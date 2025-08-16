@@ -10,13 +10,14 @@
 - Bun or Node.js (ask which runtime to use before proceeding)
 
 ## Suggested additions (optional but recommended):
-- Tailwind Enhancer: Use utility CDN like shadcn/ui or Tailwind CDN integration for quick prototyping and UI components
+- Tailwind Enhancer: Use utility CDN like shadcn/ui or alternatives as: Radix UI, React Spectrum, DaisyUI, TailGrids, Basejump, Mantine, Chakra UI, Aceternity UI, Eldora UI, Magic UI, DotUI, Basecoat UI
 - Storybook: Isolate, develop, and document UI components visually
 - API Client: Axios or Fetch (native)
 - Authentication: Clerk or Auth.js depending on preference and complexity
 - Testing: Vitest (Vite-native), React Testing Library, Playwright
 - Performance & Quality: React Profiler for dev; Lighthouse for production audits
 - Monorepo Management: Turborepo (if you anticipate several packages or want unified builds and caching)
+- Fonts: Inter, Manrope, Satoshi, Aeonik, Plus Jakarta Sans, Space Grotesk, Sora, Cal Sans, Cabinet Grotesk, Suisse Int'l, Roboto, Montserrat, Playfair Display, Merriweather, Source Sans Pro, Gloock, Karla, Bodoni, Proxima Nova, Lato, Tisa, Quicksand, Baskerville, Roboto Slab, Fira Sans, Cabin, Raleway, Garamond, Mulish
 
 ## Key Design Principles
 Feature-based structure: Features are self-contained, easy to scale.
@@ -24,6 +25,7 @@ Separation of concerns: UI in components/, logic in hooks/ & features/.
 Centralized state: Zustand in state/, TanStack Query config in api/.
 Type safety: Everything typed via TypeScript.
 Easy testing & documentation: Stories for components, testing setup per feature.
+Create a global configuration for fonts and colors and theme support.
 
 ## Additional Recommendations
 Storybook stories live next to each component (components/Button/Button.stories.tsx)
@@ -31,7 +33,6 @@ Environment config handled in .env or .env.local
 Use Biome for formatting, linting, and code standards.
 Authentication: Dedicated feature (e.g., features/auth/) for Clerk/Auth.js integration.
 Testing: Place tests in __tests__ folder inside each feature/component as needed.
-
 
 ## Folder Purpose & Flow
 components/: Pure, reusable building blocks. No app logic inside—just UI.
