@@ -1,5 +1,5 @@
-Starting Prompt: Modern React Stack Setup (2025)
-#Core stack:
+# Starting Prompt: Modern React Stack Setup (2025)
+## Core stack:
 - React (UI framework)
 - TypeScript (typed JavaScript)
 - Vite (build tool, dev server)
@@ -9,7 +9,7 @@ Starting Prompt: Modern React Stack Setup (2025)
 - Tailwind CSS (utility-first styling)
 - Bun or Node.js (ask which runtime to use before proceeding)
 
-#Suggested additions (optional but recommended):
+## Suggested additions (optional but recommended):
 - Tailwind Enhancer: Use utility CDN like shadcn/ui or Tailwind CDN integration for quick prototyping and UI components
 - Storybook: Isolate, develop, and document UI components visually
 - API Client: Axios or Fetch (native)
@@ -18,14 +18,22 @@ Starting Prompt: Modern React Stack Setup (2025)
 - Performance & Quality: React Profiler for dev; Lighthouse for production audits
 - Monorepo Management: Turborepo (if you anticipate several packages or want unified builds and caching)
 
-#Key Design Principles
+## Key Design Principles
 Feature-based structure: Features are self-contained, easy to scale.
 Separation of concerns: UI in components/, logic in hooks/ & features/.
 Centralized state: Zustand in state/, TanStack Query config in api/.
 Type safety: Everything typed via TypeScript.
 Easy testing & documentation: Stories for components, testing setup per feature.
 
-Folder Purpose & Flow
+## Additional Recommendations
+Storybook stories live next to each component (components/Button/Button.stories.tsx)
+Environment config handled in .env or .env.local
+Use Biome for formatting, linting, and code standards.
+Authentication: Dedicated feature (e.g., features/auth/) for Clerk/Auth.js integration.
+Testing: Place tests in __tests__ folder inside each feature/component as needed.
+
+
+## Folder Purpose & Flow
 components/: Pure, reusable building blocks. No app logic inside—just UI.
 features/: Contains domain-specific functionality. Each “feature” (auth, dashboard, etc.) has its own slice—could include API hooks, forms, state logic, and UI.
 api/: Setup of TanStack Query clients, API endpoints, wrappers for fetch/Axios if needed.
@@ -40,7 +48,7 @@ styles/: Tailwind initialization, app.wide CSS customizations.
 types/: Shared types/interfaces/models.
 .storybook/: Storybook config, stories for living documentation.
 
-#Project Structure Example depending on what in the stack that we use
+## Project Structure Example depending on what in the stack that we use
 ├── .storybook/               # Storybook configuration
 ├── .vscode/                  # Editor settings (optional)
 ├── public/                   # Static assets
@@ -73,3 +81,17 @@ types/: Shared types/interfaces/models.
 ├── tailwind.config.js        
 ├── tsconfig.json             # TypeScript config
 └── README.md
+
+## Scaling Up: Monorepos & Turborepo
+If you need to split backend, frontend, shared packages/libraries:
+
+text
+apps/
+  ├── web/         # Frontend React app
+  ├── api/         # Backend or serverless APIs
+  └── docs/        # Documentation site
+
+packages/
+  ├── ui/          # Shared design system
+  ├── utils/       # Shared helpers
+  └── config/      # Shared config (eslint, biome, ts)
