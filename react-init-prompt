@@ -1,0 +1,75 @@
+Starting Prompt: Modern React Stack Setup (2025)
+#Core stack:
+- React (UI framework)
+- TypeScript (typed JavaScript)
+- Vite (build tool, dev server)
+- Zustand (client state manager)
+- TanStack Query/Forms/Router (data fetching, forms, routing)
+- Biome (linting + formatting)
+- Tailwind CSS (utility-first styling)
+- Bun or Node.js (ask which runtime to use before proceeding)
+
+#Suggested additions (optional but recommended):
+- Tailwind Enhancer: Use utility CDN like shadcn/ui or Tailwind CDN integration for quick prototyping and UI components
+- Storybook: Isolate, develop, and document UI components visually
+- API Client: Axios or Fetch (native)
+- Authentication: Clerk or Auth.js depending on preference and complexity
+- Testing: Vitest (Vite-native), React Testing Library, Playwright
+- Performance & Quality: React Profiler for dev; Lighthouse for production audits
+- Monorepo Management: Turborepo (if you anticipate several packages or want unified builds and caching)
+
+#Key Design Principles
+Feature-based structure: Features are self-contained, easy to scale.
+Separation of concerns: UI in components/, logic in hooks/ & features/.
+Centralized state: Zustand in state/, TanStack Query config in api/.
+Type safety: Everything typed via TypeScript.
+Easy testing & documentation: Stories for components, testing setup per feature.
+
+Folder Purpose & Flow
+components/: Pure, reusable building blocks. No app logic inside—just UI.
+features/: Contains domain-specific functionality. Each “feature” (auth, dashboard, etc.) has its own slice—could include API hooks, forms, state logic, and UI.
+api/: Setup of TanStack Query clients, API endpoints, wrappers for fetch/Axios if needed.
+forms/: Form schemas, validation, and logic (e.g., TanStack Forms).
+hooks/: Custom hooks, including Zustand store logic and shared state/data utilities.
+layouts/: Reusable layouts (sidebar/main content, dashboard templates).
+lib/: Utility code (helpers, date formatting, etc.).
+pages/: For file-based routing or granular page-level logic if not using TanStack Router.
+router/: Routing setup via TanStack Router.
+state/: Zustand stores/slices for global state.
+styles/: Tailwind initialization, app.wide CSS customizations.
+types/: Shared types/interfaces/models.
+.storybook/: Storybook config, stories for living documentation.
+
+#Project Structure Example depending on what in the stack that we use
+├── .storybook/               # Storybook configuration
+├── .vscode/                  # Editor settings (optional)
+├── public/                   # Static assets
+├── src/
+│   ├── api/                  # Functions & hooks for API requests
+│   │   └── client.ts         # (Eg. fetch wrapper or TanStack setup)
+│   ├── components/           # Reusable UI components
+│   │   └── ui/               # Design system pieces (Button, Card, etc.)
+│   ├── features/             # App features with UI, hooks, forms
+│   │   └── auth/             
+│   │   └── dashboard/
+│   │   └── profile/
+│   ├── forms/                # Form definitions & schemas (TanStack Forms)
+│   ├── hooks/                # Custom React hooks (including Zustand stores)
+│   ├── layouts/              # Layout/wrapper components
+│   ├── lib/                  # Utility functions, shared tool logic
+│   ├── pages/                # Route-based pages (if using file routing)
+│   ├── router/               # TanStack Router config (if used)
+│   ├── styles/               # Tailwind setup, global styles, custom CSS
+│   ├── state/                # Zustand stores/global state slices
+│   ├── types/                # Custom TypeScript type definitions
+│   ├── App.tsx               # Main app entrypoint
+│   ├── main.tsx              # Root rendering logic
+│   └── index.html            # Template for app mounting
+├── .env                      # Environment variables
+├── package.json
+├── bun.lockb or package-lock.json or yarn.lock  # Dependency lockfile
+├── vite.config.ts
+├── biome.json                # Biome config
+├── tailwind.config.js        
+├── tsconfig.json             # TypeScript config
+└── README.md
