@@ -1,0 +1,31 @@
+# Plan to Clean Up Lovable-Related Content
+
+## Files to be Modified:
+package.json - Remove lovable-tagger dependency
+vite.config.ts - Remove lovable-tagger import and usage
+index.html - Remove Lovable metadata and gptengineer script
+README.md - Complete rewrite to remove all Lovable references
+package-lock.json - Will be regenerated after removing the dependency
+public/favicon.ico - Replace with a generic favicon if name contains *lov* (likely needs to be replaced as it's probably Lovable-branded)
+
+## Specific Changes:
+package.json
+Remove "lovable-tagger": "^x.x.x" from devDependencies
+vite.config.ts
+Remove import { componentTagger } from "lovable-tagger";
+Remove the componentTagger plugin from the plugins array
+index.html
+Remove Lovable-specific meta tags (description, author, og:description, og:image, twitter:site, twitter:image)
+Remove the gptengineer script tag
+Update title and description to be more generic
+README.md
+Complete rewrite to remove all Lovable references
+Update with proper project description for your day trader analyzer
+
+## Steps to Execute:
+Remove the lovable-tagger dependency
+Clean up the Vite config
+Update the HTML metadata
+Rewrite the README
+Regenerate package-lock.json
+Clean up all id containing lov (created by lovable-tagger)
