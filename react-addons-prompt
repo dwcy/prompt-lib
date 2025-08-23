@@ -1,0 +1,11 @@
+## Open‑Source JavaScript PDF Viewer
+- https://github.com/embedpdf/embed-pdf-viewer?ref=dailydev
+
+## AI 
+# AI SDK is a free open-source library that gives you the tools you need to build AI-powered products.
+npm i ai
+https://ai-sdk.dev/docs/ai-sdk-ui/overview
+
+# Streamdown
+A drop-in replacement for react-markdown, designed for AI-powered streaming.
+https://streamdown.ai/
