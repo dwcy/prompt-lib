@@ -7,6 +7,7 @@
 - TanStack Query/Forms/Router (data fetching, forms, routing)
 - Biome (linting + formatting)
 - Tailwind CSS (utility-first styling)
+- Appy default CSS / RESET CSS template, Important to prevent cursor selection on non-editable elements (always)
 - Bun or Node.js (ask which runtime to use before proceeding)
 
 ## Suggested additions (optional but recommended):
