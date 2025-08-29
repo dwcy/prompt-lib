@@ -1,0 +1,102 @@
+# =========================================================
+# Local AI Ruleset for Code Quality & Maintainability
+# =========================================================
+# These rules instruct the AI assistant to generate and edit
+# code that is clean, testable, self-documented, and scalable.
+# =========================================================
+
+general:
+  - Always write clean, self-documented code.
+  - At the top of each file, include a short descriptive comment about its intent.
+  - Each function/method must include a descriptive comment explaining WHY it exists (not just what it does).
+  - Update comments whenever code changes. No stale docs.
+  - Use inline comments only when the reasoning is not obvious.
+  - Avoid bloated files. Split into smaller modules/components when they grow too large.
+  - No magic values: define global constants or enums instead.
+  - Follow DRY (Don’t Repeat Yourself) and YAGNI (You Aren’t Gonna Need It).
+  - Each file/module should have a single clear responsibility.
+
+style:
+  - Use meaningful, intent-driven names (avoid cryptic abbreviations).
+  - Follow consistent naming conventions for variables, functions, and types.
+  - Format code using Prettier + ESLint (auto-fix issues).
+  - Order imports: external libs → internal modules → styles/constants.
+  - Avoid unused variables and unused imports.
+  - Prefer named exports over default exports (improves tooling).
+
+functions:
+  - Use JSDoc/TSDoc for complex functions or unclear signatures.
+  - Keep functions small and single-purpose.
+  - Break down complex logic into intermediate variables with descriptive names.
+  - Comment WHY a transformation or step exists, not WHAT it does.
+  - Prefer clarity over cleverness.
+
+async:
+  - Use async/await instead of raw `.then()` unless strictly necessary.
+  - Always handle errors explicitly with try/catch or centralized error utilities.
+  - Never silently ignore errors; log or propagate them.
+  - Make async data flows explicit and testable.
+
+separation_of_concerns:
+  - UI components = presentation only, no business logic.
+  - Business logic lives in services/use-cases.
+  - Data access lives in API clients, repositories, or adapters.
+  - Enforce clear data flow boundaries: UI → hooks → services → API.
+  - Avoid circular dependencies.
+
+data_flow:
+  - Always make transformations explicit and well-named.
+  - Use intermediate variables instead of chaining opaque transformations.
+  - Document the purpose of each transformation step.
+  - Normalize API data at the boundary before passing deeper into the app.
+
+type_safety:
+  - Use TypeScript interfaces for all data structures.
+  - Use union types instead of arbitrary string literals.
+  - Use branded types for domain-specific values to prevent misuse.
+  - Ensure all external API calls have typed request/response definitions.
+
+components:
+  - Break large components into smaller, focused ones.
+  - Use Prop interfaces to define contracts.
+  - Keep components pure/presentational where possible.
+  - Extract shared state into hooks or state management layer.
+  - Lazy-load heavy components where possible.
+
+api:
+  - Centralize API logic; do not scatter raw `fetch` calls in UI.
+  - Use typed clients for requests and responses.
+  - Always handle API errors gracefully with retries/fallbacks if appropriate.
+  - Avoid leaking API response shapes directly into UI.
+
+testing:
+  - Write testable code by design.
+  - Use dependency injection for external services and APIs.
+  - Keep side effects explicit and testable.
+  - Test business logic independently from UI rendering.
+  - Cover edge cases and failure modes, not just happy paths.
+  - Use mocks/stubs for external dependencies.
+
+error_handling:
+  - Differentiate between expected errors (e.g., 404 not found) and unexpected errors (bugs).
+  - Use consistent logging levels: info, warn, error.
+  - Always include contextual metadata (userId, requestId, etc.) in logs.
+  - Prefer typed results (e.g., Result<T, Error>) over throwing exceptions everywhere.
+
+security:
+  - Never log sensitive information (tokens, passwords, PII).
+  - Validate and sanitize all external input before using it.
+  - Escape or sanitize user-provided content before rendering in UI.
+  - Follow principle of least privilege for APIs and state.
+
+performance:
+  - Avoid unnecessary re-renders in UI components.
+  - Use memoization (`useMemo`, `useCallback`) only when it improves performance measurably.
+  - Lazy-load heavy dependencies or split bundles where appropriate.
+  - Use pagination or streaming for large datasets.
+
+documentation:
+  - Every exported function, type, and component should be discoverable with minimal documentation.
+  - Provide usage examples in JSDoc/TSDoc for non-trivial functions.
+  - Add a README.md for complex modules explaining intent and usage.
+  - Keep documentation in sync with code — outdated docs must be updated or removed.
