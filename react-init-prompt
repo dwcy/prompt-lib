@@ -18,8 +18,10 @@
   - to remove all console.logs when mode === production.
 - configure biome.js
     - javascript -> formatter quataStyle set to "double"
-- Add .env.exmple
-- add.env.production
+- Add enviroment files, make sure they are utf-8. git ignore all but example. And fix so vite looks at .env.develop in debug and .env if prod.
+  - .env.exmple 
+  - .env.develop (git ignore this one) 
+  - .env (git ignore this one)
 - add gitignore following standard for current setup and ignore .env
 
 ## Suggested additions (optional but recommended):
