@@ -100,3 +100,10 @@ documentation:
   - Provide usage examples in JSDoc/TSDoc for non-trivial functions.
   - Add a README.md for complex modules explaining intent and usage.
   - Keep documentation in sync with code — outdated docs must be updated or removed.
+
+Environment Variables:
+- Environment files (.env) must be created manually
+- Never generate or edit .env files in code
+- Always provide manual creation instructions
+- Specify UTF-8 encoding, not Unicode
+- Include exact content to copy
