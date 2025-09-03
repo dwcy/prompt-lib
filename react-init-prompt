@@ -9,6 +9,9 @@
 - Tailwind CSS (utility-first styling and dead code detection)
 - Appy default CSS / RESET CSS template, Important to prevent cursor selection on non-editable elements (always)
 - Bun or Node.js (ask which runtime to use before proceeding)
+- react-i18next (handle language, ask if the site needs it)
+- Zod (form validation)
+- dompurify (sanitize)
 
 ## Configuration
 - Configure vite.config.ts 
