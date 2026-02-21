@@ -20,7 +20,7 @@ Remove the gptengineer script tag
 Update title and description to be more generic
 README.md
 Complete rewrite to remove all Lovable references
-Update with proper project description for your day trader analyzer
+Update with proper project description for this content
 
 ## Steps to Execute:
 Remove the lovable-tagger dependency
