@@ -9,6 +9,9 @@
     },
     "permissions": {
       "allow": [
+        "WebSearch(*)",
+        "WebFetch(*)",
+        "Fetch(*)",
         "Bash(git status:*)",
         "Bash(git diff:*)",
         "Bash(git log:*)",
@@ -23,6 +26,7 @@
         "Bash(git switch:*)",
         "Bash(git restore:*)",
         "Bash(git stash:*)",
+        "Bash(pnpm:*)",
         "Bash(npm test:*)",
         "Bash(npm run:*)",
         "Bash(npm install:*)",
@@ -76,6 +80,7 @@
         "PowerShell(git restore:*)",
         "PowerShell(git stash:*)",
         "PowerShell(dotnet:*)",
+        "PowerShell(pnpm:*)",
         "PowerShell(npm:*)",
         "PowerShell(npx:*)",
         "PowerShell(python:*)",

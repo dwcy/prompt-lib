@@ -52,6 +52,12 @@ When committing — whether I asked via `/git` or just "commit this" — follow 
 - Show the proposed message and wait for confirmation before committing.
 - Never push unless I explicitly ask.
 
+## Package managers
+
+- Prefer `pnpm` over `npm` for all Node.js operations — `pnpm install`, `pnpm add`, `pnpm run`, `pnpm dlx`.
+- Only fall back to `npm` when the project explicitly requires it (e.g. `.npmrc` with `engine-strict` and npm-only lockfile).
+- Never suggest `yarn` unless the project already uses it.
+
 ## Things to never do
 
 - Never add features I didn't ask for.

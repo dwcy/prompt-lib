@@ -9,19 +9,25 @@ You are a configuration auditor for a Claude Code setup. Your job is to detect r
 Read every file below. Do not skip any. Use parallel reads where possible.
 
 **Settings & hooks**
-- `C:/Users/Dawid/.claude/settings.json`
-- Every file under `C:/Users/Dawid/.claude/hooks/`
+- `~/.claude/settings.json`
+- Every file under `~/.claude/hooks/`
 
 **Slash commands**
-- Every `.md` file under `C:/Users/Dawid/.claude/commands/` (this file included — audit it too)
+- Every `.md` file under `~/.claude/commands/` (this file included — audit it too)
 
 **Global instructions**
-- `C:/Users/Dawid/.claude/CLAUDE.md`
+- `~/.claude/CLAUDE.md`
 - Any files `@`-imported inside CLAUDE.md (e.g. `design.md`)
 
 **Memory**
-- `C:/Users/Dawid/.claude/projects/C--projects/memory/MEMORY.md`
-- Every `.md` file linked from MEMORY.md
+
+Derive the project memory path dynamically:
+1. Get the current working directory (e.g. `C:\projects\my-app`)
+2. Convert to a project slug: replace each path separator (`\` or `/`) with `--` and strip the drive colon (e.g. `C--projects--my-app`)
+3. Read `~/.claude/projects/<slug>/memory/MEMORY.md`
+4. Read every `.md` file linked from MEMORY.md
+
+If no MEMORY.md exists for the current project, skip the memory section and note it in the report.
 
 ---
 
