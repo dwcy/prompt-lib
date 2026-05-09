@@ -1,0 +1,250 @@
+  {
+    "autoUpdatesChannel": "latest",
+    "theme": "dark",
+    "model": "sonnet",
+    "defaultMode": "acceptEdits",
+    "statusLine": {
+      "type": "command",
+      "command": "python \"$USERPROFILE/.claude/statusline.py\""
+    },
+    "permissions": {
+      "allow": [
+        "Bash(git status:*)",
+        "Bash(git diff:*)",
+        "Bash(git log:*)",
+        "Bash(git branch:*)",
+        "Bash(git rev-parse:*)",
+        "Bash(git show:*)",
+        "Bash(git config:*)",
+        "Bash(git tag:*)",
+        "Bash(git init:*)",
+        "Bash(git add:*)",
+        "Bash(git checkout:*)",
+        "Bash(git switch:*)",
+        "Bash(git restore:*)",
+        "Bash(git stash:*)",
+        "Bash(npm test:*)",
+        "Bash(npm run:*)",
+        "Bash(npm install:*)",
+        "Bash(npx:*)",
+        "Bash(dotnet build:*)",
+        "Bash(dotnet test:*)",
+        "Bash(dotnet format:*)",
+        "Bash(dotnet restore:*)",
+        "Bash(dotnet new:*)",
+        "Bash(dotnet add:*)",
+        "Bash(dotnet sln:*)",
+        "Bash(dotnet publish:*)",
+        "Bash(dotnet pack:*)",
+        "Bash(dotnet run:*)",
+        "Bash(dotnet nuget:*)",
+        "Bash(dotnet --version:*)",
+        "Bash(dotnet --info:*)",
+        "Bash(nuget:*)",
+        "Bash(python:*)",
+        "Bash(python3:*)",
+        "Bash(py:*)",
+        "Bash(python -m venv:*)",
+        "Bash(python3 -m venv:*)",
+        "Bash(python -m pip:*)",
+        "Bash(pip:*)",
+        "Bash(pip3:*)",
+        "Bash(uv:*)",
+        "Bash(uvx:*)",
+        "Bash(poetry init:*)",
+        "Bash(poetry install:*)",
+        "Bash(poetry add:*)",
+        "Bash(pytest:*)",
+        "Bash(ls:*)",
+        "Bash(cat:*)",
+        "Bash(pwd:*)",
+        "PowerShell(Get-ChildItem:*)",
+        "PowerShell(Get-Location:*)",
+        "PowerShell(Test-Path:*)",
+        "PowerShell(git status:*)",
+        "PowerShell(git diff:*)",
+        "PowerShell(git log:*)",
+        "PowerShell(git branch:*)",
+        "PowerShell(git rev-parse:*)",
+        "PowerShell(git show:*)",
+        "PowerShell(git config:*)",
+        "PowerShell(git tag:*)",
+        "PowerShell(git init:*)",
+        "PowerShell(git add:*)",
+        "PowerShell(git checkout:*)",
+        "PowerShell(git switch:*)",
+        "PowerShell(git restore:*)",
+        "PowerShell(git stash:*)",
+        "PowerShell(dotnet:*)",
+        "PowerShell(npm:*)",
+        "PowerShell(npx:*)",
+        "PowerShell(python:*)",
+        "PowerShell(python3:*)",
+        "PowerShell(py:*)",
+        "PowerShell(pip:*)",
+        "PowerShell(pip3:*)",
+        "PowerShell(uv:*)",
+        "PowerShell(uvx:*)",
+        "PowerShell(poetry:*)",
+        "PowerShell(pytest:*)",
+        "PowerShell(nuget:*)"
+      ],
+      "deny": [
+        "Bash(rm -rf /:*)",
+        "Bash(rm -rf ~:*)",
+        "Bash(rm -rf ~/:*)",
+        "Bash(git push --force:*)",
+        "Bash(git push -f:*)",
+        "Bash(git reset --hard:*)",
+        "Bash(git clean -fd:*)",
+        "PowerShell(git push --force:*)",
+        "PowerShell(git push -f:*)",
+        "PowerShell(git reset --hard:*)",
+        "PowerShell(git clean -fd:*)"
+      ]
+    },
+    "mcpServers": {
+      "context7": {
+        "type": "stdio",
+        "command": "npx",
+        "args": ["-y", "@context7/mcp-server@latest"]
+      },
+      "github": {
+        "type": "stdio",
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-github"],
+        "env": {
+          "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
+        }
+      },
+      "figma": {
+        "type": "stdio",
+        "command": "npx",
+        "args": ["-y", "@figma/mcp-server@latest"],
+        "env": {
+          "FIGMA_ACCESS_TOKEN": "${FIGMA_ACCESS_TOKEN}"
+        }
+      },
+      "playwright": {
+        "type": "stdio",
+        "command": "npx",
+        "args": ["-y", "@playwright/mcp@latest"]
+      },
+      "azure-devops": {
+        "type": "stdio",
+        "command": "npx",
+        "args": ["-y", "@tiberriver256/mcp-server-azure-devops@latest"],
+        "env": {
+          "AZURE_DEVOPS_ORG_URL": "${AZURE_DEVOPS_ORG_URL}",
+          "AZURE_DEVOPS_TOKEN": "${AZURE_DEVOPS_TOKEN}"
+        }
+      },
+      "supabase": {
+        "type": "stdio",
+        "command": "npx",
+        "args": ["-y", "@supabase/mcp-server-supabase@latest"],
+        "env": {
+          "SUPABASE_ACCESS_TOKEN": "${SUPABASE_ACCESS_TOKEN}"
+        }
+      },
+      "obsidian": {
+        "type": "stdio",
+        "command": "npx",
+        "args": ["-y", "obsidian-mcp"],
+        "env": {
+          "OBSIDIAN_API_KEY": "${OBSIDIAN_API_KEY}",
+          "OBSIDIAN_HOST": "${OBSIDIAN_HOST}",
+          "OBSIDIAN_PORT": "${OBSIDIAN_PORT}"
+        }
+      },
+      "docker": {
+        "type": "stdio",
+        "command": "uvx",
+        "args": ["docker-mcp"]
+      }
+    },
+    "enabledPlugins": {
+      "azure@claude-plugins-official": true,
+      "microsoft-docs@claude-plugins-official": true
+    },
+    "hooks": {
+      "SessionStart": [
+        {
+          "hooks": [
+            {
+              "type": "command",
+              "command": "powershell -ExecutionPolicy Bypass -File $USERPROFILE/.claude/hooks/session-start.ps1"
+            }
+          ]
+        }
+      ],
+      "PreToolUse": [
+        {
+          "matcher": "Bash",
+          "hooks": [
+            {
+              "type": "command",
+              "command": "python \"$HOME/.claude/hooks/command_guard.py\""
+            }
+          ]
+        },
+        {
+          "matcher": "PowerShell",
+          "hooks": [
+            {
+              "type": "command",
+              "command": "python \"$USERPROFILE/.claude/hooks/command_guard.py\""
+            }
+          ]
+        },
+        {
+          "matcher": "Write",
+          "hooks": [
+            {
+              "type": "command",
+              "command": "python \"$USERPROFILE/.claude/hooks/file_write_guard.py\""
+            }
+          ]
+        },
+        {
+          "matcher": "Edit",
+          "hooks": [
+            {
+              "type": "command",
+              "command": "python \"$USERPROFILE/.claude/hooks/file_write_guard.py\""
+            }
+          ]
+        }
+      ],
+      "PostToolUse": [
+        {
+          "matcher": "Write",
+          "hooks": [
+            {
+              "type": "command",
+              "command": "python \"$USERPROFILE/.claude/hooks/write_audit.py\""
+            }
+          ]
+        },
+        {
+          "matcher": "Edit",
+          "hooks": [
+            {
+              "type": "command",
+              "command": "python \"$USERPROFILE/.claude/hooks/write_audit.py\""
+            }
+          ]
+        }
+      ],
+      "Stop": [
+        {
+          "hooks": [
+            {
+              "type": "command",
+              "command": "powershell -ExecutionPolicy Bypass -File $USERPROFILE/.claude/hooks/stop-session.ps1"
+            }
+          ]
+        }
+      ]
+    }
+  }

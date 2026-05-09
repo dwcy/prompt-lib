@@ -1,0 +1,12 @@
+[
+  {
+    "timestamp": "2026-05-04T06:43:31.254Z",
+    "tool": "monitor_started",
+    "request": {
+      "message": "MCP Monitor extension started"
+    },
+    "response": {
+      "status": "active"
+    }
+  }
+]

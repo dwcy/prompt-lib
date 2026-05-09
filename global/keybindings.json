@@ -1,0 +1,14 @@
+{
+  // Submit message with Ctrl+Enter, use Enter for newlines
+  // "chat:submit": "ctrl+enter",
+  // "chat:newline": "enter",
+
+  // Kill all background agents
+  // "chat:killAgents": "ctrl+x ctrl+k",
+
+  // Toggle fast mode (Opus 4.6 fast)
+  // "chat:fastMode": "ctrl+x ctrl+f",
+
+  // Voice push-to-talk — change to any modifier+key combo
+  // "voice:pushToTalk": "ctrl+space"
+}
