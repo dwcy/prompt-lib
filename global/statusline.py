@@ -10,6 +10,10 @@ def rgb(text, r, g, b):
     return f"\033[38;2;{r};{g};{b}m{text}\033[0m"
 
 
+def hyperlink(text, url):
+    return f"\033]8;;{url}\033\\{text}\033]8;;\033\\"
+
+
 def ctx_color(pct):
     if pct < 50:
         return (100, 220, 120)
@@ -128,7 +132,7 @@ parts = [
     rgb("🐳 docker", 41, 182, 246) if docker_present else rgb("🐳 N/A", 100, 100, 120),
     test_status if test_status else rgb("✓ N/A", 100, 100, 120),
     agent_state if agent_state else rgb("⚙️  idle", 100, 100, 120),
-    rgb(f"⊙ {session}", 200, 150, 255) if session else rgb("⊙ N/A", 100, 100, 120),
+    hyperlink(rgb(f"⊙ {cwd_str}", 200, 150, 255), f"vscode://file/{cwd_str.replace(chr(92), '/')}") if cwd_str else rgb("⊙ N/A", 100, 100, 120),
 ]
 
 print(SEP.join(parts))
