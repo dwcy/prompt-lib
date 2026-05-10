@@ -35,6 +35,10 @@ When generating `plan.md` or `tasks.md`:
 - **@init-project** — New project bootstrap (stack detection, CLAUDE.md authoring, agent spawning). Use ONLY for greenfield init.
 - **@load-project** — Reads existing CLAUDE.md and announces available specialists. Use at session start for existing projects.
 
+### Verification (read-only)
+
+- **@code-plan-verifier** — Read-only audit of an implementation against the agreed plan, project architecture, existing patterns, coding guidelines, and version-specific docs. Flags shortcuts, mock data, hardcoded fakes, TODOs, unplanned-file changes, outdated APIs, and architectural boundary violations. NEVER edits files. Use after `/speckit-implement` (or any major implementation push) to gate a commit. Outputs verdict (PASS / PASS WITH WARNINGS / FAIL) plus Plan Compliance checklist, findings with severity, and a Final Recommendation.
+
 ## Stack → agent decision matrix
 
 | If the task touches… | Owner |
@@ -46,6 +50,7 @@ When generating `plan.md` or `tasks.md`:
 | `*.css`, design tokens, theming | `@frontend-css` |
 | `*.unity`, MonoBehaviour, ScriptableObject | `@unity-architect` |
 | Cross-cutting orchestration, ADRs, scripts that span domains | `main` |
+| Read-only verification of an implementation against its plan | `@code-plan-verifier` |
 
 ## Anti-patterns
 
