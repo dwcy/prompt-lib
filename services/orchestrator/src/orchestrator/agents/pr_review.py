@@ -18,6 +18,7 @@ only requires the value to be a UUID string. v7 is a v2 follow-up.
 from __future__ import annotations
 
 import asyncio
+import json
 import re
 import shutil
 import sqlite3
@@ -465,16 +466,45 @@ class PrReviewAgent:
 
 
 def _normalize_event(event: Mapping[str, Any]) -> tuple[str, Mapping[str, Any]]:
-    """Pull ``(kind, data)`` out of either ``{"event": k, "data": d}`` or
-    ``{"kind": k, ...}`` shapes."""
+    """Pull ``(kind, data)`` out of bridge SSE events or legacy fake shapes."""
     if "event" in event:
         kind = str(event["event"])
         data = event.get("data") or {}
         if not isinstance(data, Mapping):
             data = {}
+        if kind == "task.state":
+            return "state", data
+        if kind == "task.artifact":
+            return _artifact_event_to_message(data)
+        if kind == "task.progress":
+            return "progress", data
         return kind, data
     if "kind" in event:
         kind = str(event["kind"])
         data = {k: v for k, v in event.items() if k != "kind"}
         return kind, data
     return "", {}
+
+
+def _artifact_event_to_message(data: Mapping[str, Any]) -> tuple[str, Mapping[str, Any]]:
+    artifact = data.get("artifact")
+    if not isinstance(artifact, Mapping):
+        return "artifact", data
+
+    content = artifact.get("content")
+    if isinstance(content, str):
+        text = content
+    elif content is None:
+        text = ""
+    else:
+        text = json.dumps(content, ensure_ascii=False)
+
+    return (
+        "message",
+        {
+            "text": text,
+            "partial": False,
+            "artifact_id": artifact.get("id"),
+            "mime_type": artifact.get("mime_type"),
+        },
+    )

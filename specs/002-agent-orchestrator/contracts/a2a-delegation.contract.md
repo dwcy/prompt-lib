@@ -17,8 +17,8 @@ from a2a_bridge.client.delegation import DelegationClient
 
 client = DelegationClient(
     peer_url=config.a2a_peer_url,            # e.g. "http://127.0.0.1:8765"
-    bearer_token=config.a2a_bearer_token,    # required, validated by the peer adapter
-    request_timeout=120.0,                   # seconds; per-task timeout, locks v1
+    peer_bearer_token=config.a2a_bearer_token, # required, validated by the peer adapter
+    timeout_seconds=300.0,                   # seconds; SSE read timeout
 )
 ```
 
@@ -65,9 +65,9 @@ The orchestrator detects the `NO_REVIEW:` sentinel and emits `run.skipped` with 
 
 ---
 
-## Expected event stream (v1 consumer-side shape)
+## Expected event stream
 
-`client.delegate()` yields a sequence of events. The orchestrator handles these kinds (others are passed through to the eventlog as-is, level=info):
+`client.delegate()` yields bridge SSE events such as `task.state` and `task.artifact`. The orchestrator first normalizes `task.state` to `state` and text-bearing `task.artifact` payloads to `message`; older tests may still provide that normalized shape directly. Other kinds are passed through to the eventlog as-is, level=info.
 
 | Event kind (consumer view) | Required? | Orchestrator action |
 |---|---|---|
@@ -102,9 +102,9 @@ Stream MUST close cleanly — the orchestrator consumes via `async for` and expe
 The orchestrator's correctness assumes:
 
 1. The bridge raises a typed exception (or a clearly-shaped error) on auth failure rather than silently producing an empty stream.
-2. The terminal `state` event is the LAST event yielded by the iterator (no events after `completed`/`failed`/`cancelled`).
-3. `message` events emit `text` strings encoded as UTF-8.
-4. The bridge client respects `request_timeout` and raises (or yields a `failed` state) when the peer hangs past it.
+2. The terminal `task.state` event is the LAST event yielded by the iterator (no events after `completed`/`failed`/`cancelled`).
+3. `task.artifact` events carry text content encoded as UTF-8 for review output.
+4. The bridge client respects `timeout_seconds` and raises (or yields a `failed` state) when the peer hangs past it.
 
 If any of these change, this contract — and the consumer test — must be updated.
 

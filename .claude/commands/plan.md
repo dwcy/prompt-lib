@@ -103,27 +103,33 @@ Report the approved task list and stop. Implementation happens in the main sessi
 
 Detect the backend and frontend stacks by reading project files (e.g. `*.csproj`, `pyproject.toml`, `package.json`, framework config).
 
+**Parallel isolation** (Constitution Gate 6): both agents are writers running concurrently on the same repo, so each MUST be dispatched with `isolation: "worktree"` on the Agent call. The harness creates a temporary worktree per agent, auto-cleans on no-change, and returns the path + branch on changes so the main thread can merge them back. Without isolation, the two agents silently overwrite each other's files. See [`docs/parallel-isolation.md`](../../docs/parallel-isolation.md).
+
 Spawn two agents in parallel:
 
 **Backend agent**
 
 - Use `subagent_type: dotnet-architect` for .NET projects, `subagent_type: python-architect` for Python projects, or `subagent_type: general-purpose` if the stack is unclear.
+- Set `isolation: "worktree"` on the Agent call.
 - Brief with:
   - The confirmed contract (copy it verbatim)
   - The backend tasks from the approved breakdown
   - The detected backend stack
-  - This instruction: *"Implement the contract exactly as defined. If you discover the contract needs to change, stop and report the conflict — do not silently deviate."*
+  - This instruction: *"You are running in an isolated git worktree. Stay inside it; do not `cd` out. Implement the contract exactly as defined. If you discover the contract needs to change, stop and report the conflict — do not silently deviate."*
 
 **Frontend agent**
 
 - Use `subagent_type: frontend-architect`.
+- Set `isolation: "worktree"` on the Agent call.
 - Brief with:
   - The confirmed contract (copy it verbatim)
   - The frontend tasks from the approved breakdown
   - The detected frontend stack (framework, state management, component library if present)
-  - This instruction: *"Implement against the contract. If the contract is ambiguous or appears wrong, stop and report it — do not invent your own endpoint shapes."*
+  - This instruction: *"You are running in an isolated git worktree. Stay inside it; do not `cd` out. Implement against the contract. If the contract is ambiguous or appears wrong, stop and report it — do not invent your own endpoint shapes."*
 
-Set `run_in_background: true` on the backend agent so both run in parallel. Seed the frontend agent with a note that the backend is implementing the same contract simultaneously.
+Set `run_in_background: true` on the backend agent so both run in parallel. Seed the frontend agent with a note that the backend is implementing the same contract simultaneously, also in its own worktree.
+
+After both agents return, merge each returned worktree branch back into the integration branch in main, sequentially. Report any conflicts to the user rather than auto-resolving them.
 
 ---
 

@@ -48,6 +48,9 @@ Tell the user which specialist subagents are available for this project and what
 
 ### Frontend projects
 - `@frontend-architect` — Ask for component design, state management decisions, performance
+- `@react-architect` — Ask for React 2025 stack structure, component boundaries, config setup
+- `@tanstack-architect` — Ask for TanStack Start/Router/Query/Form/Table architecture, typed routes, URL state, cache boundaries
+- `@frontend-css` — Ask for CSS modules, global tokens, theming, visual structure
 
 ### Unity3D projects
 - `@unity-architect` — Ask for scene architecture, ScriptableObject design, performance advice

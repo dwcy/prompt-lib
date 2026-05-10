@@ -77,6 +77,7 @@ ctx_pct = round(used) if used is not None else None
 ctx_str = f"{ctx_pct}%" if ctx_pct is not None else "--"
 
 branch = ""
+is_worktree = False
 try:
     result = subprocess.run(
         ["git", "branch", "--show-current"],
@@ -84,6 +85,14 @@ try:
         cwd=cwd_str,
     )
     branch = result.stdout.strip()
+    if branch:
+        gd = subprocess.run(
+            ["git", "rev-parse", "--git-dir", "--git-common-dir"],
+            capture_output=True, text=True, timeout=1,
+            cwd=cwd_str,
+        ).stdout.strip().splitlines()
+        if len(gd) == 2:
+            is_worktree = gd[0] != gd[1]
 except Exception:
     pass
 
@@ -125,10 +134,17 @@ elif is_streaming:
 NA = rgb("N/A", 100, 100, 120)
 SEP = rgb("  │  ", 70, 70, 90)
 
+if branch:
+    branch_part = rgb(f"⎇ {branch}", 255, 200, 80)
+    if is_worktree:
+        branch_part = rgb("🌳 worktree: ", 100, 220, 120) + branch_part
+else:
+    branch_part = rgb("⎇ N/A", 100, 100, 120)
+
 parts = [
     rgb(f"✦ {model}", 139, 196, 255),
     rgb(f"◐ {ctx_str}", *ctx_color(ctx_pct or 0)),
-    rgb(f"⎇ {branch}", 255, 200, 80) if branch else rgb("⎇ N/A", 100, 100, 120),
+    branch_part,
     rgb("🐳 docker", 41, 182, 246) if docker_present else rgb("🐳 N/A", 100, 100, 120),
     test_status if test_status else rgb("✓ N/A", 100, 100, 120),
     agent_state if agent_state else rgb("⚙️  idle", 100, 100, 120),

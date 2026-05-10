@@ -74,6 +74,8 @@ from orchestrator import eventlog
 from orchestrator.triggers.base import TriggerEvent
 from orchestrator.triggers.github_poll import GithubPollTrigger
 
+_REAL_ASYNCIO_SLEEP = asyncio.sleep
+
 REPO = "owner/repo"
 VALID_SHA = "0123456789abcdef0123456789abcdef01234567"
 SECOND_SHA = "fedcba9876543210fedcba9876543210fedcba98"
@@ -124,6 +126,7 @@ def _pr(
 
 async def _collect_one_poll(
     trigger: GithubPollTrigger,
+    fake_gh: Any,
     *,
     timeout: float = 2.0,
 ) -> list[TriggerEvent]:
@@ -142,7 +145,11 @@ async def _collect_one_poll(
 
     task = asyncio.create_task(_drain())
     try:
-        await asyncio.wait_for(asyncio.shield(_drain_until_idle(task)), timeout=timeout)
+        initial_rules = _fake_gh_rule_count(fake_gh)
+        await asyncio.wait_for(
+            asyncio.shield(_drain_until_first_fake_gh_call(task, fake_gh, initial_rules)),
+            timeout=timeout,
+        )
     except TimeoutError:
         pass
     finally:
@@ -157,20 +164,22 @@ async def _collect_one_poll(
     return collected
 
 
-async def _drain_until_idle(task: asyncio.Task[None]) -> None:
-    """Wait until the trigger task has been scheduled and emitted whatever it
-    will emit for the queued ``fake_gh`` rule, then return.
+def _fake_gh_rule_count(fake_gh: Any) -> int:
+    data = json.loads(fake_gh.behavior_file.read_text(encoding="utf-8"))
+    return len(data.get("rules", []))
 
-    Strategy: poll a short interval; once two consecutive checks see the same
-    state (no new events appended), assume the trigger is idle waiting for
-    its next poll tick.
-    """
+
+async def _drain_until_first_fake_gh_call(
+    task: asyncio.Task[None],
+    fake_gh: Any,
+    initial_rules: int,
+) -> None:
+    """Wait until the queued ``fake_gh`` rule has definitely been consumed."""
     while not task.done():
-        await asyncio.sleep(0.05)
-        if task.done():
+        await _REAL_ASYNCIO_SLEEP(0.05)
+        if _fake_gh_rule_count(fake_gh) < initial_rules:
+            await _REAL_ASYNCIO_SLEEP(0.1)
             return
-        await asyncio.sleep(0.05)
-        return
 
 
 def _read_events(db_path: Path) -> list[dict[str, Any]]:
@@ -220,7 +229,7 @@ class TestParserAcceptsValidInput:
         conn = _bootstrap_and_connect(tmp_db)
         try:
             trigger = GithubPollTrigger(repo=REPO, poll_seconds=0.01, eventlog_conn=conn)
-            events = await _collect_one_poll(trigger)
+            events = await _collect_one_poll(trigger, fake_gh)
         finally:
             conn.close()
 
@@ -245,7 +254,7 @@ class TestParserAcceptsValidInput:
         conn = _bootstrap_and_connect(tmp_db)
         try:
             trigger = GithubPollTrigger(repo=REPO, poll_seconds=0.01, eventlog_conn=conn)
-            events = await _collect_one_poll(trigger)
+            events = await _collect_one_poll(trigger, fake_gh)
         finally:
             conn.close()
 
@@ -260,7 +269,7 @@ class TestParserAcceptsValidInput:
         conn = _bootstrap_and_connect(tmp_db)
         try:
             trigger = GithubPollTrigger(repo=REPO, poll_seconds=0.01, eventlog_conn=conn)
-            events = await _collect_one_poll(trigger)
+            events = await _collect_one_poll(trigger, fake_gh)
         finally:
             conn.close()
 
@@ -285,7 +294,7 @@ class TestParserSkipsMalformedRows:
         conn = _bootstrap_and_connect(tmp_db)
         try:
             trigger = GithubPollTrigger(repo=REPO, poll_seconds=0.01, eventlog_conn=conn)
-            events = await _collect_one_poll(trigger)
+            events = await _collect_one_poll(trigger, fake_gh)
         finally:
             conn.close()
 
@@ -309,7 +318,7 @@ class TestParserSkipsMalformedRows:
         conn = _bootstrap_and_connect(tmp_db)
         try:
             trigger = GithubPollTrigger(repo=REPO, poll_seconds=0.01, eventlog_conn=conn)
-            events = await _collect_one_poll(trigger)
+            events = await _collect_one_poll(trigger, fake_gh)
         finally:
             conn.close()
 
@@ -326,7 +335,7 @@ class TestParserSkipsMalformedRows:
         conn = _bootstrap_and_connect(tmp_db)
         try:
             trigger = GithubPollTrigger(repo=REPO, poll_seconds=0.01, eventlog_conn=conn)
-            events = await _collect_one_poll(trigger)
+            events = await _collect_one_poll(trigger, fake_gh)
         finally:
             conn.close()
 
@@ -354,7 +363,7 @@ class TestRunnerErrorPaths:
         conn = _bootstrap_and_connect(tmp_db)
         try:
             trigger = GithubPollTrigger(repo=REPO, poll_seconds=0.01, eventlog_conn=conn)
-            events = await _collect_one_poll(trigger)
+            events = await _collect_one_poll(trigger, fake_gh)
         finally:
             conn.close()
 
@@ -384,7 +393,7 @@ class TestRunnerErrorPaths:
         conn = _bootstrap_and_connect(tmp_db)
         try:
             trigger = GithubPollTrigger(repo=REPO, poll_seconds=0.01, eventlog_conn=conn)
-            events = await _collect_one_poll(trigger)
+            events = await _collect_one_poll(trigger, fake_gh)
         finally:
             conn.close()
 
@@ -417,7 +426,7 @@ class TestRunnerErrorPaths:
         conn = _bootstrap_and_connect(tmp_db)
         try:
             trigger = GithubPollTrigger(repo=REPO, poll_seconds=0.01, eventlog_conn=conn)
-            events = await _collect_one_poll(trigger)
+            events = await _collect_one_poll(trigger, fake_gh)
         finally:
             conn.close()
 

@@ -178,6 +178,51 @@ class TestSuccessfulDelegation:
         # gh.review.posted recorded after agent activity, before run.completed.
         assert kinds.index("gh.review.posted") < kinds.index("run.completed")
 
+    async def test_consumer_handles_real_bridge_sse_event_names(
+        self,
+        tmp_db: Path,
+        fake_gh: Any,
+        fake_delegation_client: Any,
+    ) -> None:
+        _prime_diff(fake_gh)
+        _prime_review_post(fake_gh)
+
+        client = fake_delegation_client(
+            [
+                {
+                    "event": "task.state",
+                    "data": {"task_id": "t1", "state": "submitted", "ts": "t"},
+                },
+                {
+                    "event": "task.artifact",
+                    "data": {
+                        "task_id": "t1",
+                        "artifact": {
+                            "id": "a1",
+                            "kind": "text",
+                            "mime_type": "text/plain",
+                            "content": "Real bridge review.",
+                        },
+                    },
+                },
+                {
+                    "event": "task.state",
+                    "data": {"task_id": "t1", "state": "completed", "ts": "t"},
+                },
+            ]
+        )
+        conn = _bootstrap(tmp_db)
+        try:
+            agent = PrReviewAgent(delegation_client=client, eventlog_conn=conn)
+            await agent.run(_trigger_event())
+        finally:
+            conn.close()
+
+        kinds = _kinds(tmp_db)
+        assert "agent.message" in kinds
+        assert "gh.review.posted" in kinds
+        assert "run.completed" in kinds
+
     async def test_consumer_concatenates_partial_message_chunks(
         self,
         tmp_db: Path,

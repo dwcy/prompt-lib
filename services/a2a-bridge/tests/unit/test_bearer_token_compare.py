@@ -29,6 +29,15 @@ def test_auth_module_exposes_compare_token_and_validate_token_at_startup():
     assert hasattr(auth, "validate_token_at_startup")
 
 
+async def test_delegation_client_supports_async_context_manager():
+    from a2a_bridge.client.delegation import DelegationClient
+
+    client = DelegationClient(peer_url="http://127.0.0.1:8766", peer_bearer_token=LONG_TOKEN)
+
+    async with client as entered:
+        assert entered is client
+
+
 def test_compare_token_returns_true_for_exact_match():
     auth = _import_auth_module()
 
@@ -105,19 +114,11 @@ def test_validate_token_at_startup_raises_on_whitespace_only():
         auth.validate_token_at_startup("   \t\n  ")
 
 
-def test_validate_token_at_startup_warns_for_short_token(capsys):
+def test_validate_token_at_startup_raises_for_short_token():
     auth = _import_auth_module()
 
-    auth.validate_token_at_startup(SHORT_TOKEN)
-
-    captured = capsys.readouterr()
-    assert captured.out.strip() != "" or captured.err.strip() != ""
-
-
-def test_validate_token_at_startup_does_not_raise_for_short_token():
-    auth = _import_auth_module()
-
-    auth.validate_token_at_startup(SHORT_TOKEN)
+    with pytest.raises(ValueError):
+        auth.validate_token_at_startup(SHORT_TOKEN)
 
 
 def test_validate_token_at_startup_accepts_token_of_32_or_more_chars(capsys):
@@ -133,7 +134,10 @@ def test_validate_token_at_startup_accepts_token_of_32_or_more_chars(capsys):
 def test_validate_token_at_startup_does_not_log_token_value(capsys):
     auth = _import_auth_module()
 
-    auth.validate_token_at_startup(SHORT_TOKEN)
+    try:
+        auth.validate_token_at_startup(SHORT_TOKEN)
+    except ValueError:
+        pass
     try:
         auth.validate_token_at_startup(LONG_TOKEN)
     except ValueError:
