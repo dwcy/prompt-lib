@@ -104,16 +104,17 @@ def _check_gh_auth(err_console: Console) -> None:
 
 
 def _check_a2a_peer(peer_url: str, err_console: Console) -> None:
+    card_url = peer_url.rstrip("/") + "/.well-known/agent-card.json"
     try:
         with httpx.Client(timeout=5.0) as client:
-            response = client.head(peer_url)
+            response = client.get(card_url)
     except httpx.HTTPError as exc:
-        err_console.print(f"[bold red]a2a peer unreachable[/]: {peer_url}")
+        err_console.print(f"[bold red]a2a peer unreachable[/]: {card_url}")
         err_console.print(str(exc))
         raise typer.Exit(code=4) from exc
     if response.status_code >= 400:
         err_console.print(
-            f"[bold red]a2a peer unreachable[/]: {peer_url} "
+            f"[bold red]a2a peer unreachable[/]: {card_url} "
             f"(status {response.status_code})"
         )
         raise typer.Exit(code=4)

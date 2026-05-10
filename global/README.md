@@ -234,7 +234,8 @@ global/
 │   ├── python-tester.md              # Python testing specialist (pytest, async)
 │   ├── frontend-architect.md         # Frontend architecture specialist (React, Vue, Next.js)
 │   ├── frontend-css.md               # CSS architecture specialist (modules, globals, theming)
-│   ├── react-architect.md            # React 2025 stack specialist (Vite/Zustand/TanStack/Biome/Tailwind)
+│   ├── react-architect.md            # React 2025 stack specialist (Vite/Zustand/Biome/Tailwind)
+│   ├── tanstack-architect.md         # Opinionated TanStack specialist (Start/Router/Query/Form/Table)
 │   └── unity-architect.md            # Unity3D architecture specialist
 │
 ├── hooks/                            # Hook scripts (~/.claude/hooks/)

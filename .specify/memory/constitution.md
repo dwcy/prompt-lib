@@ -1,29 +1,39 @@
 <!--
 SYNC IMPACT REPORT
 ==================
+Version change: 1.0.0 → 1.1.0
+Bump rationale: MINOR — Principle II extended with a parallel-isolation clause requiring worktree isolation for concurrent writing subagents. Adds a binding rule without removing or redefining any existing principle.
+
+Modified principles:
+  II. Subagent Delegation → adds "Parallel isolation" clause and a new Constitution Check Gate 6
+
+Added sections:
+  - Constitution Check Gate 6 — Parallel Isolation (in Development Workflow & Quality Gates)
+
+Removed sections: none
+
+Templates requiring updates:
+  ⬜ .specify/templates/plan-template.md — add Parallel Execution Map sub-section under Subagent Delegation; add Gate 6 to Constitution Check
+  ⬜ .specify/templates/tasks-template.md — extend Format line with `Parallel: yes/no`; add worktree directive
+  ✅ .specify/templates/spec-template.md — no change needed
+  ⬜ .specify/memory/agents.md — add Parallel isolation subsection and example
+  ⬜ docs/parallel-isolation.md — canonical explainer (to be added)
+
+Follow-up TODOs: propagate template edits and docs explainer in the same PR as this amendment.
+
+----- Previous report (v0.0.0 → 1.0.0) -----
 Version change: 0.0.0 (template) → 1.0.0 (initial ratification)
 Bump rationale: First concrete fill of placeholder template; establishes governance for spec-driven A2A bridge work.
-
 Modified principles:
   [PRINCIPLE_1] → I. Spec-First Conformance (NON-NEGOTIABLE)
   [PRINCIPLE_2] → II. Subagent Delegation
   [PRINCIPLE_3] → III. Contract Tests Before Implementation
   [PRINCIPLE_4] → IV. Reversible Config Changes
   [PRINCIPLE_5] → V. Minimal Skill & Agent Surface
-
 Added sections:
-  - Repository Structure & Deployment (was [SECTION_2])
-  - Development Workflow & Quality Gates (was [SECTION_3])
-
-Removed sections: none
-
-Templates requiring updates:
-  ✅ .specify/templates/plan-template.md — Constitution Check gates enumerated; Subagent Delegation section already added
-  ✅ .specify/templates/tasks-template.md — Owner field already required; contract-test rule added below
-  ✅ .specify/templates/spec-template.md — no change needed (no principle adds/removes spec sections)
-  ✅ .specify/memory/agents.md — already aligned with Principle II
-
-Follow-up TODOs: none
+  - Repository Structure & Deployment
+  - Development Workflow & Quality Gates
+Templates updated: plan-template.md, tasks-template.md, agents.md.
 -->
 
 # prompt-lib Constitution
@@ -47,6 +57,8 @@ Any task with a domain-specific specialist agent listed in `.specify/memory/agen
 - `tasks.md` MUST include `Owner: @<agent>` on every task line.
 - `Owner: main` is allowed only when no specialist matches; the reason MUST be stated.
 - Architecture work goes to the matching `*-architect`; tests go to the matching `*-tester`; CSS-only work goes to `@frontend-css` regardless of framework.
+
+**Parallel isolation** (added in v1.1.0): when two or more subagents are dispatched to operate concurrently on the same repository, every writing agent MUST run in an isolated git worktree. The dispatcher passes `isolation: "worktree"` on the Agent tool call, or pre-creates the worktree via `/using-git-worktrees create` and briefs the agent with its path. Read-only agents are exempt; sequential single-agent dispatch is exempt. Tasks that will be executed in parallel MUST be marked `Parallel: yes` in `tasks.md` so `/speckit-implement` selects worktree dispatch for them. See [`docs/parallel-isolation.md`](../../docs/parallel-isolation.md) for the full rule.
 
 ### III. Contract Tests Before Implementation
 
@@ -103,6 +115,7 @@ Constitution Check gates a `/speckit-plan` run MUST pass:
 - **Gate 3 (Contract Tests)**: For each protocol surface, contract test tasks are listed before the corresponding implementation tasks in the planned task ordering.
 - **Gate 4 (Reversibility)**: Any change under `global/` has a documented rollback in `plan.md`.
 - **Gate 5 (Surface Minimality)**: Any new skill/agent has a justification line in `plan.md` explaining why an existing one cannot be extended.
+- **Gate 6 (Parallel Isolation)**: If any phase dispatches two or more writing subagents concurrently, `plan.md` lists those phases in the Parallel Execution Map and `tasks.md` marks the affected tasks `Parallel: yes`. The implementation MUST pass `isolation: "worktree"` (or pre-create a worktree) for each concurrent writer. If no phase runs writers in parallel, write `N/A`.
 
 Violations MUST be either resolved or recorded in the plan's Complexity Tracking table with explicit justification.
 
@@ -114,4 +127,4 @@ Violations MUST be either resolved or recorded in the plan's Complexity Tracking
 - Deviations require an ADR; ADRs live in `.specify/specs/<feature>/contracts/` (feature-scoped) or `docs/adr/` (cross-cutting).
 - Compliance review: any PR that touches `global/`, `.specify/templates/`, or this constitution itself requires explicit confirmation that gates are satisfied.
 
-**Version**: 1.0.0 | **Ratified**: 2026-05-09 | **Last Amended**: 2026-05-09
+**Version**: 1.1.0 | **Ratified**: 2026-05-09 | **Last Amended**: 2026-05-10

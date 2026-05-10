@@ -52,6 +52,16 @@ When committing — whether I asked via `/git` or just "commit this" — follow 
 - Show the proposed message and wait for confirmation before committing.
 - Never push unless I explicitly ask.
 
+## Parallel subagent isolation
+
+When two or more subagents are dispatched to operate concurrently on the same repository, every writing agent MUST run in an isolated git worktree. Concurrent writers on a shared working tree silently overwrite each other.
+
+- **Preferred**: pass `isolation: "worktree"` on the Agent tool call. The harness auto-cleans the worktree if the agent makes no changes; on changes, the path + branch are returned and must be merged.
+- **Alternative**: pre-create a worktree via `/using-git-worktrees create <branch>` and brief the subagent with its path as its working directory.
+- **Exempt**: read-only agents (no Write/Edit in `tools:`) and sequential single-agent dispatch.
+
+See [`docs/parallel-isolation.md`](docs/parallel-isolation.md) for the full rule, edge cases, and anti-patterns.
+
 ## Package managers
 
 - Prefer `pnpm` over `npm` for all Node.js operations — `pnpm install`, `pnpm add`, `pnpm run`, `pnpm dlx`.

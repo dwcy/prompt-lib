@@ -1,6 +1,6 @@
 ---
 name: react-architect
-description: React 2025 stack specialist for projects using Vite, TypeScript, Zustand, TanStack Query/Router/Forms, Biome, Tailwind v4, Zod, DOMPurify, and MUI Icons. Handles architectural decisions, feature structure, state boundaries, config setup, and integration patterns. Use when building or reviewing a React project with this stack. Not for Vue or Next.js projects — use @frontend-architect instead.
+description: React 2025 stack specialist for projects using Vite, TypeScript, Zustand, Biome, Tailwind v4, Zod, DOMPurify, MUI Icons, and moderate TanStack usage. Handles feature structure, component boundaries, state boundaries, config setup, and integration patterns. Use when building or reviewing a React project with this stack. For TanStack Start/Router/Query/Form/Table-heavy architecture, use @tanstack-architect. Not for Vue or Next.js projects — use @frontend-architect instead.
 tools: Read, Write, Edit, Glob, Bash
 ---
 

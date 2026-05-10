@@ -48,6 +48,17 @@ class DelegationClient:
         self._peer_bearer_token = peer_bearer_token
         self._timeout = httpx.Timeout(connect=5.0, read=timeout_seconds, write=5.0, pool=5.0)
 
+    async def __aenter__(self) -> DelegationClient:
+        return self
+
+    async def __aexit__(
+        self,
+        exc_type: object,
+        exc: object,
+        tb: object,
+    ) -> None:
+        return None
+
     async def delegate(
         self,
         prompt: str,

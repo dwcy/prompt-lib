@@ -9,6 +9,7 @@ source = { editable = "." }
 dependencies = [
     { name = "fastapi" },
     { name = "httpx" },
+    { name = "jsonschema" },
     { name = "pydantic" },
     { name = "typer" },
     { name = "uvicorn", extra = ["standard"] },
@@ -17,7 +18,6 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "a2a-sdk" },
-    { name = "jsonschema" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "ruff" },
@@ -27,6 +27,7 @@ dev = [
 requires-dist = [
     { name = "fastapi", specifier = ">=0.135" },
     { name = "httpx", specifier = ">=0.27" },
+    { name = "jsonschema", specifier = ">=4.20" },
     { name = "pydantic", specifier = ">=2.7" },
     { name = "typer", specifier = ">=0.12" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.30" },
@@ -35,7 +36,6 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "a2a-sdk", specifier = ">=1.0" },
-    { name = "jsonschema", specifier = ">=4.20" },
     { name = "pytest", specifier = ">=8" },
     { name = "pytest-asyncio", specifier = ">=0.23" },
     { name = "ruff", specifier = ">=0.6" },

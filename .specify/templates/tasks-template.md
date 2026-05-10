@@ -12,11 +12,12 @@ description: "Task list template for feature implementation"
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
 
-## Format: `[ID] [P?] [Story] Description — Owner: @<agent>`
+## Format: `[ID] [P?] [Story] Description — Owner: @<agent> [— Parallel: yes]`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
 - **[Story]**: Which user story this task belongs to (e.g., US1, US2, US3)
 - **Owner**: Named subagent that will execute the task (see `.specify/memory/agents.md`). Use `main` only when no specialist fits.
+- **Parallel: yes** (optional trailing field): mark a task that will be dispatched **concurrently** with other writing tasks. `/speckit-implement` will pass `isolation: "worktree"` on the Agent call for every `Parallel: yes` task so concurrent writers don't clobber each other. Omit for sequential tasks and for read-only auditors. See [`docs/parallel-isolation.md`](../../docs/parallel-isolation.md).
 - Include exact file paths in descriptions
 
 ## Phase status convention (MANDATORY)
@@ -35,6 +36,7 @@ Every `## Phase X: ...` heading MUST be followed immediately by a verbose `**Sta
 - Pick the owner from `.specify/memory/agents.md` — do not invent agent names.
 - Architecture/impl tasks → matching `*-architect`; test tasks → matching `*-tester`; CSS-only tasks → `@frontend-css`.
 - During `/speckit-implement`, dispatch each task by spawning the named subagent via the `Agent` tool with `subagent_type: "<agent>"`.
+- For tasks tagged `Parallel: yes`, also pass `isolation: "worktree"` on the Agent call. The worktree auto-cleans on no-change; on changes, merge the returned branch back to the integration branch before moving to the next phase (Constitution Gate 6).
 
 ## Contract test ordering rule (Constitution Principle III)
 

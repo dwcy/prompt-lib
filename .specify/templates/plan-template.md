@@ -31,13 +31,14 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-Per `.specify/memory/constitution.md` v1.0.0, the following gates apply:
+Per `.specify/memory/constitution.md` v1.1.0, the following gates apply:
 
 - **Gate 1 — Spec-First Conformance**: If this feature implements an external protocol (A2A, MCP, JSON-RPC, OpenAPI, MCP), link the canonical spec here and state the conformance scope. If not applicable, write `N/A — no external protocol`.
 - **Gate 2 — Subagent Delegation**: Delegation table below (next section) maps every phase to an owner from `.specify/memory/agents.md`.
 - **Gate 3 — Contract Tests Before Implementation**: For each protocol surface, contract test tasks must appear before their implementation tasks in `tasks.md`. State here which surfaces require contract tests, or `N/A`.
 - **Gate 4 — Reversible Config Changes**: If this feature touches `global/`, document the rollback path here. Otherwise `N/A`.
 - **Gate 5 — Minimal Skill & Agent Surface**: If this feature adds a new skill or agent, justify why an existing one cannot be extended. Otherwise `N/A`.
+- **Gate 6 — Parallel Isolation**: If any phase dispatches two or more writing subagents concurrently, list those phases in the Parallel Execution Map below and mark the affected tasks `Parallel: yes` in `tasks.md`. The dispatcher MUST pass `isolation: "worktree"` (or pre-create a worktree) for each concurrent writer. If no phase runs writers in parallel, write `N/A`.
 
 Any violation must be either resolved or recorded in the Complexity Tracking table with explicit justification.
 
@@ -56,6 +57,19 @@ This project has named subagents (`@dotnet-architect`, `@python-architect`, `@fr
 | [orchestration / cross-cutting] | `main` | [e.g., spans multiple domains] |
 
 If no specialist matches a phase, explain why in the table and assign `main`. Do not invent agent names — use only those in `agents.md`.
+
+### Parallel Execution Map
+
+*GATE 6: Required when ≥2 writing subagents run concurrently in any phase. Otherwise write `N/A`.*
+
+List every phase that dispatches two or more writing subagents in parallel. Each row represents a concurrent batch — every agent in the batch will receive `isolation: "worktree"` at dispatch time and must be merged back to the integration branch when done.
+
+| Phase | Concurrent agents | Tasks (IDs) | Integration branch |
+|---|---|---|---|
+| [e.g., US1 implementation] | `@python-architect`, `@react-architect` | T012, T013 | [e.g., `feat/orders`] |
+| [...] | [...] | [...] | [...] |
+
+If any row appears here, the matching tasks in `tasks.md` MUST carry `Parallel: yes`. See [`docs/parallel-isolation.md`](../../docs/parallel-isolation.md) for the rule, the dispatch contract, and edge cases.
 
 ## Project Structure
 
