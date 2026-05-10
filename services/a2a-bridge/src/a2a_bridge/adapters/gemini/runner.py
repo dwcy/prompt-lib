@@ -8,6 +8,8 @@ the documented ``gemini -p <prompt> --output-format stream-json``.
 
 from __future__ import annotations
 
+import shutil
+
 from a2a_bridge.protocol.tasks import Artifact
 
 
@@ -21,4 +23,7 @@ def parse_gemini_event(event: dict) -> Artifact | None:
 
 
 def gemini_command_factory(prompt: str) -> list[str]:
-    return ["gemini", "-p", prompt, "--output-format", "stream-json"]
+    """Resolves ``gemini`` via ``shutil.which`` so Windows finds ``gemini.cmd``
+    (``asyncio.create_subprocess_exec`` does not honour ``PATHEXT``)."""
+    resolved = shutil.which("gemini") or "gemini"
+    return [resolved, "-p", prompt, "--output-format", "stream-json"]

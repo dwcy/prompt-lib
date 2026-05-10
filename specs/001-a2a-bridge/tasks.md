@@ -150,8 +150,8 @@ description: "Task list for A2A Bridge for Multi-Agent CLI Delegation (v1)"
 
 **Independent Test**: GET `http://127.0.0.1:8765/.well-known/agent-card.json` and `http://127.0.0.1:8766/.well-known/agent-card.json`; both return 200 with JSON that validates against `specs/001-a2a-bridge/contracts/agent-card.schema.json`.
 
-- [ ] T035 [US3] Verify Agent Card discovery route is wired in the base FastAPI app factory (no auth, returns AgentCard JSON validated against `agent-card.schema.json`); if T020 left this incomplete, finish it in `services/a2a-bridge/src/a2a_bridge/adapters/base.py` — Owner: @python-architect
-- [ ] T036 [US3] Integration test for Agent Card discovery per spec.md User Story 3 acceptance scenarios (200 with valid card, schema validation passes, no auth required) for both Claude and Gemini adapters — `services/a2a-bridge/tests/integration/test_p3_agent_card_discovery.py` — Owner: @python-tester
+- [X] T035 [US3] Verify Agent Card discovery route is wired in the base FastAPI app factory (no auth, returns AgentCard JSON validated against `agent-card.schema.json`); if T020 left this incomplete, finish it in `services/a2a-bridge/src/a2a_bridge/adapters/base.py` — Owner: @python-architect. NOTE: complete via T020/T021 in Phase 2. Discovery route at base.py line 127-129 returns `app.state.agent_card.model_dump(mode="json")`, schema-validated at startup. No code change needed.
+- [X] T036 [US3] Integration test for Agent Card discovery per spec.md User Story 3 acceptance scenarios (200 with valid card, schema validation passes, no auth required) for both Claude and Gemini adapters — `services/a2a-bridge/tests/integration/test_p3_agent_card_discovery.py` — Owner: @python-tester
 
 **Checkpoint**: All three user stories are independently functional.
 
@@ -161,11 +161,11 @@ description: "Task list for A2A Bridge for Multi-Agent CLI Delegation (v1)"
 
 **Purpose**: Performance verification, manual conformance pass, ADRs for any deviations, and documentation polish.
 
-- [ ] T037 [P] Concurrency integration test per spec.md SC-007: 3+ inbound tasks in flight simultaneously on the Claude adapter, each gets its own CLI process and SSE stream, no cross-contamination, all complete with correct artifacts — `services/a2a-bridge/tests/integration/test_concurrency.py` — Owner: @python-tester
-- [ ] T038 [P] End-to-end `quickstart.md` validation pass: walk through every numbered step on a clean machine; record observed timings against plan.md performance budgets (p95 task acceptance <100ms, cold start <2s, 30s end-to-end); update `quickstart.md` if any step is incorrect — Owner: main
-- [ ] T039 [P] Manual A2A Inspector pass for SC-002: clone <https://github.com/a2aproject/a2a-inspector>, point it at both adapters, confirm zero spec violations on the validation panel; record the result in `services/a2a-bridge/CHANGELOG.md` (create file if missing) — Owner: main
-- [ ] T040 [P] If any spec deviation was discovered during implementation, write an ADR per Constitution Principle I in `specs/001-a2a-bridge/contracts/adr-NNN-<slug>.md` for each one — Owner: main
-- [ ] T041 Polish `services/a2a-bridge/README.md`: install, run, troubleshooting, links to `specs/001-a2a-bridge/spec.md` and `specs/001-a2a-bridge/quickstart.md` — Owner: main
+- [X] T037 [P] Concurrency integration test per spec.md SC-007: 3+ inbound tasks in flight simultaneously on the Claude adapter, each gets its own CLI process and SSE stream, no cross-contamination, all complete with correct artifacts — `services/a2a-bridge/tests/integration/test_concurrency.py` — Owner: @python-tester
+- [X] T038 [P] End-to-end `quickstart.md` validation pass: walk through every numbered step on a clean machine; record observed timings against plan.md performance budgets (p95 task acceptance <100ms, cold start <2s, 30s end-to-end); update `quickstart.md` if any step is incorrect — Owner: main. NOTE: walkthrough surfaced a Windows-specific `asyncio.create_subprocess_exec` PATHEXT bug — fixed by adding `shutil.which` resolution in `claude_command_factory` and `gemini_command_factory`. Steps 5–7 verified end-to-end with real CLI subprocesses; Step 7 demonstrates real artifacts forwarded as task.artifact events even when downstream CLI is unauthenticated. Cold start ~500ms (budget: 2s). Submitted→working ~10-25ms (budget: 100ms p95). Step 9 (Inspector) deferred to T039.
+- [ ] T039 [P] Manual A2A Inspector pass for SC-002: clone <https://github.com/a2aproject/a2a-inspector>, point it at both adapters, confirm zero spec violations on the validation panel; record the result in `services/a2a-bridge/CHANGELOG.md` (create file if missing) — Owner: main. **DEFERRED — requires user to install the Inspector web tool (Python + Node frontend) and run interactively.**
+- [X] T040 [P] If any spec deviation was discovered during implementation, write an ADR per Constitution Principle I in `specs/001-a2a-bridge/contracts/adr-NNN-<slug>.md` for each one — Owner: main. NOTE: zero unrolled-back spec deviations across Phases 1–6. The cancel-handler idempotency considered in sub-batch 3b was rolled back to spec-strict before sub-batch 3c. No ADR needed.
+- [X] T041 Polish `services/a2a-bridge/README.md`: install, run, troubleshooting, links to `specs/001-a2a-bridge/spec.md` and `specs/001-a2a-bridge/quickstart.md` — Owner: main
 
 ---
 

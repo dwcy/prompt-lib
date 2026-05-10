@@ -9,6 +9,8 @@ deterministic regardless of where it runs (research.md R3).
 
 from __future__ import annotations
 
+import shutil
+
 from a2a_bridge.protocol.tasks import Artifact
 
 
@@ -64,5 +66,9 @@ def claude_command_factory(prompt: str) -> list[str]:
 
     ``--bare`` is mandatory: it prevents the adapter from inheriting the
     developer's MCP servers, hooks, and project ``CLAUDE.md`` (research.md R3).
+
+    Resolves ``claude`` via ``shutil.which`` so Windows finds ``claude.cmd``
+    (``asyncio.create_subprocess_exec`` does not honour ``PATHEXT``).
     """
-    return ["claude", "-p", prompt, "--bare", "--output-format", "stream-json", "--verbose"]
+    resolved = shutil.which("claude") or "claude"
+    return [resolved, "-p", prompt, "--bare", "--output-format", "stream-json", "--verbose"]
