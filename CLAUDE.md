@@ -47,3 +47,8 @@ See `setup/README.md` for the wizard's structure and modes.
 - **Add an agent:** `global/agents/<name>.md` → apply → available as `@<name>`
 - **Change MCP servers:** edit `global/settings.json` → apply → update `global/MCP.md`
 - **Change hooks:** edit `global/hooks/<name>` → apply
+
+<!-- SPECKIT START -->
+Active spec-kit feature: **001-a2a-bridge** — A2A Bridge for Multi-Agent CLI Delegation (v1).
+For technical context, project structure, stack decisions, and constitution gate status, read [`specs/001-a2a-bridge/plan.md`](specs/001-a2a-bridge/plan.md). The full design tree is at `specs/001-a2a-bridge/` (spec, plan, research, data-model, contracts, quickstart).
+<!-- SPECKIT END -->
