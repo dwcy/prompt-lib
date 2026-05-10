@@ -72,6 +72,226 @@ Open questions:
 - Should `AGENTS.md` be generated from `CLAUDE.md`, or should both be separate templates?
 - Should shared rules be duplicated or imported?
 
+### 4. Convert High-Value Skills to Folder-Based Agent Skills
+
+Goal: move the most reusable slash commands from single markdown files into full skill folders with `SKILL.md`, `scripts/`, `references/`, and `assets/`.
+
+Why this is useful:
+- Keeps long instructions out of `SKILL.md` and moves stable background material into `references/`.
+- Makes repeated mechanical work safer by putting validation and extraction logic in `scripts/`.
+- Makes generated output more consistent by copying/filling templates from `assets/`.
+- Makes skills easier to test because scripts can be run directly.
+- Aligns the repo with the open Agent Skills folder format.
+
+Suggested first conversions:
+- `/skill-create` - highest leverage because it creates every future skill.
+- `/git` and `/commit` - commit-message validation and staged diff classification are deterministic enough for scripts.
+- `/pr` - PR bodies benefit from templates and automatic context collection.
+- `/review` - severity rubrics and output templates reduce inconsistent review style.
+- `/react-init` - scaffolding should use assets/templates instead of long inline instructions.
+- `/react-test` - test skeleton generation and failure summarization are good script candidates.
+- `/docs` - link checks, stale docs checks, and doc index generation fit scripts well.
+
+Suggested structure:
+```text
+global/skills/<skill-name>/
+  SKILL.md
+  scripts/
+    README.md
+    .gitkeep
+  references/
+    README.md
+    .gitkeep
+  assets/
+    README.md
+    .gitkeep
+```
+
+Useful scripts to add:
+- `validate_skill.py` - checks `SKILL.md` frontmatter, required folders, missing referenced files, and overly long instructions.
+- `score_description.py` - checks whether a skill description includes both "what it does" and "when to use it".
+- `frontmatter_validate.py` - reusable helper for skills, agents, rules, and output styles.
+- `git_context.py` - shared helper for staged files, changed files, branch, merge base, and dirty counts.
+- `markdown_lint_light.py` - validates headings, broken local links, duplicate titles, and unclosed fenced blocks.
+- `template_fill.py` - tiny helper for replacing placeholders in assets.
+
+Useful references to add:
+- `skill-folder-format.md` - canonical folder layout and when to use scripts vs references vs assets.
+- `description-trigger-rubric.md` - how to write descriptions that trigger reliably without being vague.
+- `review-severity-rubric.md` - shared definitions for Critical / Warning / Suggestion.
+- `conventional-commits.md` - commit type/scope/subject conventions.
+- `docs-style-guide.md` - where to document things and how to keep docs short.
+- `tanstack-boundaries.md` - Router vs Query vs Form vs Zustand state ownership.
+
+Useful assets to add:
+- `SKILL.md.tmpl` - base template for new folder-based skills.
+- `commit-message.tmpl` - conventional commit template.
+- `pr-body.tmpl.md` - consistent PR summary/test/risk template.
+- `review-output.tmpl.md` - findings-first review output.
+- `component.test.tsx.tmpl` - React Testing Library component test skeleton.
+- `doc-page.tmpl.md` - docs page starter with purpose, usage, and maintenance notes.
+
+Open questions:
+- Should legacy `global/skills/*.md` coexist with folder skills, or should all global skills be migrated in one pass?
+- Should shared helper scripts live under each skill, or in a repo-level `global/skills/_shared/` folder?
+- Should `setup/apply.py` deploy both file-based and folder-based skills automatically?
+- Should the `/docs` skill generate skill/agent indexes from folder metadata?
+
+### 5. Implement a Symphony-Style Issue Tracker Orchestrator
+
+Goal: evolve `services/orchestrator` from "watch PRs and review them" into a Symphony-style always-on coding-agent orchestrator where issues/tasks are the control plane.
+
+Source inspiration:
+- OpenAI Symphony article: `https://openai.com/index/open-source-codex-orchestration-symphony/`
+- OpenAI harness engineering article: `https://openai.com/sv-SE/index/harness-engineering/`
+
+Why this is useful:
+- Removes the human bottleneck of manually opening and supervising agent sessions.
+- Lets humans describe deliverables in an issue tracker and let agents pull/execute work.
+- Supports long-running work that may create multiple PRs, investigation notes, videos, or follow-up tasks.
+- Makes orchestration policy versioned in-repo through a `WORKFLOW.md` file instead of implicit human process.
+- Gives the current orchestrator a path beyond PR review: implementation, refactor exploration, CI shepherding, docs gardening, and maintenance.
+
+Core Symphony ideas to adopt:
+- Issue tracker as the control plane.
+- One isolated workspace per eligible issue.
+- Bounded concurrency so the machine is busy but not overloaded.
+- Single authoritative orchestration state for claims, retries, and reconciliation.
+- Reconciliation before dispatch on every tick.
+- Stall detection and retry for long-running or silent agents.
+- Runtime behavior loaded from repo-owned `WORKFLOW.md`.
+- Agent does ticket comments/state transitions/PR links using its normal tools, while the orchestrator schedules and observes.
+- Explicit trust/safety posture for sandbox, approvals, write permissions, and merge authority.
+
+Suggested architecture:
+```text
+services/orchestrator/src/orchestrator/
+  workflow.py             # parse WORKFLOW.md frontmatter + prompt body
+  trackers/
+    base.py               # IssueTracker protocol
+    linear.py             # Linear adapter first
+    github_issues.py      # GitHub Issues fallback / later
+  scheduler.py            # eligibility, claims, bounded concurrency
+  runner.py               # launches A2A/Codex/Claude worker per issue
+  reconciliation.py       # stale claims, state changes, stall detection
+  workspace.py            # per-issue worktree/workspace lifecycle
+  status.py               # statusline/dashboard-friendly snapshots
+```
+
+Potential `WORKFLOW.md` shape:
+```markdown
+---
+tracker:
+  kind: linear
+  project: "ENG"
+  active_states: ["Ready", "In Progress"]
+  terminal_states: ["Done", "Canceled"]
+concurrency:
+  max_parallel: 3
+agent:
+  peer: codex
+  timeout_minutes: 180
+  stall_timeout_minutes: 20
+workspace:
+  mode: git-worktree
+handoff:
+  success_state: "Human Review"
+  failure_state: "Needs Triage"
+---
+
+You are working one issue at a time.
+
+1. Read the issue title, description, comments, linked PRs, and labels.
+2. Create or reuse an isolated workspace for the issue.
+3. Make progress until the issue reaches a clear handoff point.
+4. Open PRs as needed.
+5. Comment with what changed, how it was tested, and what needs human review.
+6. If blocked, comment with the blocker and move the issue to the configured failure state.
+```
+
+Suggested state model:
+```sql
+CREATE TABLE issues (
+    tracker_id TEXT PRIMARY KEY,
+    tracker_kind TEXT NOT NULL,
+    title TEXT NOT NULL,
+    state TEXT NOT NULL,
+    updated_at TEXT,
+    payload_json TEXT NOT NULL
+);
+
+CREATE TABLE claims (
+    tracker_id TEXT PRIMARY KEY,
+    run_id TEXT NOT NULL,
+    claimed_at TEXT NOT NULL,
+    worker_pid INTEGER,
+    workspace_path TEXT NOT NULL,
+    last_event_at TEXT
+);
+
+CREATE TABLE retries (
+    tracker_id TEXT NOT NULL,
+    attempt INTEGER NOT NULL,
+    next_attempt_at TEXT NOT NULL,
+    reason TEXT NOT NULL
+);
+```
+
+Scheduler sketch:
+```python
+async def tick() -> None:
+    workflow = workflow_loader.load()
+    await reconciliation.reconcile(workflow)
+
+    candidates = await tracker.list_eligible_issues(workflow.tracker)
+    for issue in candidates:
+        if scheduler.capacity_full():
+            break
+        if state.is_claimed(issue.id):
+            continue
+        if not retries.ready(issue.id):
+            continue
+
+        claim = state.claim(issue)
+        workspace = await workspace_manager.prepare(issue)
+        scheduler.start(run_issue(issue, claim, workspace, workflow))
+```
+
+Harness-engineering improvements to pair with Symphony:
+- Make `AGENTS.md` a short map, not a giant manual; link to deeper `docs/` sources of truth.
+- Add `docs/index.md`, `docs/architecture.md`, `docs/testing.md`, `docs/quality.md`, and `docs/operations.md` so agents know where to look.
+- Add doc linting: broken links, stale references, missing owners, missing "last verified" metadata for generated docs.
+- Make the app readable to agents:
+  - per-worktree dev server,
+  - Playwright/Chrome DevTools snapshots,
+  - screenshots/videos attached to issue comments,
+  - local logs/metrics/traces exposed through queryable files or APIs.
+- Add structural linters and tests for architecture boundaries instead of only prose rules.
+- Encode taste/invariants mechanically:
+  - max file size,
+  - allowed import directions,
+  - schema/type naming conventions,
+  - structured logging requirements,
+  - test coverage expectations for changed modules.
+- Treat agent failures as harness gaps: add docs, skills, guardrails, or scripts so the next run succeeds.
+
+Suggested phases:
+1. **Spec-only phase**: add `specs/003-symphony-orchestrator/` with `spec.md`, `plan.md`, `data-model.md`, `contracts/`, and `tasks.md`.
+2. **Workflow loader phase**: parse `WORKFLOW.md` and validate config.
+3. **Tracker abstraction phase**: add `IssueTracker` protocol and a fake tracker for deterministic tests.
+4. **Workspace phase**: reuse/extend worktree manager for per-issue workspaces.
+5. **Scheduler phase**: claims, bounded concurrency, retries, stall detection.
+6. **Runner phase**: dispatch issue prompts over A2A to Claude/Codex.
+7. **Status phase**: dashboard/statusline view of active issues, claims, stale runs, and last events.
+8. **Harness phase**: doc map, architecture lint, Playwright evidence, log/metric capture.
+
+Open questions:
+- Start with Linear, GitHub Issues, or a local file-backed fake tracker?
+- Should this replace PR polling or sit beside it as `orchestrator issue-serve`?
+- Should the worker be A2A-only, Codex CLI-only, or capability-routed across peers?
+- How much authority should agents have: comment only, open PRs, update issue state, push branches, or merge?
+- Should restart recovery be SQLite-backed like current orchestrator or tracker/filesystem-driven like the Symphony spec?
+
 ## P2 - Orchestration Features
 
 ### Multi-Agent Run Graphs
