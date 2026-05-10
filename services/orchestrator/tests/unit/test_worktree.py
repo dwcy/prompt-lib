@@ -9,7 +9,6 @@ real, side-effect-free operation.
 from __future__ import annotations
 
 import asyncio
-import os
 import shutil
 import subprocess
 import time
@@ -20,7 +19,6 @@ import pytest
 
 from orchestrator import eventlog
 from orchestrator.worktree import WorktreeError, WorktreeManager
-
 
 # ---------------------------------------------------------------------------
 # fixtures

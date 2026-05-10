@@ -35,6 +35,9 @@ Submit a new task and immediately open an SSE stream of lifecycle and artifact e
 - `params.task.messages[0].role` MUST equal `"user"` for v1.
 - `params.task.messages[0].content` MUST be a non-empty string.
 
+**Optional fields beyond A2A v1.0.0**:
+- `params.task.cwd` (string, absolute filesystem path) — see [`adr-cwd-extension.md`](./adr-cwd-extension.md). Off by default; only emitted by clients that opted in (e.g. orchestrator with `ORCHESTRATOR_WORKTREE_ENABLED=true`). Adapters that do not implement it MUST ignore the field.
+
 **Errors**: see `error-codes.md`.
 
 ---

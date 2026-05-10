@@ -75,17 +75,19 @@ async def serve(config: Config) -> None:
         eventlog_conn=conn,
         notifier=notifier,
     )
-    repo_slug = config.orchestrator_repo.replace("/", "-")
-    worktree_manager = WorktreeManager(
-        repo_path=config.orchestrator_repo_path,
-        root=config.orchestrator_worktree_root / repo_slug,
-        conn=conn,
-    )
-    await worktree_manager.reconcile()
-    await worktree_manager.prune(
-        max_count=config.orchestrator_worktree_max_count,
-        max_age_days=config.orchestrator_worktree_max_age_days,
-    )
+    worktree_manager: WorktreeManager | None = None
+    if config.orchestrator_worktree_enabled:
+        repo_slug = config.orchestrator_repo.replace("/", "-")
+        worktree_manager = WorktreeManager(
+            repo_path=config.orchestrator_repo_path,
+            root=config.orchestrator_worktree_root / repo_slug,
+            conn=conn,
+        )
+        await worktree_manager.reconcile()
+        await worktree_manager.prune(
+            max_count=config.orchestrator_worktree_max_count,
+            max_age_days=config.orchestrator_worktree_max_age_days,
+        )
     agent = PrReviewAgent(
         delegation_client=client,
         eventlog_conn=conn,
@@ -98,14 +100,20 @@ async def serve(config: Config) -> None:
         consume_task = asyncio.create_task(
             _consume(events_iter, agent, semaphore, in_flight, stop_event)
         )
-        prune_task = asyncio.create_task(
-            _prune_loop(worktree_manager, config, stop_event)
-        )
+        prune_task: asyncio.Task[None] | None = None
+        if worktree_manager is not None:
+            prune_task = asyncio.create_task(
+                _prune_loop(worktree_manager, config, stop_event)
+            )
 
         await stop_event.wait()
         consume_task.cancel()
-        prune_task.cancel()
-        for pending_task in (consume_task, prune_task):
+        if prune_task is not None:
+            prune_task.cancel()
+        background_tasks: tuple[asyncio.Task[None], ...] = (
+            (consume_task, prune_task) if prune_task is not None else (consume_task,)
+        )
+        for pending_task in background_tasks:
             try:
                 await pending_task
             except (asyncio.CancelledError, Exception):

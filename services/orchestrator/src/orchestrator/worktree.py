@@ -171,7 +171,7 @@ class WorktreeManager:
     async def _add_worktree(self, path: Path, ref: str) -> None:
         await self._git_run(["fetch", "origin", ref], cwd=self._repo_path)
         await self._git_run(
-            ["worktree", "add", "--detach", str(path), f"FETCH_HEAD"],
+            ["worktree", "add", "--detach", str(path), "FETCH_HEAD"],
             cwd=self._repo_path,
         )
 
