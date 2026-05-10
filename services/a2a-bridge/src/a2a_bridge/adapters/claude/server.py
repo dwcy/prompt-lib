@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator, Callable
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI
@@ -56,6 +57,61 @@ def _build_card(host: str, port: int):
                 "output_modes": ["text/plain"],
             }
         ],
+    )
+
+
+def _extract_cwd(
+    params: dict[str, Any] | list[Any] | None,
+    allowed_roots: list[Path],
+) -> str | None:
+    """Pull ``params.task.cwd`` out, validate it against the allow-list, and
+    return the resolved absolute path string. Returns ``None`` when the caller
+    omitted ``cwd`` (back-compat: child inherits the adapter's cwd).
+
+    Rejects with ``INVALID_PARAMS`` when:
+
+    * ``cwd`` is provided but no allow-list is configured (fail-secure: the
+      operator must opt in to peer-driven cwd by setting the env var).
+    * the path does not exist or is not a directory.
+    * the path is not contained in any allow-listed root.
+    """
+    if not isinstance(params, dict):
+        return None
+    task_payload = params.get("task")
+    if not isinstance(task_payload, dict):
+        return None
+    raw = task_payload.get("cwd")
+    if raw is None:
+        return None
+    if not isinstance(raw, str) or not raw:
+        raise JsonRpcError(
+            ErrorCode.INVALID_PARAMS,
+            "Invalid params",
+            {"reason": "cwd_must_be_non_empty_string"},
+        )
+    if not allowed_roots:
+        raise JsonRpcError(
+            ErrorCode.INVALID_PARAMS,
+            "Invalid params",
+            {"reason": "cwd_not_permitted"},
+        )
+    candidate = Path(raw).resolve()
+    if not candidate.is_dir():
+        raise JsonRpcError(
+            ErrorCode.INVALID_PARAMS,
+            "Invalid params",
+            {"reason": "cwd_not_a_directory"},
+        )
+    for root in allowed_roots:
+        try:
+            candidate.relative_to(root.resolve())
+            return str(candidate)
+        except ValueError:
+            continue
+    raise JsonRpcError(
+        ErrorCode.INVALID_PARAMS,
+        "Invalid params",
+        {"reason": "cwd_not_under_allowed_root"},
     )
 
 
@@ -134,11 +190,13 @@ def build_claude_app(
     task_timeout_seconds: float = 300.0,
     host: str = "127.0.0.1",
     port: int = 8765,
+    cwd_allowed_roots: list[Path] | None = None,
 ) -> FastAPI:
     card = _build_card(host=host, port=port)
     app = build_app(bearer_token=bearer_token, name=_AGENT_NAME, agent_card=card)
 
     app.state.tasks: dict[str, Task] = {}
+    allowed_roots: list[Path] = list(cwd_allowed_roots or [])
 
     runner = CliRunner(
         cli_command_factory=cli_command_factory,
@@ -146,9 +204,11 @@ def build_claude_app(
         task_timeout_seconds=task_timeout_seconds,
     )
 
-    async def _stream_task(task: Task, prompt: str) -> AsyncIterator[bytes]:
+    async def _stream_task(
+        task: Task, prompt: str, cwd: str | None
+    ) -> AsyncIterator[bytes]:
         enforcer = OrderingEnforcer(task_id=str(task.id))
-        async for event in runner.run(prompt, task):
+        async for event in runner.run(prompt, task, cwd=cwd):
             enforcer.check(event)
             frame = format_event(event)
             yield frame.encode("utf-8")
@@ -157,11 +217,12 @@ def build_claude_app(
         params: dict[str, Any] | list[Any] | None,
     ) -> StreamingResponse:
         prompt = _extract_prompt(params)
+        cwd = _extract_cwd(params, allowed_roots)
         task = Task(method="tasks/sendSubscribe", params=params, peer_identity="local")
         app.state.tasks[str(task.id)] = task
         log_task_received(task_id=str(task.id), peer="local")
         return StreamingResponse(
-            _stream_task(task, prompt),
+            _stream_task(task, prompt, cwd),
             media_type=_SSE_MEDIA_TYPE,
             headers={"Cache-Control": "no-store"},
         )

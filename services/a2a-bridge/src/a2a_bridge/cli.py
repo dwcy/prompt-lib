@@ -20,6 +20,7 @@ import json
 import os
 import sys
 from collections.abc import Callable
+from pathlib import Path
 
 import typer
 import uvicorn
@@ -73,13 +74,24 @@ def serve(
     assert bearer_token is not None
     resolved_port = port if port is not None else _AGENT_DEFAULT_PORTS[agent]
     factory = _AGENT_APP_FACTORIES[agent]
-    application = factory(
-        bearer_token=bearer_token,
-        task_timeout_seconds=task_timeout_seconds,
-        host=host,
-        port=resolved_port,
-    )
+    factory_kwargs: dict[str, object] = {
+        "bearer_token": bearer_token,
+        "task_timeout_seconds": task_timeout_seconds,
+        "host": host,
+        "port": resolved_port,
+    }
+    if agent == "claude":
+        factory_kwargs["cwd_allowed_roots"] = _parse_cwd_allowed_roots(
+            os.environ.get("A2A_CWD_ALLOWED_ROOTS")
+        )
+    application = factory(**factory_kwargs)
     uvicorn.run(application, host=host, port=resolved_port, log_level="info")
+
+
+def _parse_cwd_allowed_roots(raw: str | None) -> list[Path]:
+    if not raw:
+        return []
+    return [Path(p).expanduser() for p in raw.split(os.pathsep) if p]
 
 
 @app.command()
