@@ -1,0 +1,60 @@
+#!/bin/sh
+#
+# Pre-push hook: runs dotnet test before pushing
+# Delegates to pre-push.ps1 on Windows
+#
+
+if [ "$(uname -s)" = "MINGW64_NT"* ] || [ "$(uname -s)" = "CYGWIN_NT"* ] || [ -n "$WINDIR" ]; then
+    powershell.exe -ExecutionPolicy Bypass -File "$(dirname "$0")/pre-push.ps1"
+    exit $?
+fi
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+echo "${BLUE}Running dotnet test before push...${NC}"
+
+if ! command -v dotnet &> /dev/null; then
+    echo "${RED}Error: dotnet command not found. Please install .NET SDK.${NC}"
+    exit 1
+fi
+
+TEST_PROJECTS=$(find . -name "*.csproj" -not -path "./.git/*" -not -path "./bin/*" -not -path "./obj/*" | \
+    xargs grep -l "Microsoft.NET.Test.Sdk\|xunit\|nunit\|mstest" 2>/dev/null || true)
+
+if [ -z "$TEST_PROJECTS" ]; then
+    SOLUTION_FILES=$(find . -name "*.sln" -not -path "./.git/*" -not -path "./bin/*" -not -path "./obj/*")
+
+    if [ -z "$SOLUTION_FILES" ]; then
+        echo "${YELLOW}No test projects or solution files found. Running dotnet test...${NC}"
+        dotnet test --verbosity quiet --no-build
+        if [ $? -ne 0 ]; then
+            echo "${RED}Error: Tests failed!${NC}"
+            exit 1
+        fi
+    else
+        for solution in $SOLUTION_FILES; do
+            echo "${BLUE}Testing: $solution${NC}"
+            dotnet test "$solution" --verbosity quiet --no-build
+            if [ $? -ne 0 ]; then
+                echo "${RED}Error: Tests failed for $solution${NC}"
+                exit 1
+            fi
+        done
+    fi
+else
+    for project in $TEST_PROJECTS; do
+        echo "${BLUE}Testing: $project${NC}"
+        dotnet test "$project" --verbosity quiet --no-build
+        if [ $? -ne 0 ]; then
+            echo "${RED}Error: Tests failed for $project${NC}"
+            exit 1
+        fi
+    done
+fi
+
+echo "${GREEN}All tests passed. Pushing...${NC}"
+exit 0

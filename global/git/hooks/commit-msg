@@ -1,0 +1,48 @@
+#!/bin/sh
+
+# Validates conventional commit messages + custom `task` type
+# Standard: https://www.conventionalcommits.org/en/v1.0.0/
+
+Color_Off='\033[0m'
+Red='\033[1;31m'
+Yellow='\033[1;33m'
+Blue='\033[1;34m'
+Green='\033[1;32m'
+
+if ! head -1 "$1" | grep -qE "^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|task|test)(\(.+?\))?: .{1,}$"; then
+	echo -e "${Red}" >&2
+	echo "Error: Commit failed!" >&2
+	echo "Your commit message does not follow the conventional commit standard." >&2
+	echo -e "${Yellow}" >&2
+	echo "Usage:" >&2
+	echo "<type>(optional scope): <description>" >&2
+	echo -e "${Blue}" >&2
+	echo "Types allowed:" >&2
+	echo "build     changes that affect the build of the project"
+	echo "chore     changes that do not affect source or test code"
+	echo "ci        changes to CI configuration"
+	echo "docs      documentation only"
+	echo "feat      new feature"
+	echo "fix       bug fix"
+	echo "perf      performance improvements"
+	echo "refactor  code restructure with no behaviour change"
+	echo "revert    revert to previous commit"
+	echo "style     code style changes"
+	echo "task      smaller piece of work — scaffolding, wiring, minor addition"
+	echo "test      adding or updating tests"
+	echo -e "${Green}" >&2
+	echo "Examples:" >&2
+	echo "feat: add place-order endpoint" >&2
+	echo "fix(auth): handle null user on login" >&2
+	echo "task: wire payment service to order handler" >&2
+	echo -e "${Color_Off}" >&2
+	exit 1
+fi
+
+if ! head -1 "$1" | grep -qE "^.{1,80}$"; then
+	echo -e "${Red}" >&2
+	echo "Error: Commit failed!" >&2
+	echo "Your commit message is too long (max 80 characters)." >&2
+	echo -e "${Color_Off}" >&2
+	exit 1
+fi
