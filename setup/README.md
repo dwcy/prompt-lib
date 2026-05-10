@@ -22,6 +22,7 @@ First run auto-installs `rich` + `questionary` via pip.
 | Doctor | Compare `~/.claude/` against `global/` and report drift (missing, changed, extra files). |
 | Restore | Roll back `~/.claude/settings.json` from a timestamped backup. |
 | Local project setup | In the current cwd: scaffold `.claude/`, pick a `CLAUDE.md` template, apply git repo-init template. |
+| Tools | Install / update optional companion tools (currently `claude-devtools` — desktop GUI for visualizing Claude Code session logs). Pulls the latest release from GitHub and runs the platform-native installer. |
 
 ## Structure
 

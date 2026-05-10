@@ -27,6 +27,7 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+from typing import Callable
 
 # Auto-install deps on first run
 try:
@@ -291,6 +292,153 @@ def apply_git_line_endings(mode: str) -> tuple[bool, str]:
     return False, f"git config failed: {result.stderr.strip()}"
 
 
+# ─── Tools (GitHub release installers) ─────────────────────────────────────────
+
+def _gh_latest_release(repo: str) -> dict:
+    import urllib.request as _ur
+    headers = {"Accept": "application/vnd.github+json", "User-Agent": "prompt-lib-installer"}
+    token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    req = _ur.Request(f"https://api.github.com/repos/{repo}/releases/latest", headers=headers)
+    with _ur.urlopen(req, timeout=30) as r:
+        return json.loads(r.read().decode("utf-8"))
+
+
+def _gh_pick_asset(release: dict, suffix: str) -> dict | None:
+    for a in release.get("assets") or []:
+        if a.get("name", "").endswith(suffix):
+            return a
+    return None
+
+
+def _download(url: str, dest: Path) -> None:
+    import urllib.request as _ur
+    headers = {"User-Agent": "prompt-lib-installer", "Accept": "application/octet-stream"}
+    req = _ur.Request(url, headers=headers)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    with _ur.urlopen(req, timeout=600) as r, open(dest, "wb") as f:
+        shutil.copyfileobj(r, f)
+
+
+CDT_REPO = "matt1398/claude-devtools"
+
+
+def _cdt_windows_exe() -> Path:
+    base = os.environ.get("LOCALAPPDATA") or str(Path.home() / "AppData" / "Local")
+    return Path(base) / "Programs" / "claude-devtools" / "claude-devtools.exe"
+
+
+def cdt_status() -> str:
+    sysname = platform.system()
+    if sysname == "Windows":
+        exe = _cdt_windows_exe()
+        if not exe.exists():
+            return "not installed"
+        ps = subprocess.run(
+            ["powershell", "-NoProfile", "-Command", f"(Get-Item '{exe}').VersionInfo.FileVersion"],
+            capture_output=True, text=True,
+        )
+        v = (ps.stdout or "").strip()
+        return f"installed {v}" if v else "installed"
+    if sysname == "Darwin":
+        if shutil.which("brew"):
+            r = subprocess.run(
+                ["brew", "list", "--cask", "--versions", "claude-devtools"],
+                capture_output=True, text=True,
+            )
+            if r.returncode == 0 and r.stdout.strip():
+                return f"installed ({r.stdout.strip()})"
+        if Path("/Applications/claude-devtools.app").exists():
+            return "installed"
+        return "not installed"
+    if sysname == "Linux":
+        for p in ("/usr/bin/claude-devtools", "/opt/claude-devtools/claude-devtools"):
+            if Path(p).exists():
+                return f"installed ({p})"
+        return "not installed"
+    return "unsupported platform"
+
+
+def cdt_install() -> tuple[bool, str]:
+    sysname = platform.system()
+    if sysname == "Darwin":
+        if not shutil.which("brew"):
+            return False, "Homebrew not found — install brew or download from claude-dev.tools"
+        r = subprocess.run(["brew", "install", "--cask", "claude-devtools"])
+        return r.returncode == 0, "brew install --cask claude-devtools"
+
+    try:
+        release = _gh_latest_release(CDT_REPO)
+    except Exception as e:
+        return False, f"GitHub API failed: {e}"
+    tag = release.get("tag_name", "")
+
+    if sysname == "Windows":
+        asset = _gh_pick_asset(release, "-x64.exe")
+        if not asset:
+            return False, "No Windows installer in latest release"
+        tmp_root = Path(os.environ.get("TEMP") or Path.home())
+        tmp = tmp_root / asset["name"]
+        try:
+            _download(asset["browser_download_url"], tmp)
+        except Exception as e:
+            return False, f"Download failed: {e}"
+        r = subprocess.run([str(tmp), "/S"])
+        if r.returncode != 0:
+            return False, f"Installer exit code {r.returncode}"
+        return True, f"Installed {tag} from {asset['name']}"
+
+    if sysname == "Linux":
+        if shutil.which("dnf"):
+            asset, installer = _gh_pick_asset(release, ".rpm"), ["sudo", "dnf", "install", "-y"]
+        elif shutil.which("apt-get"):
+            asset, installer = _gh_pick_asset(release, ".deb"), ["sudo", "apt-get", "install", "-y"]
+        elif shutil.which("pacman"):
+            asset, installer = _gh_pick_asset(release, ".pacman"), ["sudo", "pacman", "-U", "--noconfirm"]
+        else:
+            return False, "No supported package manager (need dnf, apt-get, or pacman)"
+        if not asset:
+            return False, "No matching Linux package in latest release"
+        tmp = Path("/tmp") / asset["name"]
+        try:
+            _download(asset["browser_download_url"], tmp)
+        except Exception as e:
+            return False, f"Download failed: {e}"
+        r = subprocess.run([*installer, str(tmp)])
+        return r.returncode == 0, f"Installed {tag}"
+
+    return False, f"Unsupported platform: {sysname}"
+
+
+@dataclass
+class Tool:
+    key: str
+    name: str
+    description: str
+    homepage: str
+    repo_url: str
+    install: Callable[[], tuple[bool, str]]
+    status: Callable[[], str]
+
+
+TOOLS: list[Tool] = [
+    Tool(
+        key="claude-devtools",
+        name="claude-devtools",
+        description=(
+            "Desktop GUI that visualizes Claude Code session activity by reading "
+            "local session logs in ~/.claude/. See every file path, tool call, and "
+            "token. Runs locally — no config or API keys."
+        ),
+        homepage="https://claude-dev.tools/",
+        repo_url="https://github.com/matt1398/claude-devtools",
+        install=cdt_install,
+        status=cdt_status,
+    ),
+]
+
+
 # ─── Screens ───────────────────────────────────────────────────────────────────
 
 class HomeScreen(Screen):
@@ -450,6 +598,7 @@ class OperationsScreen(Screen):
         Binding("d", "go('doctor')", "Doctor"),
         Binding("r", "go('restore')", "Restore"),
         Binding("l", "go('local')", "Local"),
+        Binding("t", "go('tools')", "Tools"),
         Binding("escape", "app.pop_screen", "Back"),
     ]
 
@@ -467,6 +616,7 @@ class OperationsScreen(Screen):
                 yield Button("[D] Doctor", id="op-doctor", variant="primary")
                 yield Button("[R] Restore", id="op-restore", variant="primary")
                 yield Button("[L] Local", id="op-local", variant="primary")
+                yield Button("[T] Tools", id="op-tools", variant="primary")
                 yield Button("Back (Esc)", id="op-back")
         yield Footer()
 
@@ -480,6 +630,7 @@ class OperationsScreen(Screen):
             "doctor": DoctorScreen,
             "restore": RestoreScreen,
             "local": LocalScreen,
+            "tools": ToolsScreen,
         }.get(name)
         if target:
             self.app.push_screen(target())
@@ -1058,6 +1209,80 @@ class LocalScreen(Screen):
             self._refresh()
         elif bid == "loc-apply":
             self.action_apply()
+
+
+class ToolsScreen(Screen):
+    """Install / update optional companion tools."""
+
+    BINDINGS = [
+        Binding("escape", "app.pop_screen", "Back"),
+        Binding("ctrl+r", "refresh", "Refresh"),
+    ]
+
+    def compose(self) -> ComposeResult:
+        yield Header()
+        with VerticalScroll():
+            yield Static(
+                "[bold bright_magenta]✦ Tools ✦[/bold bright_magenta]\n"
+                "[dim]Optional companion tools for Claude Code. "
+                "Install runs in the terminal — UI returns when done.[/dim]",
+                classes="panel",
+            )
+            for tool in TOOLS:
+                with Vertical(classes="panel"):
+                    yield Static(f"[bold cyan]{tool.name}[/bold cyan]")
+                    yield Static(tool.description)
+                    yield Static(
+                        f"[dim]Home:[/dim] [blue]{tool.homepage}[/blue]\n"
+                        f"[dim]GitHub:[/dim] [blue]{tool.repo_url}[/blue]"
+                    )
+                    yield Static("", id=f"tool-status-{tool.key}")
+                    with Horizontal():
+                        yield Button(
+                            "Install / Update",
+                            id=f"tool-install-{tool.key}",
+                            variant="success",
+                        )
+            yield Static("", id="tools-status", classes="panel")
+        yield Footer()
+
+    def on_mount(self) -> None:
+        self._refresh()
+
+    def _refresh(self) -> None:
+        for tool in TOOLS:
+            try:
+                state = tool.status()
+            except Exception as e:
+                state = f"status check failed: {e}"
+            color = "green" if state.startswith("installed") else "yellow"
+            self.query_one(f"#tool-status-{tool.key}", Static).update(
+                f"[bold]Status:[/bold] [{color}]{state}[/{color}]"
+            )
+
+    def action_refresh(self) -> None:
+        self._refresh()
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        bid = event.button.id or ""
+        if not bid.startswith("tool-install-"):
+            return
+        key = bid.removeprefix("tool-install-")
+        tool = next((t for t in TOOLS if t.key == key), None)
+        if not tool:
+            return
+        self.query_one("#tools-status", Static).update(
+            f"[yellow]Installing {tool.name}…[/yellow]  "
+            f"[dim](terminal output below — UI resumes when installer exits)[/dim]"
+        )
+        with self.app.suspend():
+            try:
+                ok, msg = tool.install()
+            except Exception as e:
+                ok, msg = False, f"Unhandled error: {e}"
+        mark = "[green]✓[/green]" if ok else "[red]✗[/red]"
+        self.query_one("#tools-status", Static).update(f"{mark} {tool.name}: {msg}")
+        self._refresh()
 
 
 # ─── App ───────────────────────────────────────────────────────────────────────

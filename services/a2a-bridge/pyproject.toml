@@ -1,0 +1,42 @@
+[project]
+name = "a2a-bridge"
+version = "0.1.0"
+description = "v1 multi-agent A2A bridge: Claude Code delegates to a peer Gemini CLI over the official A2A v1.0.0 JSON-RPC binding, with two adapters (Claude inbound, Gemini outbound target) sharing one Python package."
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.135",
+    "httpx>=0.27",
+    "pydantic>=2.7",
+    "uvicorn[standard]>=0.30",
+    "typer>=0.12",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.23",
+    "ruff>=0.6",
+    "a2a-sdk>=1.0",
+    "jsonschema>=4.20",
+]
+
+[project.scripts]
+a2a-bridge = "a2a_bridge.cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/a2a_bridge"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "RUF"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

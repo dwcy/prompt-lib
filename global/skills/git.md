@@ -36,6 +36,46 @@ git diff
 
 If nothing is staged, show the unstaged changes and ask the user which files to stage. Do not auto-stage everything.
 
+### Step 2.5 — Audit staged files for .gitignore worthiness
+
+Once at least one file is staged, invoke the `@gitignore-auditor` subagent to review the staged set for files that look like local-only state, build artifacts, caches, secrets, or IDE/OS junk that should be in `.gitignore` instead.
+
+The auditor is **read-only and advisory** — it does not edit files or run state-changing git commands. It returns a verdict (`CLEAN | WARNINGS | FLAGS`), per-file findings, suggested `.gitignore` lines, and `git rm --cached` commands for files already tracked despite belonging in `.gitignore`.
+
+How to handle the result:
+
+- **CLEAN** — proceed to Step 3.
+- **WARNINGS** — surface each warning to the user with the auditor's question. If the user wants to keep the file, proceed; if they want to ignore it, do the `.gitignore` + `git rm --cached` work first, then re-stage and re-run the audit.
+- **FLAGS** — show the findings and stop. Do not commit until the user has decided per file. For each FLAG the user accepts: append the suggested line to `.gitignore`, run the suggested `git rm --cached <path>`, then re-stage real changes and continue from Step 2.
+
+The auditor's suggestions are advisory — the user always has the final say.
+
+### Step 2.6 — Audit staged files for secrets
+
+After the gitignore audit (and any resulting `.gitignore` / `git rm --cached` work has settled), invoke the `@secret-auditor` subagent. Read-only, advisory.
+
+The auditor returns:
+- Verdict: `CLEAN | SUSPECTED | FOUND`
+- Per-finding fields: file, line, detected type, severity (HIGH/MEDIUM/LOW), redacted snippet, recommended action, and a per-finding question to ask the user.
+
+How to handle the result:
+
+- **CLEAN** — proceed to Step 3.
+- **SUSPECTED / FOUND** — for **every finding**, ask the user a y/n question of the shape:
+
+  > `secret-auditor flagged a <type> (severity <level>) at <file>:<line>:`  
+  > `<redacted snippet>`  
+  > `Recommended action: <action>`  
+  > `Is this OK to commit? (y/n)`
+
+  Loop one finding at a time. Do not bulk-approve.
+
+  - If the user answers **no**: stop the commit flow. They must edit the file (remove or redact the secret), unstage if they prefer, then re-stage real changes and re-run from Step 2. If the secret has ever been pushed, remind them to rotate it.
+  - If the user answers **yes** for a finding: record the explicit approval and continue to the next finding.
+  - Once every finding is either resolved or explicitly approved, proceed to Step 3.
+
+  In Step 6 (Show and confirm), include the list of explicitly-approved findings so the user sees the full picture before committing.
+
 ### Step 3 — Determine commit type
 
 Pick the type that best fits the changes:
