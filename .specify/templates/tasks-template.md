@@ -19,6 +19,16 @@ description: "Task list template for feature implementation"
 - **Owner**: Named subagent that will execute the task (see `.specify/memory/agents.md`). Use `main` only when no specialist fits.
 - Include exact file paths in descriptions
 
+## Phase status convention (MANDATORY)
+
+Every `## Phase X: ...` heading MUST be followed immediately by a verbose `**Status**:` line in one of three forms:
+
+- `**Status**: ⬜ Pending (0/N — T###–T###)` — zero tasks completed
+- `**Status**: 🟡 In progress (M/N — T###–T###)` — at least one but not all tasks completed
+- `**Status**: ✅ Complete (N/N — T###–T###)` — every task in the phase is `[X]`
+
+`/speckit-tasks` initialises every phase as ⬜ Pending. Whenever task `[X]` checkboxes change (typically during `/speckit-implement`), recompute the ratio for each affected phase and rewrite its Status line in the same edit. The Status line is the at-a-glance progress view; the per-task checkboxes are the source of truth.
+
 ## Owner assignment rules
 
 - Every task MUST end with `— Owner: @<agent>` or `— Owner: main`.
@@ -63,6 +73,7 @@ For any task that implements a protocol surface (A2A endpoint, agent card, JSON-
 
 ## Phase 1: Setup (Shared Infrastructure)
 
+**Status**: ⬜ Pending (0/N — T###–T###)
 **Purpose**: Project initialization and basic structure
 
 - [ ] T001 Create project structure per implementation plan — Owner: main
@@ -73,6 +84,7 @@ For any task that implements a protocol surface (A2A endpoint, agent card, JSON-
 
 ## Phase 2: Foundational (Blocking Prerequisites)
 
+**Status**: ⬜ Pending (0/N — T###–T###)
 **Purpose**: Core infrastructure that MUST be complete before ANY user story can be implemented
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
@@ -92,6 +104,7 @@ Examples of foundational tasks (adjust based on your project):
 
 ## Phase 3: User Story 1 - [Title] (Priority: P1) 🎯 MVP
 
+**Status**: ⬜ Pending (0/N — T###–T###)
 **Goal**: [Brief description of what this story delivers]
 
 **Independent Test**: [How to verify this story works on its own]
@@ -118,6 +131,7 @@ Examples of foundational tasks (adjust based on your project):
 
 ## Phase 4: User Story 2 - [Title] (Priority: P2)
 
+**Status**: ⬜ Pending (0/N — T###–T###)
 **Goal**: [Brief description of what this story delivers]
 
 **Independent Test**: [How to verify this story works on its own]
@@ -140,6 +154,7 @@ Examples of foundational tasks (adjust based on your project):
 
 ## Phase 5: User Story 3 - [Title] (Priority: P3)
 
+**Status**: ⬜ Pending (0/N — T###–T###)
 **Goal**: [Brief description of what this story delivers]
 
 **Independent Test**: [How to verify this story works on its own]
@@ -165,6 +180,7 @@ Examples of foundational tasks (adjust based on your project):
 
 ## Phase N: Polish & Cross-Cutting Concerns
 
+**Status**: ⬜ Pending (0/N — T###–T###)
 **Purpose**: Improvements that affect multiple user stories
 
 - [ ] TXXX [P] Documentation updates in docs/

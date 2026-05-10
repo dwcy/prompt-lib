@@ -49,6 +49,8 @@ See `setup/README.md` for the wizard's structure and modes.
 - **Change hooks:** edit `global/hooks/<name>` → apply
 
 <!-- SPECKIT START -->
-Active spec-kit feature: **001-a2a-bridge** — A2A Bridge for Multi-Agent CLI Delegation (v1).
-For technical context, project structure, stack decisions, and constitution gate status, read [`specs/001-a2a-bridge/plan.md`](specs/001-a2a-bridge/plan.md). The full design tree is at `specs/001-a2a-bridge/` (spec, plan, research, data-model, contracts, quickstart).
+Active spec-kit feature: **002-agent-orchestrator** — Agent Orchestrator (GitHub PR Review v1).
+For technical context, project structure, stack decisions, and constitution gate status, read [`specs/002-agent-orchestrator/plan.md`](specs/002-agent-orchestrator/plan.md). The full design tree is at `specs/002-agent-orchestrator/` (spec, plan, research, data-model, contracts, quickstart).
+
+Previously shipped: `001-a2a-bridge` (A2A Bridge for Multi-Agent CLI Delegation v1) at `specs/001-a2a-bridge/` — orchestrator depends on its `DelegationClient`.
 <!-- SPECKIT END -->

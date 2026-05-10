@@ -72,7 +72,11 @@ class CliRunner:
         self._task_timeout_seconds = task_timeout_seconds
 
     async def run(
-        self, prompt: str, task: Task
+        self,
+        prompt: str,
+        task: Task,
+        *,
+        cwd: str | None = None,
     ) -> AsyncIterator[TaskStateEvent | TaskArtifactEvent]:
         yield _state_event(task)
 
@@ -82,6 +86,7 @@ class CliRunner:
                 *argv,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
+                cwd=cwd,
             )
         except OSError as exc:
             task.transition(TaskState.WORKING)

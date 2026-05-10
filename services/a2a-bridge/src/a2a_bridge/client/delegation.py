@@ -48,12 +48,20 @@ class DelegationClient:
         self._peer_bearer_token = peer_bearer_token
         self._timeout = httpx.Timeout(connect=5.0, read=timeout_seconds, write=5.0, pool=5.0)
 
-    async def delegate(self, prompt: str) -> AsyncIterator[dict[str, Any]]:
+    async def delegate(
+        self,
+        prompt: str,
+        *,
+        cwd: str | None = None,
+    ) -> AsyncIterator[dict[str, Any]]:
+        task_payload: dict[str, Any] = {"messages": [{"role": "user", "content": prompt}]}
+        if cwd is not None:
+            task_payload["cwd"] = cwd
         request_body: dict[str, Any] = {
             "jsonrpc": "2.0",
             "id": str(uuid.uuid4()),
             "method": "tasks/sendSubscribe",
-            "params": {"task": {"messages": [{"role": "user", "content": prompt}]}},
+            "params": {"task": task_payload},
         }
         headers = {
             "Authorization": f"Bearer {self._peer_bearer_token}",
