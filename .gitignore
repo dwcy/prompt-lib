@@ -35,3 +35,6 @@ Thumbs.db
 
 # Local-only Claude state (project skills/commands ARE committed; only ephemera here)
 .claude/settings.local.json
+
+# Spec-kit local install state (declared config in .specify/extensions.yml IS committed)
+.specify/extensions/.registry
