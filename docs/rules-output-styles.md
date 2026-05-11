@@ -1,4 +1,4 @@
-# Rules, output styles, and project templates
+﻿# Rules, output styles, and project templates
 
 Three loosely related mechanisms that each shape Claude's behaviour in a different way.
 
@@ -31,7 +31,7 @@ paths:
 Conventions to apply when editing these files…
 ```
 
-Drop it in `global/rules/`, run `setup/apply.py`, restart.
+Drop it in `global/rules/`, run `setup/settings-configurator-ui.py`, restart.
 
 ## Output styles — response formatting profiles
 
@@ -104,4 +104,4 @@ Announces which specialist subagents are now available for the session
 
 1. Create `global/project-templates/<name>.md` with the two-section format.
 2. Add a hint in `global/agents/init-project.md` so the agent knows when to pick this template (e.g. "for Rust projects, use `rust.md`").
-3. `python setup/apply.py` → restart.
+3. `python setup/settings-configurator-ui.py` → restart.

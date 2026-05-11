@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json
+import os
 import platform
 import re
 import shutil
@@ -7,13 +8,7 @@ import subprocess
 from pathlib import Path
 
 
-def load_env(env_file):
-    with open(env_file) as f:
-        return {k: str(v) for k, v in json.load(f).items() if str(v).strip()}
-
-
 def apply_git_line_endings(mode):
-    """Apply GIT_LINE_ENDINGS via `git config --global core.autocrlf`."""
     if mode == 'auto':
         mode = 'true' if platform.system() == 'Windows' else 'input'
     if mode not in ('true', 'input', 'false'):
@@ -48,15 +43,18 @@ def update_profile(profile_path, keys, export_lines):
 
 def main():
     script_dir = Path(__file__).parent
-    env_file = script_dir / 'setup.env.json'
+    example_file = script_dir / 'setup.env.example.json'
 
-    if not env_file.exists():
-        print(f"Error: {env_file} not found.")
+    if not example_file.exists():
+        print(f"Error: {example_file} not found.")
         raise SystemExit(1)
 
-    env = load_env(env_file)
+    with open(example_file) as f:
+        keys = list(json.load(f).keys())
+
+    env = {k: os.environ[k] for k in keys if k in os.environ and os.environ[k].strip()}
     if not env:
-        print("No values set in setup.env.json. Fill in the values and re-run.")
+        print("No matching variables found in system environment.")
         raise SystemExit(0)
 
     export_lines = [f"export {k}={repr(v)}" for k, v in env.items()]

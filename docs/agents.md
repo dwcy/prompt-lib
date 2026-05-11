@@ -1,4 +1,4 @@
-# Agents — every subagent explained
+﻿# Agents — every subagent explained
 
 Agents are **separate Claude sessions with focused system prompts and restricted tools**. They protect the main conversation's context window and let you compose specialists.
 
@@ -123,7 +123,7 @@ See [`parallel-isolation.md`](parallel-isolation.md) for the dispatch contract, 
    ---
    ```
 2. Below the frontmatter, write the system prompt — what the agent does on activation, its rules, its output format.
-3. Run `python setup/apply.py`.
+3. Run `python setup/settings-configurator-ui.py`.
 4. Restart Claude Code.
 
 **Description-writing rule**: distinct enough that Claude can pick *only this one* when the trigger appears. Read [`architecture.md`](architecture.md#5-ready--how-claude-picks-a-tool) for the resolution algorithm.

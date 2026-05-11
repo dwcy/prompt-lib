@@ -1,4 +1,4 @@
-# Settings — `global/settings.json` field by field
+﻿# Settings — `global/settings.json` field by field
 
 The single most important file in this repo. This document explains every field, what it controls, and what changes when you edit it.
 
@@ -54,7 +54,7 @@ Every entry is a long-lived stdio subprocess started at session boot.
 
 `${VAR}` placeholders are resolved from the **shell that launched Claude Code**, not from `.env` files. The flow:
 
-1. `setup/apply.py` (mode: "Initialize env vars") prompts for each var and persists it via `setx` on Windows / shell rc on Unix.
+1. `setup/settings-configurator-ui.py` (mode: "Initialize env vars") prompts for each var and persists it via `setx` on Windows / shell rc on Unix.
 2. Restart your terminal so the new vars are inherited.
 3. Launch Claude Code.
 
@@ -92,12 +92,12 @@ See [`hooks.md`](hooks.md) for what each script actually checks.
 - Output styles — discovered from `~/.claude/output-styles/*.md`
 - Project templates — discovered from `~/.claude/project-templates/*.md`
 
-These are pure file-system conventions. Drop a file in the right folder → run `setup/apply.py` → it's registered.
+These are pure file-system conventions. Drop a file in the right folder → run `setup/settings-configurator-ui.py` → it's registered.
 
 ## Editing safely
 
 1. Edit `global/settings.json` here in the repo.
-2. Run `python setup/apply.py` → the wizard takes a timestamped backup before overwriting `~/.claude/settings.json`.
+2. Run `python setup/settings-configurator-ui.py` → the wizard takes a timestamped backup before overwriting `~/.claude/settings.json`.
 3. Restart Claude Code.
 4. If something breaks: rerun the wizard → "Restore" → pick the timestamped backup.
 

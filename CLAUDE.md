@@ -35,7 +35,7 @@ After editing anything in `global/`, deploy and restart:
 
 ```bash
 # Recommended — interactive TUI wizard (preview, doctor, restore, env init, local setup)
-python setup/apply.py
+python setup/settings-configurator-ui.py
 
 # Fallback — non-interactive bash script
 bash setup/tools/apply-global-claude-settings.sh

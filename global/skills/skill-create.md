@@ -1,4 +1,4 @@
----
+﻿---
 name: skill-create
 description: Create, draft, and refine a new Claude Code skill (slash command). Use this skill whenever someone wants to build a new /skill, automate a workflow into a repeatable skill, capture a process they keep doing manually, convert a conversation into a reusable command, or improve an existing skill's description, instructions, or triggering accuracy. Even if the user just says "make this a skill" or "save this as a command", use this skill.
 allowed-tools: Read, Write, Edit, Glob, Bash
@@ -119,12 +119,13 @@ allowed-tools: Bash, Read  # only tools this skill actually needs
 
 ### Writing the description — the most important field
 
-The description is the **primary trigger mechanism**. Claude decides whether to use a skill based on this field alone. Two rules:
+The description is the **primary trigger mechanism**. Claude decides whether to use a skill based on this field alone. Three rules:
 
-1. **Include both WHAT it does AND WHEN to use it** — all "when to use" information goes in the description, not the body.
-2. **Be pushy** — Claude tends to undertrigger skills. Write descriptions that lean toward triggering. Instead of "Generates a commit message", write "Generates a conventional commit message from staged changes. Use this whenever the user asks to commit, stage changes, write a git message, or says anything like 'commit this' or 'let's commit'."
+1. **The system-reminder shows only the first 64 characters.** Anything after that is cut with `…` and invisible until the skill is already invoked. Put the most critical trigger condition — especially proactive ones — in the first 64 characters. Test it: count the first 64 chars of your description and ask "is the right trigger visible here?"
+2. **Include both WHAT it does AND WHEN to use it** — all "when to use" information goes in the description, not the body.
+3. **Be pushy** — Claude tends to undertrigger skills. Write descriptions that lean toward triggering. Instead of "Generates a commit message", write "Generates a conventional commit message from staged changes. Use this whenever the user asks to commit, stage changes, write a git message, or says anything like 'commit this' or 'let's commit'."
 
-Test the description mentally: if someone typed a realistic user request, would this description match it clearly?
+Test the description mentally: if someone typed a realistic user request, would this description match it clearly within the first 64 characters?
 
 ### Writing the body — explain WHY, not just WHAT
 
@@ -223,7 +224,7 @@ Ask the user which scope before writing, unless it's obvious from context.
 ```
 
 After writing, remind the user:
-- Global skills: run `python setup/apply.py` then restart Claude Code
+- Global skills: run `python setup/settings-configurator-ui.py` then restart Claude Code
 - Project skills: active immediately in this session
 
 ---

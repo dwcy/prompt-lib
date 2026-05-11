@@ -12,7 +12,7 @@ Versioned source for everything in `~/.claude/` — agents, skills, hooks, rules
 | Always-on context bloat | Conditional rules in `global/rules/` (`csharp.md`, `typescript.md`, `react.md`, `tests.md`) load only when Claude touches a matching file |
 | Response-mode switching | Four output styles — `concise`, `technical`, `review`, `architect` — picked per session via `/output-style` |
 | External tool integrations | Eight pre-wired MCP servers: `context7`, `github`, `figma`, `playwright`, `azure-devops`, `supabase`, `obsidian`, `docker` (env vars resolved via `${VAR}` substitution) |
-| Multi-machine setup / drift detection | Interactive TUI wizard at `setup/apply.py` — deploy, init env vars, doctor (drift report), restore from backup, local project scaffold, optional companion tools |
+| Multi-machine setup / drift detection | Interactive TUI wizard at `setup/settings-configurator-ui.py` — deploy, init env vars, doctor (drift report), restore from backup, local project scaffold, optional companion tools |
 | Cross-agent delegation (Claude ↔ Gemini) | [`services/a2a-bridge`](services/a2a-bridge/) — A2A protocol v1.0.0 implementation, Python 3.13 + FastAPI, 199 tests passing |
 | Autonomous PR review | [`services/orchestrator`](services/orchestrator/) — daemon that watches a GitHub repo, dispatches each PR to a peer Claude agent over the A2A bridge, posts the review back via `gh`, persists state to SQLite, pushes phone notifications via ntfy.sh, ships with a Textual dashboard |
 | Spec-driven feature work | `specs/` holds spec-kit feature trees (spec, plan, research, data-model, contracts, tasks, quickstart) — `001-a2a-bridge` and `002-agent-orchestrator` |
@@ -108,7 +108,7 @@ prompt-lib/
 │   ├── rules/           ← file-pattern-conditional rules
 │   ├── output-styles/   ← response formatting profiles
 │   └── project-templates/  ← templates used by @init-project
-├── setup/               ← TUI installer (apply.py)
+├── setup/               ← TUI installer (settings-configurator-ui.py)
 ├── services/
 │   ├── a2a-bridge/      ← A2A protocol bridge
 │   └── orchestrator/    ← PR-review daemon
@@ -118,7 +118,7 @@ prompt-lib/
 ## Apply changes
 
 ```bash
-python setup/apply.py
+python setup/settings-configurator-ui.py
 ```
 
 First run auto-installs `rich` + `questionary`. After applying, restart Claude Code.

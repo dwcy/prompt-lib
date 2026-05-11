@@ -1,4 +1,4 @@
-# Future Ideas Backlog
+﻿# Future Ideas Backlog
 
 Opinionated backlog for future improvements to prompt-lib, the A2A bridge, and the orchestrator.
 
@@ -134,7 +134,7 @@ Useful assets to add:
 Open questions:
 - Should legacy `global/skills/*.md` coexist with folder skills, or should all global skills be migrated in one pass?
 - Should shared helper scripts live under each skill, or in a repo-level `global/skills/_shared/` folder?
-- Should `setup/apply.py` deploy both file-based and folder-based skills automatically?
+- Should `setup/settings-configurator-ui.py` deploy both file-based and folder-based skills automatically?
 - Should the `/docs` skill generate skill/agent indexes from folder metadata?
 
 ### 5. Implement a Symphony-Style Issue Tracker Orchestrator

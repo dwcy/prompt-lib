@@ -4,11 +4,11 @@ One-stop entry point for setting up this machine's Claude Code environment.
 
 ## Primary
 
-**`apply.py`** — interactive TUI wizard. Deploys `global/` config to `~/.claude/`, initializes machine env vars, runs drift checks, restores backups, and scaffolds `.claude/` in other projects.
+**`settings-configurator-ui.py`** — interactive TUI wizard. Deploys `global/` config to `~/.claude/`, initializes machine env vars, runs drift checks, restores backups, and scaffolds `.claude/` in other projects.
 
 ```bash
-python setup/apply.py        # any shell
-setup\apply.cmd              # Windows convenience launcher
+python setup/settings-configurator-ui.py        # any shell
+setup\settings-configurator-ui.cmd              # Windows convenience launcher
 ```
 
 First run auto-installs `rich` + `questionary` via pip.
@@ -29,8 +29,8 @@ First run auto-installs `rich` + `questionary` via pip.
 ```
 setup/
 ├── README.md           ← this file
-├── apply.py            ← primary wizard
-├── apply.cmd           ← Windows launcher
+├── settings-configurator-ui.py            ← primary wizard
+├── settings-configurator-ui.cmd           ← Windows launcher
 ├── env/                ← machine env var initialization
 └── tools/              ← supporting scripts (bash fallback, smoke test)
 ```

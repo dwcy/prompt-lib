@@ -1,4 +1,4 @@
-# Hooks — when they fire and what they do
+﻿# Hooks — when they fire and what they do
 
 A hook is a script bound to a Claude Code lifecycle event in `settings.json`. Hooks see structured JSON on stdin, can emit `additionalContext` for Claude, and signal allow/block via exit code (`0` = allow, `2` = block + show reason).
 
@@ -98,6 +98,6 @@ Different layers, different responsibilities. No overlap.
 1. Drop the script under `global/hooks/<name>.py` (or `.ps1`).
 2. Wire it in `global/settings.json` under `hooks.<event>`. Pick a `matcher:` if the event has one (e.g. `Bash`, `Write`).
 3. Make sure your script reads JSON from stdin and exits with the right code (`0` allow, `2` block, anything else = error → also allow but logged).
-4. `python setup/apply.py` → restart Claude Code.
+4. `python setup/settings-configurator-ui.py` → restart Claude Code.
 
 **Don't break the boot**: a SessionStart hook that errors out can still let you in, but a hook that hangs will make sessions feel broken. Wrap your script body in `try/except` and exit `0` on unexpected errors unless blocking is the explicit intent.

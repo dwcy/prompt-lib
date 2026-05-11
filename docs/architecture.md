@@ -1,4 +1,4 @@
-# Architecture — how Claude Code wires everything together
+﻿# Architecture — how Claude Code wires everything together
 
 > Read this first.
 
@@ -116,7 +116,7 @@ MCP servers run as long-lived stdio subprocesses for the duration of the session
 
 ## Why this layout
 
-- **`global/`** is the source of truth. You edit here, run `setup/apply.py`, and the deployed config under `~/.claude/` is overwritten.
+- **`global/`** is the source of truth. You edit here, run `setup/settings-configurator-ui.py`, and the deployed config under `~/.claude/` is overwritten.
 - **`.claude/`** at the project root is for project-only commands and overrides. Not deployed.
 - **`services/`** are runtime daemons, not config. They run as separate processes and use the A2A protocol to talk to other agents.
 - **`specs/`** is spec-kit driven design — feature trees that produce `services/` implementations. The spec is the source of truth for the service.

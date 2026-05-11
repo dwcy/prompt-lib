@@ -1,4 +1,4 @@
-# Workflows — composing agents, skills, and services
+﻿# Workflows — composing agents, skills, and services
 
 Individual agents and skills are useful. Composing them into named workflows is where the leverage is. This document shows the canonical multi-agent flows this repo supports out of the box.
 
@@ -142,7 +142,7 @@ For: turning a repeated workflow into a `/skill`.
 3. /skill-create drafts the markdown, asks about trigger phrasing
 4. Test it in the same session ("type /your-new-skill and tell me what happened")
 5. Iterate description until autonomous routing fires reliably
-6. python setup/apply.py
+6. python setup/settings-configurator-ui.py
 7. Restart Claude Code → skill is live in every project
 ```
 
