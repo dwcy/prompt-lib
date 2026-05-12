@@ -41,6 +41,7 @@ try:
         Button, Checkbox, DataTable, Footer, Header, Input, Label,
         MarkdownViewer, OptionList, RadioButton, RadioSet, Rule, Select, Static
     )
+    from textual.widget import Widget
     from textual.widgets.option_list import Option
     from textual.widgets._header import HeaderIcon
     from textual.command import DiscoveryHit, Hits
@@ -57,6 +58,7 @@ except ImportError:
         Button, Checkbox, DataTable, Footer, Header, Input, Label,
         MarkdownViewer, OptionList, RadioButton, RadioSet, Rule, Select, Static
     )
+    from textual.widget import Widget
     from textual.widgets.option_list import Option
     from textual.widgets._header import HeaderIcon
     from textual.command import DiscoveryHit, Hits
@@ -123,6 +125,10 @@ def render_env_summary() -> Text:
     txt.append("✓" if env["git"] else "✗", style="green" if env["git"] else "red")
     txt.append("/")
     txt.append("✓" if env["bash"] else "✗", style="green" if env["bash"] else "red")
+    txt.append("    Claude CLI: ", style="bold bright_blue")
+    txt.append("✓ installed" if env["claude"] else "✗ not found", style="green" if env["claude"] else "red")
+    txt.append("    gh: ", style="bold bright_blue")
+    txt.append("✓ installed" if env["gh"] else "✗ not found", style="green" if env["gh"] else "red")
     txt.append("\nSource: ", style="bold bright_blue")
     txt.append(f"{GLOBAL_DIR}\n", style="cyan")
     txt.append("Target: ", style="bold bright_blue")
@@ -261,6 +267,43 @@ class FileStatus:
     state: str  # NEW | CHANGED | UNCHANGED
 
 
+# ─── Update check ──────────────────────────────────────────────────────────────
+
+def check_for_updates() -> dict:
+    if not shutil.which("git"):
+        return {"status": "no_git"}
+    try:
+        local = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            capture_output=True, text=True, cwd=str(REPO_DIR), timeout=5,
+        )
+        remote = subprocess.run(
+            ["git", "ls-remote", "origin", "HEAD"],
+            capture_output=True, text=True, cwd=str(REPO_DIR), timeout=10,
+        )
+        if local.returncode != 0 or remote.returncode != 0 or not remote.stdout.strip():
+            return {"status": "error"}
+        local_hash = local.stdout.strip()
+        remote_hash = remote.stdout.split()[0]
+        short = lambda h: h[:8]
+        if local_hash == remote_hash:
+            return {"status": "up_to_date", "hash": short(local_hash)}
+        return {"status": "behind", "local": short(local_hash), "remote": short(remote_hash)}
+    except Exception:
+        return {"status": "error"}
+
+
+def do_git_pull() -> tuple[bool, str]:
+    try:
+        r = subprocess.run(
+            ["git", "pull"],
+            capture_output=True, text=True, cwd=str(REPO_DIR), timeout=60,
+        )
+        return r.returncode == 0, (r.stdout + r.stderr).strip()
+    except Exception as e:
+        return False, str(e)
+
+
 # ─── Pure helpers ──────────────────────────────────────────────────────────────
 
 def detect_env() -> dict:
@@ -271,6 +314,8 @@ def detect_env() -> dict:
         "shell": os.environ.get("SHELL") or os.environ.get("COMSPEC", "?"),
         "git": shutil.which("git") is not None,
         "bash": shutil.which("bash") is not None,
+        "claude": shutil.which("claude") is not None,
+        "gh": shutil.which("gh") is not None,
         "target_exists": TARGET.exists(),
     }
 
@@ -471,6 +516,60 @@ def cdt_install() -> tuple[bool, str]:
     return False, f"Unsupported platform: {sysname}"
 
 
+# ─── Claude CLI ────────────────────────────────────────────────────────────────
+
+def claude_cli_status() -> str:
+    if not shutil.which("claude"):
+        return "not installed"
+    r = subprocess.run(["claude", "--version"], capture_output=True, text=True)
+    v = (r.stdout or r.stderr or "").strip().splitlines()[0] if r.returncode == 0 else ""
+    return f"installed {v}" if v else "installed"
+
+
+def claude_cli_install() -> tuple[bool, str]:
+    if not shutil.which("npm"):
+        return False, "npm not found — install Node.js from https://nodejs.org then re-run"
+    r = subprocess.run(["npm", "install", "-g", "@anthropic-ai/claude-code"], capture_output=True, text=True)
+    return r.returncode == 0, r.stdout.strip() or r.stderr.strip()
+
+
+# ─── GitHub CLI ────────────────────────────────────────────────────────────────
+
+def gh_status() -> str:
+    if not shutil.which("gh"):
+        return "not installed"
+    r = subprocess.run(["gh", "--version"], capture_output=True, text=True)
+    v = (r.stdout or "").strip().splitlines()[0] if r.returncode == 0 else ""
+    return f"installed {v}" if v else "installed"
+
+
+def gh_install() -> tuple[bool, str]:
+    sysname = platform.system()
+    if sysname == "Windows":
+        if shutil.which("winget"):
+            r = subprocess.run(["winget", "install", "--id", "GitHub.cli", "-e"], capture_output=True, text=True)
+            return r.returncode == 0, "winget install GitHub.cli"
+        if shutil.which("scoop"):
+            r = subprocess.run(["scoop", "install", "gh"], capture_output=True, text=True)
+            return r.returncode == 0, "scoop install gh"
+        return False, "Install manually from https://cli.github.com"
+    if sysname == "Darwin":
+        if shutil.which("brew"):
+            r = subprocess.run(["brew", "install", "gh"], capture_output=True, text=True)
+            return r.returncode == 0, "brew install gh"
+        return False, "Install Homebrew first or download from https://cli.github.com"
+    if sysname == "Linux":
+        if shutil.which("apt-get"):
+            subprocess.run(["sudo", "apt-get", "update", "-y"], capture_output=True)
+            r = subprocess.run(["sudo", "apt-get", "install", "-y", "gh"], capture_output=True, text=True)
+            return r.returncode == 0, "apt-get install gh"
+        if shutil.which("dnf"):
+            r = subprocess.run(["sudo", "dnf", "install", "-y", "gh"], capture_output=True, text=True)
+            return r.returncode == 0, "dnf install gh"
+        return False, "Install manually from https://cli.github.com"
+    return False, f"Unsupported platform: {sysname}"
+
+
 @dataclass
 class Tool:
     key: str
@@ -483,6 +582,30 @@ class Tool:
 
 
 TOOLS: list[Tool] = [
+    Tool(
+        key="claude-cli",
+        name="Claude CLI (claude-code)",
+        description=(
+            "The Claude Code CLI — Anthropic's official terminal interface for Claude. "
+            "Installed globally via npm. Required for all Claude Code sessions."
+        ),
+        homepage="https://claude.ai/code",
+        repo_url="https://github.com/anthropics/claude-code",
+        install=claude_cli_install,
+        status=claude_cli_status,
+    ),
+    Tool(
+        key="gh",
+        name="GitHub CLI (gh)",
+        description=(
+            "GitHub's official CLI for managing repos, PRs, issues, and Actions from the terminal. "
+            "Required by skills that create PRs or interact with GitHub."
+        ),
+        homepage="https://cli.github.com",
+        repo_url="https://github.com/cli/cli",
+        install=gh_install,
+        status=gh_status,
+    ),
     Tool(
         key="claude-devtools",
         name="claude-devtools",
@@ -500,6 +623,77 @@ TOOLS: list[Tool] = [
 
 
 # ─── Screens ───────────────────────────────────────────────────────────────────
+
+class UpdatePanel(Widget):
+    """Async update checker — compares local HEAD to origin and offers git pull."""
+
+    DEFAULT_CSS = """
+    UpdatePanel {
+        height: auto;
+        margin: 0 2 0 2;
+    }
+    #update-row {
+        height: 3;
+        align-vertical: middle;
+        padding: 0;
+        margin: 0;
+    }
+    #update-msg {
+        width: 1fr;
+        padding: 0 1;
+        content-align: left middle;
+        height: 3;
+    }
+    #btn-pull { margin: 0; }
+    """
+
+    def compose(self) -> ComposeResult:
+        with Horizontal(id="update-row"):
+            yield Static("[dim]Checking for updates…[/dim]", id="update-msg")
+            yield Button("⬆ Pull update", id="btn-pull", variant="warning")
+
+    def on_mount(self) -> None:
+        self.query_one("#btn-pull").display = False
+        self.run_worker(self._check, thread=True, exclusive=True)
+
+    def _check(self) -> None:
+        result = check_for_updates()
+        self.app.call_from_thread(self._apply, result)
+
+    def _apply(self, result: dict) -> None:
+        msg = self.query_one("#update-msg", Static)
+        btn = self.query_one("#btn-pull", Button)
+        if result["status"] == "up_to_date":
+            msg.update(f"[green]✓ Up to date[/green]  [dim]{result['hash']}[/dim]")
+        elif result["status"] == "behind":
+            msg.update(
+                f"[yellow bold]⬆ Update available[/yellow bold]  "
+                f"[dim]{result['local']} → {result['remote']}[/dim]"
+            )
+            btn.display = True
+        elif result["status"] == "no_git":
+            msg.update("[dim]git not found — cannot check for updates[/dim]")
+        else:
+            msg.update("[dim]⚠ Could not reach remote[/dim]")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "btn-pull":
+            event.stop()
+            self.query_one("#btn-pull").display = False
+            self.query_one("#update-msg", Static).update("[yellow]Pulling…[/yellow]")
+            self.run_worker(self._pull, thread=True, exclusive=True)
+
+    def _pull(self) -> None:
+        ok, output = do_git_pull()
+        def _done() -> None:
+            msg = self.query_one("#update-msg", Static)
+            if ok:
+                msg.update("[green]✓ Pulled — restart the wizard to apply changes[/green]")
+            else:
+                msg.update(f"[red]✗ Pull failed:[/red] [dim]{output[:120]}[/dim]")
+                self.query_one("#btn-pull").display = True
+        self.app.call_from_thread(_done)
+
 
 class AppCommandsProvider(SystemCommandsProvider):
     """System commands with Quit pinned to the bottom of the discovery list."""
@@ -533,6 +727,7 @@ class HomeScreen(Screen):
         with VerticalScroll(id="home-scroll"):
             yield Static(render_banner(), id="banner", classes="centered")
             yield Static(render_env_summary(), id="env-summary", classes="panel")
+            yield UpdatePanel()
             with Horizontal(id="home-nav"):
                 yield Button("[E] Env vars", id="btn-env", variant="primary")
             with Vertical(classes="home-section"):
