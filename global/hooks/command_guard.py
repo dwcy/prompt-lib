@@ -101,6 +101,11 @@ OBFUSCATED_EXEC_PS = [
     (r"&\s*\(\s*\[scriptblock\]::Create", "scriptblock injection"),
 ]
 
+FORBIDDEN_PACKAGE_MANAGER = re.compile(
+    r"(?im)(?:^|[;&|]\s*|&&\s*|\|\|\s*)\s*(?:command\s+)?"
+    r"(npm|npx|yarn)(?:\.(?:cmd|ps1|bat))?\b"
+)
+
 
 def scan(command: str, tool_name: str = "Bash") -> list[str]:
     issues = []
@@ -136,6 +141,11 @@ def scan(command: str, tool_name: str = "Bash") -> list[str]:
     for pattern, label in env_hijack:
         if re.search(pattern, command, re.IGNORECASE):
             issues.append(f"Environment hijack: {label}")
+
+    if FORBIDDEN_PACKAGE_MANAGER.search(command):
+        issues.append(
+            "Package manager policy: npm, npx, and yarn are forbidden; use pnpm/pnpm dlx or bun/bunx"
+        )
 
     return issues
 

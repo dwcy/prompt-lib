@@ -61,7 +61,7 @@ After writing CLAUDE.md, tell the user which specialist subagents are now availa
 
 ### For Frontend projects:
 - `@frontend-architect` — Component design, state management, performance patterns
-- `@react-architect` — React 2025 stack structure, component boundaries, config setup
+- `@react-architect` — Current stable React stack structure, component boundaries, config setup
 - `@tanstack-architect` — TanStack Start/Router/Query/Form/Table architecture, typed routes, URL state, cache boundaries
 - `@frontend-css` — CSS modules, global tokens, theming, visual structure
 

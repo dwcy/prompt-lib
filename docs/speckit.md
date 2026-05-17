@@ -1,4 +1,4 @@
-# Spec-kit — how it behaves in this repo
+﻿# Spec-kit — how it behaves in this repo
 
 Spec-kit is the spec-driven workflow this repo uses for any non-trivial feature: a chain of slash commands that walks from `spec.md` → `plan.md` → `tasks.md` → execution, with a constitution that gates each step. This document covers **the specific configuration shipped here** — not generic spec-kit usage.
 
@@ -45,7 +45,7 @@ specs/
 | I | **Spec-First Conformance** | NON-NEGOTIABLE. External protocols (A2A, MCP, JSON-RPC, OpenAPI) are authoritative. Deviations require an ADR. |
 | II | **Subagent Delegation** | Every `tasks.md` line must end with `Owner: @<agent>`. Specialists own their domains; `main` is allowed only when nothing else fits. v1.1.0 extends this with the parallel-isolation clause — concurrent writers require `isolation: "worktree"`. |
 | III | **Contract Tests Before Implementation** | Protocol surfaces must have contract tests written and observed failing *before* implementation. |
-| IV | **Reversible Config Changes** | Anything under `global/` must be deployable and revertable via `setup/apply.py`. |
+| IV | **Reversible Config Changes** | Anything under `global/` must be deployable and revertable via `setup/settings-configurator-ui.py`. |
 | V | **Minimal Skill & Agent Surface** | Don't add a new skill or agent if an existing one can be extended. Run `/review-conflicts` before adding. |
 
 Amendments require the `/speckit-constitution` slash command, a Sync Impact Report at the top of the file, a semver bump, and propagation to dependent templates.

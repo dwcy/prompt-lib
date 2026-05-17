@@ -1,6 +1,6 @@
 ---
 name: self-improvement
-description: Use when the user asks to improve future performance, review prior work, learn from mistakes, or maintain project memory. Captures lessons from user corrections, repeated issues, successful patterns, and newly-learned facts into local memory files under .claude/skills/self-improvement/memory/. Reviews memory before tasks and removes lessons that have become stale (e.g., a previously-failing tool now works). Never claims retraining of model weights.
+description: Invoke proactively after any user correction ("no", "don't", "wrong", "stop doing X") or after fixing a non-obvious bug. Also invoke when the user asks to improve future performance, review prior work, learn from mistakes, or maintain project memory. Captures lessons into .claude/skills/self-improvement/memory/. Never claims retraining of model weights.
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 ---
 

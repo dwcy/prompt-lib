@@ -1,0 +1,2584 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>prompt-lib — A4 infographic (v2)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper:   #FAF6EB;
+  --paper-2: #F1EBDC;
+  --ink:     #1A1726;
+  --ink-2:   #5B5468;
+  --ink-3:   #908A9C;
+  --rule:    #D9D3C2;
+  --rule-2:  #EAE3D1;
+  --accent:  #CC006B;
+  --accent-soft: #FBE7F0;
+  --teal:    #0F4A40;
+  --amber:   #B8870E;
+  --shadow:  0 1px 0 #D9D3C2;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; }
+html { color-scheme: light; }
+body {
+  font-family: "Inter", system-ui, sans-serif;
+  color: var(--ink);
+  background: #2F2A3B;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+/* ── A4 landscape sheet, scaled to fit viewport, no scroll ─────────────── */
+.sheet {
+  width: min(100vw, calc(100vh * 297 / 210));
+  aspect-ratio: 297 / 210;
+  background: var(--paper);
+  background-image:
+    radial-gradient(1px 1px at 30% 30%, rgba(26,23,38,0.04) 1px, transparent 0),
+    radial-gradient(1px 1px at 80% 70%, rgba(26,23,38,0.03) 1px, transparent 0);
+  background-size: 18px 18px, 22px 22px;
+  box-shadow: 0 24px 60px -20px rgba(0,0,0,0.5), 0 6px 14px -6px rgba(0,0,0,0.3);
+  position: relative;
+  container-type: size;
+  container-name: sheet;
+  overflow: hidden;
+  padding: 2.4cqh 2.6cqw;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  gap: 1.2cqh;
+  transform-origin: 0 0;
+  touch-action: none;
+  will-change: transform;
+}
+.sheet[data-zoomed] { cursor: grab; }
+.sheet[data-zoomed].dragging { cursor: grabbing; }
+
+@page { size: A4 landscape; margin: 0; }
+@media print {
+  body { background: white; }
+  .sheet { box-shadow: none; width: 100%; height: 100%; aspect-ratio: auto; }
+}
+
+/* ── Header ────────────────────────────────────────────────────────────── */
+.head {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 2.4fr);
+  gap: 2cqw;
+  align-items: end;
+  padding-bottom: 1cqh;
+  border-bottom: 1px solid var(--rule);
+}
+.brand h1 {
+  font-family: "Space Grotesk", "Inter", sans-serif;
+  font-weight: 700;
+  font-size: 4.6cqh;
+  line-height: 1;
+  letter-spacing: -0.025em;
+  margin: 0 0 0.7cqh;
+  color: var(--ink);
+}
+.brand h1 .accent { color: var(--accent); }
+.brand .tag {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 1.3cqh;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+.brand .tag .sep { color: var(--ink-3); margin: 0 .6ch; }
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.8cqw;
+  align-items: end;
+}
+.stat {
+  text-align: left;
+  padding: 0.6cqh 0.8cqw 0.4cqh;
+  border-left: 2px solid var(--accent);
+  background: linear-gradient(180deg, transparent, var(--paper-2));
+}
+.stat .n {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 700;
+  font-size: 4.4cqh;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+  font-feature-settings: "tnum" 1;
+}
+.stat .l {
+  display: block;
+  margin-top: 0.4cqh;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 1.05cqh;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+/* ── Track labels ──────────────────────────────────────────────────────── */
+.track {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.2cqw;
+}
+.track h2 {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 700;
+  font-size: 1.8cqh;
+  margin: 0;
+  padding: 0.4cqh 0;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 0.8cqw;
+  color: var(--ink);
+}
+.track h2 .num {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 1.3cqh;
+  color: var(--accent);
+  font-weight: 600;
+}
+.track h2::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--rule);
+}
+
+/* ── Body — A | B vertical split, each track is its own sub-grid ────────── */
+.tracks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 1.4cqw;
+  min-height: 0;
+}
+.track-col {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  grid-auto-rows: minmax(0, 1fr);
+  gap: 0.7cqh 0.7cqw;
+  min-height: 0;
+  align-content: stretch;
+}
+/* Span helpers — column widths and (optional) row heights ─────────────── */
+.cell.w-2 { grid-column: span 2; }
+.cell.w-3 { grid-column: span 3; }
+.cell.w-4 { grid-column: span 4; }
+.cell.w-6 { grid-column: span 6; }
+.cell.t-2 { grid-row: span 2; }
+/* Accent variants for visual variation without gradients ─────────────── */
+.cell.tinted          { background: var(--paper-2); }
+.cell.dark.tinted     { background: #221E33; border-color: #221E33; }
+.cell.framed          { border-width: 2px; border-color: var(--ink); }
+.cell.framed::before, .cell.framed::after { border-color: var(--ink); }
+.cell.accent-rail     { border-left: 3px solid var(--accent); padding-left: 1cqw; }
+.cell.dark.accent-rail { border-left: 3px solid var(--accent); }
+.cell {
+  position: relative;
+  padding: 1cqh 1.1cqw 0.8cqh;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  row-gap: 0.5cqh;
+  min-height: 0;
+  overflow: hidden;
+  font-feature-settings: "tnum" 1, "ss01" 1;
+}
+/* Blueprint corner ticks — subtle, accent. */
+.cell::before, .cell::after {
+  content: "";
+  position: absolute;
+  width: 0.8cqw; height: 0.6cqh;
+  border-color: var(--accent);
+  border-style: solid;
+  pointer-events: none;
+  opacity: 0.85;
+}
+.cell::before { top: -1px; left: -1px;  border-width: 1px 0 0 1px; }
+.cell::after  { bottom: -1px; right: -1px; border-width: 0 1px 1px 0; }
+
+.cell.dark {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+.cell.dark::before, .cell.dark::after { border-color: var(--accent); opacity: 1; }
+.cell.dark .sub, .cell.dark .desc { color: rgba(250,246,235,0.78); }
+.cell.dark .pill {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.16);
+  color: var(--paper);
+}
+.cell.dark .cell-foot {
+  color: rgba(250,246,235,0.55);
+  border-top-color: rgba(255,255,255,0.12);
+}
+.cell.dark .ladder li { color: var(--paper); }
+.cell.dark .ladder li::before { background: var(--accent); }
+.cell.dark .ladder li .k { color: rgba(250,246,235,0.65); }
+.cell.dark .kv .k { color: rgba(250,246,235,0.65); }
+
+/* ── Cell header (idx + title + badge) ─────────────────────────────────── */
+.cell .hdr {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  column-gap: 0.7cqw;
+  padding-bottom: 0.45cqh;
+  border-bottom: 1px solid var(--rule-2);
+}
+.cell.dark .hdr { border-bottom-color: rgba(255,255,255,0.14); }
+.cell .idx {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.95cqh;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.08em;
+}
+.cell .title {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 700;
+  font-size: 1.55cqh;
+  letter-spacing: -0.012em;
+  margin: 0;
+  line-height: 1;
+  color: inherit;
+}
+.cell .badge {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 700;
+  font-size: 2cqh;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  padding: 0.25cqh 0.55cqw;
+  background: var(--accent);
+  color: var(--paper);
+  border-radius: 2px;
+  min-width: 2.6cqw;
+  text-align: center;
+  font-feature-settings: "tnum" 1;
+}
+.cell .badge.small {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.9cqh;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 0.35cqh 0.5cqw;
+}
+.cell.dark .badge { background: var(--accent); color: var(--paper); }
+
+/* ── Subtitle (always present, 1 mono line) ────────────────────────────── */
+.cell .sub {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.92cqh;
+  letter-spacing: 0.04em;
+  color: var(--ink-2);
+  margin: 0;
+  line-height: 1.25;
+}
+.cell .desc {
+  font-size: 1.02cqh;
+  line-height: 1.32;
+  color: var(--ink-2);
+  margin: 0;
+}
+
+/* ── Cell body wrapper — fills remaining space ─────────────────────────── */
+.cell .body {
+  align-self: center;
+  min-height: 0;
+}
+
+/* ── Cell footer meta line ─────────────────────────────────────────────── */
+.cell .cell-foot {
+  display: flex;
+  align-items: center;
+  gap: 0.5cqw;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.78cqh;
+  font-weight: 500;
+  color: var(--ink-3);
+  letter-spacing: 0.02em;
+  border-top: 1px dotted var(--rule);
+  padding-top: 0.4cqh;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cell .cell-foot::before {
+  content: "↳";
+  color: var(--accent);
+  font-weight: 700;
+  flex: 0 0 auto;
+}
+
+/* ── Tiny components inside cells ──────────────────────────────────────── */
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4cqh 0.35cqw;
+  align-content: flex-start;
+  align-items: flex-start;
+}
+.pill {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.92cqh;
+  font-weight: 600;
+  padding: 0.35cqh 0.7cqw;
+  border: 1px solid var(--rule);
+  border-radius: 0;
+  color: var(--ink);
+  background: var(--paper-2);
+  white-space: nowrap;
+  line-height: 1.1;
+}
+.pill.accent { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.pill.flat   { background: transparent; }
+
+.bar {
+  display: grid;
+  gap: 0.35cqh;
+  position: relative;
+  padding-bottom: 0.25cqh;
+}
+.bar::after {
+  content: "";
+  position: absolute;
+  left: 6.5cqw; right: 2.6cqw;
+  bottom: 0;
+  height: 1px;
+  background: var(--rule);
+  opacity: 0.6;
+}
+.cell.dark .bar::after { background: rgba(255,255,255,0.16); }
+.bar .row {
+  display: grid;
+  grid-template-columns: 6cqw 1fr 2cqw;
+  align-items: center;
+  gap: 0.55cqw;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.88cqh;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.bar .row .lab {
+  color: var(--ink);
+  letter-spacing: 0.03em;
+}
+.cell.dark .bar .row .lab { color: var(--paper); }
+.bar .row .num {
+  color: var(--accent);
+  text-align: right;
+  font-weight: 700;
+  font-feature-settings: "tnum" 1;
+}
+.bar .track-line {
+  position: relative;
+  height: 0.75cqh;
+  background: var(--rule-2);
+  border-radius: 1px;
+}
+.cell.dark .bar .track-line { background: rgba(255,255,255,0.1); }
+.bar .track-line span {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  background: var(--accent);
+  border-radius: 1px;
+}
+.bar .row:nth-child(2n) .track-line span { background: var(--ink); }
+.cell.dark .bar .row:nth-child(2n) .track-line span { background: var(--paper); }
+.bar .row:nth-child(3n) .track-line span { background: var(--teal); }
+.bar .row:nth-child(4n) .track-line span { background: var(--amber); }
+
+.ladder {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45cqh;
+}
+.ladder li {
+  position: relative;
+  padding-left: 1.6ch;
+  font-size: 0.98cqh;
+  line-height: 1.3;
+  color: var(--ink);
+}
+.ladder li::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0.45em;
+  width: 0.9ch; height: 2px;
+  background: var(--accent);
+}
+.ladder li .k {
+  display: inline-block;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.82cqh;
+  color: var(--ink-2);
+  letter-spacing: 0.04em;
+  margin-bottom: 0.1cqh;
+}
+
+.flow {
+  display: grid;
+  grid-template-columns: 1fr 0.5cqw 1fr 0.5cqw 1fr;
+  align-items: stretch;
+  gap: 0.15cqw;
+}
+.flow .node {
+  text-align: center;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.88cqh;
+  font-weight: 600;
+  color: var(--ink);
+  padding: 0.6cqh 0.3cqw;
+  background: var(--paper-2);
+  border: 1px solid var(--rule);
+  line-height: 1.2;
+  display: grid;
+  place-items: center;
+}
+.cell.dark .flow .node {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.18);
+  color: var(--paper);
+}
+.flow .arr {
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 1.2cqh;
+}
+
+.kv {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.45cqh 0.7cqw;
+  font-size: 0.95cqh;
+  align-items: baseline;
+}
+.kv .k {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.82cqh;
+  color: var(--ink-2);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.kv .v { color: var(--ink); line-height: 1.3; }
+.cell.dark .kv .v { color: var(--paper); }
+.cell.dark .kv .k { color: rgba(250,246,235,0.65); }
+
+/* ── Specific cells ────────────────────────────────────────────────────── */
+.lifecycle-mini {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.3cqw;
+  position: relative;
+}
+.lifecycle-mini::before {
+  content: "";
+  position: absolute;
+  top: 0.85cqh;
+  left: 8%; right: 8%;
+  height: 2px;
+  background: var(--accent);
+  opacity: 0.85;
+}
+.cell.dark .lifecycle-mini::before { opacity: 1; }
+.lifecycle-mini .beat { text-align: center; position: relative; }
+.lifecycle-mini .dot {
+  width: 1.4cqh;
+  height: 1.4cqh;
+  border-radius: 50%;
+  background: var(--accent);
+  margin: 0.15cqh auto 0.5cqh;
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 0 0 0.35cqh var(--paper);
+}
+.cell.dark .lifecycle-mini .dot { box-shadow: 0 0 0 0.35cqh var(--ink); }
+.lifecycle-mini .lab {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.78cqh;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.1;
+  letter-spacing: 0.03em;
+}
+.cell.dark .lifecycle-mini .lab { color: var(--paper); }
+
+.iso-mini {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5cqw;
+}
+.iso-mini .col {
+  padding: 0.55cqh 0.65cqw;
+  border: 1px solid var(--rule);
+  background: var(--paper-2);
+  font-size: 0.85cqh;
+  font-family: "JetBrains Mono", monospace;
+  line-height: 1.3;
+  color: var(--ink);
+}
+.cell.dark .iso-mini .col {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.18);
+  color: var(--paper);
+}
+.iso-mini .col.bad  { border-left: 3px solid #B83A2C; }
+.iso-mini .col.good { border-left: 3px solid var(--teal); }
+.cell.dark .iso-mini .col.good { border-left-color: #6CE5A0; }
+.iso-mini .col .h {
+  display: flex; align-items: center; gap: 0.4ch;
+  font-weight: 700;
+  margin-bottom: 0.25cqh;
+  font-size: 0.92cqh;
+}
+.iso-mini .col.bad  .h::before { content: "✗"; color: #B83A2C; font-weight: 900; }
+.iso-mini .col.good .h::before { content: "✓"; color: var(--teal); font-weight: 900; }
+.cell.dark .iso-mini .col.good .h::before { color: #6CE5A0; }
+
+.wire-mini {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4cqw;
+  align-items: center;
+}
+.wire-mini .end {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.92cqh;
+  font-weight: 700;
+  text-align: center;
+  padding: 0.5cqh 0.3cqw;
+  background: var(--paper-2);
+  border: 1px solid var(--rule);
+  color: var(--ink);
+}
+.cell.dark .wire-mini .end {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.18);
+  color: var(--paper);
+}
+.wire-mini .lanes {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 0.25cqh;
+  margin-top: 0.3cqh;
+  padding-top: 0.4cqh;
+  border-top: 1px dotted var(--rule);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.82cqh;
+}
+.cell.dark .wire-mini .lanes { border-top-color: rgba(255,255,255,0.18); }
+.wire-mini .lanes div {
+  display: grid;
+  grid-template-columns: 1.4ch 1fr auto;
+  gap: 0.5cqw;
+  align-items: center;
+  color: var(--ink-2);
+}
+.cell.dark .wire-mini .lanes div { color: rgba(250,246,235,0.78); }
+.wire-mini .lanes div .dir { color: var(--accent); font-weight: 700; }
+.wire-mini .lanes div .meta { color: var(--ink-3); }
+.cell.dark .wire-mini .lanes div .meta { color: rgba(250,246,235,0.5); }
+
+.orch-mini {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.3cqw;
+}
+.orch-mini .step {
+  text-align: center;
+  padding: 0.55cqh 0.2cqw;
+  border: 1px solid var(--rule);
+  background: var(--paper-2);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.78cqh;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.2;
+}
+.cell.dark .orch-mini .step {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.18);
+  color: var(--paper);
+}
+.orch-mini .step .ord {
+  display: block;
+  color: var(--accent);
+  font-size: 0.8cqh;
+  font-weight: 700;
+  margin-bottom: 0.2cqh;
+  letter-spacing: 0.05em;
+}
+
+.deploy-mini {
+  display: grid;
+  grid-template-columns: 1fr 0.8cqw 1fr 0.8cqw 1fr;
+  align-items: stretch;
+  gap: 0.25cqw;
+}
+.deploy-mini .b {
+  text-align: center;
+  padding: 0.6cqh 0.35cqw;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.9cqh;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--paper-2);
+  border: 1px solid var(--rule);
+  line-height: 1.2;
+  display: grid;
+  place-items: center;
+}
+.cell.dark .deploy-mini .b {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.18);
+  color: var(--paper);
+}
+.deploy-mini .b.mid {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--paper);
+}
+.cell.dark .deploy-mini .b.mid { background: var(--accent); color: var(--paper); }
+.deploy-mini .arr {
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 1.1cqh;
+}
+
+.gates-row {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.3cqw;
+}
+.gates-row .gx {
+  text-align: center;
+  padding: 0.55cqh 0.15cqw;
+  border: 1px solid var(--rule);
+  background: var(--paper-2);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.9cqh;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1;
+  display: grid;
+  align-content: center;
+  gap: 0.2cqh;
+}
+.cell.dark .gates-row .gx {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.18);
+  color: var(--paper);
+}
+.gates-row .gx.new {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--paper);
+}
+.cell.dark .gates-row .gx.new { background: var(--accent); color: var(--paper); }
+.gates-row .gx .lab {
+  display: block;
+  font-size: 0.62cqh;
+  font-weight: 500;
+  color: var(--ink-2);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.cell.dark .gates-row .gx .lab { color: rgba(250,246,235,0.6); }
+.gates-row .gx.new .lab { color: rgba(250,246,235,0.85); }
+
+/* ── Footer ────────────────────────────────────────────────────────────── */
+.foot {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 1cqw;
+  padding-top: 0.8cqh;
+  border-top: 1px solid var(--rule);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 1cqh;
+  color: var(--ink-2);
+}
+.foot .url { color: var(--ink); font-weight: 600; }
+.foot .mid {
+  text-align: center;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.06em;
+}
+.foot .right { text-align: right; }
+
+/* ── Multi-sheet deck + pager ──────────────────────────────────────────── */
+.deck { display: contents; }
+.sheet:not(.active) { display: none; }
+
+.pager {
+  position: fixed;
+  bottom: 14px;
+  right: 18px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(250,246,235,0.6);
+  letter-spacing: 0.08em;
+  user-select: none;
+}
+.pager .dots {
+  display: flex;
+  gap: 6px;
+}
+.pager .dot {
+  width: 6px;
+  height: 6px;
+  background: rgba(250,246,235,0.25);
+  cursor: pointer;
+  transition: background 0.12s ease, transform 0.12s ease;
+}
+.pager .dot.active {
+  background: var(--accent);
+  transform: scale(1.4);
+}
+.pager .keys {
+  opacity: 0.5;
+  letter-spacing: 0.1em;
+}
+@media print { .pager { display: none; } }
+</style>
+</head>
+
+<body>
+
+<div class="deck">
+
+<div class="sheet active" data-idx="1" role="img" aria-label="prompt-lib feature infographic — UI features (1 of 6)">
+
+  <!-- ─── Header ─── -->
+  <div class="head">
+    <div class="brand">
+      <h1>prompt-lib <span class="accent">/</span> the harness</h1>
+      <div class="tag">
+        Claude Code configuration library<span class="sep">·</span>v1.1.0<span class="sep">·</span>single-page reference
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="n">14</span><span class="l">agents</span></div>
+      <div class="stat"><span class="n">37</span><span class="l">commands</span></div>
+      <div class="stat"><span class="n">8</span><span class="l">mcp</span></div>
+      <div class="stat"><span class="n">5</span><span class="l">hooks</span></div>
+      <div class="stat"><span class="n">2</span><span class="l">services</span></div>
+      <div class="stat"><span class="n">6</span><span class="l">gates</span></div>
+    </div>
+  </div>
+
+  <!-- ─── Track labels ─── -->
+  <div class="track">
+    <h2><span class="num">A</span>UI features</h2>
+    <h2><span class="num">B</span>Behind the scenes</h2>
+  </div>
+
+  <!-- ─── Two-column body: A track left, B track right ─── -->
+  <div class="tracks">
+
+    <!-- ╞══ A · UI features ═══════════════════════════════════════════════╡ -->
+    <div class="track-col">
+
+      <!-- Wide bar chart — Agents -->
+      <div class="cell w-4">
+        <div class="hdr">
+          <span class="idx">A·01</span>
+          <h3 class="title">@-Agents</h3>
+          <span class="badge">14</span>
+        </div>
+        <p class="sub">specialists routed by description match</p>
+        <div class="body">
+          <div class="bar">
+            <div class="row"><span class="lab">architect</span><div class="track-line"><span style="width:50%"></span></div><span class="num">7</span></div>
+            <div class="row"><span class="lab">auditor</span><div class="track-line"><span style="width:21%"></span></div><span class="num">3</span></div>
+            <div class="row"><span class="lab">bootstrap</span><div class="track-line"><span style="width:14%"></span></div><span class="num">2</span></div>
+            <div class="row"><span class="lab">tester</span><div class="track-line"><span style="width:14%"></span></div><span class="num">2</span></div>
+          </div>
+        </div>
+        <div class="cell-foot">global/agents/*.md · invoke with @</div>
+      </div>
+
+      <!-- Compact lifecycle — Hooks (accent-rail variant) -->
+      <div class="cell w-2 accent-rail">
+        <div class="hdr">
+          <span class="idx">A·02</span>
+          <h3 class="title">Hooks</h3>
+          <span class="badge">5</span>
+        </div>
+        <p class="sub">lifecycle scripts</p>
+        <div class="body">
+          <div class="lifecycle-mini">
+            <div class="beat"><div class="dot"></div><div class="lab">Start</div></div>
+            <div class="beat"><div class="dot"></div><div class="lab">Pre</div></div>
+            <div class="beat"><div class="dot"></div><div class="lab">Post</div></div>
+            <div class="beat"><div class="dot"></div><div class="lab">Stop</div></div>
+          </div>
+        </div>
+        <div class="cell-foot">global/hooks/</div>
+      </div>
+
+      <!-- Wide bar chart — Slash commands -->
+      <div class="cell w-4">
+        <div class="hdr">
+          <span class="idx">A·03</span>
+          <h3 class="title">Slash commands</h3>
+          <span class="badge">37</span>
+        </div>
+        <p class="sub">across six categories</p>
+        <div class="body">
+          <div class="bar">
+            <div class="row"><span class="lab">spec-kit</span><div class="track-line"><span style="width:80%"></span></div><span class="num">14</span></div>
+            <div class="row"><span class="lab">frontend</span><div class="track-line"><span style="width:46%"></span></div><span class="num">8</span></div>
+            <div class="row"><span class="lab">git</span><div class="track-line"><span style="width:35%"></span></div><span class="num">6</span></div>
+            <div class="row"><span class="lab">safety</span><div class="track-line"><span style="width:23%"></span></div><span class="num">4</span></div>
+          </div>
+        </div>
+        <div class="cell-foot">global/skills/*.md · invoke with /</div>
+      </div>
+
+      <!-- Compact pills — MCP -->
+      <div class="cell w-2">
+        <div class="hdr">
+          <span class="idx">A·04</span>
+          <h3 class="title">MCP</h3>
+          <span class="badge">8</span>
+        </div>
+        <p class="sub">external tool surfaces</p>
+        <div class="body">
+          <div class="pills">
+            <span class="pill">github</span>
+            <span class="pill">figma</span>
+            <span class="pill">supabase</span>
+            <span class="pill">azure-devops</span>
+            <span class="pill">obsidian</span>
+            <span class="pill">playwright</span>
+            <span class="pill">docker</span>
+            <span class="pill">context7</span>
+          </div>
+        </div>
+        <div class="cell-foot">settings.json · mcpServers</div>
+      </div>
+
+      <!-- Full-width emphasis — Wizard (tinted) -->
+      <div class="cell w-6 tinted">
+        <div class="hdr">
+          <span class="idx">A·05</span>
+          <h3 class="title">Setup wizard</h3>
+          <span class="badge small">2 MODES</span>
+        </div>
+        <p class="sub">Textual TUI · same code, two distributions</p>
+        <div class="body">
+          <div class="kv">
+            <span class="k">terminal</span><span class="v">python setup/settings-configurator-ui.py</span>
+            <span class="k">standalone</span><span class="v">HextravagantSetup.exe — 40 MiB · no Python required on host</span>
+          </div>
+        </div>
+        <div class="cell-foot">setup/ · build via setup/build/build_exe.py</div>
+      </div>
+
+      <!-- Three small pill cards in row 4 -->
+      <div class="cell w-2">
+        <div class="hdr">
+          <span class="idx">A·06</span>
+          <h3 class="title">Templates</h3>
+          <span class="badge">6</span>
+        </div>
+        <p class="sub">stack-aware CLAUDE.md</p>
+        <div class="body">
+          <div class="pills">
+            <span class="pill">dotnet</span>
+            <span class="pill">python</span>
+            <span class="pill">frontend</span>
+            <span class="pill">monorepo</span>
+            <span class="pill">unity</span>
+            <span class="pill">other</span>
+          </div>
+        </div>
+        <div class="cell-foot">global/project-templates/</div>
+      </div>
+
+      <div class="cell w-2">
+        <div class="hdr">
+          <span class="idx">A·07</span>
+          <h3 class="title">Styles</h3>
+          <span class="badge">4</span>
+        </div>
+        <p class="sub">response shape modes</p>
+        <div class="body">
+          <div class="pills">
+            <span class="pill">architect</span>
+            <span class="pill">concise</span>
+            <span class="pill">review</span>
+            <span class="pill">technical</span>
+          </div>
+        </div>
+        <div class="cell-foot">global/output-styles/</div>
+      </div>
+
+      <div class="cell w-2">
+        <div class="hdr">
+          <span class="idx">A·08</span>
+          <h3 class="title">Rules</h3>
+          <span class="badge">4</span>
+        </div>
+        <p class="sub">path-conditional context</p>
+        <div class="body">
+          <div class="pills">
+            <span class="pill">csharp</span>
+            <span class="pill">react</span>
+            <span class="pill">tests</span>
+            <span class="pill">typescript</span>
+          </div>
+        </div>
+        <div class="cell-foot">global/rules/</div>
+      </div>
+
+    </div>
+
+    <!-- ╞══ B · Behind the scenes ════════════════════════════════════════╡ -->
+    <div class="track-col">
+
+      <!-- Routing flow -->
+      <div class="cell dark w-3">
+        <div class="hdr">
+          <span class="idx">B·01</span>
+          <h3 class="title">Description routing</h3>
+          <span class="badge small">AUTO</span>
+        </div>
+        <p class="sub">no magic — every description: is the trigger</p>
+        <div class="body">
+          <div class="flow">
+            <div class="node">user<br>msg</div>
+            <div class="arr">›</div>
+            <div class="node">scan<br>descriptions</div>
+            <div class="arr">›</div>
+            <div class="node">pick<br>+ invoke</div>
+          </div>
+        </div>
+        <div class="cell-foot">frontmatter · agent + skill</div>
+      </div>
+
+      <!-- Isolation diagram -->
+      <div class="cell dark w-3 accent-rail">
+        <div class="hdr">
+          <span class="idx">B·02</span>
+          <h3 class="title">Parallel isolation</h3>
+          <span class="badge small">G6</span>
+        </div>
+        <p class="sub">concurrent writers need a worktree each</p>
+        <div class="body">
+          <div class="iso-mini">
+            <div class="col bad"><div class="h">shared</div>last write wins · diff lost</div>
+            <div class="col good"><div class="h">worktree</div>isolation: "worktree" · clean merge</div>
+          </div>
+        </div>
+        <div class="cell-foot">docs/parallel-isolation.md</div>
+      </div>
+
+      <!-- Wide Gates row -->
+      <div class="cell dark w-4">
+        <div class="hdr">
+          <span class="idx">B·03</span>
+          <h3 class="title">Constitution gates</h3>
+          <span class="badge">6</span>
+        </div>
+        <p class="sub">checked by /speckit-plan before Phase 0</p>
+        <div class="body">
+          <div class="gates-row">
+            <div class="gx">G1<span class="lab">spec</span></div>
+            <div class="gx">G2<span class="lab">deleg</span></div>
+            <div class="gx">G3<span class="lab">ctest</span></div>
+            <div class="gx">G4<span class="lab">rev</span></div>
+            <div class="gx">G5<span class="lab">surf</span></div>
+            <div class="gx new">G6<span class="lab">new</span></div>
+          </div>
+        </div>
+        <div class="cell-foot">.specify/memory/constitution.md · v1.1.0</div>
+      </div>
+
+      <!-- Tight Memory tiers -->
+      <div class="cell dark w-2">
+        <div class="hdr">
+          <span class="idx">B·04</span>
+          <h3 class="title">Memory</h3>
+          <span class="badge">2</span>
+        </div>
+        <p class="sub">two tiers, one rule</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">~/.claude</span>auto: user · feedback · project · reference</li>
+            <li><span class="k">.claude/skills/self-improvement</span>project: lessons · mistakes · prefs</li>
+          </ul>
+        </div>
+        <div class="cell-foot">hard-delete on stale</div>
+      </div>
+
+      <!-- A2A wire -->
+      <div class="cell dark w-3">
+        <div class="hdr">
+          <span class="idx">B·05</span>
+          <h3 class="title">A2A bridge</h3>
+          <span class="badge small">JSON-RPC</span>
+        </div>
+        <p class="sub">local HTTP — Claude delegates to peer CLI</p>
+        <div class="body">
+          <div class="wire-mini">
+            <div class="end">orchestrator</div>
+            <div class="end">peer CLI</div>
+            <div class="lanes">
+              <div><span class="dir">▶</span><span>tasks.send</span><span class="meta">POST</span></div>
+              <div><span class="dir">◀</span><span>task.state</span><span class="meta">SSE</span></div>
+              <div><span class="dir">◀</span><span>task.artifact</span><span class="meta">SSE</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="cell-foot">services/a2a-bridge/ · spec 001</div>
+      </div>
+
+      <!-- Conventions ladder -->
+      <div class="cell dark w-3 accent-rail">
+        <div class="hdr">
+          <span class="idx">B·06</span>
+          <h3 class="title">Conventions</h3>
+          <span class="badge">3</span>
+        </div>
+        <p class="sub">house rules enforced automatically</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">commits</span>conventional types · author via -c flags</li>
+            <li><span class="k">branches</span>refuse on main · feature branch first</li>
+            <li><span class="k">tasks.md</span>**Status**: ⬜🟡✅ (M/N — T###)</li>
+          </ul>
+        </div>
+        <div class="cell-foot">global/CLAUDE.md · /git enforces</div>
+      </div>
+
+      <!-- Wide Orchestrator -->
+      <div class="cell dark w-4 tinted">
+        <div class="hdr">
+          <span class="idx">B·07</span>
+          <h3 class="title">Orchestrator</h3>
+          <span class="badge">5</span>
+        </div>
+        <p class="sub">watches GitHub · triages · notifies your phone</p>
+        <div class="body">
+          <div class="orch-mini">
+            <div class="step"><span class="ord">01</span>gh list</div>
+            <div class="step"><span class="ord">02</span>trigger</div>
+            <div class="step"><span class="ord">03</span>delegate</div>
+            <div class="step"><span class="ord">04</span>comment</div>
+            <div class="step"><span class="ord">05</span>ntfy</div>
+          </div>
+        </div>
+        <div class="cell-foot">services/orchestrator/ · specs 002 + 003</div>
+      </div>
+
+      <!-- Tight Deploy -->
+      <div class="cell dark w-2">
+        <div class="hdr">
+          <span class="idx">B·08</span>
+          <h3 class="title">Deploy</h3>
+          <span class="badge small">REV</span>
+        </div>
+        <p class="sub">repo → wizard → ~/.claude</p>
+        <div class="body">
+          <div class="deploy-mini">
+            <div class="b">global/</div>
+            <div class="arr">›</div>
+            <div class="b mid">apply</div>
+            <div class="arr">›</div>
+            <div class="b">~/.claude</div>
+          </div>
+        </div>
+        <div class="cell-foot">setup/settings-configurator-ui.py</div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ─── Footer ─── -->
+  <div class="foot">
+    <div class="left">prompt-lib · <span class="url">github.com/Dawid/prompt-lib</span></div>
+    <div class="mid">A · UI FEATURES   ┃   B · BEHIND</div>
+    <div class="right">sheet 1 / 6 · UI features</div>
+  </div>
+
+</div>
+<!-- ════ END SHEET 1 — Overview ═══════════════════════════════════════════ -->
+
+
+<!-- ════ SHEET 2 — How it composes ════════════════════════════════════════ -->
+<div class="sheet" data-idx="2" role="img" aria-label="prompt-lib infographic — how it composes (2 of 6)">
+
+  <div class="head">
+    <div class="brand">
+      <h1>prompt-lib <span class="accent">/</span> how it composes</h1>
+      <div class="tag">workflows<span class="sep">·</span>multi-agent recipes<span class="sep">·</span>sheet 2/6</div>
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="n">8</span><span class="l">recipes</span></div>
+      <div class="stat"><span class="n">14</span><span class="l">agents</span></div>
+      <div class="stat"><span class="n">5</span><span class="l">hooks</span></div>
+      <div class="stat"><span class="n">3</span><span class="l">auditors</span></div>
+      <div class="stat"><span class="n">2</span><span class="l">services</span></div>
+      <div class="stat"><span class="n">6</span><span class="l">gates</span></div>
+    </div>
+  </div>
+
+  <div class="track">
+    <h2><span class="num">A</span>Named workflows</h2>
+    <h2><span class="num">B</span>Composition primitives</h2>
+  </div>
+
+  <div class="tracks">
+
+    <div class="track-col">
+
+      <div class="cell w-3">
+        <div class="hdr"><span class="idx">A·01</span><h3 class="title">Bootstrap project</h3><span class="badge">4</span></div>
+        <p class="sub">empty dir → ready-to-code workspace</p>
+        <div class="body">
+          <div class="flow">
+            <div class="node">@init-<br>project</div>
+            <div class="arr">›</div>
+            <div class="node">@arch-<br>itect</div>
+            <div class="arr">›</div>
+            <div class="node">/git<br>init</div>
+          </div>
+        </div>
+        <div class="cell-foot">writes CLAUDE.md · auto-routes specialist</div>
+      </div>
+
+      <div class="cell w-3 accent-rail">
+        <div class="hdr"><span class="idx">A·02</span><h3 class="title">Spec-kit feature</h3><span class="badge">7</span></div>
+        <p class="sub">single-session spec-driven implementation</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">phase 1</span>/speckit-specify → spec.md</li>
+            <li><span class="k">phase 2</span>/speckit-plan → constitution check</li>
+            <li><span class="k">phase 3</span>/speckit-tasks → tasks.md</li>
+            <li><span class="k">phase 4</span>/speckit-implement → @verifier</li>
+          </ul>
+        </div>
+        <div class="cell-foot">specs/&lt;feature&gt;/ · gates G1–G6</div>
+      </div>
+
+      <div class="cell w-4">
+        <div class="hdr"><span class="idx">A·03</span><h3 class="title">Daily commit</h3><span class="badge">5</span></div>
+        <p class="sub">staged → audited → committed → PR'd</p>
+        <div class="body">
+          <div class="orch-mini">
+            <div class="step"><span class="ord">01</span>stage</div>
+            <div class="step"><span class="ord">02</span>secret</div>
+            <div class="step"><span class="ord">03</span>gitignore</div>
+            <div class="step"><span class="ord">04</span>commit</div>
+            <div class="step"><span class="ord">05</span>pr</div>
+          </div>
+        </div>
+        <div class="cell-foot">/git · /pr · @secret-auditor · @gitignore-auditor</div>
+      </div>
+
+      <div class="cell w-2">
+        <div class="hdr"><span class="idx">A·04</span><h3 class="title">UI component</h3><span class="badge">4</span></div>
+        <p class="sub">design → code → test → review</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">/design</span>load design tokens</li>
+            <li><span class="k">/ui-component</span>build component</li>
+            <li><span class="k">/react-test</span>vitest + RTL</li>
+            <li><span class="k">/react-review</span>quality pass</li>
+          </ul>
+        </div>
+        <div class="cell-foot">global/skills/</div>
+      </div>
+
+      <div class="cell w-3">
+        <div class="hdr"><span class="idx">A·05</span><h3 class="title">Multi-agent triage</h3><span class="badge">5</span></div>
+        <p class="sub">orchestrator daemon flow</p>
+        <div class="body">
+          <div class="orch-mini">
+            <div class="step"><span class="ord">01</span>poll</div>
+            <div class="step"><span class="ord">02</span>trigger</div>
+            <div class="step"><span class="ord">03</span>a2a</div>
+            <div class="step"><span class="ord">04</span>comment</div>
+            <div class="step"><span class="ord">05</span>ntfy</div>
+          </div>
+        </div>
+        <div class="cell-foot">services/orchestrator/</div>
+      </div>
+
+      <div class="cell w-3">
+        <div class="hdr"><span class="idx">A·06</span><h3 class="title">Onboarding</h3><span class="badge small">AUTO</span></div>
+        <p class="sub">cold session warms up automatically</p>
+        <div class="body">
+          <div class="flow">
+            <div class="node">claude<br>cmd</div>
+            <div class="arr">›</div>
+            <div class="node">Session<br>Start hook</div>
+            <div class="arr">›</div>
+            <div class="node">@load-<br>project</div>
+          </div>
+        </div>
+        <div class="cell-foot">global/hooks/session-start.ps1</div>
+      </div>
+
+      <div class="cell w-3">
+        <div class="hdr"><span class="idx">A·07</span><h3 class="title">Pick up &amp; ship</h3><span class="badge">4</span></div>
+        <p class="sub">resume an existing branch</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">/git</span>status · resume work</li>
+            <li><span class="k">/review</span>self-review pass</li>
+            <li><span class="k">/finishing-a-branch</span>final commit</li>
+            <li><span class="k">/pr</span>open the PR</li>
+          </ul>
+        </div>
+        <div class="cell-foot">global/skills/</div>
+      </div>
+
+      <div class="cell w-3 tinted">
+        <div class="hdr"><span class="idx">A·08</span><h3 class="title">Parallel split</h3><span class="badge small">G6</span></div>
+        <p class="sub">full-stack feature, two agents at once</p>
+        <div class="body">
+          <div class="iso-mini">
+            <div class="col bad"><div class="h">shared</div>writes clobber each other</div>
+            <div class="col good"><div class="h">worktrees</div>each agent gets its own tree</div>
+          </div>
+        </div>
+        <div class="cell-foot">docs/parallel-isolation.md</div>
+      </div>
+
+    </div>
+
+    <div class="track-col">
+
+      <div class="cell dark w-3">
+        <div class="hdr"><span class="idx">B·01</span><h3 class="title">Architect + tester</h3><span class="badge">2</span></div>
+        <p class="sub">pair pattern — same stack, opposite role</p>
+        <div class="body">
+          <div class="flow">
+            <div class="node">@arch-<br>itect</div>
+            <div class="arr">›</div>
+            <div class="node">scaffold<br>+ types</div>
+            <div class="arr">›</div>
+            <div class="node">@tester<br>writes</div>
+          </div>
+        </div>
+        <div class="cell-foot">global/agents/&lt;stack&gt;-{architect,tester}</div>
+      </div>
+
+      <div class="cell dark w-3 accent-rail">
+        <div class="hdr"><span class="idx">B·02</span><h3 class="title">Auditor pattern</h3><span class="badge">3</span></div>
+        <p class="sub">read-only, advisory output</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">@code-plan-verifier</span>plan ↔ code drift</li>
+            <li><span class="k">@gitignore-auditor</span>staged-file scan</li>
+            <li><span class="k">@secret-auditor</span>credential scan</li>
+          </ul>
+        </div>
+        <div class="cell-foot">no Write / Edit · human decides</div>
+      </div>
+
+      <div class="cell dark w-3">
+        <div class="hdr"><span class="idx">B·03</span><h3 class="title">Skill → agent → skill</h3><span class="badge">3</span></div>
+        <p class="sub">slash command bootstraps a subagent</p>
+        <div class="body">
+          <div class="flow">
+            <div class="node">/skill<br>(orchestrate)</div>
+            <div class="arr">›</div>
+            <div class="node">@agent<br>(focused work)</div>
+            <div class="arr">›</div>
+            <div class="node">/skill<br>(commit/PR)</div>
+          </div>
+        </div>
+        <div class="cell-foot">main thread stays clean</div>
+      </div>
+
+      <div class="cell dark w-3">
+        <div class="hdr"><span class="idx">B·04</span><h3 class="title">Hook gating</h3><span class="badge small">BLOCK</span></div>
+        <p class="sub">PreToolUse can refuse a tool call</p>
+        <div class="body">
+          <div class="iso-mini">
+            <div class="col good"><div class="h">safe call</div>passes guards · executes</div>
+            <div class="col bad"><div class="h">unsafe</div>blocked · message returned</div>
+          </div>
+        </div>
+        <div class="cell-foot">global/hooks/{command,file_write}_guard.py</div>
+      </div>
+
+      <div class="cell dark w-3">
+        <div class="hdr"><span class="idx">B·05</span><h3 class="title">Memory loop</h3><span class="badge">3</span></div>
+        <p class="sub">post-task → updated context next time</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">trigger</span>user correction or success</li>
+            <li><span class="k">capture</span>add to lessons / mistakes</li>
+            <li><span class="k">replay</span>future tasks see the lesson</li>
+          </ul>
+        </div>
+        <div class="cell-foot">.claude/skills/self-improvement/</div>
+      </div>
+
+      <div class="cell dark w-3 accent-rail">
+        <div class="hdr"><span class="idx">B·06</span><h3 class="title">Parallel dispatch</h3><span class="badge small">G6</span></div>
+        <p class="sub">isolation: "worktree" on Agent tool call</p>
+        <div class="body">
+          <div class="flow">
+            <div class="node">dispatcher</div>
+            <div class="arr">›</div>
+            <div class="node">git<br>worktree add</div>
+            <div class="arr">›</div>
+            <div class="node">agent in<br>isolated tree</div>
+          </div>
+        </div>
+        <div class="cell-foot">Constitution v1.1.0 · Gate 6</div>
+      </div>
+
+      <div class="cell dark w-4 tinted">
+        <div class="hdr"><span class="idx">B·07</span><h3 class="title">Spec-driven loop</h3><span class="badge">6</span></div>
+        <p class="sub">constitution gates every plan</p>
+        <div class="body">
+          <div class="gates-row">
+            <div class="gx">G1<span class="lab">spec</span></div>
+            <div class="gx">G2<span class="lab">deleg</span></div>
+            <div class="gx">G3<span class="lab">ctest</span></div>
+            <div class="gx">G4<span class="lab">rev</span></div>
+            <div class="gx">G5<span class="lab">surf</span></div>
+            <div class="gx new">G6<span class="lab">new</span></div>
+          </div>
+        </div>
+        <div class="cell-foot">.specify/memory/constitution.md</div>
+      </div>
+
+      <div class="cell dark w-2">
+        <div class="hdr"><span class="idx">B·08</span><h3 class="title">Reversible deploy</h3><span class="badge small">G4</span></div>
+        <p class="sub">repo → wizard → home</p>
+        <div class="body">
+          <div class="deploy-mini">
+            <div class="b">global/</div>
+            <div class="arr">›</div>
+            <div class="b mid">wizard</div>
+            <div class="arr">›</div>
+            <div class="b">~/.claude</div>
+          </div>
+        </div>
+        <div class="cell-foot">timestamped backups</div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="foot">
+    <div class="left">prompt-lib · <span class="url">github.com/Dawid/prompt-lib</span></div>
+    <div class="mid">A · WORKFLOWS   ┃   B · PRIMITIVES</div>
+    <div class="right">sheet 2 / 6 · how it composes</div>
+  </div>
+
+</div>
+<!-- ════ END SHEET 2 ══════════════════════════════════════════════════════ -->
+
+
+<!-- ════ SHEET 3 — Agents deep-dive ═══════════════════════════════════════ -->
+<div class="sheet" data-idx="3" role="img" aria-label="prompt-lib infographic — agents deep-dive (3 of 6)">
+
+  <div class="head">
+    <div class="brand">
+      <h1>prompt-lib <span class="accent">/</span> 14 specialists</h1>
+      <div class="tag">subagents · routing · tool restrictions<span class="sep">·</span>sheet 3/6</div>
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="n">14</span><span class="l">agents</span></div>
+      <div class="stat"><span class="n">7</span><span class="l">architects</span></div>
+      <div class="stat"><span class="n">2</span><span class="l">testers</span></div>
+      <div class="stat"><span class="n">3</span><span class="l">auditors</span></div>
+      <div class="stat"><span class="n">2</span><span class="l">bootstrap</span></div>
+      <div class="stat"><span class="n">6</span><span class="l">stacks</span></div>
+    </div>
+  </div>
+
+  <div class="track">
+    <h2><span class="num">A</span>The roster</h2>
+    <h2><span class="num">B</span>How they work</h2>
+  </div>
+
+  <div class="tracks">
+
+    <div class="track-col">
+
+      <div class="cell w-3">
+        <div class="hdr"><span class="idx">A·01</span><h3 class="title">Project bootstrap</h3><span class="badge">2</span></div>
+        <p class="sub">cold-start specialists</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">@init-project</span>new dir · writes CLAUDE.md</li>
+            <li><span class="k">@load-project</span>existing dir · reads context</li>
+          </ul>
+        </div>
+        <div class="cell-foot">global/agents/{init,load}-project.md</div>
+      </div>
+
+      <div class="cell w-3">
+        <div class="hdr"><span class="idx">A·02</span><h3 class="title">.NET</h3><span class="badge">2</span></div>
+        <p class="sub">Clean Arch · CQRS · xUnit</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">@dotnet-architect</span>structure, DI, services</li>
+            <li><span class="k">@dotnet-tester</span>xUnit, TestContainers</li>
+          </ul>
+        </div>
+        <div class="cell-foot">global/agents/dotnet-*.md</div>
+      </div>
+
+      <div class="cell w-3">
+        <div class="hdr"><span class="idx">A·03</span><h3 class="title">Python</h3><span class="badge">2</span></div>
+        <p class="sub">FastAPI / Django · pytest</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">@python-architect</span>async · DI · sessions</li>
+            <li><span class="k">@python-tester</span>pytest · fixtures · DB</li>
+          </ul>
+        </div>
+        <div class="cell-foot">global/agents/python-*.md</div>
+      </div>
+
+      <div class="cell w-3 accent-rail">
+        <div class="hdr"><span class="idx">A·04</span><h3 class="title">Frontend stacks</h3><span class="badge">4</span></div>
+        <p class="sub">stack-specific architects</p>
+        <div class="body">
+          <div class="pills">
+            <span class="pill">react-architect</span>
+            <span class="pill">tanstack-architect</span>
+            <span class="pill">frontend-architect</span>
+            <span class="pill">frontend-css</span>
+          </div>
+        </div>
+        <div class="cell-foot">global/agents/{react,tanstack,frontend}-*.md</div>
+      </div>
+
+      <div class="cell w-2">
+        <div class="hdr"><span class="idx">A·05</span><h3 class="title">Unity</h3><span class="badge">1</span></div>
+        <p class="sub">scenes · ScriptableObject</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">@unity-architect</span>MonoBehaviour patterns · perf</li>
+          </ul>
+        </div>
+        <div class="cell-foot">global/agents/unity-architect.md</div>
+      </div>
+
+      <div class="cell w-4 tinted">
+        <div class="hdr"><span class="idx">A·06</span><h3 class="title">Read-only auditors</h3><span class="badge">3</span></div>
+        <p class="sub">advisory output · never edit</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">@code-plan-verifier</span>plan ↔ code drift after impl</li>
+            <li><span class="k">@gitignore-auditor</span>build artefacts / IDE junk in staged</li>
+            <li><span class="k">@secret-auditor</span>tokens · keys · embedded passwords</li>
+          </ul>
+        </div>
+        <div class="cell-foot">tools: Read, Grep, Glob, Bash (no Write/Edit)</div>
+      </div>
+
+      <div class="cell w-4">
+        <div class="hdr"><span class="idx">A·07</span><h3 class="title">Routing examples</h3><span class="badge small">DESC.</span></div>
+        <p class="sub">trigger phrase → which agent fires</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">"start a new project"</span>@init-project</li>
+            <li><span class="k">"review the plan vs code"</span>@code-plan-verifier</li>
+            <li><span class="k">"design TanStack route loaders"</span>@tanstack-architect</li>
+            <li><span class="k">"write the Python tests"</span>@python-tester</li>
+          </ul>
+        </div>
+        <div class="cell-foot">description: field in frontmatter</div>
+      </div>
+
+      <div class="cell w-2">
+        <div class="hdr"><span class="idx">A·08</span><h3 class="title">Tools matrix</h3><span class="badge">2</span></div>
+        <p class="sub">who can write, who can only read</p>
+        <div class="body">
+          <div class="iso-mini">
+            <div class="col bad"><div class="h">writers</div>11 agents · R/W/E</div>
+            <div class="col good"><div class="h">readers</div>3 auditors · R only</div>
+          </div>
+        </div>
+        <div class="cell-foot">tools: in frontmatter</div>
+      </div>
+
+    </div>
+
+    <div class="track-col">
+
+      <div class="cell dark w-3">
+        <div class="hdr"><span class="idx">B·01</span><h3 class="title">Description routing</h3><span class="badge small">AUTO</span></div>
+        <p class="sub">how Claude picks an agent</p>
+        <div class="body">
+          <div class="flow">
+            <div class="node">user<br>intent</div>
+            <div class="arr">›</div>
+            <div class="node">scan<br>descriptions</div>
+            <div class="arr">›</div>
+            <div class="node">spawn<br>subagent</div>
+          </div>
+        </div>
+        <div class="cell-foot">specificity wins · vague descriptions lose</div>
+      </div>
+
+      <div class="cell dark w-3">
+        <div class="hdr"><span class="idx">B·02</span><h3 class="title">Context isolation</h3><span class="badge small">CLEAN</span></div>
+        <p class="sub">subagent runs in its own session</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">main thread</span>orchestration only</li>
+            <li><span class="k">subagent</span>fresh context · restricted tools</li>
+            <li><span class="k">return</span>summary back to main</li>
+          </ul>
+        </div>
+        <div class="cell-foot">protects main context window</div>
+      </div>
+
+      <div class="cell dark w-3 accent-rail">
+        <div class="hdr"><span class="idx">B·03</span><h3 class="title">Parallel + worktree</h3><span class="badge small">G6</span></div>
+        <p class="sub">concurrent writers need isolation</p>
+        <div class="body">
+          <div class="iso-mini">
+            <div class="col bad"><div class="h">shared tree</div>silent overwrite</div>
+            <div class="col good"><div class="h">isolation</div>"worktree" param</div>
+          </div>
+        </div>
+        <div class="cell-foot">Constitution v1.1.0 · Gate 6</div>
+      </div>
+
+      <div class="cell dark w-3">
+        <div class="hdr"><span class="idx">B·04</span><h3 class="title">Auditor contract</h3><span class="badge small">R-O</span></div>
+        <p class="sub">read-only · never modifies</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">input</span>staged files · plan · diff</li>
+            <li><span class="k">output</span>findings · severity · evidence</li>
+            <li><span class="k">decision</span>delegated to human / caller</li>
+          </ul>
+        </div>
+        <div class="cell-foot">an editing auditor isn't an auditor</div>
+      </div>
+
+      <div class="cell dark w-3">
+        <div class="hdr"><span class="idx">B·05</span><h3 class="title">Architect → tester</h3><span class="badge">2</span></div>
+        <p class="sub">canonical pair pattern</p>
+        <div class="body">
+          <div class="flow">
+            <div class="node">architect<br>scaffolds</div>
+            <div class="arr">›</div>
+            <div class="node">interface<br>frozen</div>
+            <div class="arr">›</div>
+            <div class="node">tester<br>covers</div>
+          </div>
+        </div>
+        <div class="cell-foot">spec-kit Gate 3 makes this explicit</div>
+      </div>
+
+      <div class="cell dark w-3">
+        <div class="hdr"><span class="idx">B·06</span><h3 class="title">Verifier pass</h3><span class="badge small">DRIFT</span></div>
+        <p class="sub">second opinion · cold-read</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">@code-plan-verifier</span>reads plan.md + tasks.md</li>
+            <li><span class="k">+ reads</span>actual code on disk</li>
+            <li><span class="k">reports</span>drift, missing, extra</li>
+          </ul>
+        </div>
+        <div class="cell-foot">last step before commit</div>
+      </div>
+
+      <div class="cell dark w-3 tinted">
+        <div class="hdr"><span class="idx">B·07</span><h3 class="title">Stack detection</h3><span class="badge">6</span></div>
+        <p class="sub">@init-project sniffs the project</p>
+        <div class="body">
+          <div class="pills">
+            <span class="pill">.csproj</span>
+            <span class="pill">pyproject</span>
+            <span class="pill">package.json</span>
+            <span class="pill">unity</span>
+            <span class="pill">monorepo</span>
+            <span class="pill">other</span>
+          </div>
+        </div>
+        <div class="cell-foot">global/project-templates/&lt;stack&gt;.md</div>
+      </div>
+
+      <div class="cell dark w-3 accent-rail">
+        <div class="hdr"><span class="idx">B·08</span><h3 class="title">Agent vs skill</h3><span class="badge">2</span></div>
+        <p class="sub">when to pick which</p>
+        <div class="body">
+          <div class="iso-mini">
+            <div class="col good"><div class="h">agent</div>open-ended · needs isolation</div>
+            <div class="col good"><div class="h">skill</div>repetitive · stays in main thread</div>
+          </div>
+        </div>
+        <div class="cell-foot">global/{agents,skills}/</div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="foot">
+    <div class="left">prompt-lib · <span class="url">github.com/Dawid/prompt-lib</span></div>
+    <div class="mid">A · ROSTER   ┃   B · MECHANICS</div>
+    <div class="right">sheet 3 / 6 · 14 specialists</div>
+  </div>
+
+</div>
+<!-- ════ END SHEET 3 ══════════════════════════════════════════════════════ -->
+
+
+<!-- ════ SHEET 4 — Spec-kit ═══════════════════════════════════════════════ -->
+<div class="sheet" data-idx="4" role="img" aria-label="prompt-lib infographic — spec-kit (4 of 6)">
+
+  <div class="head">
+    <div class="brand">
+      <h1>prompt-lib <span class="accent">/</span> spec-kit</h1>
+      <div class="tag">constitution v1.1.0<span class="sep">·</span>6 gates<span class="sep">·</span>sheet 4/6</div>
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="n">5</span><span class="l">principles</span></div>
+      <div class="stat"><span class="n">6</span><span class="l">gates</span></div>
+      <div class="stat"><span class="n">14</span><span class="l">commands</span></div>
+      <div class="stat"><span class="n">3</span><span class="l">specs</span></div>
+      <div class="stat"><span class="n">1</span><span class="l">adr</span></div>
+      <div class="stat"><span class="n">7</span><span class="l">artefacts</span></div>
+    </div>
+  </div>
+
+  <div class="track">
+    <h2><span class="num">A</span>The artefacts</h2>
+    <h2><span class="num">B</span>The governance</h2>
+  </div>
+
+  <div class="tracks">
+
+    <div class="track-col">
+
+      <div class="cell w-3 accent-rail">
+        <div class="hdr"><span class="idx">A·01</span><h3 class="title">spec.md</h3><span class="badge small">SOURCE</span></div>
+        <p class="sub">authoritative product description</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">user stories</span>priority + acceptance</li>
+            <li><span class="k">requirements</span>FR-NNN testable</li>
+            <li><span class="k">edges</span>+ success criteria</li>
+          </ul>
+        </div>
+        <div class="cell-foot">/speckit-specify → spec.md</div>
+      </div>
+
+      <div class="cell w-3">
+        <div class="hdr"><span class="idx">A·02</span><h3 class="title">plan.md</h3><span class="badge small">DESIGN</span></div>
+        <p class="sub">technical decisions + constitution check</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">phase 0</span>research + risks</li>
+            <li><span class="k">phase 1</span>data model + contracts</li>
+            <li><span class="k">gates</span>G1–G6 must pass</li>
+          </ul>
+        </div>
+        <div class="cell-foot">/speckit-plan → plan.md</div>
+      </div>
+
+      <div class="cell w-3">
+        <div class="hdr"><span class="idx">A·03</span><h3 class="title">tasks.md</h3><span class="badge small">PHASES</span></div>
+        <p class="sub">phase-status convention enforced</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">format</span>[ID] [P?] [Story] Owner: @agent</li>
+            <li><span class="k">status</span>⬜🟡✅ (M/N — T###)</li>
+            <li><span class="k">recompute</span>on every checkbox</li>
+          </ul>
+        </div>
+        <div class="cell-foot">/speckit-tasks → tasks.md</div>
+      </div>
+
+      <div class="cell w-3">
+        <div class="hdr"><span class="idx">A·04</span><h3 class="title">research.md</h3><span class="badge small">R</span></div>
+        <p class="sub">unknowns resolved before code</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">decisions</span>recorded with rationale</li>
+            <li><span class="k">alternatives</span>considered and rejected</li>
+            <li><span class="k">refs</span>links to docs + specs</li>
+          </ul>
+        </div>
+        <div class="cell-foot">specs/&lt;feature&gt;/research.md</div>
+      </div>
+
+      <div class="cell w-3">
+        <div class="hdr"><span class="idx">A·05</span><h3 class="title">data-model.md</h3><span class="badge small">D</span></div>
+        <p class="sub">entities · fields · relationships</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">tables</span>schema + invariants</li>
+            <li><span class="k">events</span>append-only kinds</li>
+            <li><span class="k">cursors</span>idempotency keys</li>
+          </ul>
+        </div>
+        <div class="cell-foot">specs/&lt;feature&gt;/data-model.md</div>
+      </div>
+
+      <div class="cell w-3 tinted">
+        <div class="hdr"><span class="idx">A·06</span><h3 class="title">contracts/</h3><span class="badge small">G3</span></div>
+        <p class="sub">protocol surfaces · tested first</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">wire format</span>method · request · response</li>
+            <li><span class="k">errors</span>codes + retry semantics</li>
+            <li><span class="k">test</span>written + failing before impl</li>
+          </ul>
+        </div>
+        <div class="cell-foot">tests/contract/ · Gate 3 mandatory</div>
+      </div>
+
+      <div class="cell w-3">
+        <div class="hdr"><span class="idx">A·07</span><h3 class="title">quickstart.md</h3><span class="badge small">Q</span></div>
+        <p class="sub">smoke test for the feature</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">setup</span>env vars · install</li>
+            <li><span class="k">happy path</span>three commands to demo</li>
+            <li><span class="k">verify</span>expected outputs</li>
+          </ul>
+        </div>
+        <div class="cell-foot">specs/&lt;feature&gt;/quickstart.md</div>
+      </div>
+
+      <div class="cell w-3">
+        <div class="hdr"><span class="idx">A·08</span><h3 class="title">Slash commands</h3><span class="badge">14</span></div>
+        <p class="sub">spec-kit + helpers</p>
+        <div class="body">
+          <div class="pills">
+            <span class="pill">specify</span>
+            <span class="pill">clarify</span>
+            <span class="pill">plan</span>
+            <span class="pill">tasks</span>
+            <span class="pill">analyze</span>
+            <span class="pill">implement</span>
+            <span class="pill">checklist</span>
+            <span class="pill">constitution</span>
+          </div>
+        </div>
+        <div class="cell-foot">.claude/skills/speckit-*/</div>
+      </div>
+
+    </div>
+
+    <div class="track-col">
+
+      <div class="cell dark w-6 tinted">
+        <div class="hdr"><span class="idx">B·01</span><h3 class="title">Constitution gates</h3><span class="badge">6</span></div>
+        <p class="sub">every /speckit-plan run must pass before Phase 0</p>
+        <div class="body">
+          <div class="gates-row">
+            <div class="gx">G1<span class="lab">spec-first</span></div>
+            <div class="gx">G2<span class="lab">deleg</span></div>
+            <div class="gx">G3<span class="lab">ctest</span></div>
+            <div class="gx">G4<span class="lab">rev</span></div>
+            <div class="gx">G5<span class="lab">surf</span></div>
+            <div class="gx new">G6<span class="lab">parallel</span></div>
+          </div>
+        </div>
+        <div class="cell-foot">.specify/memory/constitution.md · v1.1.0</div>
+      </div>
+
+      <div class="cell dark w-3">
+        <div class="hdr"><span class="idx">B·02</span><h3 class="title">Core principles</h3><span class="badge">5</span></div>
+        <p class="sub">non-negotiables</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">I</span>Spec-first conformance</li>
+            <li><span class="k">II</span>Subagent delegation</li>
+            <li><span class="k">III</span>Contract tests before impl</li>
+            <li><span class="k">IV</span>Reversible config changes</li>
+            <li><span class="k">V</span>Minimal skill + agent surface</li>
+          </ul>
+        </div>
+        <div class="cell-foot">constitution.md · §Core Principles</div>
+      </div>
+
+      <div class="cell dark w-3 accent-rail">
+        <div class="hdr"><span class="idx">B·03</span><h3 class="title">Phase status</h3><span class="badge small">⬜🟡✅</span></div>
+        <p class="sub">recompute on every checkbox change</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">⬜ pending</span>0 / N tasks done</li>
+            <li><span class="k">🟡 in progress</span>1..N-1 done</li>
+            <li><span class="k">✅ complete</span>N / N done</li>
+          </ul>
+        </div>
+        <div class="cell-foot">**Status**: ✅ (M/N — T###–T###)</div>
+      </div>
+
+      <div class="cell dark w-3">
+        <div class="hdr"><span class="idx">B·04</span><h3 class="title">Delegation roster</h3><span class="badge small">G2</span></div>
+        <p class="sub">tasks.md Owner: @agent required</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">roster</span>.specify/memory/agents.md</li>
+            <li><span class="k">rule</span>Owner: main only with reason</li>
+            <li><span class="k">enforce</span>/speckit-implement dispatches</li>
+          </ul>
+        </div>
+        <div class="cell-foot">G2 · matched specialist required</div>
+      </div>
+
+      <div class="cell dark w-3">
+        <div class="hdr"><span class="idx">B·05</span><h3 class="title">ADR pipeline</h3><span class="badge">1</span></div>
+        <p class="sub">deviations need paper trail</p>
+        <div class="body">
+          <div class="flow">
+            <div class="node">deviation<br>identified</div>
+            <div class="arr">›</div>
+            <div class="node">ADR<br>drafted</div>
+            <div class="arr">›</div>
+            <div class="node">linked from<br>plan / spec</div>
+          </div>
+        </div>
+        <div class="cell-foot">docs/adr/ · specs/&lt;f&gt;/contracts/</div>
+      </div>
+
+      <div class="cell dark w-3 accent-rail">
+        <div class="hdr"><span class="idx">B·06</span><h3 class="title">Sync impact report</h3><span class="badge small">SEMVER</span></div>
+        <p class="sub">amendments versioned + propagated</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">MAJOR</span>principle removed or redefined</li>
+            <li><span class="k">MINOR</span>new principle / section</li>
+            <li><span class="k">PATCH</span>clarification only</li>
+          </ul>
+        </div>
+        <div class="cell-foot">top of constitution.md</div>
+      </div>
+
+      <div class="cell dark w-3">
+        <div class="hdr"><span class="idx">B·07</span><h3 class="title">Specs delivered</h3><span class="badge">3</span></div>
+        <p class="sub">features shipped via spec-kit</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">001</span>A2A bridge for multi-agent CLI</li>
+            <li><span class="k">002</span>Agent orchestrator (PR review)</li>
+            <li><span class="k">003</span>GitHub issue triage</li>
+          </ul>
+        </div>
+        <div class="cell-foot">specs/00&lt;N&gt;-*/</div>
+      </div>
+
+      <div class="cell dark w-3">
+        <div class="hdr"><span class="idx">B·08</span><h3 class="title">Compliance review</h3><span class="badge small">PR</span></div>
+        <p class="sub">touch global/ → confirm gates</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">global/</span>any change · gate confirm</li>
+            <li><span class="k">templates</span>require ADR if deviating</li>
+            <li><span class="k">constitution</span>amend through /speckit-constitution</li>
+          </ul>
+        </div>
+        <div class="cell-foot">enforced in PR review</div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="foot">
+    <div class="left">prompt-lib · <span class="url">github.com/Dawid/prompt-lib</span></div>
+    <div class="mid">A · ARTEFACTS   ┃   B · GOVERNANCE</div>
+    <div class="right">sheet 4 / 6 · spec-kit</div>
+  </div>
+
+</div>
+<!-- ════ END SHEET 4 ══════════════════════════════════════════════════════ -->
+
+
+<!-- ════ SHEET 5 — Multi-agent runtime ════════════════════════════════════ -->
+<div class="sheet" data-idx="5" role="img" aria-label="prompt-lib infographic — multi-agent runtime (5 of 6)">
+
+  <div class="head">
+    <div class="brand">
+      <h1>prompt-lib <span class="accent">/</span> multi-agent runtime</h1>
+      <div class="tag">A2A bridge<span class="sep">·</span>Orchestrator daemon<span class="sep">·</span>sheet 5/6</div>
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="n">2</span><span class="l">daemons</span></div>
+      <div class="stat"><span class="n">3</span><span class="l">specs</span></div>
+      <div class="stat"><span class="n">8</span><span class="l">event kinds</span></div>
+      <div class="stat"><span class="n">3</span><span class="l">trigger kinds</span></div>
+      <div class="stat"><span class="n">2</span><span class="l">peers</span></div>
+      <div class="stat"><span class="n">1</span><span class="l">eventlog</span></div>
+    </div>
+  </div>
+
+  <div class="track">
+    <h2><span class="num">A</span>Runtime components</h2>
+    <h2><span class="num">B</span>Protocols + contracts</h2>
+  </div>
+
+  <div class="tracks">
+
+    <div class="track-col">
+
+      <div class="cell w-3 accent-rail">
+        <div class="hdr"><span class="idx">A·01</span><h3 class="title">a2a-bridge · claude</h3><span class="badge small">:8765</span></div>
+        <p class="sub">local HTTP bridge for Claude Code CLI</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">serve</span>uv run a2a-bridge serve claude</li>
+            <li><span class="k">auth</span>A2A_BEARER_TOKEN env</li>
+            <li><span class="k">spawn</span>claude --print --stream-json</li>
+          </ul>
+        </div>
+        <div class="cell-foot">services/a2a-bridge/ · spec 001</div>
+      </div>
+
+      <div class="cell w-3 accent-rail">
+        <div class="hdr"><span class="idx">A·02</span><h3 class="title">a2a-bridge · gemini</h3><span class="badge small">:8766</span></div>
+        <p class="sub">same bridge, different adapter</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">serve</span>uv run a2a-bridge serve gemini</li>
+            <li><span class="k">spawn</span>gemini --jsonl</li>
+            <li><span class="k">interop</span>any CLI that streams</li>
+          </ul>
+        </div>
+        <div class="cell-foot">adapter pattern · cli-llm-app skill</div>
+      </div>
+
+      <div class="cell w-3 tinted">
+        <div class="hdr"><span class="idx">A·03</span><h3 class="title">Orchestrator</h3><span class="badge small">DAEMON</span></div>
+        <p class="sub">poll-driven · async · long-running</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">env</span>ORCHESTRATOR_REPO=owner/name</li>
+            <li><span class="k">poll</span>ORCHESTRATOR_POLL_SECONDS=30</li>
+            <li><span class="k">log</span>~/.claude/orchestrator/events.db</li>
+          </ul>
+        </div>
+        <div class="cell-foot">services/orchestrator/ · spec 002</div>
+      </div>
+
+      <div class="cell w-3">
+        <div class="hdr"><span class="idx">A·04</span><h3 class="title">Trigger kinds</h3><span class="badge">3</span></div>
+        <p class="sub">Trigger Protocol — plug-in surface</p>
+        <div class="body">
+          <div class="pills">
+            <span class="pill">pr.opened</span>
+            <span class="pill">pr.updated</span>
+            <span class="pill">issue.opened</span>
+          </div>
+        </div>
+        <div class="cell-foot">triggers/base.py · TriggerEvent.kind</div>
+      </div>
+
+      <div class="cell w-3">
+        <div class="hdr"><span class="idx">A·05</span><h3 class="title">Consumer agents</h3><span class="badge">2</span></div>
+        <p class="sub">one per trigger kind family</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">PrReviewAgent</span>delegate → gh pr comment</li>
+            <li><span class="k">IssueTriageAgent</span>delegate → gh issue comment</li>
+          </ul>
+        </div>
+        <div class="cell-foot">orchestrator/agents/</div>
+      </div>
+
+      <div class="cell w-3">
+        <div class="hdr"><span class="idx">A·06</span><h3 class="title">Event log</h3><span class="badge small">SQLite</span></div>
+        <p class="sub">append-only · forensic record</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">events</span>id · run_id · kind · payload</li>
+            <li><span class="k">issue_cursor</span>idempotency for triage</li>
+            <li><span class="k">pr_cursor</span>idempotency for review</li>
+          </ul>
+        </div>
+        <div class="cell-foot">orchestrator/eventlog.py</div>
+      </div>
+
+      <div class="cell w-3">
+        <div class="hdr"><span class="idx">A·07</span><h3 class="title">Notifier</h3><span class="badge small">ntfy</span></div>
+        <p class="sub">phone push at detection · complete · fail</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">info</span>issue detected · triage complete</li>
+            <li><span class="k">error</span>delegate failed · parse failed</li>
+            <li><span class="k">via</span>ntfy.sh topic (your choice)</li>
+          </ul>
+        </div>
+        <div class="cell-foot">orchestrator/notifier.py</div>
+      </div>
+
+      <div class="cell w-3">
+        <div class="hdr"><span class="idx">A·08</span><h3 class="title">GitHub poller</h3><span class="badge">2</span></div>
+        <p class="sub">gh CLI · plain HTTP underneath</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">github_poll</span>gh pr list --json</li>
+            <li><span class="k">github_issues_poll</span>gh issue list --json</li>
+            <li><span class="k">errors</span>rate-limited · auth-failed events</li>
+          </ul>
+        </div>
+        <div class="cell-foot">orchestrator/triggers/*.py</div>
+      </div>
+
+    </div>
+
+    <div class="track-col">
+
+      <div class="cell dark w-6 tinted">
+        <div class="hdr"><span class="idx">B·01</span><h3 class="title">A2A wire format</h3><span class="badge small">JSON-RPC</span></div>
+        <p class="sub">request over POST · responses over SSE</p>
+        <div class="body">
+          <div class="wire-mini">
+            <div class="end">orchestrator</div>
+            <div class="end">peer CLI</div>
+            <div class="lanes">
+              <div><span class="dir">▶</span><span>tasks.send</span><span class="meta">POST JSON-RPC</span></div>
+              <div><span class="dir">◀</span><span>task.state</span><span class="meta">SSE</span></div>
+              <div><span class="dir">◀</span><span>task.artifact</span><span class="meta">SSE</span></div>
+              <div><span class="dir">◀</span><span>task.progress</span><span class="meta">SSE</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="cell-foot">spec 001 · contracts/jsonrpc-methods.md</div>
+      </div>
+
+      <div class="cell dark w-3">
+        <div class="hdr"><span class="idx">B·02</span><h3 class="title">Run lifecycle events</h3><span class="badge">5</span></div>
+        <p class="sub">terminal kinds set the run outcome</p>
+        <div class="body">
+          <div class="pills">
+            <span class="pill">run.queued</span>
+            <span class="pill">run.started</span>
+            <span class="pill">run.completed</span>
+            <span class="pill">run.failed</span>
+            <span class="pill">run.skipped</span>
+          </div>
+        </div>
+        <div class="cell-foot">5 of 8 event kinds</div>
+      </div>
+
+      <div class="cell dark w-3">
+        <div class="hdr"><span class="idx">B·03</span><h3 class="title">Side-effect events</h3><span class="badge">3</span></div>
+        <p class="sub">downstream actions, recorded</p>
+        <div class="body">
+          <div class="pills">
+            <span class="pill">gh.comment.posted</span>
+            <span class="pill">gh.comment.failed</span>
+            <span class="pill">triage.decision</span>
+          </div>
+        </div>
+        <div class="cell-foot">eventlog.append_event()</div>
+      </div>
+
+      <div class="cell dark w-3 accent-rail">
+        <div class="hdr"><span class="idx">B·04</span><h3 class="title">Spec 001 — A2A</h3><span class="badge small">SHIPPED</span></div>
+        <p class="sub">multi-agent CLI delegation v1</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">scope</span>JSON-RPC + SSE bridge</li>
+            <li><span class="k">peers</span>Claude · Gemini adapters</li>
+            <li><span class="k">test</span>spec-conformance contract</li>
+          </ul>
+        </div>
+        <div class="cell-foot">specs/001-a2a-bridge/</div>
+      </div>
+
+      <div class="cell dark w-3 accent-rail">
+        <div class="hdr"><span class="idx">B·05</span><h3 class="title">Spec 002 — orch</h3><span class="badge small">SHIPPED</span></div>
+        <p class="sub">PR review v1</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">scope</span>poll PRs · review · comment · ntfy</li>
+            <li><span class="k">trigger</span>pr.opened + pr.updated</li>
+            <li><span class="k">demo</span>quickstart.md</li>
+          </ul>
+        </div>
+        <div class="cell-foot">specs/002-agent-orchestrator/</div>
+      </div>
+
+      <div class="cell dark w-3">
+        <div class="hdr"><span class="idx">B·06</span><h3 class="title">Spec 003 — triage</h3><span class="badge small">SHIPPED</span></div>
+        <p class="sub">issue triage v1</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">scope</span>poll issues · triage · comment</li>
+            <li><span class="k">trigger</span>issue.opened</li>
+            <li><span class="k">dedup</span>issue_cursor table</li>
+          </ul>
+        </div>
+        <div class="cell-foot">specs/003-issue-triage/</div>
+      </div>
+
+      <div class="cell dark w-3">
+        <div class="hdr"><span class="idx">B·07</span><h3 class="title">Trigger Protocol</h3><span class="badge small">ABSTRACT</span></div>
+        <p class="sub">plug-in extension point</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">interface</span>async events() iterator</li>
+            <li><span class="k">teardown</span>aclose() coroutine</li>
+            <li><span class="k">cancellation</span>asyncio.CancelledError safe</li>
+          </ul>
+        </div>
+        <div class="cell-foot">triggers/base.py · class Trigger(Protocol)</div>
+      </div>
+
+      <div class="cell dark w-3">
+        <div class="hdr"><span class="idx">B·08</span><h3 class="title">Idempotency</h3><span class="badge small">CURSOR</span></div>
+        <p class="sub">don't dispatch the same thing twice</p>
+        <div class="body">
+          <div class="iso-mini">
+            <div class="col bad"><div class="h">no cursor</div>same issue triaged each poll</div>
+            <div class="col good"><div class="h">issue_cursor</div>insert on success → skip next</div>
+          </div>
+        </div>
+        <div class="cell-foot">SQLite · INSERT OR REPLACE</div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="foot">
+    <div class="left">prompt-lib · <span class="url">github.com/Dawid/prompt-lib</span></div>
+    <div class="mid">A · RUNTIME   ┃   B · PROTOCOLS</div>
+    <div class="right">sheet 5 / 6 · multi-agent runtime</div>
+  </div>
+
+</div>
+<!-- ════ END SHEET 5 ══════════════════════════════════════════════════════ -->
+
+
+<!-- ════ SHEET 6 — Safety + guardrails ════════════════════════════════════ -->
+<div class="sheet" data-idx="6" role="img" aria-label="prompt-lib infographic — safety + guardrails (6 of 6)">
+
+  <div class="head">
+    <div class="brand">
+      <h1>prompt-lib <span class="accent">/</span> safety + guardrails</h1>
+      <div class="tag">what stops things from breaking<span class="sep">·</span>sheet 6/6</div>
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="n">5</span><span class="l">hooks</span></div>
+      <div class="stat"><span class="n">3</span><span class="l">auditors</span></div>
+      <div class="stat"><span class="n">4</span><span class="l">rules</span></div>
+      <div class="stat"><span class="n">6</span><span class="l">gates</span></div>
+      <div class="stat"><span class="n">4</span><span class="l">conventions</span></div>
+      <div class="stat"><span class="n">1</span><span class="l">constitution</span></div>
+    </div>
+  </div>
+
+  <div class="track">
+    <h2><span class="num">A</span>Active guardrails</h2>
+    <h2><span class="num">B</span>Governance + memory</h2>
+  </div>
+
+  <div class="tracks">
+
+    <div class="track-col">
+
+      <div class="cell w-3 accent-rail">
+        <div class="hdr"><span class="idx">A·01</span><h3 class="title">PreToolUse guard</h3><span class="badge small">BLOCK</span></div>
+        <p class="sub">command_guard.py + file_write_guard.py</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">obfuscation</span>hex / base64 in shell args</li>
+            <li><span class="k">destructive</span>rm -rf /, force-push main</li>
+            <li><span class="k">forbidden paths</span>write outside allowlist</li>
+          </ul>
+        </div>
+        <div class="cell-foot">global/hooks/{command,file_write}_guard.py</div>
+      </div>
+
+      <div class="cell w-3">
+        <div class="hdr"><span class="idx">A·02</span><h3 class="title">PostToolUse audit</h3><span class="badge small">LOG</span></div>
+        <p class="sub">forensic ledger of every write</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">writes JSONL</span>per-session append-only</li>
+            <li><span class="k">captures</span>tool, args, timestamp</li>
+            <li><span class="k">replay</span>reconstruct exactly what ran</li>
+          </ul>
+        </div>
+        <div class="cell-foot">global/hooks/write_audit.py</div>
+      </div>
+
+      <div class="cell w-3">
+        <div class="hdr"><span class="idx">A·03</span><h3 class="title">SessionStart hook</h3><span class="badge small">AUTO</span></div>
+        <p class="sub">warms up the session on launch</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">detects</span>existing CLAUDE.md</li>
+            <li><span class="k">routes</span>→ @load-project</li>
+            <li><span class="k">announces</span>relevant specialists</li>
+          </ul>
+        </div>
+        <div class="cell-foot">global/hooks/session-start.ps1</div>
+      </div>
+
+      <div class="cell w-3 tinted">
+        <div class="hdr"><span class="idx">A·04</span><h3 class="title">@code-plan-verifier</h3><span class="badge small">R-O</span></div>
+        <p class="sub">independent drift check</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">input</span>plan.md + tasks.md + actual code</li>
+            <li><span class="k">checks</span>missing · unauthorised · spec drift</li>
+            <li><span class="k">output</span>per-FR pass/miss/partial report</li>
+          </ul>
+        </div>
+        <div class="cell-foot">tools: Read, Grep, Glob, Bash (no Write)</div>
+      </div>
+
+      <div class="cell w-3">
+        <div class="hdr"><span class="idx">A·05</span><h3 class="title">@gitignore-auditor</h3><span class="badge small">R-O</span></div>
+        <p class="sub">staged-file junk scan</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">finds</span>build artefacts · caches · IDE files</li>
+            <li><span class="k">suggests</span>.gitignore lines + rm --cached</li>
+            <li><span class="k">never edits</span>caller decides</li>
+          </ul>
+        </div>
+        <div class="cell-foot">runs before /git commit</div>
+      </div>
+
+      <div class="cell w-3">
+        <div class="hdr"><span class="idx">A·06</span><h3 class="title">@secret-auditor</h3><span class="badge small">R-O</span></div>
+        <p class="sub">credential scan with evidence</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">finds</span>API keys · JWTs · private keys</li>
+            <li><span class="k">entropy</span>high-entropy near cred keywords</li>
+            <li><span class="k">output</span>file · line · severity · snippet</li>
+          </ul>
+        </div>
+        <div class="cell-foot">runs before /git commit</div>
+      </div>
+
+      <div class="cell w-3">
+        <div class="hdr"><span class="idx">A·07</span><h3 class="title">File-pattern rules</h3><span class="badge">4</span></div>
+        <p class="sub">context loaded only when paths match</p>
+        <div class="body">
+          <div class="pills">
+            <span class="pill">csharp</span>
+            <span class="pill">react</span>
+            <span class="pill">tests</span>
+            <span class="pill">typescript</span>
+          </div>
+        </div>
+        <div class="cell-foot">global/rules/*.md · path-glob bound</div>
+      </div>
+
+      <div class="cell w-3">
+        <div class="hdr"><span class="idx">A·08</span><h3 class="title">Refuse on main</h3><span class="badge small">/git</span></div>
+        <p class="sub">commits demand a feature branch</p>
+        <div class="body">
+          <div class="iso-mini">
+            <div class="col bad"><div class="h">on main</div>commit refused · branch first</div>
+            <div class="col good"><div class="h">on feature</div>commit proceeds</div>
+          </div>
+        </div>
+        <div class="cell-foot">~/.claude/CLAUDE.md · /git skill</div>
+      </div>
+
+    </div>
+
+    <div class="track-col">
+
+      <div class="cell dark w-6 tinted">
+        <div class="hdr"><span class="idx">B·01</span><h3 class="title">Constitution gates</h3><span class="badge">6</span></div>
+        <p class="sub">non-negotiables · checked before Phase 0</p>
+        <div class="body">
+          <div class="gates-row">
+            <div class="gx">G1<span class="lab">spec</span></div>
+            <div class="gx">G2<span class="lab">deleg</span></div>
+            <div class="gx">G3<span class="lab">ctest</span></div>
+            <div class="gx">G4<span class="lab">rev</span></div>
+            <div class="gx">G5<span class="lab">surf</span></div>
+            <div class="gx new">G6<span class="lab">parallel</span></div>
+          </div>
+        </div>
+        <div class="cell-foot">.specify/memory/constitution.md · v1.1.0</div>
+      </div>
+
+      <div class="cell dark w-3 accent-rail">
+        <div class="hdr"><span class="idx">B·02</span><h3 class="title">Parallel isolation</h3><span class="badge small">G6</span></div>
+        <p class="sub">writers in worktrees, not shared trees</p>
+        <div class="body">
+          <div class="iso-mini">
+            <div class="col bad"><div class="h">shared</div>silent overwrite</div>
+            <div class="col good"><div class="h">worktree</div>clean merge</div>
+          </div>
+        </div>
+        <div class="cell-foot">docs/parallel-isolation.md</div>
+      </div>
+
+      <div class="cell dark w-3">
+        <div class="hdr"><span class="idx">B·03</span><h3 class="title">Reversible deploy</h3><span class="badge small">G4</span></div>
+        <p class="sub">global/ → wizard → ~/.claude · timestamped backups</p>
+        <div class="body">
+          <div class="deploy-mini">
+            <div class="b">global/</div>
+            <div class="arr">›</div>
+            <div class="b mid">wizard</div>
+            <div class="arr">›</div>
+            <div class="b">~/.claude</div>
+          </div>
+        </div>
+        <div class="cell-foot">setup/settings-configurator-ui.py</div>
+      </div>
+
+      <div class="cell dark w-3">
+        <div class="hdr"><span class="idx">B·04</span><h3 class="title">Contract tests first</h3><span class="badge small">G3</span></div>
+        <p class="sub">written + failing before impl</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">wire format</span>request · response · errors</li>
+            <li><span class="k">tests live</span>tests/contract/</li>
+            <li><span class="k">order</span>contract test → impl task</li>
+          </ul>
+        </div>
+        <div class="cell-foot">enforced by tasks.md ordering</div>
+      </div>
+
+      <div class="cell dark w-3">
+        <div class="hdr"><span class="idx">B·05</span><h3 class="title">ADRs</h3><span class="badge small">DEV.</span></div>
+        <p class="sub">deviations have a paper trail</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">cross-cutting</span>docs/adr/NNNN-*.md</li>
+            <li><span class="k">feature-scoped</span>specs/&lt;f&gt;/contracts/</li>
+            <li><span class="k">format</span>status · context · decision · consequences</li>
+          </ul>
+        </div>
+        <div class="cell-foot">/adr skill scaffolds the template</div>
+      </div>
+
+      <div class="cell dark w-3 accent-rail">
+        <div class="hdr"><span class="idx">B·06</span><h3 class="title">Conventions</h3><span class="badge">4</span></div>
+        <p class="sub">house rules Claude follows</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">commits</span>conv. types · -c agent author</li>
+            <li><span class="k">branches</span>refuse on main</li>
+            <li><span class="k">tasks.md</span>**Status**: ⬜🟡✅</li>
+            <li><span class="k">.env files</span>never written by Claude</li>
+          </ul>
+        </div>
+        <div class="cell-foot">~/.claude/CLAUDE.md</div>
+      </div>
+
+      <div class="cell dark w-3">
+        <div class="hdr"><span class="idx">B·07</span><h3 class="title">Auto-memory</h3><span class="badge">4</span></div>
+        <p class="sub">durable context across sessions</p>
+        <div class="body">
+          <div class="pills">
+            <span class="pill">user</span>
+            <span class="pill">feedback</span>
+            <span class="pill">project</span>
+            <span class="pill">reference</span>
+          </div>
+        </div>
+        <div class="cell-foot">~/.claude/projects/&lt;hash&gt;/memory/</div>
+      </div>
+
+      <div class="cell dark w-3 tinted">
+        <div class="hdr"><span class="idx">B·08</span><h3 class="title">Self-improvement</h3><span class="badge">4</span></div>
+        <p class="sub">project-local · learns from corrections</p>
+        <div class="body">
+          <div class="pills">
+            <span class="pill">lessons</span>
+            <span class="pill">mistakes</span>
+            <span class="pill">preferences</span>
+            <span class="pill">evals</span>
+          </div>
+        </div>
+        <div class="cell-foot">.claude/skills/self-improvement/</div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="foot">
+    <div class="left">prompt-lib · <span class="url">github.com/Dawid/prompt-lib</span></div>
+    <div class="mid">A · GUARDRAILS   ┃   B · GOVERNANCE</div>
+    <div class="right">sheet 6 / 6 · safety</div>
+  </div>
+
+</div>
+<!-- ════ END SHEET 6 ══════════════════════════════════════════════════════ -->
+
+</div><!-- /.deck -->
+
+<div class="pager" aria-hidden="true">
+  <span class="keys">‹ ›</span>
+  <div class="dots">
+    <span class="dot active" data-go="1"></span>
+    <span class="dot" data-go="2"></span>
+    <span class="dot" data-go="3"></span>
+    <span class="dot" data-go="4"></span>
+    <span class="dot" data-go="5"></span>
+    <span class="dot" data-go="6"></span>
+  </div>
+  <span class="num"><span id="pager-cur">1</span>/6</span>
+</div>
+
+<script>
+/* Multi-sheet deck — arrow keys cycle, hidden zoom + pan per sheet.
+     wheel        : cursor-anchored zoom, range [1, 5]
+     drag         : pan when zoomed (pointer events with capture)
+     dblclick / Escape : reset zoom + pan on the active sheet
+     ← → / pgup pgdn   : cycle through sheets (state preserved per sheet)
+     1..6 keys         : jump to specific sheet
+*/
+(() => {
+  const sheets = Array.from(document.querySelectorAll(".sheet"));
+  if (!sheets.length) return;
+
+  const MIN = 1, MAX = 5, SENSITIVITY = 0.0018;
+  const clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
+  const states = new WeakMap();
+
+  function stateOf(sheet) {
+    if (!states.has(sheet)) states.set(sheet, { scale: 1, tx: 0, ty: 0 });
+    return states.get(sheet);
+  }
+
+  function apply(sheet) {
+    const s = stateOf(sheet);
+    sheet.style.transform = `translate(${s.tx}px, ${s.ty}px) scale(${s.scale})`;
+    if (s.scale > 1.001) sheet.setAttribute("data-zoomed", "");
+    else                 sheet.removeAttribute("data-zoomed");
+  }
+
+  function reset(sheet) {
+    const s = stateOf(sheet);
+    s.scale = 1; s.tx = 0; s.ty = 0;
+    apply(sheet);
+  }
+
+  /* ── Per-sheet zoom + pan ─────────────────────────────────────────── */
+  function attach(sheet) {
+    let dragging = false, lastX = 0, lastY = 0, pid = null;
+
+    sheet.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      const s = stateOf(sheet);
+      const rect = sheet.getBoundingClientRect();
+      const cx = e.clientX - rect.left;
+      const cy = e.clientY - rect.top;
+      const next = clamp(s.scale * (1 + -e.deltaY * SENSITIVITY), MIN, MAX);
+      if (next === s.scale) return;
+      const f = next / s.scale;
+      s.tx -= cx * (f - 1);
+      s.ty -= cy * (f - 1);
+      s.scale = next;
+      if (s.scale <= MIN + 0.001) { s.tx = 0; s.ty = 0; s.scale = MIN; }
+      apply(sheet);
+    }, { passive: false });
+
+    sheet.addEventListener("pointerdown", (e) => {
+      const s = stateOf(sheet);
+      if (s.scale <= MIN + 0.001) return;
+      if (e.button !== undefined && e.button !== 0) return;
+      dragging = true; pid = e.pointerId;
+      lastX = e.clientX; lastY = e.clientY;
+      sheet.classList.add("dragging");
+      if (sheet.setPointerCapture && pid !== null) sheet.setPointerCapture(pid);
+      e.preventDefault();
+    });
+    sheet.addEventListener("pointermove", (e) => {
+      if (!dragging) return;
+      const s = stateOf(sheet);
+      s.tx += e.clientX - lastX;
+      s.ty += e.clientY - lastY;
+      lastX = e.clientX; lastY = e.clientY;
+      apply(sheet);
+    });
+    const endDrag = (e) => {
+      if (!dragging) return;
+      dragging = false;
+      sheet.classList.remove("dragging");
+      if (sheet.releasePointerCapture && pid !== null) {
+        try { sheet.releasePointerCapture(pid); } catch (_) {}
+      }
+      pid = null;
+    };
+    sheet.addEventListener("pointerup", endDrag);
+    sheet.addEventListener("pointercancel", endDrag);
+    sheet.addEventListener("dblclick", () => reset(sheet));
+  }
+
+  sheets.forEach(attach);
+
+  /* ── Sheet switching ──────────────────────────────────────────────── */
+  const dots = Array.from(document.querySelectorAll(".pager .dot"));
+  const curEl = document.getElementById("pager-cur");
+  let activeIdx = 0;
+
+  function show(idx) {
+    idx = ((idx % sheets.length) + sheets.length) % sheets.length;
+    sheets[activeIdx].classList.remove("active");
+    sheets[idx].classList.add("active");
+    if (dots[activeIdx]) dots[activeIdx].classList.remove("active");
+    if (dots[idx])       dots[idx].classList.add("active");
+    activeIdx = idx;
+    if (curEl) curEl.textContent = String(idx + 1);
+    apply(sheets[idx]);
+  }
+
+  dots.forEach((dot, i) => {
+    dot.addEventListener("click", () => show(i));
+  });
+
+  window.addEventListener("keydown", (e) => {
+    if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+    if (e.key === "ArrowRight" || e.key === "PageDown") { show(activeIdx + 1); e.preventDefault(); }
+    else if (e.key === "ArrowLeft" || e.key === "PageUp") { show(activeIdx - 1); e.preventDefault(); }
+    else if (e.key === "Home") { show(0); e.preventDefault(); }
+    else if (e.key === "End")  { show(sheets.length - 1); e.preventDefault(); }
+    else if (/^[1-9]$/.test(e.key)) {
+      const i = parseInt(e.key, 10) - 1;
+      if (i < sheets.length) { show(i); e.preventDefault(); }
+    }
+    else if (e.key === "Escape") reset(sheets[activeIdx]);
+  });
+})();
+</script>
+
+</body>
+</html>

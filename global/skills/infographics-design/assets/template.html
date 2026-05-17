@@ -1,0 +1,304 @@
+<!doctype html>
+<!--
+  Infographic template — A4 landscape, single page, no scroll.
+  Replace the brand, the stat row, and the cell contents.
+  See references/card-anatomy.md + references/component-palette.md.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Project name — A4 infographic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── Design tokens ─── see references/design-tokens.css for full notes ── */
+:root {
+  --paper: #FAF6EB; --paper-2: #F1EBDC;
+  --ink: #1A1726; --ink-2: #5B5468; --ink-3: #908A9C;
+  --rule: #D9D3C2; --rule-2: #EAE3D1;
+  --accent: #CC006B; --accent-soft: #FBE7F0;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; }
+html { color-scheme: light; }
+body {
+  font-family: "Inter", system-ui, sans-serif;
+  color: var(--ink); background: #2F2A3B;
+  display: grid; place-items: center; overflow: hidden;
+}
+
+/* ── Sheet (A4 landscape, fit-to-viewport, no scroll) ──────────────────── */
+.sheet {
+  width: min(100vw, calc(100vh * 297 / 210));
+  aspect-ratio: 297 / 210;
+  background: var(--paper);
+  box-shadow: 0 24px 60px -20px rgba(0,0,0,0.5);
+  container-type: size; container-name: sheet;
+  overflow: hidden; padding: 2.4cqh 2.6cqw;
+  display: grid; grid-template-rows: auto auto 1fr auto; gap: 1.2cqh;
+}
+@page { size: A4 landscape; margin: 0; }
+@media print {
+  body { background: white; }
+  .sheet { box-shadow: none; width: 100%; height: 100%; aspect-ratio: auto; }
+}
+
+/* ── Header ────────────────────────────────────────────────────────────── */
+.head { display: grid; grid-template-columns: 1.6fr 2.4fr; gap: 2cqw;
+        align-items: end; padding-bottom: 1cqh; border-bottom: 1px solid var(--rule); }
+.brand h1 { font-family: "Space Grotesk", sans-serif; font-weight: 700;
+            font-size: 4.6cqh; line-height: 1; letter-spacing: -0.025em;
+            margin: 0 0 0.7cqh; }
+.brand h1 .accent { color: var(--accent); }
+.brand .tag { font-family: "JetBrains Mono", monospace; font-size: 1.3cqh;
+              letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); }
+.brand .tag .sep { color: var(--ink-3); margin: 0 .6ch; }
+.stats { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.8cqw; align-items: end; }
+.stat { padding: 0.6cqh 0.8cqw 0.4cqh; border-left: 2px solid var(--accent);
+        background: linear-gradient(180deg, transparent, var(--paper-2)); }
+.stat .n { font-family: "Space Grotesk", sans-serif; font-weight: 700;
+           font-size: 4.4cqh; line-height: 1; letter-spacing: -0.04em; font-feature-settings: "tnum" 1; }
+.stat .l { display: block; margin-top: 0.4cqh; font-family: "JetBrains Mono", monospace;
+           font-size: 1.05cqh; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); }
+
+/* ── Track labels (A | B) ──────────────────────────────────────────────── */
+.track { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2cqw; }
+.track h2 { font-family: "Space Grotesk", sans-serif; font-size: 1.8cqh;
+            margin: 0; padding: 0.4cqh 0; display: flex; align-items: center; gap: 0.8cqw; }
+.track h2 .num { font-family: "JetBrains Mono", monospace; font-size: 1.3cqh; color: var(--accent); }
+.track h2::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
+
+/* ── Tracks body — A left, B right ─────────────────────────────────────── */
+.tracks { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1.4cqw; min-height: 0; }
+.track-col { display: grid; grid-template-columns: repeat(6, 1fr);
+             grid-auto-rows: minmax(0, 1fr); gap: 0.7cqh 0.7cqw; min-height: 0; }
+.cell.w-2 { grid-column: span 2; }
+.cell.w-3 { grid-column: span 3; }
+.cell.w-4 { grid-column: span 4; }
+.cell.w-6 { grid-column: span 6; }
+
+/* ── Cell anatomy ──────────────────────────────────────────────────────── */
+.cell {
+  position: relative; padding: 1cqh 1.1cqw 0.8cqh;
+  background: var(--paper); border: 1px solid var(--rule);
+  display: grid; grid-template-rows: auto auto 1fr auto; row-gap: 0.5cqh;
+  min-height: 0; overflow: hidden; font-feature-settings: "tnum" 1;
+}
+.cell::before, .cell::after {
+  content: ""; position: absolute; width: 0.8cqw; height: 0.6cqh;
+  border-color: var(--accent); border-style: solid; opacity: 0.85;
+}
+.cell::before { top: -1px; left: -1px; border-width: 1px 0 0 1px; }
+.cell::after  { bottom: -1px; right: -1px; border-width: 0 1px 1px 0; }
+.cell.dark { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.cell.dark .sub { color: rgba(250,246,235,0.78); }
+.cell.dark .cell-foot { color: rgba(250,246,235,0.55); border-top-color: rgba(255,255,255,0.12); }
+.cell.tinted { background: var(--paper-2); }
+.cell.dark.tinted { background: #221E33; border-color: #221E33; }
+.cell.accent-rail { border-left: 3px solid var(--accent); padding-left: 1cqw; }
+
+.cell .hdr { display: grid; grid-template-columns: auto 1fr auto; align-items: center;
+             column-gap: 0.7cqw; padding-bottom: 0.45cqh; border-bottom: 1px solid var(--rule-2); }
+.cell.dark .hdr { border-bottom-color: rgba(255,255,255,0.14); }
+.cell .idx { font-family: "JetBrains Mono", monospace; font-size: 0.95cqh; font-weight: 700;
+             color: var(--accent); letter-spacing: 0.08em; }
+.cell .title { font-family: "Space Grotesk", sans-serif; font-weight: 700;
+               font-size: 1.55cqh; letter-spacing: -0.012em; margin: 0; line-height: 1; }
+.cell .badge { font-family: "Space Grotesk", sans-serif; font-weight: 700;
+               font-size: 2cqh; line-height: 1; letter-spacing: -0.03em;
+               padding: 0.25cqh 0.55cqw; background: var(--accent); color: var(--paper);
+               border-radius: 2px; min-width: 2.6cqw; text-align: center; font-feature-settings: "tnum" 1; }
+.cell .badge.small { font-family: "JetBrains Mono", monospace; font-size: 0.9cqh;
+                     font-weight: 700; letter-spacing: 0.05em; padding: 0.35cqh 0.5cqw; }
+
+.cell .sub { font-family: "JetBrains Mono", monospace; font-size: 0.92cqh;
+             letter-spacing: 0.04em; color: var(--ink-2); margin: 0; line-height: 1.25; }
+.cell .body { align-self: center; min-height: 0; }
+.cell .cell-foot { display: flex; align-items: center; gap: 0.5cqw;
+                   font-family: "JetBrains Mono", monospace; font-size: 0.78cqh; font-weight: 500;
+                   color: var(--ink-3); letter-spacing: 0.02em;
+                   border-top: 1px dotted var(--rule); padding-top: 0.4cqh;
+                   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cell .cell-foot::before { content: "↳"; color: var(--accent); font-weight: 700; }
+
+/* ── Body components — see references/component-palette.md ─────────────── */
+/* Bar chart */
+.bar { display: grid; gap: 0.35cqh; }
+.bar .row { display: grid; grid-template-columns: 6cqw 1fr 2cqw; align-items: center;
+            gap: 0.55cqw; font-family: "JetBrains Mono", monospace; font-size: 0.88cqh; font-weight: 600; }
+.bar .row .lab { color: var(--ink); }
+.cell.dark .bar .row .lab { color: var(--paper); }
+.bar .row .num { color: var(--accent); text-align: right; font-weight: 700; font-feature-settings: "tnum" 1; }
+.bar .track-line { position: relative; height: 0.75cqh; background: var(--rule-2); border-radius: 1px; }
+.cell.dark .bar .track-line { background: rgba(255,255,255,0.1); }
+.bar .track-line span { position: absolute; left: 0; top: 0; bottom: 0;
+                        background: var(--accent); border-radius: 1px; }
+
+/* Pills */
+.pills { display: flex; flex-wrap: wrap; gap: 0.4cqh 0.35cqw; align-content: flex-start; }
+.pill { font-family: "JetBrains Mono", monospace; font-size: 0.92cqh; font-weight: 600;
+        padding: 0.35cqh 0.7cqw; border: 1px solid var(--rule); border-radius: 0;
+        color: var(--ink); background: var(--paper-2); white-space: nowrap; line-height: 1.1; }
+.cell.dark .pill { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.16); color: var(--paper); }
+
+/* Flow (3-step) */
+.flow { display: grid; grid-template-columns: 1fr 0.5cqw 1fr 0.5cqw 1fr; align-items: stretch; gap: 0.15cqw; }
+.flow .node { text-align: center; font-family: "JetBrains Mono", monospace;
+              font-size: 0.88cqh; font-weight: 600; padding: 0.6cqh 0.3cqw;
+              background: var(--paper-2); border: 1px solid var(--rule); line-height: 1.2;
+              display: grid; place-items: center; }
+.cell.dark .flow .node { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.18); color: var(--paper); }
+.flow .arr { display: grid; place-items: center; color: var(--accent); font-weight: 700; font-size: 1.2cqh; }
+
+/* Ladder */
+.ladder { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.45cqh; }
+.ladder li { position: relative; padding-left: 1.6ch; font-size: 0.98cqh; line-height: 1.3; }
+.ladder li::before { content: ""; position: absolute; left: 0; top: 0.45em;
+                     width: 0.9ch; height: 2px; background: var(--accent); }
+.ladder li .k { display: inline-block; font-family: "JetBrains Mono", monospace;
+                font-size: 0.82cqh; color: var(--ink-2); letter-spacing: 0.04em; margin-bottom: 0.1cqh; }
+.cell.dark .ladder li .k { color: rgba(250,246,235,0.65); }
+
+/* (For lifecycle-mini, orch-mini, iso-mini, wire-mini, gates-row, deploy-mini,
+   kv — copy from references/component-palette.md as needed.) */
+
+/* ── Footer ────────────────────────────────────────────────────────────── */
+.foot { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+        gap: 1cqw; padding-top: 0.8cqh; border-top: 1px solid var(--rule);
+        font-family: "JetBrains Mono", monospace; font-size: 1cqh; color: var(--ink-2); }
+.foot .url { color: var(--ink); font-weight: 600; }
+.foot .mid { text-align: center; font-weight: 600; color: var(--accent); letter-spacing: 0.06em; }
+.foot .right { text-align: right; }
+</style>
+</head>
+
+<body>
+
+<div class="sheet" role="img" aria-label="Project infographic, single-page A4">
+
+  <!-- ─── Header ──────────────────────────────────────────────────────── -->
+  <div class="head">
+    <div class="brand">
+      <h1>project <span class="accent">/</span> tagline</h1>
+      <div class="tag">subtitle line<span class="sep">·</span>version<span class="sep">·</span>single-page reference</div>
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="n">N</span><span class="l">things</span></div>
+      <div class="stat"><span class="n">N</span><span class="l">things</span></div>
+      <div class="stat"><span class="n">N</span><span class="l">things</span></div>
+      <div class="stat"><span class="n">N</span><span class="l">things</span></div>
+      <div class="stat"><span class="n">N</span><span class="l">things</span></div>
+      <div class="stat"><span class="n">N</span><span class="l">things</span></div>
+    </div>
+  </div>
+
+  <!-- ─── Track labels (must mirror body grid) ────────────────────────── -->
+  <div class="track">
+    <h2><span class="num">A</span>Track A — visible surface</h2>
+    <h2><span class="num">B</span>Track B — behind the scenes</h2>
+  </div>
+
+  <!-- ─── Body — A left, B right ──────────────────────────────────────── -->
+  <div class="tracks">
+
+    <!-- A track -->
+    <div class="track-col">
+
+      <div class="cell w-4">
+        <div class="hdr">
+          <span class="idx">A·01</span>
+          <h3 class="title">Wide bar chart</h3>
+          <span class="badge">14</span>
+        </div>
+        <p class="sub">subtitle — one concrete statement</p>
+        <div class="body">
+          <div class="bar">
+            <div class="row"><span class="lab">label-a</span><div class="track-line"><span style="width:50%"></span></div><span class="num">7</span></div>
+            <div class="row"><span class="lab">label-b</span><div class="track-line"><span style="width:21%"></span></div><span class="num">3</span></div>
+            <div class="row"><span class="lab">label-c</span><div class="track-line"><span style="width:14%"></span></div><span class="num">2</span></div>
+            <div class="row"><span class="lab">label-d</span><div class="track-line"><span style="width:14%"></span></div><span class="num">2</span></div>
+          </div>
+        </div>
+        <div class="cell-foot">path/to/source · how to invoke</div>
+      </div>
+
+      <div class="cell w-2 accent-rail">
+        <div class="hdr">
+          <span class="idx">A·02</span>
+          <h3 class="title">Pills</h3>
+          <span class="badge">8</span>
+        </div>
+        <p class="sub">flat enumeration</p>
+        <div class="body">
+          <div class="pills">
+            <span class="pill">one</span>
+            <span class="pill">two</span>
+            <span class="pill">three</span>
+            <span class="pill">four</span>
+          </div>
+        </div>
+        <div class="cell-foot">path/to/source</div>
+      </div>
+
+      <!-- Add more A cells here. Span widths in a row must sum to 6. -->
+
+    </div>
+
+    <!-- B track -->
+    <div class="track-col">
+
+      <div class="cell dark w-3">
+        <div class="hdr">
+          <span class="idx">B·01</span>
+          <h3 class="title">Flow diagram</h3>
+          <span class="badge small">AUTO</span>
+        </div>
+        <p class="sub">3-step transformation</p>
+        <div class="body">
+          <div class="flow">
+            <div class="node">step 1</div>
+            <div class="arr">›</div>
+            <div class="node">step 2</div>
+            <div class="arr">›</div>
+            <div class="node">step 3</div>
+          </div>
+        </div>
+        <div class="cell-foot">path/to/source · spec NNN</div>
+      </div>
+
+      <div class="cell dark w-3">
+        <div class="hdr">
+          <span class="idx">B·02</span>
+          <h3 class="title">Ladder list</h3>
+          <span class="badge">3</span>
+        </div>
+        <p class="sub">structured definitions</p>
+        <div class="body">
+          <ul class="ladder">
+            <li><span class="k">key-a</span>value or rule on this line</li>
+            <li><span class="k">key-b</span>value or rule on this line</li>
+            <li><span class="k">key-c</span>value or rule on this line</li>
+          </ul>
+        </div>
+        <div class="cell-foot">path/to/source</div>
+      </div>
+
+      <!-- Add more B cells here. -->
+
+    </div>
+
+  </div>
+
+  <!-- ─── Footer ──────────────────────────────────────────────────────── -->
+  <div class="foot">
+    <div class="left">project · <span class="url">repo url</span></div>
+    <div class="mid">A · VISIBLE   ┃   B · BEHIND</div>
+    <div class="right">A4 landscape · 297 × 210 mm</div>
+  </div>
+
+</div>
+
+</body>
+</html>

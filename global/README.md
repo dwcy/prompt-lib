@@ -234,7 +234,7 @@ global/
 │   ├── python-tester.md              # Python testing specialist (pytest, async)
 │   ├── frontend-architect.md         # Frontend architecture specialist (React, Vue, Next.js)
 │   ├── frontend-css.md               # CSS architecture specialist (modules, globals, theming)
-│   ├── react-architect.md            # React 2025 stack specialist (Vite/Zustand/Biome/Tailwind)
+│   ├── react-architect.md            # Current stable React stack specialist (Vite/Zustand/Biome/Tailwind)
 │   ├── tanstack-architect.md         # Opinionated TanStack specialist (Start/Router/Query/Form/Table)
 │   └── unity-architect.md            # Unity3D architecture specialist
 │
@@ -254,7 +254,7 @@ global/
 │   └── tests.md                      # Loaded only when editing test files
 │
 ├── skills/                           # Global slash commands (~/.claude/skills/)
-│   ├── react-init.md                 # /react-init — scaffold full React 2025 project interactively
+│   ├── react-init.md                 # /react-init — scaffold full current-stable React project interactively
 │   ├── react-review.md               # /react-review — code quality + architecture review (Critical/Warning/Suggestion)
 │   ├── react-test.md                 # /react-test — scaffold or review tests with Vitest + RTL
 │   ├── react-safe.md                 # /react-safe — async, error handling, and security audit
@@ -315,8 +315,8 @@ Drop a `.mcp.json` into a project root to add project-scoped servers. Commit it 
   "mcpServers": {
     "server-name": {
       "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "@scope/mcp-package@latest"],
+      "command": "pnpm",
+      "args": ["dlx", "@scope/mcp-package@latest"],
       "env": {
         "API_KEY": "${MY_API_KEY}"
       }

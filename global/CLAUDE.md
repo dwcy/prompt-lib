@@ -64,9 +64,10 @@ See [`docs/parallel-isolation.md`](docs/parallel-isolation.md) for the full rule
 
 ## Package managers
 
-- Prefer `pnpm` over `npm` for all Node.js operations — `pnpm install`, `pnpm add`, `pnpm run`, `pnpm dlx`.
-- Only fall back to `npm` when the project explicitly requires it (e.g. `.npmrc` with `engine-strict` and npm-only lockfile).
-- Never suggest `yarn` unless the project already uses it.
+- For frontend and Node.js work, use only `pnpm` or `bun`.
+- Never run or suggest `npm`, `npx`, or `yarn` for frontend work. Use `pnpm install`, `pnpm add`, `pnpm run`, `pnpm dlx`, or the matching `bun` / `bunx` command.
+- When initializing a new frontend project, always ask which package manager to use: `pnpm` or `bun`.
+- If an existing frontend project has only `package-lock.json` or `yarn.lock`, stop and ask whether to migrate to `pnpm` or `bun` instead of using npm/yarn.
 
 ## Things to never do
 

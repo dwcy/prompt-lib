@@ -2,6 +2,8 @@
 
 Versioned source for everything in `~/.claude/` — agents, skills, hooks, rules, output styles, MCP servers, project templates — plus a TUI installer and two services that extend Claude Code into a multi-agent system.
 
+> **Visual tour:** open [`docs/infographic.html`](docs/infographic.html) in a browser — single A4 landscape sheet, no scrolling, every feature at a glance. The longer scrollable variant is at [`docs/infographic-v1.html`](docs/infographic-v1.html).
+
 ## Functionality
 
 | Need | How this repo handles it |
@@ -12,10 +14,11 @@ Versioned source for everything in `~/.claude/` — agents, skills, hooks, rules
 | Always-on context bloat | Conditional rules in `global/rules/` (`csharp.md`, `typescript.md`, `react.md`, `tests.md`) load only when Claude touches a matching file |
 | Response-mode switching | Four output styles — `concise`, `technical`, `review`, `architect` — picked per session via `/output-style` |
 | External tool integrations | Eight pre-wired MCP servers: `context7`, `github`, `figma`, `playwright`, `azure-devops`, `supabase`, `obsidian`, `docker` (env vars resolved via `${VAR}` substitution) |
-| Multi-machine setup / drift detection | Interactive TUI wizard at `setup/apply.py` — deploy, init env vars, doctor (drift report), restore from backup, local project scaffold, optional companion tools |
+| Multi-machine setup / drift detection | Interactive TUI wizard at `setup/settings-configurator-ui.py` — deploy, init env vars, doctor (drift report), restore from backup, local project scaffold, optional companion tools |
+| Install without cloning | `/plugin marketplace add dwcy/prompt-lib` + `/plugin install prompt-lib@prompt-lib` ships skills, agents, hooks, MCP servers, and output styles as a Claude Code plugin. The apply-script path remains the way to get the full setup (global `CLAUDE.md`, rules, permissions, theme). See [`docs/plugin-install.md`](docs/plugin-install.md). |
 | Cross-agent delegation (Claude ↔ Gemini) | [`services/a2a-bridge`](services/a2a-bridge/) — A2A protocol v1.0.0 implementation, Python 3.13 + FastAPI, 199 tests passing |
 | Autonomous PR review | [`services/orchestrator`](services/orchestrator/) — daemon that watches a GitHub repo, dispatches each PR to a peer Claude agent over the A2A bridge, posts the review back via `gh`, persists state to SQLite, pushes phone notifications via ntfy.sh, ships with a Textual dashboard |
-| Spec-driven feature work | `specs/` holds spec-kit feature trees (spec, plan, research, data-model, contracts, tasks, quickstart) — `001-a2a-bridge` and `002-agent-orchestrator` |
+| Spec-driven feature work | `specs/` holds spec-kit feature trees (spec, plan, research, data-model, contracts, tasks, quickstart) — `001-a2a-bridge`, `002-agent-orchestrator`, `003-issue-triage`, `004-github-plugin` |
 | Tool-call safety | `PreToolUse` hooks (`command_guard.py`, `file_write_guard.py`) and `PostToolUse` audit (`write_audit.py`) intercept risky operations |
 | Authoring new skills | `/skill-create` — scaffolds, tests, and refines new slash commands |
 
@@ -62,7 +65,7 @@ Every command available in this project, grouped by purpose. Source links point 
 
 | Command | When to use | Links |
 |---|---|---|
-| `/react-init` | Scaffold a full React 2025 project — Vite + TS + Zustand + TanStack + Biome + Tailwind v4 + Zod + MUI Icons | [src](global/skills/react-init.md) · [docs](docs/skills.md#react-init) |
+| `/react-init` | Scaffold a full current-stable React project — Vite + TS + Zustand + TanStack + Biome + Tailwind + Zod + MUI Icons | [src](global/skills/react-init.md) · [docs](docs/skills.md#react-init) |
 | `/react-review` | Code-quality review of a React file/feature — Critical / Warning / Suggestion | [src](global/skills/react-review.md) · [docs](docs/skills.md#react-review) |
 | `/react-test` | Scaffold or review Vitest + RTL tests for a component, hook, or feature | [src](global/skills/react-test.md) · [docs](docs/skills.md#react-test) |
 | `/react-safe` | Audit a React file for async correctness, error handling, security gaps | [src](global/skills/react-safe.md) · [docs](docs/skills.md#react-safe) |
@@ -108,7 +111,7 @@ prompt-lib/
 │   ├── rules/           ← file-pattern-conditional rules
 │   ├── output-styles/   ← response formatting profiles
 │   └── project-templates/  ← templates used by @init-project
-├── setup/               ← TUI installer (apply.py)
+├── setup/               ← TUI installer (settings-configurator-ui.py)
 ├── services/
 │   ├── a2a-bridge/      ← A2A protocol bridge
 │   └── orchestrator/    ← PR-review daemon
@@ -118,12 +121,23 @@ prompt-lib/
 ## Apply changes
 
 ```bash
-python setup/apply.py
+python setup/settings-configurator-ui.py
 ```
 
 First run auto-installs `rich` + `questionary`. After applying, restart Claude Code.
 
 Fallback (non-interactive): `bash setup/tools/apply-global-claude-settings.sh`.
+
+### Alternative: install as a Claude Code plugin
+
+You can install skills/agents/hooks/MCP servers without cloning the repo:
+
+```text
+/plugin marketplace add dwcy/prompt-lib
+/plugin install prompt-lib@prompt-lib
+```
+
+Plugin install ships the shareable surface (skills become `/prompt-lib:*`, agents become `prompt-lib:*`). Items the plugin model can't carry — global `CLAUDE.md`, `global/rules/`, `global/project-templates/`, permissions, theme, statusLine — stay on the apply path. Both paths coexist. Full guide at [`docs/plugin-install.md`](docs/plugin-install.md); design at [`specs/004-github-plugin/`](specs/004-github-plugin/).
 
 ## Further reading
 
@@ -140,6 +154,7 @@ Fallback (non-interactive): `bash setup/tools/apply-global-claude-settings.sh`.
 - [`docs/parallel-isolation.md`](docs/parallel-isolation.md) — when concurrent subagents must run in isolated git worktrees, why, and how
 - [`docs/speckit.md`](docs/speckit.md) — spec-kit configuration in this repo: constitution, gates, slash commands, templates, delegation roster, phase-status rule, git-extension override
 - [`docs/services.md`](docs/services.md) — `a2a-bridge` and `orchestrator` daemons in detail
+- [`docs/plugin-install.md`](docs/plugin-install.md) — install prompt-lib as a Claude Code plugin (no clone), scope split with the apply path
 - [`docs/learning.md`](docs/learning.md) — 5-day learning path, mental shortcuts, debugging surprises
 
 ### Other references

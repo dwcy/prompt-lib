@@ -1,11 +1,11 @@
-# Learning path — getting fluent with this stack
+﻿# Learning path — getting fluent with this stack
 
 This stack is opinionated and dense. There's a fast way and a slow way to learn it. The fast way:
 
 ## Day 1 — get it running
 
 1. Read [`architecture.md`](architecture.md) end-to-end. Skip nothing. The five-step boot is the only model you need.
-2. Run `python setup/apply.py`. Try every mode (Update / Doctor / Restore). The wizard is reversible — explore.
+2. Run `python setup/settings-configurator-ui.py`. Try every mode (Update / Doctor / Restore). The wizard is reversible — explore.
 3. Open Claude Code in any project. Watch the `SessionStart` hook fire — it either offers to scaffold `CLAUDE.md` or says "@load-project will brief you."
 4. Type `/git`. Observe how the skill body becomes the next instruction. That's the whole skill model.
 
@@ -53,7 +53,7 @@ This stack is opinionated and dense. There's a fast way and a slow way to learn 
 - **"Why is my agent's output too summarised?"** It probably should have been a skill (runs in your conversation; you see everything).
 - **"Should this be in CLAUDE.md or a rule?"** If it applies always → CLAUDE.md. If it only applies to specific files → rule with a `paths:` glob.
 - **"My MCP server isn't authenticating."** The env var is missing in the shell that launched Claude Code. Restart the shell after running the wizard's "Initialize env vars" mode.
-- **"My change didn't take effect."** You forgot to run `setup/apply.py` or to restart Claude Code. Both are required.
+- **"My change didn't take effect."** You forgot to run `setup/settings-configurator-ui.py` or to restart Claude Code. Both are required.
 
 ## Debugging surprises
 

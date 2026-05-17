@@ -14,17 +14,23 @@ Detect the test framework and run the full suite:
 |---|---|
 | .NET | `dotnet test` |
 | Bun | `bun test` |
-| Node | `npm test` or `npx vitest run` |
+| pnpm | `pnpm test` or `pnpm exec vitest run` |
 | Python | `python -m pytest` |
 
 Stop and report failures. Do not commit with failing tests.
+
+For frontend/Node projects, detect the package manager before running commands:
+- `pnpm-lock.yaml` -> use `pnpm`
+- `bun.lockb` or `bun.lock` -> use `bun`
+- `package-lock.json` or `yarn.lock` only -> stop and ask whether to migrate to `pnpm` or `bun`
 
 ## Step 2 — Verify build
 
 | Stack | Command |
 |---|---|
 | .NET | `dotnet build --no-restore` |
-| Frontend | `bun run build` or `npm run build` |
+| Frontend pnpm | `pnpm build` |
+| Frontend Bun | `bun run build` |
 
 Stop and report errors.
 

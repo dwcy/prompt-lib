@@ -35,7 +35,7 @@ After editing anything in `global/`, deploy and restart:
 
 ```bash
 # Recommended — interactive TUI wizard (preview, doctor, restore, env init, local setup)
-python setup/apply.py
+python setup/settings-configurator-ui.py
 
 # Fallback — non-interactive bash script
 bash setup/tools/apply-global-claude-settings.sh
@@ -49,8 +49,8 @@ See `setup/README.md` for the wizard's structure and modes.
 - **Change hooks:** edit `global/hooks/<name>` → apply
 
 <!-- SPECKIT START -->
-Active spec-kit feature: **002-agent-orchestrator** — Agent Orchestrator (GitHub PR Review v1).
-For technical context, project structure, stack decisions, and constitution gate status, read [`specs/002-agent-orchestrator/plan.md`](specs/002-agent-orchestrator/plan.md). The full design tree is at `specs/002-agent-orchestrator/` (spec, plan, research, data-model, contracts, quickstart).
+Active spec-kit feature: **004-github-plugin** — Package prompt-lib as an Installable Claude Code Plugin (v1).
+For technical context, project structure, stack decisions, and constitution gate status, read [`specs/004-github-plugin/plan.md`](specs/004-github-plugin/plan.md). The full design tree is at `specs/004-github-plugin/` (spec, plan, research, data-model, contracts, quickstart).
 
-Previously shipped: `001-a2a-bridge` (A2A Bridge for Multi-Agent CLI Delegation v1) at `specs/001-a2a-bridge/` — orchestrator depends on its `DelegationClient`.
+Previously shipped: `003-issue-triage` (GitHub Issue Triage Orchestrator v1) at `specs/003-issue-triage/` — extends the 002 trigger abstraction. `002-agent-orchestrator` (Agent Orchestrator — GitHub PR Review v1) at `specs/002-agent-orchestrator/`. `001-a2a-bridge` (A2A Bridge for Multi-Agent CLI Delegation v1) at `specs/001-a2a-bridge/`.
 <!-- SPECKIT END -->

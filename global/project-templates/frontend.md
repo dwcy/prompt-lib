@@ -28,8 +28,7 @@
 
 5. Which package manager?
    - pnpm (recommended)
-   - npm
-   - yarn
+   - Bun
 
 6. Which test setup?
    - Vitest + Testing Library
@@ -84,6 +83,19 @@ src/
 - Props interfaces named `[ComponentName]Props`
 - Custom hooks must start with `use`
 
+## Version Rules
+
+- Use the latest stable version of the selected framework, libraries, and tooling.
+- Verify current stable docs or registry metadata before adding version-specific APIs or packages.
+- Do not pin stale year-based stack assumptions into project rules.
+
+## Package Manager Rules
+
+- Use only the selected package manager: [PACKAGE MANAGER].
+- Do not run `npm`, `npx`, or `yarn`.
+- Use `pnpm dlx` or `bunx` for one-off package executors.
+- If the repo contains only `package-lock.json` or `yarn.lock`, ask before migrating to `pnpm` or `bun`.
+
 ## TypeScript Rules
 
 - `strict: true` in tsconfig — no exceptions
@@ -121,8 +133,15 @@ src/
 ## Build & Run
 
 ```bash
+# pnpm
 pnpm install
 pnpm dev
 pnpm build
 pnpm test
+
+# Bun
+bun install
+bun run dev
+bun run build
+bun test
 ```

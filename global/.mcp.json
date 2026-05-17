@@ -1,0 +1,62 @@
+{
+  "mcpServers": {
+    "context7": {
+      "type": "stdio",
+      "command": "pnpm",
+      "args": ["dlx", "@context7/mcp-server@latest"]
+    },
+    "github": {
+      "type": "stdio",
+      "command": "pnpm",
+      "args": ["dlx", "@modelcontextprotocol/server-github@latest"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
+      }
+    },
+    "figma": {
+      "type": "stdio",
+      "command": "pnpm",
+      "args": ["dlx", "@figma/mcp-server@latest"],
+      "env": {
+        "FIGMA_ACCESS_TOKEN": "${FIGMA_ACCESS_TOKEN}"
+      }
+    },
+    "playwright": {
+      "type": "stdio",
+      "command": "pnpm",
+      "args": ["dlx", "@playwright/mcp@latest"]
+    },
+    "azure-devops": {
+      "type": "stdio",
+      "command": "pnpm",
+      "args": ["dlx", "@tiberriver256/mcp-server-azure-devops@latest"],
+      "env": {
+        "AZURE_DEVOPS_ORG_URL": "${AZURE_DEVOPS_ORG_URL}",
+        "AZURE_DEVOPS_TOKEN": "${AZURE_DEVOPS_TOKEN}"
+      }
+    },
+    "supabase": {
+      "type": "stdio",
+      "command": "pnpm",
+      "args": ["dlx", "@supabase/mcp-server-supabase@latest"],
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "${SUPABASE_ACCESS_TOKEN}"
+      }
+    },
+    "obsidian": {
+      "type": "stdio",
+      "command": "pnpm",
+      "args": ["dlx", "obsidian-mcp@latest"],
+      "env": {
+        "OBSIDIAN_API_KEY": "${OBSIDIAN_API_KEY}",
+        "OBSIDIAN_HOST": "${OBSIDIAN_HOST}",
+        "OBSIDIAN_PORT": "${OBSIDIAN_PORT}"
+      }
+    },
+    "docker": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["docker-mcp"]
+    }
+  }
+}

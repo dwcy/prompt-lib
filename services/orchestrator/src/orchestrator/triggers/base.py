@@ -29,7 +29,7 @@ class TriggerEvent(BaseModel):
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    kind: Literal["pr.opened", "pr.updated"]
+    kind: Literal["pr.opened", "pr.updated", "issue.opened"]
     repo: str
     pr_number: int
     head_sha: str

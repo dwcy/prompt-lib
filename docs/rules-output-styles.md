@@ -1,4 +1,4 @@
-# Rules, output styles, and project templates
+﻿# Rules, output styles, and project templates
 
 Three loosely related mechanisms that each shape Claude's behaviour in a different way.
 
@@ -12,7 +12,7 @@ A rule is a markdown file in `global/rules/` with a `paths:` glob in its frontma
 |---|---|---|
 | `csharp.md` | Editing `**/*.cs` | C# conventions — naming, async patterns, nullability, file-scoped namespaces, etc. |
 | `typescript.md` | Editing `**/*.ts`, `**/*.tsx` | TypeScript conventions — strict types, no `any`, import sort, etc. |
-| `react.md` | Editing `**/*.tsx`, `**/components/**/*.ts`, `**/features/**/*.ts`, `**/hooks/**/*.ts`, `**/state/**/*.ts` | React 2025 idioms — function components, hook patterns, file colocation |
+| `react.md` | Editing `**/*.tsx`, `**/components/**/*.ts`, `**/features/**/*.ts`, `**/hooks/**/*.ts`, `**/state/**/*.ts` | Current stable React idioms — function components, hook patterns, file colocation |
 | `tests.md` | Editing test files (`**/*Tests*/**/*.cs`, `**/*Test.cs`, `**/*.test.ts`, `**/*.test.tsx`, `**/*.spec.ts`) | Test conventions across stacks |
 
 ### Why this beats putting it in CLAUDE.md
@@ -31,7 +31,7 @@ paths:
 Conventions to apply when editing these files…
 ```
 
-Drop it in `global/rules/`, run `setup/apply.py`, restart.
+Drop it in `global/rules/`, run `setup/settings-configurator-ui.py`, restart.
 
 ## Output styles — response formatting profiles
 
@@ -72,7 +72,7 @@ Project templates live in `global/project-templates/` and drive what `@init-proj
 |---|---|
 | `dotnet.md` | .NET projects — solution layout, Clean Architecture preferences, test framework, ORM |
 | `python.md` | Python — FastAPI / Django / CLI, packaging, async, DB |
-| `frontend.md` | React / Vue / Next.js (non-2025-stack) |
+| `frontend.md` | React / Vue / Next.js projects |
 | `monorepo.md` | Mono-repos — package manager, workspace tooling, build orchestrator |
 | `unity.md` | Unity3D — render pipeline, target platforms, asset organisation |
 | `other.md` | Generic fallback — open-ended questions, freeform |
@@ -104,4 +104,4 @@ Announces which specialist subagents are now available for the session
 
 1. Create `global/project-templates/<name>.md` with the two-section format.
 2. Add a hint in `global/agents/init-project.md` so the agent knows when to pick this template (e.g. "for Rust projects, use `rust.md`").
-3. `python setup/apply.py` → restart.
+3. `python setup/settings-configurator-ui.py` → restart.
