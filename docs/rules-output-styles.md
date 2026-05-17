@@ -12,7 +12,7 @@ A rule is a markdown file in `global/rules/` with a `paths:` glob in its frontma
 |---|---|---|
 | `csharp.md` | Editing `**/*.cs` | C# conventions — naming, async patterns, nullability, file-scoped namespaces, etc. |
 | `typescript.md` | Editing `**/*.ts`, `**/*.tsx` | TypeScript conventions — strict types, no `any`, import sort, etc. |
-| `react.md` | Editing `**/*.tsx`, `**/components/**/*.ts`, `**/features/**/*.ts`, `**/hooks/**/*.ts`, `**/state/**/*.ts` | React 2025 idioms — function components, hook patterns, file colocation |
+| `react.md` | Editing `**/*.tsx`, `**/components/**/*.ts`, `**/features/**/*.ts`, `**/hooks/**/*.ts`, `**/state/**/*.ts` | Current stable React idioms — function components, hook patterns, file colocation |
 | `tests.md` | Editing test files (`**/*Tests*/**/*.cs`, `**/*Test.cs`, `**/*.test.ts`, `**/*.test.tsx`, `**/*.spec.ts`) | Test conventions across stacks |
 
 ### Why this beats putting it in CLAUDE.md
@@ -72,7 +72,7 @@ Project templates live in `global/project-templates/` and drive what `@init-proj
 |---|---|
 | `dotnet.md` | .NET projects — solution layout, Clean Architecture preferences, test framework, ORM |
 | `python.md` | Python — FastAPI / Django / CLI, packaging, async, DB |
-| `frontend.md` | React / Vue / Next.js (non-2025-stack) |
+| `frontend.md` | React / Vue / Next.js projects |
 | `monorepo.md` | Mono-repos — package manager, workspace tooling, build orchestrator |
 | `unity.md` | Unity3D — render pipeline, target platforms, asset organisation |
 | `other.md` | Generic fallback — open-ended questions, freeform |

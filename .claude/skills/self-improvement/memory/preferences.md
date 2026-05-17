@@ -32,6 +32,13 @@ Durable user / project preferences not visible from the code itself. Each entry 
 - **Scope**: All Node.js projects on this machine.
 - **Stale signal**: User explicitly switches a project to npm/yarn.
 
+### P-20260511-01 — Measure before stating; never guess a number when evidence is at hand
+- **Date**: 2026-05-11
+- **Preference**: When a concrete value (character count, line number, byte offset, version, etc.) can be obtained by reading what is directly in front of me — a file, a tool result, the conversation — do that first, then state the number. Never pattern-match to a familiar value and present it as fact.
+- **Why**: I stated "~75 chars" from vague familiarity with terminal widths, then had to correct to 64 after actually counting. The guess wasted the user's time and required a correction.
+- **Scope**: All responses. Applies especially to counts, sizes, offsets, and version numbers.
+- **Stale signal**: N/A — this is a permanent epistemic standard.
+
 ### P-20260510-05 — Never edit `.env*` files; print copy-paste instructions instead
 - **Date**: 2026-05-10
 - **Preference**: When env file content is needed, provide exact copy-paste instructions and the content as a code block — do not write the file. Env files must be UTF-8 (not UTF-16/BOM). Only `.env.example` is ever committed.

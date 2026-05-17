@@ -109,7 +109,7 @@ Claude sees github MCP tools registered (e.g. github__search_issues)
           ▼
 Calls: github__search_issues(query="label:bug")
           ▼
-MCP server (npx) returns JSON → Claude summarises
+MCP server (`pnpm dlx` or `uvx`) returns JSON → Claude summarises
 ```
 
 MCP servers run as long-lived stdio subprocesses for the duration of the session. `${ENV_VAR}` placeholders in `settings.json` are substituted from the shell that launched Claude Code — not from `.env` files. See [`settings.md`](settings.md#mcp-environment-variables) for the env-var lifecycle.

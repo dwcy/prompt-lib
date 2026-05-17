@@ -162,7 +162,9 @@ And `src/test/setup.ts` imports `@testing-library/jest-dom`. Create these if mis
 ## After writing tests
 
 ```bash
-bun run test        # or: npx vitest
+pnpm test           # or: bun test
+pnpm exec vitest    # or: bunx vitest
+pnpm test -- --coverage
 bun run test --coverage
 ```
 

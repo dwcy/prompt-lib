@@ -1,10 +1,12 @@
 ---
 name: react-init
-description: Scaffold a new React 2025 project — Vite + TypeScript + Zustand + TanStack + Biome + Tailwind v4 + Zod + MUI Icons. Asks questions then generates all config files, folder structure, and .cursorrules.
+description: Scaffold a new current-stable React project with Vite, TypeScript, Zustand, TanStack, Biome, Tailwind, Zod, and MUI Icons. Asks questions then generates all config files, folder structure, and .cursorrules.
 allowed-tools: Bash, Read, Write, Edit, Glob
 ---
 
-Scaffold a complete React 2025 project. Ask all questions first, then execute everything in order without further interruptions.
+Scaffold a complete current-stable React project. Ask all questions first, then execute everything in order without further interruptions.
+
+Use only `pnpm` or `bun`. Never run `npm`, `npx`, or `yarn`. Use the latest stable versions at execution time; when a package or config format may have changed, verify current docs or registry metadata before writing version-specific setup.
 
 ---
 
@@ -12,7 +14,7 @@ Scaffold a complete React 2025 project. Ask all questions first, then execute ev
 
 Ask all at once in a single message:
 
-1. **Runtime** — Bun or Node.js (npm)?
+1. **Package manager** — pnpm or Bun?
 2. **i18n** — Does this project need multi-language support? (react-i18next)
 3. **Auth** — Authentication needed? If yes: Clerk or Auth.js?
 4. **Testing** — Add testing setup? (Vitest + React Testing Library + Playwright)
@@ -41,19 +43,32 @@ If the directory is not empty, warn the user and ask to confirm before continuin
 
 ## Step 3 — Create the Vite project
 
-**With Bun:**
+Use the package manager chosen in Step 1.
+
+**With pnpm:**
 ```bash
-bun create vite . --template react-ts
+pnpm create vite@latest . -- --template react-ts
 ```
 
-**With Node/npm:**
+**With Bun:**
 ```bash
-npm create vite@latest . -- --template react-ts
+bun create vite@latest . --template react-ts
 ```
+
+Do not use npm, npx, or yarn.
 
 ---
 
 ## Step 4 — Install core dependencies
+
+**With pnpm:**
+```bash
+pnpm add zustand @tanstack/react-query @tanstack/react-router @tanstack/react-form
+pnpm add zod dompurify
+pnpm add @mui/icons-material @mui/material @emotion/react @emotion/styled
+pnpm add tailwindcss @tailwindcss/vite
+pnpm add -D @biomejs/biome @types/node @types/dompurify
+```
 
 **With Bun:**
 ```bash
@@ -64,74 +79,86 @@ bun add tailwindcss @tailwindcss/vite
 bun add -d @biomejs/biome @types/node @types/dompurify
 ```
 
-**With npm:**
-```bash
-npm install zustand @tanstack/react-query @tanstack/react-router @tanstack/react-form
-npm install zod dompurify
-npm install @mui/icons-material @mui/material @emotion/react @emotion/styled
-npm install tailwindcss @tailwindcss/vite
-npm install -D @biomejs/biome @types/node @types/dompurify
-```
-
 ---
 
 ## Step 5 — Install optional dependencies based on answers
 
 **i18n:**
 ```bash
+pnpm add react-i18next i18next i18next-http-backend i18next-browser-languagedetector
+# or:
 bun add react-i18next i18next i18next-http-backend i18next-browser-languagedetector
-# or: npm install react-i18next i18next ...
 ```
 
 **Auth — Clerk:**
 ```bash
+pnpm add @clerk/clerk-react
+# or:
 bun add @clerk/clerk-react
 ```
 
 **Auth — Auth.js:**
 ```bash
+pnpm add @auth/core
+# or:
 bun add @auth/core
 ```
 
 **Testing:**
 ```bash
+pnpm add -D vitest @vitest/coverage-v8 jsdom @testing-library/react @testing-library/jest-dom @testing-library/user-event
+pnpm add -D @playwright/test
+# or:
 bun add -d vitest @vitest/coverage-v8 jsdom @testing-library/react @testing-library/jest-dom @testing-library/user-event
 bun add -d @playwright/test
 ```
 
 **Axios:**
 ```bash
+pnpm add axios
+# or:
 bun add axios
 ```
 
 **shadcn/ui:**
 ```bash
+pnpm dlx shadcn@latest init
+# or:
 bunx shadcn@latest init
 ```
 
 **Radix UI:**
 ```bash
+pnpm add @radix-ui/react-dialog @radix-ui/react-dropdown-menu @radix-ui/react-tooltip
+# or:
 bun add @radix-ui/react-dialog @radix-ui/react-dropdown-menu @radix-ui/react-tooltip
 ```
 
 **DaisyUI:**
 ```bash
+pnpm add -D daisyui
+# or:
 bun add -d daisyui
 ```
 
 **Mantine:**
 ```bash
+pnpm add @mantine/core @mantine/hooks
+# or:
 bun add @mantine/core @mantine/hooks
 ```
 
 **Storybook** — run after other deps are installed:
 ```bash
+pnpm dlx storybook@latest init --builder vite
+# or:
 bunx storybook@latest init --builder vite
-# or: npx storybook@latest init --builder vite
 ```
 
 **Turborepo:**
 ```bash
+pnpm add -D turbo
+# or:
 bun add -d turbo
 ```
 
@@ -162,11 +189,10 @@ export default defineConfig(({ mode }) => ({
 
 ### `biome.json`
 
-Write fresh:
+Write fresh. If you have verified the current stable Biome schema URL, include it; otherwise omit `$schema` rather than pinning a stale version.
 
 ```json
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
   "vcs": {
     "enabled": true,
     "clientKind": "git",
@@ -269,6 +295,8 @@ Thumbs.db
 
 ### `.env.example`
 
+Write `.env.example` only. Do not write `.env`, `.env.develop`, `.env.local`, or any other real env file.
+
 ```bash
 # Copy to .env.develop for local development
 # Copy to .env for production
@@ -282,21 +310,21 @@ Add Clerk key if Clerk was selected:
 VITE_CLERK_PUBLISHABLE_KEY=pk_test_your_key_here
 ```
 
-### `.env.develop`
+### Local env instructions
+
+Tell the user to create `.env.develop` and `.env` manually in UTF-8 encoding (no BOM) if they need local/prod values:
 
 ```bash
+# .env.develop
 VITE_APP_NAME=my-app
 VITE_API_BASE_URL=http://localhost:3000
-```
 
-### `.env`
-
-```bash
+# .env
 VITE_APP_NAME=my-app
 VITE_API_BASE_URL=https://api.yourdomain.com
 ```
 
-Both `.env` and `.env.develop` are gitignored.
+Both `.env` and `.env.develop` are gitignored and must not be written by the agent.
 
 ---
 
@@ -492,13 +520,19 @@ import "@testing-library/jest-dom";
 Write `.cursorrules` in the project root:
 
 ```
-# React 2025 Stack — Project Rules
+# Current Stable React Stack - Project Rules
 
 ## Stack
-React 19, TypeScript strict, Vite, Zustand, TanStack Query/Router/Forms, Biome, Tailwind v4, Zod, DOMPurify, MUI Icons
+React, TypeScript strict, Vite, Zustand, TanStack Query/Router/Forms, Biome, Tailwind, Zod, DOMPurify, MUI Icons
 [Add: react-i18next] [if i18n selected]
 [Add: Clerk / Auth.js] [if auth selected]
 [Add: Vitest + React Testing Library + Playwright] [if testing selected]
+
+## Package manager
+- Use only <selected-package-manager>: pnpm or bun
+- Do not use npm, npx, or yarn
+- Use pnpm dlx or bunx for one-off package executors
+- Verify latest stable package docs before adding version-specific APIs
 
 ## Folder structure
 src/api/         — TanStack Query client and query/mutation hooks
@@ -547,7 +581,7 @@ src/styles/      — globals.css and Tailwind entry
 
 ## Biome
 - Double quotes, 2-space indent, 100-char line width
-- Run: bun run check (or npm run check)
+- Run: pnpm check or bun run check, matching the selected package manager
 
 ## Forms
 - TanStack Forms for form state management
@@ -580,8 +614,9 @@ Replace `<FontName>` with the URL-encoded font name (e.g. `Plus+Jakarta+Sans`, `
 Run the package manager install to ensure everything is resolved:
 
 ```bash
+pnpm install
+# or:
 bun install
-# or: npm install
 ```
 
 ---
@@ -591,11 +626,11 @@ bun install
 Summarise everything created:
 
 - Packages installed (core + optional)
-- Config files written (vite.config.ts, biome.json, tsconfig.json, .gitignore, .env.*)
+- Config files written (vite.config.ts, biome.json, tsconfig.json, .gitignore, .env.example)
 - Folders created
 - Starter files written
 - .cursorrules generated
 - What to do next:
-  - Run `bun dev` (or `npm run dev`) to start the dev server
+  - Run `pnpm dev` or `bun run dev` to start the dev server
   - Run `/css scaffold` to complete the CSS token setup if not already done
   - Run `/git init` to initialise the repo with the dwcy/repo-init hooks

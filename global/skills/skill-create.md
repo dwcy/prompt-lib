@@ -45,7 +45,7 @@ Before writing the draft, think about what could go wrong or vary:
 - What if the target file doesn't exist?
 - What if the user gives no arguments?
 - Are there multiple modes (e.g., `/skill scaffold` vs `/skill review`)?
-- Are there environment-specific concerns (Windows paths, Bun vs npm, etc.)?
+- Are there environment-specific concerns (Windows paths, pnpm vs Bun, etc.)?
 - Does it need to read CLAUDE.md or project context first?
 
 Ask only the questions whose answers would change how you write the skill. Don't interrogate — one round of questions, then proceed.

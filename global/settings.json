@@ -27,10 +27,8 @@
         "Bash(git restore:*)",
         "Bash(git stash:*)",
         "Bash(pnpm:*)",
-        "Bash(npm test:*)",
-        "Bash(npm run:*)",
-        "Bash(npm install:*)",
-        "Bash(npx:*)",
+        "Bash(bun:*)",
+        "Bash(bunx:*)",
         "Bash(dotnet build:*)",
         "Bash(dotnet test:*)",
         "Bash(dotnet format:*)",
@@ -81,8 +79,8 @@
         "PowerShell(git stash:*)",
         "PowerShell(dotnet:*)",
         "PowerShell(pnpm:*)",
-        "PowerShell(npm:*)",
-        "PowerShell(npx:*)",
+        "PowerShell(bun:*)",
+        "PowerShell(bunx:*)",
         "PowerShell(python:*)",
         "PowerShell(python3:*)",
         "PowerShell(py:*)",
@@ -102,43 +100,49 @@
         "Bash(git push -f:*)",
         "Bash(git reset --hard:*)",
         "Bash(git clean -fd:*)",
+        "Bash(npm:*)",
+        "Bash(npx:*)",
+        "Bash(yarn:*)",
         "PowerShell(git push --force:*)",
         "PowerShell(git push -f:*)",
         "PowerShell(git reset --hard:*)",
-        "PowerShell(git clean -fd:*)"
+        "PowerShell(git clean -fd:*)",
+        "PowerShell(npm:*)",
+        "PowerShell(npx:*)",
+        "PowerShell(yarn:*)"
       ]
     },
     "mcpServers": {
       "context7": {
         "type": "stdio",
-        "command": "npx",
-        "args": ["-y", "@context7/mcp-server@latest"]
+        "command": "pnpm",
+        "args": ["dlx", "@context7/mcp-server@latest"]
       },
       "github": {
         "type": "stdio",
-        "command": "npx",
-        "args": ["-y", "@modelcontextprotocol/server-github"],
+        "command": "pnpm",
+        "args": ["dlx", "@modelcontextprotocol/server-github@latest"],
         "env": {
           "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
         }
       },
       "figma": {
         "type": "stdio",
-        "command": "npx",
-        "args": ["-y", "@figma/mcp-server@latest"],
+        "command": "pnpm",
+        "args": ["dlx", "@figma/mcp-server@latest"],
         "env": {
           "FIGMA_ACCESS_TOKEN": "${FIGMA_ACCESS_TOKEN}"
         }
       },
       "playwright": {
         "type": "stdio",
-        "command": "npx",
-        "args": ["-y", "@playwright/mcp@latest"]
+        "command": "pnpm",
+        "args": ["dlx", "@playwright/mcp@latest"]
       },
       "azure-devops": {
         "type": "stdio",
-        "command": "npx",
-        "args": ["-y", "@tiberriver256/mcp-server-azure-devops@latest"],
+        "command": "pnpm",
+        "args": ["dlx", "@tiberriver256/mcp-server-azure-devops@latest"],
         "env": {
           "AZURE_DEVOPS_ORG_URL": "${AZURE_DEVOPS_ORG_URL}",
           "AZURE_DEVOPS_TOKEN": "${AZURE_DEVOPS_TOKEN}"
@@ -146,16 +150,16 @@
       },
       "supabase": {
         "type": "stdio",
-        "command": "npx",
-        "args": ["-y", "@supabase/mcp-server-supabase@latest"],
+        "command": "pnpm",
+        "args": ["dlx", "@supabase/mcp-server-supabase@latest"],
         "env": {
           "SUPABASE_ACCESS_TOKEN": "${SUPABASE_ACCESS_TOKEN}"
         }
       },
       "obsidian": {
         "type": "stdio",
-        "command": "npx",
-        "args": ["-y", "obsidian-mcp"],
+        "command": "pnpm",
+        "args": ["dlx", "obsidian-mcp@latest"],
         "env": {
           "OBSIDIAN_API_KEY": "${OBSIDIAN_API_KEY}",
           "OBSIDIAN_HOST": "${OBSIDIAN_HOST}",

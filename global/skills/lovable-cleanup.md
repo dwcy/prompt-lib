@@ -105,17 +105,18 @@ Wait for their answer. Then rewrite `README.md` completely — no Lovable refere
 Detect the package manager:
 
 ```bash
-ls package-lock.json yarn.lock pnpm-lock.yaml bun.lockb 2>/dev/null
+ls package-lock.json yarn.lock pnpm-lock.yaml bun.lockb bun.lock 2>/dev/null
 ```
 
-Run the matching install command to regenerate the lockfile with the removed dependency:
+Run the matching install command to regenerate the lockfile with the removed dependency. Do not use npm or yarn. If the project only has `package-lock.json` or `yarn.lock`, stop and ask whether to migrate to `pnpm` or `bun`.
 
 | Lockfile | Command |
 |---|---|
-| `package-lock.json` | `npm install` |
-| `yarn.lock` | `yarn install` |
+| `package-lock.json` | Stop and ask to migrate to `pnpm` or `bun` |
+| `yarn.lock` | Stop and ask to migrate to `pnpm` or `bun` |
 | `pnpm-lock.yaml` | `pnpm install` |
 | `bun.lockb` | `bun install` |
+| `bun.lock` | `bun install` |
 
 ---
 

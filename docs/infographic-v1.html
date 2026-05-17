@@ -1,0 +1,1346 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>prompt-lib — the harness, visualised</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* ─── Design system ────────────────────────────────────────────────────── */
+:root {
+  --bg-0: #0a0517;
+  --bg-1: #140a26;
+  --bg-2: #1d0f33;
+  --bg-3: #2a1342;
+
+  --pink-1: #FFB6C1;
+  --pink-2: #FF85B3;
+  --pink-3: #FF2897;
+  --pink-4: #CC006B;
+  --cyan: #00D9FF;
+  --violet: #B388FF;
+  --amber: #FFD166;
+  --mint: #6CE5A0;
+
+  --text: #F5F2FF;
+  --text-dim: #C4BDE0;
+  --text-muted: #8B82B0;
+  --rule: rgba(179, 136, 255, 0.18);
+
+  --card: rgba(255, 255, 255, 0.035);
+  --card-strong: rgba(255, 255, 255, 0.07);
+  --card-border: rgba(179, 136, 255, 0.22);
+
+  --shadow-soft: 0 18px 48px -16px rgba(255, 40, 151, 0.35);
+  --shadow-strong: 0 36px 80px -24px rgba(0, 217, 255, 0.45);
+
+  --r-sm: 8px;
+  --r-md: 16px;
+  --r-lg: 28px;
+  --r-xl: 40px;
+
+  --step--1: clamp(0.78rem, 0.74rem + 0.18vw, 0.88rem);
+  --step-0:  clamp(0.95rem, 0.9rem + 0.24vw, 1.05rem);
+  --step-1:  clamp(1.12rem, 1.04rem + 0.4vw, 1.28rem);
+  --step-2:  clamp(1.4rem, 1.25rem + 0.7vw, 1.7rem);
+  --step-3:  clamp(1.8rem, 1.55rem + 1.2vw, 2.4rem);
+  --step-4:  clamp(2.4rem, 2.05rem + 1.8vw, 3.4rem);
+  --step-5:  clamp(3.2rem, 2.7rem + 2.6vw, 5rem);
+  --step-6:  clamp(4.2rem, 3.4rem + 4vw, 7rem);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+html { color-scheme: dark; scroll-behavior: smooth; }
+body {
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: var(--step-0);
+  line-height: 1.55;
+  color: var(--text);
+  background:
+    radial-gradient(60vw 60vw at 8% -10%, rgba(255, 40, 151, 0.22), transparent 60%),
+    radial-gradient(50vw 50vw at 100% 10%, rgba(0, 217, 255, 0.18), transparent 60%),
+    radial-gradient(45vw 45vw at 50% 110%, rgba(179, 136, 255, 0.22), transparent 60%),
+    linear-gradient(180deg, var(--bg-0), var(--bg-1) 30%, var(--bg-2) 60%, var(--bg-0));
+  background-attachment: fixed;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+::selection { background: var(--pink-3); color: white; }
+
+h1, h2, h3, h4 {
+  font-family: "Space Grotesk", "Inter", system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  margin: 0;
+  line-height: 1.05;
+}
+h2 { font-size: var(--step-4); }
+h3 { font-size: var(--step-2); }
+h4 { font-size: var(--step-1); font-weight: 600; }
+
+p { margin: 0 0 .6em; color: var(--text-dim); }
+code, kbd, .mono {
+  font-family: "JetBrains Mono", ui-monospace, "SF Mono", Consolas, monospace;
+  font-size: 0.86em;
+}
+
+a { color: var(--cyan); text-decoration: none; }
+a:hover { color: var(--pink-3); }
+
+main {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: clamp(1.5rem, 1rem + 2vw, 3.5rem) clamp(1rem, .5rem + 2vw, 3rem);
+}
+
+section {
+  padding-block: clamp(3rem, 2rem + 4vw, 6rem);
+  scroll-margin-top: 2rem;
+}
+section + section { border-top: 1px solid var(--rule); }
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: .55ch;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: var(--step--1);
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--cyan);
+  margin-bottom: 1.2rem;
+}
+.eyebrow::before {
+  content: "";
+  width: 28px; height: 1px;
+  background: linear-gradient(90deg, var(--cyan), transparent);
+}
+
+.lede {
+  color: var(--text-dim);
+  font-size: var(--step-1);
+  max-width: 64ch;
+  margin-bottom: 2.5rem;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--pink-1), var(--pink-3) 35%, var(--violet) 75%, var(--cyan));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ─── Hero ─────────────────────────────────────────────────────────────── */
+.hero {
+  padding-block: clamp(4rem, 2.5rem + 5vw, 8rem) clamp(3rem, 2rem + 4vw, 5rem);
+  position: relative;
+}
+.hero h1 {
+  font-size: var(--step-6);
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  margin-bottom: 1.2rem;
+}
+.hero .lede { font-size: var(--step-2); color: var(--text-dim); max-width: 32ch; }
+
+.kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: .8ch;
+  padding: .5rem 1rem;
+  border-radius: 999px;
+  background: var(--card-strong);
+  border: 1px solid var(--card-border);
+  font-family: "JetBrains Mono", monospace;
+  font-size: var(--step--1);
+  font-weight: 600;
+  color: var(--text-dim);
+  margin-bottom: 2rem;
+}
+.kicker .dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--mint);
+  box-shadow: 0 0 0 4px rgba(108, 229, 160, 0.18);
+  animation: pulse 2.2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.25); opacity: 0.75; }
+}
+
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1.5rem;
+  margin-top: 3rem;
+}
+.stat {
+  padding: 1.4rem 1.4rem 1.2rem;
+  border-radius: var(--r-md);
+  background: linear-gradient(180deg, var(--card-strong), var(--card));
+  border: 1px solid var(--card-border);
+  position: relative;
+  overflow: hidden;
+}
+.stat::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 80% at 100% 0%, rgba(255, 40, 151, 0.18), transparent 60%);
+  pointer-events: none;
+}
+.stat .n {
+  display: block;
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 700;
+  font-size: var(--step-5);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  background: linear-gradient(135deg, var(--pink-1), var(--pink-3) 60%, var(--violet));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.stat .label {
+  display: block;
+  margin-top: .6rem;
+  font-size: var(--step--1);
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--text-muted);
+}
+
+/* ─── Generic cards & grids ────────────────────────────────────────────── */
+.grid {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+.grid-3 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.grid-4 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+
+.card {
+  position: relative;
+  padding: 1.4rem 1.4rem 1.25rem;
+  border-radius: var(--r-md);
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  transition: transform .25s ease, border-color .25s ease, background .25s ease;
+}
+.card:hover {
+  transform: translateY(-4px);
+  background: var(--card-strong);
+  border-color: rgba(0, 217, 255, 0.45);
+}
+.card h4 {
+  margin-bottom: .25rem;
+  display: flex; align-items: center; gap: .6ch;
+}
+.card .tag {
+  display: inline-block;
+  font-family: "JetBrains Mono", monospace;
+  font-size: var(--step--1);
+  color: var(--pink-3);
+  margin-bottom: .8rem;
+}
+.card p { font-size: var(--step-0); margin: 0; color: var(--text-dim); }
+
+.card.gem { /* clip-cut variant */
+  clip-path: polygon(18px 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%, 0 18px);
+}
+.card.outlined::before {
+  content: "";
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, var(--pink-3), var(--cyan));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ─── Section header ───────────────────────────────────────────────────── */
+.section-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 1rem 2rem;
+  margin-bottom: clamp(1.5rem, 1rem + 2vw, 2.5rem);
+}
+.section-head .count {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: var(--step-4);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  color: var(--pink-3);
+  line-height: 1;
+}
+@media (max-width: 720px) {
+  .section-head { grid-template-columns: 1fr; }
+  .section-head .count { font-size: var(--step-3); }
+}
+
+/* ─── Donut chart (slash-commands breakdown) ───────────────────────────── */
+.donut-wrap {
+  display: grid;
+  grid-template-columns: minmax(220px, 320px) minmax(220px, 1fr);
+  gap: 2.5rem;
+  align-items: center;
+}
+@media (max-width: 760px) {
+  .donut-wrap { grid-template-columns: 1fr; justify-items: center; }
+}
+.donut {
+  --c1: var(--pink-3);
+  --c2: var(--cyan);
+  --c3: var(--violet);
+  --c4: var(--amber);
+  --c5: var(--mint);
+  --c6: #FF85B3;
+  --total: 37;
+  --git: 6;        /* /git family */
+  --plan: 14;      /* spec-kit + plan */
+  --frontend: 8;   /* react/ui/css */
+  --dotnet: 2;     /* dotnet */
+  --docs: 3;       /* docs/skill-create/adr */
+  --safety: 4;     /* review-conflicts, prompt-injection-guard, finishing, lovable-cleanup */
+
+  --p1: calc(var(--git)      / var(--total) * 360deg);
+  --p2: calc((var(--git) + var(--plan))      / var(--total) * 360deg);
+  --p3: calc((var(--git) + var(--plan) + var(--frontend))      / var(--total) * 360deg);
+  --p4: calc((var(--git) + var(--plan) + var(--frontend) + var(--dotnet))      / var(--total) * 360deg);
+  --p5: calc((var(--git) + var(--plan) + var(--frontend) + var(--dotnet) + var(--docs))      / var(--total) * 360deg);
+
+  width: min(320px, 80vw);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    conic-gradient(
+      var(--c1) 0 var(--p1),
+      var(--c2) var(--p1) var(--p2),
+      var(--c3) var(--p2) var(--p3),
+      var(--c4) var(--p3) var(--p4),
+      var(--c5) var(--p4) var(--p5),
+      var(--c6) var(--p5) 360deg
+    );
+  position: relative;
+  filter: drop-shadow(0 22px 40px rgba(255, 40, 151, 0.35));
+  animation: donut-in 1.2s cubic-bezier(.2,.7,.2,1) both;
+}
+.donut::before {
+  content: "";
+  position: absolute; inset: 18%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, var(--bg-1), var(--bg-0));
+  box-shadow: inset 0 0 0 1px var(--card-border);
+}
+.donut::after {
+  content: "37";
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--pink-1), var(--cyan));
+  -webkit-background-clip: text; background-clip: text;
+  color: transparent;
+}
+@keyframes donut-in {
+  from { transform: rotate(-90deg) scale(0.7); opacity: 0; }
+  to   { transform: rotate(0) scale(1); opacity: 1; }
+}
+.legend { display: grid; gap: .6rem; }
+.legend li {
+  display: grid;
+  grid-template-columns: 14px 1fr auto;
+  gap: .8rem;
+  align-items: center;
+  list-style: none;
+  padding: .55rem .75rem;
+  border-radius: 10px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+}
+.legend .swatch {
+  width: 14px; height: 14px; border-radius: 4px;
+}
+.legend .num {
+  font-family: "JetBrains Mono", monospace;
+  font-weight: 600; color: var(--text);
+}
+.legend ul { padding: 0; margin: 0; }
+
+/* ─── Lifecycle timeline (hooks) ───────────────────────────────────────── */
+.lifecycle {
+  --line: linear-gradient(90deg, var(--pink-3), var(--violet), var(--cyan));
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+  padding-top: 2rem;
+}
+.lifecycle::before {
+  content: "";
+  position: absolute;
+  top: 35px;
+  left: 7%; right: 7%;
+  height: 2px;
+  background: var(--line);
+  filter: blur(.3px);
+  z-index: 0;
+}
+.beat {
+  position: relative;
+  z-index: 1;
+  padding: 1.2rem 1rem 1rem;
+  border-radius: var(--r-md);
+  background: var(--card);
+  border: 1px solid var(--card-border);
+}
+.beat .dot {
+  width: 18px; height: 18px; border-radius: 50%;
+  margin: 0 auto .8rem;
+  background: linear-gradient(135deg, var(--pink-3), var(--cyan));
+  box-shadow: 0 0 0 6px var(--bg-1), 0 0 0 7px var(--card-border);
+}
+.beat h4 {
+  text-align: center;
+  font-family: "JetBrains Mono", monospace;
+  font-size: var(--step-0);
+  color: var(--text);
+  margin-bottom: .5rem;
+}
+.beat p { text-align: center; font-size: var(--step--1); }
+@media (max-width: 760px) {
+  .lifecycle { grid-template-columns: 1fr; }
+  .lifecycle::before { display: none; }
+}
+
+/* ─── Wizard dual-mode ─────────────────────────────────────────────────── */
+.dual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+@media (max-width: 760px) { .dual { grid-template-columns: 1fr; } }
+.window {
+  border-radius: var(--r-md);
+  background: linear-gradient(180deg, #0d0a1f, #0a0617);
+  border: 1px solid var(--card-border);
+  overflow: hidden;
+  box-shadow: var(--shadow-soft);
+}
+.window header {
+  display: flex; align-items: center; gap: .6ch;
+  padding: .6rem .85rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid var(--rule);
+}
+.window header .traffic { display: flex; gap: .3rem; }
+.window header .traffic i {
+  width: 11px; height: 11px; border-radius: 50%;
+  background: var(--text-muted);
+}
+.window header .traffic i:nth-child(1) { background: #FF5F56; }
+.window header .traffic i:nth-child(2) { background: #FFBD2E; }
+.window header .traffic i:nth-child(3) { background: #27C93F; }
+.window header .title {
+  font-family: "JetBrains Mono", monospace;
+  font-size: var(--step--1);
+  color: var(--text-muted);
+  margin-left: .5rem;
+}
+.window pre {
+  margin: 0;
+  padding: 1rem 1.1rem 1.3rem;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.84rem;
+  line-height: 1.55;
+  color: var(--text-dim);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.window .prompt { color: var(--mint); }
+.window .key { color: var(--cyan); }
+.window .val { color: var(--pink-3); }
+.window .dim { color: var(--text-muted); }
+
+/* ─── MCP grid ─────────────────────────────────────────────────────────── */
+.mcp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 1rem;
+}
+.mcp {
+  position: relative;
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  gap: .9rem;
+  align-items: center;
+  padding: 1rem;
+  border-radius: var(--r-md);
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  transition: transform .25s ease, border-color .25s ease;
+}
+.mcp:hover { transform: translateY(-3px); border-color: rgba(0, 217, 255, 0.5); }
+.mcp .glyph {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display: grid; place-items: center;
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 700; color: white;
+  font-size: 1rem;
+  background: linear-gradient(135deg, var(--pink-3), var(--violet));
+}
+.mcp:nth-child(2n) .glyph { background: linear-gradient(135deg, var(--cyan), var(--violet)); }
+.mcp:nth-child(3n) .glyph { background: linear-gradient(135deg, var(--amber), var(--pink-3)); }
+.mcp:nth-child(4n) .glyph { background: linear-gradient(135deg, var(--mint), var(--cyan)); }
+.mcp .name { font-weight: 600; }
+.mcp .role { font-size: var(--step--1); color: var(--text-muted); }
+
+/* ─── Quick-strip ──────────────────────────────────────────────────────── */
+.strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+@media (max-width: 760px) { .strip { grid-template-columns: 1fr 1fr; } }
+.tile {
+  padding: 1.2rem;
+  border-radius: var(--r-md);
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  text-align: left;
+}
+.tile .big {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 700;
+  font-size: var(--step-3);
+  background: linear-gradient(135deg, var(--cyan), var(--violet));
+  -webkit-background-clip: text; background-clip: text;
+  color: transparent;
+}
+.tile h4 { font-size: var(--step-0); margin: .25rem 0 .5rem; }
+.tile p { font-size: var(--step--1); }
+
+/* ─── Routing flow diagram ─────────────────────────────────────────────── */
+.flow {
+  display: grid;
+  grid-template-columns: 1fr 64px 1fr 64px 1fr 64px 1fr;
+  gap: 0;
+  align-items: stretch;
+}
+.flow .step {
+  padding: 1.1rem 1rem;
+  border-radius: var(--r-md);
+  background: var(--card-strong);
+  border: 1px solid var(--card-border);
+  display: grid;
+  align-content: center;
+  min-height: 130px;
+}
+.flow .step .n {
+  font-family: "JetBrains Mono", monospace;
+  font-size: var(--step--1);
+  color: var(--cyan);
+}
+.flow .step h4 { font-size: var(--step-0); margin: .25rem 0 .35rem; }
+.flow .step p { font-size: var(--step--1); }
+.flow .arrow {
+  display: grid; place-items: center;
+  color: var(--violet); font-size: 1.6rem; font-weight: 700;
+}
+@media (max-width: 900px) {
+  .flow { grid-template-columns: 1fr; }
+  .flow .arrow { transform: rotate(90deg); padding: .25rem 0; }
+}
+
+/* ─── Worktree isolation diagram ───────────────────────────────────────── */
+.iso {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+@media (max-width: 760px) { .iso { grid-template-columns: 1fr; } }
+.iso .box {
+  padding: 1.4rem;
+  border-radius: var(--r-md);
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  position: relative;
+}
+.iso .bad { border-color: rgba(255, 95, 86, 0.5); }
+.iso .good { border-color: rgba(108, 229, 160, 0.5); }
+.iso .pill {
+  display: inline-block;
+  padding: .2rem .6rem;
+  border-radius: 999px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: var(--step--1);
+  font-weight: 600;
+  margin-bottom: .9rem;
+}
+.iso .bad .pill { color: #FF5F56; background: rgba(255, 95, 86, 0.12); }
+.iso .good .pill { color: var(--mint); background: rgba(108, 229, 160, 0.12); }
+.iso .agent {
+  display: inline-flex; align-items: center; gap: .4ch;
+  padding: .25rem .55rem;
+  border-radius: 6px;
+  background: var(--card-strong);
+  border: 1px solid var(--card-border);
+  font-family: "JetBrains Mono", monospace;
+  font-size: var(--step--1);
+  margin-right: .3rem; margin-bottom: .3rem;
+}
+.iso pre {
+  margin: .8rem 0 0;
+  padding: .8rem .9rem;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.8rem;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 8px;
+  white-space: pre-wrap;
+  color: var(--text-dim);
+}
+
+/* ─── Spec-kit gates ───────────────────────────────────────────────────── */
+.gates {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 1rem;
+}
+.gate {
+  padding: 1.1rem;
+  border-radius: var(--r-md);
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  position: relative;
+  overflow: hidden;
+}
+.gate::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, transparent 60%, rgba(255, 40, 151, 0.18));
+  pointer-events: none;
+}
+.gate .n {
+  display: inline-block;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: var(--step-2);
+  font-weight: 700;
+  line-height: 1;
+  background: linear-gradient(135deg, var(--cyan), var(--violet));
+  -webkit-background-clip: text; background-clip: text;
+  color: transparent;
+}
+.gate h4 { font-size: var(--step-0); margin: .35rem 0 .35rem; }
+.gate p { font-size: var(--step--1); margin: 0; }
+.gate.gate-new { border-color: rgba(108, 229, 160, 0.5); }
+.gate.gate-new::before {
+  content: "v1.1.0";
+  position: absolute; top: .65rem; right: .65rem;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.7rem; font-weight: 600;
+  color: var(--mint);
+  padding: .15rem .45rem;
+  background: rgba(108, 229, 160, 0.12);
+  border-radius: 999px;
+}
+
+/* ─── Memory dual-tier ─────────────────────────────────────────────────── */
+.tiers {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+@media (max-width: 760px) { .tiers { grid-template-columns: 1fr; } }
+.tier {
+  padding: 1.6rem 1.4rem;
+  border-radius: var(--r-md);
+  background: linear-gradient(160deg, var(--card-strong), var(--card));
+  border: 1px solid var(--card-border);
+  position: relative;
+}
+.tier h4 {
+  display: flex; align-items: baseline; gap: .55ch;
+  font-size: var(--step-2);
+}
+.tier h4 .path {
+  font-family: "JetBrains Mono", monospace;
+  font-size: var(--step-0);
+  color: var(--pink-3);
+  font-weight: 500;
+}
+.tier ul {
+  margin: .8rem 0 0; padding: 0; list-style: none;
+  display: grid; gap: .5rem;
+}
+.tier li {
+  position: relative;
+  padding-left: 1.4em;
+  color: var(--text-dim);
+  font-size: var(--step--1);
+}
+.tier li::before {
+  content: "›";
+  position: absolute; left: 0; top: -2px;
+  color: var(--cyan);
+  font-weight: 700;
+}
+
+/* ─── A2A wire diagram ─────────────────────────────────────────────────── */
+.wire {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 1.5rem;
+}
+@media (max-width: 760px) { .wire { grid-template-columns: 1fr; } }
+.node {
+  padding: 1.4rem;
+  border-radius: var(--r-md);
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  text-align: center;
+}
+.node .label {
+  font-family: "JetBrains Mono", monospace;
+  font-size: var(--step--1);
+  color: var(--text-muted);
+}
+.node h4 { margin: .25rem 0 .5rem; }
+.channels { display: grid; gap: .5rem; }
+.channel {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: .5rem;
+  padding: .5rem .85rem;
+  border-radius: 8px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.78rem;
+}
+.channel .dir { color: var(--cyan); font-weight: 700; }
+.channel .label { color: var(--text); }
+.channel .proto { color: var(--pink-3); }
+
+/* ─── Orchestrator timeline ────────────────────────────────────────────── */
+.orch {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: .75rem;
+  position: relative;
+}
+@media (max-width: 900px) { .orch { grid-template-columns: 1fr; } }
+.orch::before {
+  content: "";
+  position: absolute;
+  top: 28px;
+  left: 4%; right: 4%;
+  height: 2px;
+  background: linear-gradient(90deg, var(--cyan), var(--violet), var(--pink-3));
+  opacity: .5;
+}
+@media (max-width: 900px) { .orch::before { display: none; } }
+.tick {
+  position: relative;
+  padding: 1.1rem .9rem .9rem;
+  border-radius: var(--r-md);
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  text-align: center;
+}
+.tick .pin {
+  width: 16px; height: 16px; border-radius: 50%;
+  margin: 0 auto .6rem;
+  background: var(--cyan);
+  box-shadow: 0 0 0 6px var(--bg-1), 0 0 0 7px var(--card-border);
+}
+.tick:nth-child(2) .pin { background: var(--violet); }
+.tick:nth-child(3) .pin { background: var(--pink-3); }
+.tick:nth-child(4) .pin { background: var(--amber); }
+.tick:nth-child(5) .pin { background: var(--mint); }
+.tick h4 {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.tick p { font-size: var(--step--1); margin: .25rem 0 0; }
+
+/* ─── Deploy flow ──────────────────────────────────────────────────────── */
+.deploy {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr;
+  gap: 1rem;
+  align-items: center;
+}
+@media (max-width: 760px) {
+  .deploy { grid-template-columns: 1fr; }
+  .deploy .glyph { display: none; }
+}
+.deploy .glyph { font-size: 1.8rem; color: var(--cyan); text-align: center; }
+.deploy .pane {
+  padding: 1.4rem 1.2rem;
+  border-radius: var(--r-md);
+  background: var(--card);
+  border: 1px solid var(--card-border);
+}
+.deploy .pane h4 {
+  font-family: "JetBrains Mono", monospace;
+  font-size: var(--step-0);
+  color: var(--cyan);
+  margin-bottom: .5rem;
+}
+.deploy .pane p { font-size: var(--step--1); margin: 0; }
+.deploy .pane.center {
+  background: linear-gradient(160deg, var(--card-strong), var(--card));
+  border-color: rgba(0, 217, 255, 0.5);
+}
+
+/* ─── Governance / table ───────────────────────────────────────────────── */
+.gov {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+/* ─── Footer ───────────────────────────────────────────────────────────── */
+footer {
+  margin-top: 4rem;
+  padding: 3rem 0 4rem;
+  border-top: 1px solid var(--rule);
+  text-align: center;
+}
+footer p { color: var(--text-muted); }
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  justify-content: center;
+  margin-top: 1.4rem;
+}
+.badge {
+  font-family: "JetBrains Mono", monospace;
+  font-size: var(--step--1);
+  padding: .35rem .75rem;
+  border-radius: 999px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  color: var(--text-dim);
+}
+
+/* ─── Entrance animations ──────────────────────────────────────────────── */
+@media (prefers-reduced-motion: no-preference) {
+  section { animation: enter .9s cubic-bezier(.2,.7,.2,1) both; }
+  section:nth-of-type(odd) { animation-delay: .05s; }
+  .stat, .card, .gate, .mcp, .beat, .tile, .tier, .tick, .node, .pane { animation: rise .8s cubic-bezier(.2,.7,.2,1) both; }
+  .stat:nth-child(2), .card:nth-child(2), .gate:nth-child(2), .mcp:nth-child(2), .beat:nth-child(2), .tile:nth-child(2), .tier:nth-child(2), .tick:nth-child(2) { animation-delay: .08s; }
+  .stat:nth-child(3), .card:nth-child(3), .gate:nth-child(3), .mcp:nth-child(3), .beat:nth-child(3), .tile:nth-child(3), .tick:nth-child(3) { animation-delay: .16s; }
+  .stat:nth-child(4), .card:nth-child(4), .gate:nth-child(4), .mcp:nth-child(4), .beat:nth-child(4), .tile:nth-child(4), .tick:nth-child(4) { animation-delay: .24s; }
+  .stat:nth-child(5), .card:nth-child(5), .gate:nth-child(5), .mcp:nth-child(5), .tick:nth-child(5) { animation-delay: .32s; }
+  .stat:nth-child(6), .card:nth-child(6), .gate:nth-child(6), .mcp:nth-child(6) { animation-delay: .4s; }
+}
+@keyframes enter { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+@keyframes rise  { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+/* ─── Print ────────────────────────────────────────────────────────────── */
+@media print {
+  html, body { background: white; color: #111; }
+  body { background-image: none; }
+  section { page-break-inside: avoid; border-top-color: #ddd; }
+  .card, .stat, .gate, .mcp, .beat, .tile, .tier, .tick, .node, .pane, .window {
+    background: white !important; border-color: #ccc !important;
+    box-shadow: none !important; color: #111 !important;
+  }
+  .gradient-text, .stat .n, .donut::after, .tile .big, .tier .path { color: #C2185B !important; -webkit-text-fill-color: #C2185B; }
+  .donut { filter: none !important; }
+}
+</style>
+</head>
+
+<body>
+
+<main>
+
+<!-- ════ Hero ═════════════════════════════════════════════════════════════ -->
+<section class="hero">
+  <span class="kicker"><span class="dot"></span> prompt-lib · Claude Code harness · v1.1.0</span>
+  <h1><span class="gradient-text">A configured</span><br><span class="gradient-text">cognition harness.</span></h1>
+  <p class="lede">Versioned source for everything that lives in <code>~/.claude/</code> — agents, skills, hooks, rules, MCP servers, and a spec-driven workflow. One repo, deploy-once, reproducible across every project on the machine.</p>
+
+  <div class="stat-row">
+    <div class="stat"><span class="n">14</span><span class="label">@-agents</span></div>
+    <div class="stat"><span class="n">37</span><span class="label">slash commands</span></div>
+    <div class="stat"><span class="n">8</span><span class="label">MCP servers</span></div>
+    <div class="stat"><span class="n">5</span><span class="label">hooks</span></div>
+    <div class="stat"><span class="n">2</span><span class="label">services</span></div>
+    <div class="stat"><span class="n">6</span><span class="label">governance gates</span></div>
+  </div>
+</section>
+
+<!-- ════ THE VISIBLE SURFACE ══════════════════════════════════════════════ -->
+
+<!-- ── Slash commands donut ─────────────────────────────────────────────── -->
+<section id="commands">
+  <div class="section-head">
+    <div>
+      <span class="eyebrow">visible surface · slash commands</span>
+      <h2>37 commands, six categories.</h2>
+      <p class="lede">Every workflow that you find yourself repeating crystallises into a <code>/skill</code>. Grouped by what they do, not by the file they live in.</p>
+    </div>
+    <div class="count">/37</div>
+  </div>
+
+  <div class="donut-wrap">
+    <div class="donut" aria-hidden="true"></div>
+    <ul class="legend">
+      <li><span class="swatch" style="background:#FF2897"></span>Spec-kit + planning <span class="num">14</span></li>
+      <li><span class="swatch" style="background:#00D9FF"></span>Frontend / React / CSS <span class="num">8</span></li>
+      <li><span class="swatch" style="background:#B388FF"></span>Git workflow <span class="num">6</span></li>
+      <li><span class="swatch" style="background:#FFD166"></span>Meta / safety / review <span class="num">4</span></li>
+      <li><span class="swatch" style="background:#6CE5A0"></span>Docs / skills / ADR <span class="num">3</span></li>
+      <li><span class="swatch" style="background:#FF85B3"></span>.NET <span class="num">2</span></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ── Agents ───────────────────────────────────────────────────────────── -->
+<section id="agents">
+  <div class="section-head">
+    <div>
+      <span class="eyebrow">visible surface · subagents</span>
+      <h2>14 specialists, picked by description.</h2>
+      <p class="lede">Each agent is a separate Claude session with a focused system prompt and a restricted tool set — protects the main context window and lets you compose deep expertise.</p>
+    </div>
+    <div class="count">@14</div>
+  </div>
+
+  <div class="grid grid-3">
+    <div class="card"><span class="tag">project bootstrap</span><h4>@init-project</h4><p>Detects the stack, asks architecture questions, writes <code>CLAUDE.md</code>, and announces specialists.</p></div>
+    <div class="card"><span class="tag">project bootstrap</span><h4>@load-project</h4><p>Auto-invoked on SessionStart. Reads <code>CLAUDE.md</code> and surfaces the relevant specialist agents.</p></div>
+
+    <div class="card outlined"><span class="tag">architect</span><h4>@dotnet-architect</h4><p>Clean Architecture, CQRS, domain modelling, DI patterns.</p></div>
+    <div class="card outlined"><span class="tag">architect</span><h4>@python-architect</h4><p>FastAPI / Django structure, async design, DI, DB sessions.</p></div>
+    <div class="card outlined"><span class="tag">architect</span><h4>@react-architect</h4><p>Current stable React stack: Vite + Zustand + Tailwind + Zod.</p></div>
+    <div class="card outlined"><span class="tag">architect</span><h4>@tanstack-architect</h4><p>TanStack Start / Router / Query / Form / Table specialist.</p></div>
+    <div class="card outlined"><span class="tag">architect</span><h4>@frontend-architect</h4><p>Vue 3, Next.js, or other React stacks.</p></div>
+    <div class="card outlined"><span class="tag">architect</span><h4>@frontend-css</h4><p>Modular + global CSS pattern; <code>globals.css</code> + <code>*.module.css</code>.</p></div>
+    <div class="card outlined"><span class="tag">architect</span><h4>@unity-architect</h4><p>Scene architecture, ScriptableObject, MonoBehaviour patterns.</p></div>
+
+    <div class="card"><span class="tag">tester</span><h4>@dotnet-tester</h4><p>xUnit, TestContainers integration, mocking strategy.</p></div>
+    <div class="card"><span class="tag">tester</span><h4>@python-tester</h4><p>pytest, async patterns, fixture design, real-DB integration.</p></div>
+
+    <div class="card gem"><span class="tag">read-only auditor</span><h4>@code-plan-verifier</h4><p>Independent drift check: plan vs. code, after implementation.</p></div>
+    <div class="card gem"><span class="tag">read-only auditor</span><h4>@gitignore-auditor</h4><p>Scans staged files for build artefacts, caches, IDE junk.</p></div>
+    <div class="card gem"><span class="tag">read-only auditor</span><h4>@secret-auditor</h4><p>Scans staged files for tokens, keys, embedded passwords.</p></div>
+  </div>
+</section>
+
+<!-- ── Hooks lifecycle ──────────────────────────────────────────────────── -->
+<section id="hooks">
+  <div class="section-head">
+    <div>
+      <span class="eyebrow">visible surface · hooks</span>
+      <h2>Lifecycle scripts, not magic.</h2>
+      <p class="lede">Five shell / Python scripts that fire at well-defined moments. Set up context, audit tool calls, write transcripts, signal session end. Nothing waits on a prompt.</p>
+    </div>
+    <div class="count">×5</div>
+  </div>
+
+  <div class="lifecycle">
+    <div class="beat">
+      <div class="dot"></div>
+      <h4>SessionStart</h4>
+      <p>Detects existing <code>CLAUDE.md</code>; routes to <code>@load-project</code>. Shows the project picker.</p>
+    </div>
+    <div class="beat">
+      <div class="dot"></div>
+      <h4>PreToolUse</h4>
+      <p><code>command_guard.py</code> + <code>file_write_guard.py</code> — blocks dangerous Bash and writes to forbidden paths.</p>
+    </div>
+    <div class="beat">
+      <div class="dot"></div>
+      <h4>PostToolUse</h4>
+      <p><code>write_audit.py</code> appends to a per-session JSONL ledger for forensics.</p>
+    </div>
+    <div class="beat">
+      <div class="dot"></div>
+      <h4>Stop</h4>
+      <p><code>stop-session.ps1</code> — emits a clean session-end summary.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── Setup wizard dual-mode ───────────────────────────────────────────── -->
+<section id="wizard">
+  <div class="section-head">
+    <div>
+      <span class="eyebrow">visible surface · setup wizard</span>
+      <h2>Two run modes, one TUI.</h2>
+      <p class="lede"><code>settings-configurator-ui.py</code> is a Textual TUI for deploying <code>global/</code>, restoring backups, drift-checking, and scaffolding new projects. Ships as both a Python script and a self-contained <code>.exe</code>.</p>
+    </div>
+  </div>
+
+  <div class="dual">
+    <div class="window">
+      <header>
+        <div class="traffic"><i></i><i></i><i></i></div>
+        <span class="title">~ — bash — terminal mode</span>
+      </header>
+<pre><span class="prompt">$</span> python setup/settings-configurator-ui.py
+
+<span class="dim">─ Modes ────────────────────────────────</span>
+<span class="key">Update</span>   <span class="dim">global/ → ~/.claude/ with preview</span>
+<span class="key">MCP</span>      <span class="dim">list / toggle / edit servers</span>
+<span class="key">Doctor</span>   <span class="dim">drift report repo vs target</span>
+<span class="key">Restore</span>  <span class="dim">roll back settings.json</span>
+<span class="key">Local</span>    <span class="dim">scaffold .claude/ in a project</span>
+
+<span class="val">first run installs `textual` via pip</span>
+</pre>
+    </div>
+    <div class="window">
+      <header>
+        <div class="traffic"><i></i><i></i><i></i></div>
+        <span class="title">C:\ — HextravagantSetup.exe — standalone</span>
+      </header>
+<pre><span class="prompt">&gt;</span> .\HextravagantSetup.exe
+
+<span class="dim">─ Bundled ──────────────────────────────</span>
+<span class="key">python311.dll</span>  <span class="dim">embedded interpreter</span>
+<span class="key">textual + rich</span> <span class="dim">all submodules &amp; .css</span>
+<span class="key">global/</span>        <span class="dim">snapshot of config tree</span>
+<span class="key">setup/env/</span>     <span class="dim">env var manifests</span>
+
+<span class="val">40 MiB · no Python required on target</span>
+</pre>
+    </div>
+  </div>
+</section>
+
+<!-- ── MCP servers ──────────────────────────────────────────────────────── -->
+<section id="mcp">
+  <div class="section-head">
+    <div>
+      <span class="eyebrow">visible surface · model context protocol</span>
+      <h2>8 servers wired into every session.</h2>
+      <p class="lede">External capabilities exposed as MCP tools — Claude can call them transparently, the same way it calls built-in tools.</p>
+    </div>
+    <div class="count">×8</div>
+  </div>
+
+  <div class="mcp-grid">
+    <div class="mcp"><div class="glyph">C7</div><div><div class="name">context7</div><div class="role">latest docs lookup</div></div></div>
+    <div class="mcp"><div class="glyph">GH</div><div><div class="name">github</div><div class="role">repos · issues · PRs</div></div></div>
+    <div class="mcp"><div class="glyph">FG</div><div><div class="name">figma</div><div class="role">files · components · tokens</div></div></div>
+    <div class="mcp"><div class="glyph">PW</div><div><div class="name">playwright</div><div class="role">browser automation</div></div></div>
+    <div class="mcp"><div class="glyph">AZ</div><div><div class="name">azure-devops</div><div class="role">work items · pipelines</div></div></div>
+    <div class="mcp"><div class="glyph">SB</div><div><div class="name">supabase</div><div class="role">postgres · auth · storage</div></div></div>
+    <div class="mcp"><div class="glyph">OB</div><div><div class="name">obsidian</div><div class="role">vault notes &amp; backlinks</div></div></div>
+    <div class="mcp"><div class="glyph">DK</div><div><div class="name">docker</div><div class="role">containers &amp; compose</div></div></div>
+  </div>
+</section>
+
+<!-- ── Quick strip ──────────────────────────────────────────────────────── -->
+<section id="extras">
+  <div class="section-head">
+    <div>
+      <span class="eyebrow">visible surface · everything else</span>
+      <h2>Smaller affordances that compound.</h2>
+    </div>
+  </div>
+
+  <div class="strip">
+    <div class="tile">
+      <div class="big">4</div>
+      <h4>Output styles</h4>
+      <p>architect · concise · review · technical</p>
+    </div>
+    <div class="tile">
+      <div class="big">4</div>
+      <h4>File-pattern rules</h4>
+      <p>Loaded conditionally: <code>csharp</code> · <code>react</code> · <code>tests</code> · <code>typescript</code></p>
+    </div>
+    <div class="tile">
+      <div class="big">6</div>
+      <h4>Project templates</h4>
+      <p>dotnet · frontend · monorepo · other · python · unity</p>
+    </div>
+    <div class="tile">
+      <div class="big">1</div>
+      <h4>Statusline</h4>
+      <p>Clickable VS Code link to project root in every session.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ════ BEHIND THE SCENES ════════════════════════════════════════════════ -->
+
+<!-- ── Description-driven routing ───────────────────────────────────────── -->
+<section id="routing">
+  <div class="section-head">
+    <div>
+      <span class="eyebrow">behind the scenes · routing</span>
+      <h2>How Claude picks a tool.</h2>
+      <p class="lede">Autonomous routing is not magic — it is a description match. Every agent and skill has a one-sentence <code>description:</code> field. Vague descriptions lose to specific ones.</p>
+    </div>
+  </div>
+
+  <div class="flow">
+    <div class="step">
+      <span class="n">01</span>
+      <h4>User message</h4>
+      <p>Natural language — no <code>@</code> or <code>/</code> prefix needed.</p>
+    </div>
+    <div class="arrow">›</div>
+    <div class="step">
+      <span class="n">02</span>
+      <h4>Scan descriptions</h4>
+      <p>Every loaded agent + skill <code>description:</code> is matched against intent.</p>
+    </div>
+    <div class="arrow">›</div>
+    <div class="step">
+      <span class="n">03</span>
+      <h4>Pick best match</h4>
+      <p>Ties broken by specificity — “Use after committing…” beats “code review.”</p>
+    </div>
+    <div class="arrow">›</div>
+    <div class="step">
+      <span class="n">04</span>
+      <h4>Invoke</h4>
+      <p>Subagent spawns with its system prompt + allowed tools; main thread stays clean.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── Parallel isolation ───────────────────────────────────────────────── -->
+<section id="isolation">
+  <div class="section-head">
+    <div>
+      <span class="eyebrow">behind the scenes · constitution principle ii</span>
+      <h2>Parallel writers need worktrees.</h2>
+      <p class="lede">Two subagents writing to the same working tree silently clobber each other — git sees only the last write. The harness enforces <code>isolation: "worktree"</code> for every concurrent writer (Constitution v1.1.0, Gate 6).</p>
+    </div>
+  </div>
+
+  <div class="iso">
+    <div class="box bad">
+      <span class="pill">✗ shared working tree</span>
+      <h4>Silent overwrite</h4>
+      <p>Two writers on the same checkout.</p>
+      <div style="margin-top:.8rem">
+        <span class="agent">@react-architect</span>
+        <span class="agent">@dotnet-architect</span>
+      </div>
+<pre>writes <span style="color:#FF5F56">App.tsx</span>      → ok
+writes <span style="color:#FF5F56">App.tsx</span>      → ok, but earlier diff lost
+git status     → only second writer's content visible</pre>
+    </div>
+    <div class="box good">
+      <span class="pill">✓ worktree per writer</span>
+      <h4>Isolated edits</h4>
+      <p>Each agent gets its own checkout + branch.</p>
+      <div style="margin-top:.8rem">
+        <span class="agent">@react-architect</span>
+        <span class="agent">@dotnet-architect</span>
+      </div>
+<pre>isolation: <span style="color:#6CE5A0">"worktree"</span>
+git worktree add ../feat-fe feat/fe
+git worktree add ../feat-be feat/be
+→ merge cleanly at the end</pre>
+    </div>
+  </div>
+</section>
+
+<!-- ── Spec-kit gates ───────────────────────────────────────────────────── -->
+<section id="speckit">
+  <div class="section-head">
+    <div>
+      <span class="eyebrow">behind the scenes · governance</span>
+      <h2>Six Constitution gates.</h2>
+      <p class="lede">Every <code>/speckit-plan</code> run must pass these gates before Phase 0 research. Violations are either resolved or recorded in the plan's Complexity Tracking table with explicit justification.</p>
+    </div>
+    <div class="count">v1.1.0</div>
+  </div>
+
+  <div class="gates">
+    <div class="gate"><span class="n">G1</span><h4>Spec-First</h4><p>External-protocol implementations link the spec and state conformance scope.</p></div>
+    <div class="gate"><span class="n">G2</span><h4>Delegation</h4><p>Every phase has an <code>Owner: @&lt;agent&gt;</code> from <code>agents.md</code>.</p></div>
+    <div class="gate"><span class="n">G3</span><h4>Contract Tests</h4><p>Protocol-surface contract tests precede implementation tasks.</p></div>
+    <div class="gate"><span class="n">G4</span><h4>Reversibility</h4><p>Any <code>global/</code> change documents its rollback path.</p></div>
+    <div class="gate"><span class="n">G5</span><h4>Surface Minimality</h4><p>New skills/agents justify why an existing one cannot be extended.</p></div>
+    <div class="gate gate-new"><span class="n">G6</span><h4>Parallel Isolation</h4><p>Concurrent writing subagents run in isolated worktrees.</p></div>
+  </div>
+</section>
+
+<!-- ── Memory dual-tier ─────────────────────────────────────────────────── -->
+<section id="memory">
+  <div class="section-head">
+    <div>
+      <span class="eyebrow">behind the scenes · learned context</span>
+      <h2>Two memory tiers, one rule.</h2>
+      <p class="lede">Memory is reusable context, not retrained weights. Global memory is persistent across projects; project-local memory belongs to one repo. Both support hard-delete when the world changes.</p>
+    </div>
+  </div>
+
+  <div class="tiers">
+    <div class="tier">
+      <h4>Auto-memory <span class="path">~/.claude/projects/.../memory/</span></h4>
+      <p>Per-project file-based store with a <code>MEMORY.md</code> index. Types: <code>user</code>, <code>feedback</code>, <code>project</code>, <code>reference</code>.</p>
+      <ul>
+        <li>Captures preferences, conventions, surprises</li>
+        <li>Never duplicates code or git history</li>
+        <li>Always converts relative dates to absolute</li>
+        <li>Stale entries deleted, not soft-marked</li>
+      </ul>
+    </div>
+    <div class="tier">
+      <h4>Self-improvement <span class="path">.claude/skills/self-improvement/</span></h4>
+      <p>Project-local skill with structured memory: <code>lessons</code>, <code>mistakes</code>, <code>preferences</code>, <code>evals</code>. Triggered on corrections and post-task review.</p>
+      <ul>
+        <li>ID-tagged entries: <code>L-YYYYMMDD-NN</code>, <code>M-…</code>, <code>P-…</code>, <code>E-…</code></li>
+        <li>Hard removal on contradicting evidence</li>
+        <li>Validated by <code>extract_lessons.py</code></li>
+        <li>Survives compaction; lives in the repo</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ── A2A bridge wire ──────────────────────────────────────────────────── -->
+<section id="a2a">
+  <div class="section-head">
+    <div>
+      <span class="eyebrow">behind the scenes · multi-agent</span>
+      <h2>A2A bridge — JSON-RPC + SSE.</h2>
+      <p class="lede">Local HTTP bridge that lets Claude delegate to a peer CLI (Claude Code, Gemini CLI). Spec-001 contract: JSON-RPC <code>tasks.send</code> request, Server-Sent-Events stream back.</p>
+    </div>
+  </div>
+
+  <div class="wire">
+    <div class="node">
+      <span class="label">consumer</span>
+      <h4>Claude (orchestrator)</h4>
+      <p>DelegationClient.delegate(prompt)</p>
+    </div>
+    <div class="channels">
+      <div class="channel"><span class="dir">▶</span><span class="label">tasks.send</span><span class="proto">POST · JSON-RPC</span></div>
+      <div class="channel"><span class="dir">◀</span><span class="label">task.state</span><span class="proto">SSE event</span></div>
+      <div class="channel"><span class="dir">◀</span><span class="label">task.artifact</span><span class="proto">SSE event</span></div>
+      <div class="channel"><span class="dir">◀</span><span class="label">task.progress</span><span class="proto">SSE event</span></div>
+    </div>
+    <div class="node">
+      <span class="label">producer</span>
+      <h4>Peer CLI</h4>
+      <p>Claude Code · Gemini CLI</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── Orchestrator timeline ────────────────────────────────────────────── -->
+<section id="orchestrator">
+  <div class="section-head">
+    <div>
+      <span class="eyebrow">behind the scenes · daemons</span>
+      <h2>Orchestrator: poll → triage → notify.</h2>
+      <p class="lede">A long-running daemon that watches GitHub for new PRs and Issues, dispatches each to a peer Claude agent via the A2A bridge, posts the result, and pings your phone over ntfy.sh. All state in an append-only SQLite event log.</p>
+    </div>
+  </div>
+
+  <div class="orch">
+    <div class="tick"><div class="pin"></div><h4>gh issue list</h4><p>poll every N seconds</p></div>
+    <div class="tick"><div class="pin"></div><h4>TriggerEvent</h4><p>kind = issue.opened</p></div>
+    <div class="tick"><div class="pin"></div><h4>delegate()</h4><p>via A2A bridge</p></div>
+    <div class="tick"><div class="pin"></div><h4>gh issue comment</h4><p>triage decision posted</p></div>
+    <div class="tick"><div class="pin"></div><h4>ntfy publish</h4><p>phone push notification</p></div>
+  </div>
+</section>
+
+<!-- ── Settings deploy ──────────────────────────────────────────────────── -->
+<section id="deploy">
+  <div class="section-head">
+    <div>
+      <span class="eyebrow">behind the scenes · reversible config</span>
+      <h2>One-way deploy with rollback.</h2>
+      <p class="lede">The repo is the source of truth for <code>~/.claude/</code>. Apply via the wizard, drift-check via Doctor mode, roll back from timestamped backups.</p>
+    </div>
+  </div>
+
+  <div class="deploy">
+    <div class="pane">
+      <h4>global/</h4>
+      <p>Versioned source — agents, skills, hooks, rules, settings.json. The only thing committed.</p>
+    </div>
+    <div class="glyph">→</div>
+    <div class="pane center">
+      <h4>apply wizard</h4>
+      <p>Preview · diff · backup · deploy. Reversible.</p>
+    </div>
+    <div class="glyph">→</div>
+    <div class="pane">
+      <h4>~/.claude/</h4>
+      <p>Target — what Claude Code actually reads. Never edited by hand.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── Governance ───────────────────────────────────────────────────────── -->
+<section id="governance">
+  <div class="section-head">
+    <div>
+      <span class="eyebrow">behind the scenes · convention</span>
+      <h2>Conventions Claude follows for you.</h2>
+    </div>
+  </div>
+
+  <div class="gov">
+    <div class="card">
+      <span class="tag">commits</span>
+      <h4>Conventional + agent authorship</h4>
+      <p><code>&lt;type&gt;: &lt;subject&gt;</code> with <code>type ∈ feat | task | fix | refactor | test | docs</code>. Authored as <code>Claude Agent &lt;my@agent.commit&gt;</code> via <code>-c</code> flags — never modifies global git config.</p>
+    </div>
+    <div class="card">
+      <span class="tag">branches</span>
+      <h4>Refuse-on-main</h4>
+      <p>The <code>/git</code> skill refuses to commit on <code>main</code> / <code>master</code>. Always asks for a feature branch first.</p>
+    </div>
+    <div class="card">
+      <span class="tag">tasks.md</span>
+      <h4>Phase-status convention</h4>
+      <p>Every <code>## Phase X</code> heading carries <code>**Status**: ⬜🟡✅ (M/N — T###–T###)</code>. Rewritten on every checkbox change.</p>
+    </div>
+    <div class="card">
+      <span class="tag">ADRs</span>
+      <h4>Deviations have a paper trail</h4>
+      <p>Cross-cutting decisions live at <code>docs/adr/</code>; feature-scoped ones live with the spec under <code>specs/&lt;feature&gt;/contracts/</code>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ════ Footer ═══════════════════════════════════════════════════════════ -->
+<footer>
+  <p>prompt-lib · <code>github.com/Dawid/prompt-lib</code></p>
+  <div class="badges">
+    <span class="badge">Textual TUI</span>
+    <span class="badge">PyInstaller onefile</span>
+    <span class="badge">spec-kit</span>
+    <span class="badge">A2A protocol</span>
+    <span class="badge">ntfy.sh</span>
+    <span class="badge">JSON-RPC + SSE</span>
+    <span class="badge">SQLite event log</span>
+    <span class="badge">Constitution v1.1.0</span>
+  </div>
+</footer>
+
+</main>
+
+</body>
+</html>

@@ -30,7 +30,22 @@ from datetime import datetime
 from pathlib import Path
 from typing import Callable
 
-# Auto-install deps on first run
+IS_FROZEN = getattr(sys, "frozen", False)
+
+
+def _missing_textual() -> None:
+    msg = (
+        "This wizard requires the `textual` package.\n"
+        "Install with one of:\n"
+        "  python -m pip install textual\n"
+        "  uv pip install textual\n"
+    )
+    if IS_FROZEN:
+        msg += "\nIf you see this from a frozen build, it was built incorrectly - rebuild with `python setup/build/build_exe.py`."
+    sys.stderr.write(msg + "\n")
+    sys.exit(2)
+
+
 try:
     from rich.text import Text
     from textual.app import App, ComposeResult
@@ -47,8 +62,13 @@ try:
     from textual.command import DiscoveryHit, Hits
     from textual.system_commands import SystemCommandsProvider
 except ImportError:
+    if IS_FROZEN:
+        _missing_textual()
     print("First run — installing textual...")
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "--quiet", "textual"])
+    try:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "--quiet", "textual"])
+    except Exception:
+        _missing_textual()
     from rich.text import Text
     from textual.app import App, ComposeResult
     from textual.binding import Binding
@@ -63,15 +83,39 @@ except ImportError:
     from textual.widgets._header import HeaderIcon
     from textual.command import DiscoveryHit, Hits
     from textual.system_commands import SystemCommandsProvider
-    from textual.widgets._header import HeaderIcon
 
 
 # ─── Paths ─────────────────────────────────────────────────────────────────────
+#
+# Two layouts are supported:
+#   - Source: this file lives at <repo>/setup/settings-configurator-ui.py, with
+#     siblings <repo>/global/ and <repo>/setup/env/.
+#   - Frozen exe (PyInstaller --onefile): bundled resources are extracted into
+#     sys._MEIPASS; the exe itself sits anywhere on disk and is not a git repo.
+
+def _resource_root() -> Path:
+    """Directory containing bundled `global/` and `env/` trees."""
+    if IS_FROZEN:
+        return Path(getattr(sys, "_MEIPASS", Path(sys.executable).parent))
+    return Path(__file__).resolve().parent.parent  # repo root
+
+
+def _detect_repo_dir() -> Path | None:
+    """Return the repo working tree if we have one; else None (frozen + no repo)."""
+    if IS_FROZEN:
+        candidate = Path(sys.executable).resolve().parent
+        for parent in (candidate, *candidate.parents):
+            if (parent / ".git").exists():
+                return parent
+        return None
+    return Path(__file__).resolve().parent.parent
+
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-REPO_DIR = SCRIPT_DIR.parent
-GLOBAL_DIR = REPO_DIR / "global"
-ENV_DIR = SCRIPT_DIR / "env"
+RESOURCE_ROOT = _resource_root()
+REPO_DIR: Path | None = _detect_repo_dir()
+GLOBAL_DIR = RESOURCE_ROOT / "global"
+ENV_DIR = RESOURCE_ROOT / "setup" / "env" if IS_FROZEN else SCRIPT_DIR / "env"
 ENV_FILE = ENV_DIR / "setup.env.example.json"
 TARGET = Path.home() / ".claude"
 
@@ -158,6 +202,18 @@ def _os_should_skip(filename: str) -> bool:
     return False
 
 
+_PLUGIN_ONLY_FILES = frozenset({".mcp.json", "hooks/hooks.json"})
+
+
+def _is_plugin_only(rel_path: Path) -> bool:
+    """Skip files that Claude Code loads only when `global/` is installed as a plugin."""
+    posix = rel_path.as_posix()
+    if posix in _PLUGIN_ONLY_FILES:
+        return True
+    parts = rel_path.parts
+    return bool(parts) and parts[0] == ".claude-plugin"
+
+
 @dataclass
 class Component:
     key: str
@@ -180,14 +236,18 @@ class Component:
         if not self.src_path.exists():
             return []
         if self.type == "file":
-            if _os_should_skip(self.src_path.name):
+            if _os_should_skip(self.src_path.name) or _is_plugin_only(Path(self.src)):
                 return []
             return [(self.src_path, Path(self.src).name)]
         out: list[tuple[Path, Path]] = []
         iterator = self.src_path.rglob("*") if self.recursive else self.src_path.glob(self.glob)
         for f in iterator:
-            if f.is_file() and not _os_should_skip(f.name):
-                out.append((f, f.relative_to(self.src_path)))
+            if not f.is_file() or _os_should_skip(f.name):
+                continue
+            rel = f.relative_to(self.src_path)
+            if _is_plugin_only(Path(self.src) / rel):
+                continue
+            out.append((f, rel))
         return out
 
 
@@ -270,6 +330,8 @@ class FileStatus:
 # ─── Update check ──────────────────────────────────────────────────────────────
 
 def check_for_updates() -> dict:
+    if REPO_DIR is None:
+        return {"status": "no_repo"}
     if not shutil.which("git"):
         return {"status": "no_git"}
     try:
@@ -294,6 +356,8 @@ def check_for_updates() -> dict:
 
 
 def do_git_pull() -> tuple[bool, str]:
+    if REPO_DIR is None:
+        return False, "no git checkout available (running from a frozen build)"
     try:
         r = subprocess.run(
             ["git", "pull"],
@@ -785,10 +849,10 @@ class ReadmeScreen(Screen):
 
     def compose(self) -> ComposeResult:
         yield AppHeader()
-        readme = next(
-            (p for p in [REPO_DIR / "README.md", GLOBAL_DIR / "README.md", SCRIPT_DIR / "README.md"] if p.exists()),
-            None,
-        )
+        candidates = [GLOBAL_DIR / "README.md", RESOURCE_ROOT / "README.md", SCRIPT_DIR / "README.md"]
+        if REPO_DIR is not None:
+            candidates.insert(0, REPO_DIR / "README.md")
+        readme = next((p for p in candidates if p.exists()), None)
         if readme:
             yield MarkdownViewer(readme.read_text(encoding="utf-8"), show_table_of_contents=True)
         else:

@@ -2,6 +2,8 @@
 
 Deeper documentation on what every piece of this repo does, why it exists, and how to compose it into a real multi-agent workflow.
 
+> **One-page visual tour:** [`infographic.html`](infographic.html) — single A4 landscape sheet, no scrolling, 16-cell grid of every feature. Scrollable long-form variant: [`infographic-v1.html`](infographic-v1.html).
+
 ## Reading order
 
 1. [`architecture.md`](architecture.md) — how Claude Code loads context at session start; how agents, skills, MCP tools, hooks, and rules fit together.
@@ -14,7 +16,8 @@ Deeper documentation on what every piece of this repo does, why it exists, and h
 8. [`parallel-isolation.md`](parallel-isolation.md) — when concurrent subagents must run in isolated git worktrees, why, and how (`isolation: "worktree"` + `/using-git-worktrees`). Canonical source of the rule.
 9. [`speckit.md`](speckit.md) — how spec-kit is configured in this repo: constitution, gates, slash commands, templates, delegation roster, phase-status convention, git-extension override.
 10. [`services.md`](services.md) — the `a2a-bridge` and `orchestrator` daemons: where they live, what they do, how they extend Claude Code.
-11. [`learning.md`](learning.md) — how to grow muscle memory with this stack: what to learn first, what to skip, how to debug surprises.
+11. [`plugin-install.md`](plugin-install.md) — install prompt-lib as a Claude Code plugin without cloning (no Python script). Covers install commands, the scope split vs. the apply path, prerequisites, local-dev workflow, and troubleshooting. Design lives in [`specs/004-github-plugin/`](../specs/004-github-plugin/).
+12. [`learning.md`](learning.md) — how to grow muscle memory with this stack: what to learn first, what to skip, how to debug surprises.
 
 ## Conventions used in these docs
 

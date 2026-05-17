@@ -292,6 +292,70 @@ Open questions:
 - How much authority should agents have: comment only, open PRs, update issue state, push branches, or merge?
 - Should restart recovery be SQLite-backed like current orchestrator or tracker/filesystem-driven like the Symphony spec?
 
+### 6. Enforce pnpm/Bun for Frontend Work
+
+Goal: make frontend and Node.js workflows use only `pnpm` or `bun`, never `npm`, `npx`, or `yarn`, and make every new frontend project explicitly choose between `pnpm` and `bun` before scaffolding.
+
+Status: implemented on 2026-05-16.
+
+Policy:
+- `npm`, `npx`, and `yarn` are forbidden for frontend work.
+- New frontend projects must ask: "Package manager: pnpm or Bun?"
+- Existing projects with `package-lock.json` or `yarn.lock` should stop and ask whether to migrate to `pnpm` or `bun`; do not regenerate those lockfiles with npm/yarn.
+- Use the latest stable versions at execution time. Prefer `@latest` scaffolders and verify current stable docs/registry metadata before recommending version-specific APIs or packages.
+- Do not hardcode stale year-based stack claims when "latest stable" is the real rule; describe the stack as current stable React/Vite/TanStack/Tailwind/etc. unless the version is verified.
+
+Files to update:
+- `global/CLAUDE.md`
+  - Promote "Prefer pnpm over npm" to a strict package-manager rule.
+  - State that `npx` is also forbidden and should become `pnpm dlx` or `bunx`.
+  - Add the "ask pnpm or Bun when initializing a new frontend project" rule.
+- `global/project-templates/frontend.md`
+  - Replace the package-manager choices with only `pnpm` and `bun`.
+  - Template build/run commands from the selected manager instead of always showing `pnpm`.
+  - Add latest-stable verification language to the generated `CLAUDE.md`.
+- `global/project-templates/monorepo.md`
+  - Add an explicit frontend package-manager question when the monorepo contains a web app.
+  - Replace root/web examples with selected `pnpm` or `bun` commands.
+- `global/skills/react-init.md`
+  - Replace "Runtime - Bun or Node.js (npm)?" with "Package manager - pnpm or Bun?"
+  - Remove every npm command path.
+  - Add parallel command examples for `pnpm` and `bun`: create, add, run, dlx/bunx, install.
+  - Use latest stable packages at scaffolding time and avoid pinned stale config schema versions unless verified.
+  - Generate `.cursorrules`/project rules that mention `pnpm` or `bun`, never npm.
+- `global/skills/finishing-a-development-branch.md`
+  - Change Node/frontend test/build commands to detect `pnpm-lock.yaml` or `bun.lockb`.
+  - Stop and ask for migration if only `package-lock.json` or `yarn.lock` exists.
+- `global/skills/react-test.md` and `global/skills/react-perf.md`
+  - Replace `npx` fallbacks with `pnpm exec`/`pnpm dlx` or `bunx`.
+- `global/skills/lovable-cleanup.md`
+  - Treat `package-lock.json` and `yarn.lock` as migration prompts, not lockfiles to regenerate.
+  - Regenerate only `pnpm-lock.yaml` or `bun.lockb`.
+- `global/settings.json`
+  - Remove npm/npx allow rules for Bash and PowerShell.
+  - Add `bun`/`bunx` allow rules beside existing `pnpm`.
+  - Replace MCP server `npx` launch commands with `pnpm dlx` or `bunx` where supported.
+  - Add explicit deny rules for `npm`, `npx`, and `yarn` if Claude settings support deny precedence cleanly.
+- `global/hooks/command_guard.py`
+  - Add a package-manager policy check that blocks frontend `npm`, `npx`, and `yarn` commands with a clear message to use `pnpm` or `bun`.
+  - Keep any non-frontend exception handling explicit and rare.
+- Docs and indexes:
+  - Update `docs/skills.md`, `docs/rules-output-styles.md`, `docs/settings.md`, `README.md`, and `global/README.md` so the documented examples match the new policy.
+
+Suggested implementation phases:
+1. **Policy pass**: update `global/CLAUDE.md`, templates, and docs so the written guidance is unambiguous.
+2. **Skill command pass**: update `/react-init`, `/react-test`, `/react-perf`, `/lovable-cleanup`, and `/finishing-a-development-branch`.
+3. **Enforcement pass**: update settings permissions and `command_guard.py` so accidental npm/npx/yarn commands are blocked.
+4. **Verification pass**: add a lightweight grep/script check that fails on new frontend npm/npx/yarn command examples, allowing only historical explanation text or secret-token regexes.
+5. **Install/apply pass**: run the settings configurator and smoke-test the generated global files.
+
+Acceptance criteria:
+- Searching frontend-related skills/templates for executable `npm`, `npx`, or `yarn` examples returns no active commands.
+- `/react-init` always asks `pnpm` vs `bun` before creating a project.
+- Generated frontend `CLAUDE.md` files instruct agents to use latest stable packages and the selected package manager only.
+- Claude settings allow `pnpm`, `pnpm dlx`, `bun`, and `bunx`, and no longer allow direct npm/npx/yarn package operations.
+- Existing npm/yarn projects are handled by asking about migration instead of silently using their old package manager.
+
 ## P2 - Orchestration Features
 
 ### Multi-Agent Run Graphs

@@ -50,7 +50,7 @@ Skills are how you turn "things you keep doing" into one keystroke.
 
 ### `/react-init`
 - **Tools**: `Bash, Read, Write, Edit, Glob`
-- **What it does**: scaffolds a complete React 2025 project — Vite + TS + Zustand + TanStack + Biome + Tailwind v4 + Zod + MUI Icons. Asks all questions up front, then generates config files, folder structure, and `.cursorrules` without further interruptions.
+- **What it does**: scaffolds a complete current-stable React project — Vite + TS + Zustand + TanStack + Biome + Tailwind + Zod + MUI Icons. Asks all questions up front, requires choosing `pnpm` or `bun`, then generates config files, folder structure, and `.cursorrules` without further interruptions.
 - **Pairs with**: `@react-architect` for React structure decisions and `@tanstack-architect` for route/data/form/table architecture.
 
 ### `/react-review`
