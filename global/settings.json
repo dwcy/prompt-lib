@@ -182,7 +182,7 @@
           "hooks": [
             {
               "type": "command",
-              "command": "powershell -ExecutionPolicy Bypass -File $USERPROFILE/.claude/hooks/session-start.ps1"
+              "command": "python \"$USERPROFILE/.claude/hooks/session_start.py\""
             }
           ]
         }
@@ -193,7 +193,7 @@
           "hooks": [
             {
               "type": "command",
-              "command": "python \"$HOME/.claude/hooks/command_guard.py\""
+              "command": "python \"$USERPROFILE/.claude/hooks/command_guard.py\""
             }
           ]
         },
@@ -250,7 +250,7 @@
           "hooks": [
             {
               "type": "command",
-              "command": "powershell -ExecutionPolicy Bypass -File $USERPROFILE/.claude/hooks/stop-session.ps1"
+              "command": "python \"$USERPROFILE/.claude/hooks/stop_session.py\""
             }
           ]
         }
