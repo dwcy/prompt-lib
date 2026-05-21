@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "powershell -ExecutionPolicy Bypass -File \"${CLAUDE_PLUGIN_ROOT}/hooks/session-start.ps1\""
+            "command": "python \"${CLAUDE_PLUGIN_ROOT}/hooks/session_start.py\""
           }
         ]
       }
@@ -73,7 +73,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "powershell -ExecutionPolicy Bypass -File \"${CLAUDE_PLUGIN_ROOT}/hooks/stop-session.ps1\""
+            "command": "python \"${CLAUDE_PLUGIN_ROOT}/hooks/stop_session.py\""
           }
         ]
       }

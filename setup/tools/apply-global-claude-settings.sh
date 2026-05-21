@@ -23,8 +23,12 @@ if [ -f "$TARGET/settings.json" ]; then
   echo "  Backed up existing settings.json -> settings.json.bak"
 fi
 
-# Copy settings.json
-cp "$SCRIPT_DIR/settings.json" "$TARGET/settings.json"
+# Copy settings.json — authored Windows-canonical ($USERPROFILE). On non-Windows
+# shells that variable is empty, so swap it for $HOME (resolves on Linux/macOS).
+case "$(uname -s)" in
+  MINGW*|MSYS*|CYGWIN*) cp "$SCRIPT_DIR/settings.json" "$TARGET/settings.json" ;;
+  *) sed 's/\$USERPROFILE/$HOME/g' "$SCRIPT_DIR/settings.json" > "$TARGET/settings.json" ;;
+esac
 echo "  Copied  settings.json"
 
 # Copy agents

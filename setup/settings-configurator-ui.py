@@ -69,6 +69,17 @@ except ImportError:
         subprocess.check_call([sys.executable, "-m", "pip", "install", "--quiet", "textual"])
     except Exception:
         _missing_textual()
+    # pip just wrote new packages (typically into the user site-packages dir).
+    # That directory's contents were scanned at interpreter startup, so a fresh
+    # import won't see the new files until we (a) ensure the user site dir is on
+    # sys.path and (b) drop importlib's cached directory listing.
+    import importlib
+    import site
+
+    user_site = site.getusersitepackages()
+    if user_site and user_site not in sys.path:
+        sys.path.append(user_site)
+    importlib.invalidate_caches()
     from rich.text import Text
     from textual.app import App, ComposeResult
     from textual.binding import Binding
@@ -212,6 +223,18 @@ def _is_plugin_only(rel_path: Path) -> bool:
         return True
     parts = rel_path.parts
     return bool(parts) and parts[0] == ".claude-plugin"
+
+
+def translate_for_os(filename: str, text: str) -> str:
+    """Rewrite OS-specific tokens in a config file before it is deployed.
+
+    The repo's settings.json is authored Windows-canonical ($USERPROFILE). On
+    POSIX shells that variable is empty, so hook/statusline command paths break.
+    Swap it for $HOME, which resolves correctly on Linux, macOS, and git-bash.
+    """
+    if filename != "settings.json" or platform.system() == "Windows":
+        return text
+    return text.replace("$USERPROFILE", "$HOME")
 
 
 @dataclass
@@ -396,11 +419,19 @@ def diff_component(comp: Component) -> list[FileStatus]:
         dst_file = comp.dst_path / rel if comp.type == "dir" else comp.dst_path
         if not dst_file.exists():
             out.append(FileStatus(rel, src_file, dst_file, "NEW"))
-        elif filecmp.cmp(src_file, dst_file, shallow=False):
+        elif _src_matches_dst(src_file, dst_file):
             out.append(FileStatus(rel, src_file, dst_file, "UNCHANGED"))
         else:
             out.append(FileStatus(rel, src_file, dst_file, "CHANGED"))
     return out
+
+
+def _src_matches_dst(src_file: Path, dst_file: Path) -> bool:
+    """Compare a source file to its deployed copy, accounting for OS translation."""
+    if src_file.name == "settings.json":
+        src_text = translate_for_os(src_file.name, src_file.read_text(encoding="utf-8"))
+        return src_text == dst_file.read_text(encoding="utf-8")
+    return filecmp.cmp(src_file, dst_file, shallow=False)
 
 
 def find_extras(comp: Component) -> list[Path]:
@@ -418,7 +449,12 @@ def apply_statuses(statuses: list[FileStatus]) -> tuple[int, int]:
             skipped += 1
         else:
             st.dst.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(st.src, st.dst)
+            if st.src.name == "settings.json":
+                text = translate_for_os(st.src.name, st.src.read_text(encoding="utf-8"))
+                st.dst.write_text(text, encoding="utf-8")
+                shutil.copystat(st.src, st.dst)
+            else:
+                shutil.copy2(st.src, st.dst)
             copied += 1
     return copied, skipped
 
