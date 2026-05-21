@@ -14,25 +14,30 @@
    - pnpm workspaces (no build orchestrator)
    - None / manual scripts
 
-3. Is there a shared library / contracts project?
+3. If this monorepo has a frontend app, which package manager should it use?
+   - pnpm (recommended)
+   - Bun
+   - No frontend app
+
+4. Is there a shared library / contracts project?
    - Shared TypeScript types between frontend and backend
    - Shared .NET class library
    - OpenAPI / generated client (e.g. Orval, NSwag)
    - None
 
-4. How are environment configs managed?
+5. How are environment configs managed?
    - `.env` files per workspace
    - Central `.env` at root
    - Docker Compose environment
    - Secrets manager (Azure Key Vault, AWS Secrets Manager)
 
-5. How is the app deployed?
+6. How is the app deployed?
    - Docker Compose (local + prod)
    - Separate containers per service (Kubernetes / App Service)
    - Single container
    - Serverless
 
-6. Is there a CI/CD pipeline already? (yes/no)
+7. Is there a CI/CD pipeline already? (yes/no)
    - If yes: GitHub Actions / Azure DevOps / other?
 
 ---
@@ -47,6 +52,7 @@
 - **Frontend:** [FRONTEND STACK]
 - **Shared:** [SHARED LAYER]
 - **Monorepo tooling:** [TOOLING]
+- **Frontend package manager:** [FRONTEND PACKAGE MANAGER]
 - **Deployment:** [DEPLOYMENT APPROACH]
 
 ## Repository Layout
@@ -80,7 +86,7 @@ docker-compose up
 
 # Or run individually
 cd apps/api && dotnet run        # or: uvicorn / node
-cd apps/web && pnpm dev
+cd apps/web && pnpm dev          # or: bun run dev
 ```
 
 ## Build & CI Rules
@@ -88,6 +94,8 @@ cd apps/web && pnpm dev
 - All pull requests must pass both backend and frontend CI
 - Do not merge if either `apps/api` or `apps/web` tests are red
 - Shared package changes require bumping the version and updating all consumers
+- Frontend and Node.js commands must use only `pnpm` or `bun`; never use `npm`, `npx`, or `yarn`
+- New frontend work must use latest stable packages and verify current docs before adding version-specific APIs
 
 ## API Contract Rules
 

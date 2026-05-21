@@ -80,7 +80,7 @@ class TestTriggerEventConstruction:
 
 
 class TestKindValidation:
-    @pytest.mark.parametrize("valid_kind", ["pr.opened", "pr.updated"])
+    @pytest.mark.parametrize("valid_kind", ["pr.opened", "pr.updated", "issue.opened"])
     def test_valid_kinds_accepted(self, valid_kind: str) -> None:
         base = _import_base()
 
@@ -90,13 +90,54 @@ class TestKindValidation:
 
     @pytest.mark.parametrize(
         "invalid_kind",
-        ["pr.closed", "issue.opened", "", "PR.OPENED", "pr_opened"],
+        ["pr.closed", "", "PR.OPENED", "pr_opened"],
     )
     def test_invalid_kinds_rejected(self, invalid_kind: str) -> None:
         base = _import_base()
 
         with pytest.raises(ValidationError):
             base.TriggerEvent(**_valid_kwargs(kind=invalid_kind))
+
+
+class TestIssueEventKind:
+    """issue.opened kind accepts sentinel head_sha and stores issue_number."""
+
+    def test_issue_opened_with_sentinel_sha_accepted(self) -> None:
+        base = _import_base()
+
+        event = base.TriggerEvent(
+            kind="issue.opened",
+            repo="owner/repo",
+            pr_number=99,
+            head_sha="0" * 40,
+            detected_at=datetime(2026, 5, 12, 10, 0, 0, tzinfo=UTC),
+            payload={
+                "issue_number": 99,
+                "title": "Something broken",
+                "body": "details",
+                "labels": ["bug"],
+                "author": "alice",
+            },
+        )
+
+        assert event.kind == "issue.opened"
+        assert event.pr_number == 99
+        assert event.payload["issue_number"] == 99
+
+    def test_issue_event_payload_arbitrary_fields(self) -> None:
+        base = _import_base()
+
+        event = base.TriggerEvent(
+            kind="issue.opened",
+            repo="owner/repo",
+            pr_number=1,
+            head_sha="0" * 40,
+            detected_at=datetime(2026, 5, 12, 10, 0, 0, tzinfo=UTC),
+            payload={"issue_number": 1, "title": "t", "body": "", "labels": [], "author": "u"},
+        )
+
+        assert event.payload["labels"] == []
+        assert event.payload["body"] == ""
 
 
 # ---------------------------------------------------------------------------

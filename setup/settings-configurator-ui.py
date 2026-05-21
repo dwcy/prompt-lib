@@ -1,6 +1,7 @@
-"""apply.py — HEXTRAVAGANT Claude Code Setup Wizard (Textual TUI).
+# -*- coding: utf-8 -*-
+"""settings-configurator-ui.py — HEXTRAVAGANT Claude Code Setup Wizard (Textual TUI).
 
-Run: python setup/apply.py
+Run: python setup/settings-configurator-ui.py
 Auto-installs textual on first run.
 
 Modes (left/right arrows + Enter, or letter shortcut):
@@ -29,7 +30,22 @@ from datetime import datetime
 from pathlib import Path
 from typing import Callable
 
-# Auto-install deps on first run
+IS_FROZEN = getattr(sys, "frozen", False)
+
+
+def _missing_textual() -> None:
+    msg = (
+        "This wizard requires the `textual` package.\n"
+        "Install with one of:\n"
+        "  python -m pip install textual\n"
+        "  uv pip install textual\n"
+    )
+    if IS_FROZEN:
+        msg += "\nIf you see this from a frozen build, it was built incorrectly - rebuild with `python setup/build/build_exe.py`."
+    sys.stderr.write(msg + "\n")
+    sys.exit(2)
+
+
 try:
     from rich.text import Text
     from textual.app import App, ComposeResult
@@ -40,10 +56,19 @@ try:
         Button, Checkbox, DataTable, Footer, Header, Input, Label,
         MarkdownViewer, OptionList, RadioButton, RadioSet, Rule, Select, Static
     )
+    from textual.widget import Widget
     from textual.widgets.option_list import Option
+    from textual.widgets._header import HeaderIcon
+    from textual.command import DiscoveryHit, Hits
+    from textual.system_commands import SystemCommandsProvider
 except ImportError:
+    if IS_FROZEN:
+        _missing_textual()
     print("First run — installing textual...")
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "--quiet", "textual"])
+    try:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "--quiet", "textual"])
+    except Exception:
+        _missing_textual()
     from rich.text import Text
     from textual.app import App, ComposeResult
     from textual.binding import Binding
@@ -53,25 +78,54 @@ except ImportError:
         Button, Checkbox, DataTable, Footer, Header, Input, Label,
         MarkdownViewer, OptionList, RadioButton, RadioSet, Rule, Select, Static
     )
+    from textual.widget import Widget
     from textual.widgets.option_list import Option
+    from textual.widgets._header import HeaderIcon
+    from textual.command import DiscoveryHit, Hits
+    from textual.system_commands import SystemCommandsProvider
 
 
 # ─── Paths ─────────────────────────────────────────────────────────────────────
+#
+# Two layouts are supported:
+#   - Source: this file lives at <repo>/setup/settings-configurator-ui.py, with
+#     siblings <repo>/global/ and <repo>/setup/env/.
+#   - Frozen exe (PyInstaller --onefile): bundled resources are extracted into
+#     sys._MEIPASS; the exe itself sits anywhere on disk and is not a git repo.
+
+def _resource_root() -> Path:
+    """Directory containing bundled `global/` and `env/` trees."""
+    if IS_FROZEN:
+        return Path(getattr(sys, "_MEIPASS", Path(sys.executable).parent))
+    return Path(__file__).resolve().parent.parent  # repo root
+
+
+def _detect_repo_dir() -> Path | None:
+    """Return the repo working tree if we have one; else None (frozen + no repo)."""
+    if IS_FROZEN:
+        candidate = Path(sys.executable).resolve().parent
+        for parent in (candidate, *candidate.parents):
+            if (parent / ".git").exists():
+                return parent
+        return None
+    return Path(__file__).resolve().parent.parent
+
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-REPO_DIR = SCRIPT_DIR.parent
-GLOBAL_DIR = REPO_DIR / "global"
-ENV_DIR = SCRIPT_DIR / "env"
-ENV_FILE = ENV_DIR / "setup.env.json"
+RESOURCE_ROOT = _resource_root()
+REPO_DIR: Path | None = _detect_repo_dir()
+GLOBAL_DIR = RESOURCE_ROOT / "global"
+ENV_DIR = RESOURCE_ROOT / "setup" / "env" if IS_FROZEN else SCRIPT_DIR / "env"
+ENV_FILE = ENV_DIR / "setup.env.example.json"
 TARGET = Path.home() / ".claude"
 
 
 # ─── Visual constants ──────────────────────────────────────────────────────────
 
-MASCOT = r"""  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \_
-__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/
-  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \_
-__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/"""
+MASCOT = r"""  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/
+__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/
+  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/
+__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/"""
 
 LOGO = r"""██╗  ██╗███████╗██╗  ██╗████████╗██████╗  █████╗ ██╗   ██╗ █████╗  ██████╗  █████╗ ███╗   ██╗████████╗
 ██║  ██║██╔════╝╚██╗██╔╝╚══██╔══╝██╔══██╗██╔══██╗██║   ██║██╔══██╗██╔════╝ ██╔══██╗████╗  ██║╚══██╔══╝
@@ -80,8 +134,8 @@ LOGO = r"""██╗  ██╗███████╗██╗  ██╗█�
 ██║  ██║███████╗██╔╝ ██╗   ██║   ██║  ██║██║  ██║ ╚████╔╝ ██║  ██║╚██████╔╝██║  ██║██║ ╚████║   ██║
 ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝  ╚═══╝  ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═══╝   ╚═╝"""
 
-LOGO_GRADIENT = ["bright_magenta", "magenta", "blue", "blue", "cyan", "bright_cyan"]
-MASCOT_GRADIENT = ["bright_magenta", "magenta", "cyan", "bright_cyan"]
+LOGO_GRADIENT = ["#FFB6C1", "#FF85B3", "#FF55A5", "#FF2897", "#FF0080", "#CC006B"]
+MASCOT_GRADIENT = ["#CC006B", "#FF2897", "#FF85B3", "#FFB6C1"]
 
 
 def render_banner() -> Text:
@@ -115,6 +169,10 @@ def render_env_summary() -> Text:
     txt.append("✓" if env["git"] else "✗", style="green" if env["git"] else "red")
     txt.append("/")
     txt.append("✓" if env["bash"] else "✗", style="green" if env["bash"] else "red")
+    txt.append("    Claude CLI: ", style="bold bright_blue")
+    txt.append("✓ installed" if env["claude"] else "✗ not found", style="green" if env["claude"] else "red")
+    txt.append("    gh: ", style="bold bright_blue")
+    txt.append("✓ installed" if env["gh"] else "✗ not found", style="green" if env["gh"] else "red")
     txt.append("\nSource: ", style="bold bright_blue")
     txt.append(f"{GLOBAL_DIR}\n", style="cyan")
     txt.append("Target: ", style="bold bright_blue")
@@ -144,6 +202,18 @@ def _os_should_skip(filename: str) -> bool:
     return False
 
 
+_PLUGIN_ONLY_FILES = frozenset({".mcp.json", "hooks/hooks.json"})
+
+
+def _is_plugin_only(rel_path: Path) -> bool:
+    """Skip files that Claude Code loads only when `global/` is installed as a plugin."""
+    posix = rel_path.as_posix()
+    if posix in _PLUGIN_ONLY_FILES:
+        return True
+    parts = rel_path.parts
+    return bool(parts) and parts[0] == ".claude-plugin"
+
+
 @dataclass
 class Component:
     key: str
@@ -166,14 +236,18 @@ class Component:
         if not self.src_path.exists():
             return []
         if self.type == "file":
-            if _os_should_skip(self.src_path.name):
+            if _os_should_skip(self.src_path.name) or _is_plugin_only(Path(self.src)):
                 return []
             return [(self.src_path, Path(self.src).name)]
         out: list[tuple[Path, Path]] = []
         iterator = self.src_path.rglob("*") if self.recursive else self.src_path.glob(self.glob)
         for f in iterator:
-            if f.is_file() and not _os_should_skip(f.name):
-                out.append((f, f.relative_to(self.src_path)))
+            if not f.is_file() or _os_should_skip(f.name):
+                continue
+            rel = f.relative_to(self.src_path)
+            if _is_plugin_only(Path(self.src) / rel):
+                continue
+            out.append((f, rel))
         return out
 
 
@@ -192,6 +266,58 @@ COMPONENTS: list[Component] = [
     Component("git_templates",     "git/ templates",     "dir",  "git",                "git",              recursive=True),
 ]
 
+ENV_DESCRIPTIONS: dict[str, str] = {
+    "GITHUB_PERSONAL_ACCESS_TOKEN": (
+        "GitHub MCP server — gives Claude access to repos, issues, PRs, and code search. "
+        "Create at github.com/settings/tokens (repo + read:org scopes)."
+    ),
+    "FIGMA_ACCESS_TOKEN": (
+        "Figma MCP server — gives Claude read access to files, components, and design tokens. "
+        "Create at figma.com/settings under Personal access tokens."
+    ),
+    "POSTGRES_CONNECTION_STRING": (
+        "Direct PostgreSQL connection for services that query the DB (e.g. postgresql://user:pass@host:5432/db). "
+        "Not required for MCP servers — only for local service scripts."
+    ),
+    "AZURE_DEVOPS_ORG_URL": (
+        "Azure DevOps MCP server — your organisation URL (e.g. https://dev.azure.com/your-org). "
+        "Pair with AZURE_DEVOPS_TOKEN."
+    ),
+    "AZURE_DEVOPS_TOKEN": (
+        "Azure DevOps MCP server — Personal Access Token for work items, repos, pipelines, and PRs. "
+        "Create in Azure DevOps → User Settings → Personal access tokens."
+    ),
+    "SUPABASE_ACCESS_TOKEN": (
+        "Supabase MCP server — gives Claude access to your project's DB, auth, storage, and edge functions. "
+        "Create at supabase.com/dashboard/account/tokens."
+    ),
+    "OBSIDIAN_API_KEY": (
+        "Obsidian MCP server — API key from the Local REST API plugin. "
+        "Lets Claude read and search your vault. Enable the plugin in Obsidian first."
+    ),
+    "OBSIDIAN_HOST": (
+        "Obsidian MCP server — host where the Local REST API plugin listens (default: 127.0.0.1). "
+        "Change only if Obsidian runs on a remote machine."
+    ),
+    "OBSIDIAN_PORT": (
+        "Obsidian MCP server — port for the Local REST API plugin (default: 27123). "
+        "Change only if you've set a custom port in the plugin settings."
+    ),
+    "PROJECTS_PATH": (
+        "Base directory for your projects (e.g. C:/projects or ~/projects). "
+        "Used by session hooks and helper scripts to resolve project paths."
+    ),
+    "TEMP_PATH": (
+        "Scratch directory for temporary files generated during Claude sessions. "
+        "Defaults to the OS temp dir if left empty."
+    ),
+    "GIT_LINE_ENDINGS": (
+        "Sets git core.autocrlf globally. "
+        "auto = LF in repo, CRLF on Windows checkout (recommended). "
+        "Other values: true, false, input."
+    ),
+}
+
 
 @dataclass
 class FileStatus:
@@ -199,6 +325,47 @@ class FileStatus:
     src: Path
     dst: Path
     state: str  # NEW | CHANGED | UNCHANGED
+
+
+# ─── Update check ──────────────────────────────────────────────────────────────
+
+def check_for_updates() -> dict:
+    if REPO_DIR is None:
+        return {"status": "no_repo"}
+    if not shutil.which("git"):
+        return {"status": "no_git"}
+    try:
+        local = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            capture_output=True, text=True, cwd=str(REPO_DIR), timeout=5,
+        )
+        remote = subprocess.run(
+            ["git", "ls-remote", "origin", "HEAD"],
+            capture_output=True, text=True, cwd=str(REPO_DIR), timeout=10,
+        )
+        if local.returncode != 0 or remote.returncode != 0 or not remote.stdout.strip():
+            return {"status": "error"}
+        local_hash = local.stdout.strip()
+        remote_hash = remote.stdout.split()[0]
+        short = lambda h: h[:8]
+        if local_hash == remote_hash:
+            return {"status": "up_to_date", "hash": short(local_hash)}
+        return {"status": "behind", "local": short(local_hash), "remote": short(remote_hash)}
+    except Exception:
+        return {"status": "error"}
+
+
+def do_git_pull() -> tuple[bool, str]:
+    if REPO_DIR is None:
+        return False, "no git checkout available (running from a frozen build)"
+    try:
+        r = subprocess.run(
+            ["git", "pull"],
+            capture_output=True, text=True, cwd=str(REPO_DIR), timeout=60,
+        )
+        return r.returncode == 0, (r.stdout + r.stderr).strip()
+    except Exception as e:
+        return False, str(e)
 
 
 # ─── Pure helpers ──────────────────────────────────────────────────────────────
@@ -211,6 +378,8 @@ def detect_env() -> dict:
         "shell": os.environ.get("SHELL") or os.environ.get("COMSPEC", "?"),
         "git": shutil.which("git") is not None,
         "bash": shutil.which("bash") is not None,
+        "claude": shutil.which("claude") is not None,
+        "gh": shutil.which("gh") is not None,
         "target_exists": TARGET.exists(),
     }
 
@@ -411,6 +580,60 @@ def cdt_install() -> tuple[bool, str]:
     return False, f"Unsupported platform: {sysname}"
 
 
+# ─── Claude CLI ────────────────────────────────────────────────────────────────
+
+def claude_cli_status() -> str:
+    if not shutil.which("claude"):
+        return "not installed"
+    r = subprocess.run(["claude", "--version"], capture_output=True, text=True)
+    v = (r.stdout or r.stderr or "").strip().splitlines()[0] if r.returncode == 0 else ""
+    return f"installed {v}" if v else "installed"
+
+
+def claude_cli_install() -> tuple[bool, str]:
+    if not shutil.which("npm"):
+        return False, "npm not found — install Node.js from https://nodejs.org then re-run"
+    r = subprocess.run(["npm", "install", "-g", "@anthropic-ai/claude-code"], capture_output=True, text=True)
+    return r.returncode == 0, r.stdout.strip() or r.stderr.strip()
+
+
+# ─── GitHub CLI ────────────────────────────────────────────────────────────────
+
+def gh_status() -> str:
+    if not shutil.which("gh"):
+        return "not installed"
+    r = subprocess.run(["gh", "--version"], capture_output=True, text=True)
+    v = (r.stdout or "").strip().splitlines()[0] if r.returncode == 0 else ""
+    return f"installed {v}" if v else "installed"
+
+
+def gh_install() -> tuple[bool, str]:
+    sysname = platform.system()
+    if sysname == "Windows":
+        if shutil.which("winget"):
+            r = subprocess.run(["winget", "install", "--id", "GitHub.cli", "-e"], capture_output=True, text=True)
+            return r.returncode == 0, "winget install GitHub.cli"
+        if shutil.which("scoop"):
+            r = subprocess.run(["scoop", "install", "gh"], capture_output=True, text=True)
+            return r.returncode == 0, "scoop install gh"
+        return False, "Install manually from https://cli.github.com"
+    if sysname == "Darwin":
+        if shutil.which("brew"):
+            r = subprocess.run(["brew", "install", "gh"], capture_output=True, text=True)
+            return r.returncode == 0, "brew install gh"
+        return False, "Install Homebrew first or download from https://cli.github.com"
+    if sysname == "Linux":
+        if shutil.which("apt-get"):
+            subprocess.run(["sudo", "apt-get", "update", "-y"], capture_output=True)
+            r = subprocess.run(["sudo", "apt-get", "install", "-y", "gh"], capture_output=True, text=True)
+            return r.returncode == 0, "apt-get install gh"
+        if shutil.which("dnf"):
+            r = subprocess.run(["sudo", "dnf", "install", "-y", "gh"], capture_output=True, text=True)
+            return r.returncode == 0, "dnf install gh"
+        return False, "Install manually from https://cli.github.com"
+    return False, f"Unsupported platform: {sysname}"
+
+
 @dataclass
 class Tool:
     key: str
@@ -423,6 +646,30 @@ class Tool:
 
 
 TOOLS: list[Tool] = [
+    Tool(
+        key="claude-cli",
+        name="Claude CLI (claude-code)",
+        description=(
+            "The Claude Code CLI — Anthropic's official terminal interface for Claude. "
+            "Installed globally via npm. Required for all Claude Code sessions."
+        ),
+        homepage="https://claude.ai/code",
+        repo_url="https://github.com/anthropics/claude-code",
+        install=claude_cli_install,
+        status=claude_cli_status,
+    ),
+    Tool(
+        key="gh",
+        name="GitHub CLI (gh)",
+        description=(
+            "GitHub's official CLI for managing repos, PRs, issues, and Actions from the terminal. "
+            "Required by skills that create PRs or interact with GitHub."
+        ),
+        homepage="https://cli.github.com",
+        repo_url="https://github.com/cli/cli",
+        install=gh_install,
+        status=gh_status,
+    ),
     Tool(
         key="claude-devtools",
         name="claude-devtools",
@@ -441,26 +688,129 @@ TOOLS: list[Tool] = [
 
 # ─── Screens ───────────────────────────────────────────────────────────────────
 
+class UpdatePanel(Widget):
+    """Async update checker — compares local HEAD to origin and offers git pull."""
+
+    DEFAULT_CSS = """
+    UpdatePanel {
+        height: auto;
+        margin: 0 2 0 2;
+    }
+    #update-row {
+        height: 3;
+        align-vertical: middle;
+        padding: 0;
+        margin: 0;
+    }
+    #update-msg {
+        width: 1fr;
+        padding: 0 1;
+        content-align: left middle;
+        height: 3;
+    }
+    #btn-pull { margin: 0; }
+    """
+
+    def compose(self) -> ComposeResult:
+        with Horizontal(id="update-row"):
+            yield Static("[dim]Checking for updates…[/dim]", id="update-msg")
+            yield Button("⬆ Pull update", id="btn-pull", variant="warning")
+
+    def on_mount(self) -> None:
+        self.query_one("#btn-pull").display = False
+        self.run_worker(self._check, thread=True, exclusive=True)
+
+    def _check(self) -> None:
+        result = check_for_updates()
+        self.app.call_from_thread(self._apply, result)
+
+    def _apply(self, result: dict) -> None:
+        msg = self.query_one("#update-msg", Static)
+        btn = self.query_one("#btn-pull", Button)
+        if result["status"] == "up_to_date":
+            msg.update(f"[green]✓ Up to date[/green]  [dim]{result['hash']}[/dim]")
+        elif result["status"] == "behind":
+            msg.update(
+                f"[yellow bold]⬆ Update available[/yellow bold]  "
+                f"[dim]{result['local']} → {result['remote']}[/dim]"
+            )
+            btn.display = True
+        elif result["status"] == "no_git":
+            msg.update("[dim]git not found — cannot check for updates[/dim]")
+        else:
+            msg.update("[dim]⚠ Could not reach remote[/dim]")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "btn-pull":
+            event.stop()
+            self.query_one("#btn-pull").display = False
+            self.query_one("#update-msg", Static).update("[yellow]Pulling…[/yellow]")
+            self.run_worker(self._pull, thread=True, exclusive=True)
+
+    def _pull(self) -> None:
+        ok, output = do_git_pull()
+        def _done() -> None:
+            msg = self.query_one("#update-msg", Static)
+            if ok:
+                msg.update("[green]✓ Pulled — restart the wizard to apply changes[/green]")
+            else:
+                msg.update(f"[red]✗ Pull failed:[/red] [dim]{output[:120]}[/dim]")
+                self.query_one("#btn-pull").display = True
+        self.app.call_from_thread(_done)
+
+
+class AppCommandsProvider(SystemCommandsProvider):
+    """System commands with Quit pinned to the bottom of the discovery list."""
+
+    async def discover(self) -> Hits:
+        commands = list(self.app.get_system_commands(self.screen))
+        quit_cmd = next((c for c in commands if c.title == "Quit"), None)
+        for cmd in sorted((c for c in commands if c.title != "Quit"), key=lambda c: c.title):
+            if cmd.discover:
+                yield DiscoveryHit(cmd.title, cmd.callback, help=cmd.help)
+        if quit_cmd and quit_cmd.discover:
+            yield DiscoveryHit(quit_cmd.title, quit_cmd.callback, help=quit_cmd.help)
+
+
+class AppHeader(Header):
+    def on_mount(self) -> None:
+        self.query_one(HeaderIcon).icon = "▼"
+
+
 class HomeScreen(Screen):
     """Landing screen — banner + horizontal nav."""
 
     BINDINGS = [
         Binding("r", "go('readme')", "README"),
         Binding("e", "go('env')", "Env"),
-        Binding("o", "go('ops')", "Operations"),
         Binding("q", "app.quit", "Quit"),
     ]
 
     def compose(self) -> ComposeResult:
-        yield Header(show_clock=True)
+        yield AppHeader(show_clock=True)
         with VerticalScroll(id="home-scroll"):
             yield Static(render_banner(), id="banner", classes="centered")
             yield Static(render_env_summary(), id="env-summary", classes="panel")
+            yield UpdatePanel()
             with Horizontal(id="home-nav"):
-                yield Button("[R] README", id="btn-readme", variant="primary")
                 yield Button("[E] Env vars", id="btn-env", variant="primary")
-                yield Button("[O] Operations", id="btn-ops", variant="primary")
-                yield Button("[Q] Quit", id="btn-quit", variant="error")
+            with Vertical(classes="home-section"):
+                yield Static("[bold]Global Claude Settings[/bold]", classes="home-section-title")
+                with Horizontal(classes="ops-row"):
+                    yield Button("[U] Update", id="btn-op-update", variant="default")
+                    yield Button("[R] Restore", id="btn-op-restore", variant="default")
+            with Vertical(classes="home-section"):
+                yield Static("[bold]Local Claude Settings[/bold]", classes="home-section-title")
+                with Horizontal(classes="ops-row"):
+                    yield Button("[D] Doctor", id="btn-op-doctor", variant="default")
+                    yield Button("[L] Local", id="btn-op-local", variant="default")
+            with Horizontal(classes="ops-row"):
+                yield Button("[M] MCP", id="btn-op-mcp", variant="default")
+                yield Button("[T] Tools", id="btn-op-tools", variant="default")
+        with Horizontal(id="home-bottom"):
+            yield Button("[R] README", id="btn-readme", variant="primary")
+            yield Static("", classes="home-spacer")
+            yield Button("[Q] Quit", id="btn-quit", variant="error")
         yield Footer()
 
     def on_mount(self) -> None:
@@ -471,19 +821,25 @@ class HomeScreen(Screen):
             self.app.push_screen(ReadmeScreen())
         elif name == "env":
             self.app.push_screen(EnvScreen())
-        elif name == "ops":
-            self.app.push_screen(OperationsScreen())
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         bid = event.button.id or ""
+        op_screens = {
+            "btn-op-update":  UpdateScreen,
+            "btn-op-mcp":     McpScreen,
+            "btn-op-doctor":  DoctorScreen,
+            "btn-op-restore": RestoreScreen,
+            "btn-op-local":   LocalScreen,
+            "btn-op-tools":   ToolsScreen,
+        }
         if bid == "btn-readme":
             self.action_go("readme")
         elif bid == "btn-env":
             self.action_go("env")
-        elif bid == "btn-ops":
-            self.action_go("ops")
         elif bid == "btn-quit":
             self.app.exit()
+        elif bid in op_screens:
+            self.app.push_screen(op_screens[bid]())
 
 
 class ReadmeScreen(Screen):
@@ -492,11 +848,11 @@ class ReadmeScreen(Screen):
     BINDINGS = [Binding("escape", "app.pop_screen", "Back"), Binding("q", "app.pop_screen", "Back")]
 
     def compose(self) -> ComposeResult:
-        yield Header()
-        readme = next(
-            (p for p in [REPO_DIR / "README.md", GLOBAL_DIR / "README.md", SCRIPT_DIR / "README.md"] if p.exists()),
-            None,
-        )
+        yield AppHeader()
+        candidates = [GLOBAL_DIR / "README.md", RESOURCE_ROOT / "README.md", SCRIPT_DIR / "README.md"]
+        if REPO_DIR is not None:
+            candidates.insert(0, REPO_DIR / "README.md")
+        readme = next((p for p in candidates if p.exists()), None)
         if readme:
             yield MarkdownViewer(readme.read_text(encoding="utf-8"), show_table_of_contents=True)
         else:
@@ -504,42 +860,50 @@ class ReadmeScreen(Screen):
         yield Footer()
 
 
+_PATH_KEYS: frozenset[str] = frozenset({"PROJECTS_PATH", "TEMP_PATH"})
+
+
 class EnvScreen(Screen):
-    """Edit setup.env.json and apply via setx / shell rc + git config."""
+    """Show env vars (values from system env) and apply via setx / shell rc + git config."""
 
     BINDINGS = [
         Binding("escape", "app.pop_screen", "Back"),
-        Binding("ctrl+s", "save", "Save"),
-        Binding("ctrl+a", "apply", "Save & Apply"),
+        Binding("ctrl+a", "apply", "Apply"),
     ]
 
     def __init__(self) -> None:
         super().__init__()
-        self.data: dict[str, str] = json.loads(ENV_FILE.read_text(encoding="utf-8")) if ENV_FILE.exists() else {}
+        keys = list(json.loads(ENV_FILE.read_text(encoding="utf-8")).keys()) if ENV_FILE.exists() else []
+        self.data: dict[str, str] = {k: os.environ.get(k, "") for k in keys}
 
     def compose(self) -> ComposeResult:
-        yield Header()
+        yield AppHeader()
         with VerticalScroll():
             yield Static(
                 "[bold bright_magenta]✦ Environment variables ✦[/bold bright_magenta]\n"
-                f"[dim]Source: {ENV_FILE}[/dim]\n"
-                "[dim]Edit values, then Save (Ctrl+S) or Save & Apply (Ctrl+A). "
-                "Status icon: ✓ set in current shell, ✗ missing.[/dim]\n",
+                "[dim]Values read from system environment. "
+                "Apply (Ctrl+A) sets them via setx (Windows) or shell rc (Unix). "
+                "Status icon: ✓ set in current shell, ✗ missing.[/dim]",
                 classes="panel",
             )
             for key, val in self.data.items():
                 shell_set = bool(os.environ.get(key))
                 icon = "[green]✓[/green]" if shell_set else "[red]✗[/red]"
+                is_path = key in _PATH_KEYS
                 with Horizontal(classes="env-row"):
                     yield Static(f"[bold cyan]{key}[/bold cyan]", classes="env-name")
                     yield Static(icon, classes="env-icon")
+                    if is_path:
+                        yield Button("Browse…", id=f"browse-{key}", classes="env-browse")
                     yield Input(value=str(val), id=f"in-{key}", placeholder="(empty)", classes="env-value")
+                desc = ENV_DESCRIPTIONS.get(key)
+                if desc:
+                    yield Static(desc, classes="help-text")
             yield Static("")
             with Horizontal(id="env-actions"):
-                yield Button("Save (Ctrl+S)", id="env-save", variant="primary")
-                yield Button("Save & Apply (Ctrl+A)", id="env-apply", variant="success")
+                yield Button("Apply (Ctrl+A)", id="env-apply", variant="success")
                 yield Button("Back (Esc)", id="env-back")
-            yield Static("", id="env-status", classes="panel")
+            yield Static("", id="env-status")
         yield Footer()
 
     def _gather(self) -> dict[str, str]:
@@ -549,17 +913,21 @@ class EnvScreen(Screen):
             out[key] = inp.value
         return out
 
-    def action_save(self) -> None:
-        data = self._gather()
-        ENV_FILE.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
-        self.query_one("#env-status", Static).update(f"[green]✓ Saved {ENV_FILE}[/green]")
-        self.data = data
+    def _open_browser(self, key: str) -> None:
+        raw = self.query_one(f"#in-{key}", Input).value
+        start = Path(raw).expanduser() if raw else Path.home()
+        if not start.is_dir():
+            start = start.parent if start.parent.is_dir() else Path.home()
+
+        def _cb(path: Path | None) -> None:
+            if path is not None:
+                self.query_one(f"#in-{key}", Input).value = str(path)
+
+        self.app.push_screen(FolderBrowserScreen(start), _cb)
 
     def action_apply(self) -> None:
         data = self._gather()
-        ENV_FILE.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
-        self.data = data
-        msgs = [f"[green]✓ Saved {ENV_FILE}[/green]"]
+        msgs = []
         non_empty = {k: v for k, v in data.items() if v.strip()}
 
         if platform.system() == "Windows":
@@ -568,8 +936,10 @@ class EnvScreen(Screen):
                 ok = r.returncode == 0
                 msgs.append(f"  {'[green]✓[/green]' if ok else '[red]✗[/red]'} setx {k}")
         else:
-            r = subprocess.run([sys.executable, str(ENV_DIR / "setup.py")], capture_output=True, text=True)
-            msgs.append("[green]✓ setup.py ran[/green]" if r.returncode == 0 else f"[red]✗ setup.py failed:[/red] {r.stderr.strip()}")
+            export_lines = [f"export {k}={repr(v)}" for k, v in non_empty.items()]
+            for profile in ["~/.bashrc", "~/.zshrc", "~/.profile"]:
+                update_profile(profile, list(non_empty.keys()), export_lines)
+            msgs.append("[green]✓ Updated shell rc files[/green]")
 
         gle = data.get("GIT_LINE_ENDINGS", "").strip()
         if gle:
@@ -581,12 +951,12 @@ class EnvScreen(Screen):
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         bid = event.button.id or ""
-        if bid == "env-save":
-            self.action_save()
-        elif bid == "env-apply":
+        if bid == "env-apply":
             self.action_apply()
         elif bid == "env-back":
             self.app.pop_screen()
+        elif bid.startswith("browse-"):
+            self._open_browser(bid.removeprefix("browse-"))
 
 
 class OperationsScreen(Screen):
@@ -603,7 +973,7 @@ class OperationsScreen(Screen):
     ]
 
     def compose(self) -> ComposeResult:
-        yield Header()
+        yield AppHeader()
         with VerticalScroll():
             yield Static(
                 "[bold bright_magenta]✦ Operations ✦[/bold bright_magenta]\n"
@@ -653,7 +1023,7 @@ class UpdateScreen(Screen):
     ]
 
     def compose(self) -> ComposeResult:
-        yield Header()
+        yield AppHeader()
         with VerticalScroll():
             yield Static(
                 "[bold bright_magenta]✦ Update global settings ✦[/bold bright_magenta]\n"
@@ -771,7 +1141,7 @@ class DoctorScreen(Screen):
     BINDINGS = [Binding("escape", "app.pop_screen", "Back"), Binding("ctrl+r", "refresh", "Refresh")]
 
     def compose(self) -> ComposeResult:
-        yield Header()
+        yield AppHeader()
         with VerticalScroll():
             yield Static(
                 "[bold bright_magenta]✦ Doctor — drift report ✦[/bold bright_magenta]\n"
@@ -831,7 +1201,7 @@ class RestoreScreen(Screen):
     BINDINGS = [Binding("escape", "app.pop_screen", "Back")]
 
     def compose(self) -> ComposeResult:
-        yield Header()
+        yield AppHeader()
         with VerticalScroll():
             yield Static(
                 "[bold bright_magenta]✦ Restore settings.json ✦[/bold bright_magenta]\n"
@@ -893,7 +1263,7 @@ class McpScreen(Screen):
         self.is_global = True
 
     def compose(self) -> ComposeResult:
-        yield Header()
+        yield AppHeader()
         with VerticalScroll():
             yield Static(
                 "[bold bright_magenta]✦ Manage MCP servers ✦[/bold bright_magenta]",
@@ -1034,6 +1404,80 @@ class McpScreen(Screen):
             self.action_edit()
 
 
+class FolderBrowserScreen(ModalScreen):
+    """Modal directory picker — navigate the filesystem tree and select a folder."""
+
+    BINDINGS = [
+        Binding("escape", "cancel", "Cancel"),
+        Binding("backspace", "go_up", "Parent"),
+    ]
+
+    def __init__(self, start: Path) -> None:
+        super().__init__()
+        self._current = start.resolve() if start.is_dir() else start.parent.resolve()
+        self._entries: list[Path] = []
+
+    def compose(self) -> ComposeResult:
+        with Container(id="browser-dialog"):
+            yield Static("", id="browser-path")
+            yield OptionList(id="browser-list")
+            with Horizontal(id="browser-actions"):
+                yield Button("Select  [bold]↵[/bold]", id="br-select", variant="success")
+                yield Button("Parent  [bold]⌫[/bold]", id="br-up")
+                yield Button("Cancel  [bold]Esc[/bold]", id="br-cancel", variant="error")
+
+    def on_mount(self) -> None:
+        self._populate()
+        self.query_one("#browser-list", OptionList).focus()
+
+    def _populate(self) -> None:
+        lst = self.query_one("#browser-list", OptionList)
+        lst.clear_options()
+        self.query_one("#browser-path", Static).update(
+            f"[bold cyan]  {self._current}[/bold cyan]"
+        )
+        at_root = self._current.parent == self._current
+        if not at_root:
+            lst.add_option(Option("  ..", id="__up__"))
+        try:
+            entries = sorted(
+                [d for d in self._current.iterdir() if d.is_dir()],
+                key=lambda p: p.name.lower(),
+            )
+        except PermissionError:
+            entries = []
+        self._entries = entries
+        for i, d in enumerate(entries):
+            lst.add_option(Option(f"  {d.name}", id=f"__dir_{i}__"))
+
+    def action_go_up(self) -> None:
+        if self._current.parent != self._current:
+            self._current = self._current.parent
+            self._populate()
+
+    def action_cancel(self) -> None:
+        self.dismiss(None)
+
+    def on_option_list_option_selected(self, event: OptionList.OptionSelected) -> None:
+        opt_id = event.option.id or ""
+        if opt_id == "__up__":
+            self.action_go_up()
+        elif opt_id.startswith("__dir_"):
+            idx = int(opt_id[6:-2])
+            if 0 <= idx < len(self._entries):
+                self._current = self._entries[idx]
+                self._populate()
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        bid = event.button.id or ""
+        if bid == "br-select":
+            self.dismiss(self._current)
+        elif bid == "br-up":
+            self.action_go_up()
+        elif bid == "br-cancel":
+            self.action_cancel()
+
+
 class LocalScreen(Screen):
     """Set up .claude/ in another project."""
 
@@ -1048,7 +1492,7 @@ class LocalScreen(Screen):
         self.template_options = [(p.stem, str(p)) for p in tpls]
 
     def compose(self) -> ComposeResult:
-        yield Header()
+        yield AppHeader()
         with VerticalScroll():
             yield Static(
                 "[bold bright_magenta]✦ Local project setup ✦[/bold bright_magenta]\n"
@@ -1057,12 +1501,35 @@ class LocalScreen(Screen):
             )
             with Horizontal():
                 yield Label("Project path: ")
+                yield Button("Browse…", id="loc-browse")
                 yield Input(value=str(Path.cwd()), id="loc-path")
             yield Checkbox("Create .claude/ scaffolding (skills/, hooks/, settings.local.json)", value=True, id="loc-scaffold")
+            yield Static(
+                "Creates .claude/skills/, .claude/hooks/, and settings.local.json with an empty permissions stub.\n"
+                "Claude Code discovers project-local agents and skills from these dirs at session start (docs/architecture.md).\n"
+                "[yellow]⚑ TODO: Edit .claude/settings.local.json → add allow[] entries for commands this project needs "
+                "(e.g. npm, pytest, dotnet). Run Initialize env vars from the home screen first if MCP servers are needed.[/yellow]\n"
+                "Test: ls .claude/ → skills/, hooks/, settings.local.json all present.",
+                classes="help-text",
+            )
             yield Checkbox("Apply CLAUDE.md project template", value=False, id="loc-template")
+            yield Static(
+                "Copies a starter CLAUDE.md from global/project-templates/ into the project root.\n"
+                "Sets project conventions and stack hints that Claude reads at every session start (docs/rules-output-styles.md).\n"
+                "Test: open a new Claude Code session in the project — the SessionStart hook detects CLAUDE.md and invokes @load-project.\n"
+                "Review and customise the generated CLAUDE.md before committing it.",
+                classes="help-text",
+            )
             if self.template_options:
                 yield Select(self.template_options, id="loc-tpl-select", prompt="Pick template…")
             yield Checkbox("Apply git repo-init template (hooks + .editorconfig + .gitattributes)", value=False, id="loc-git")
+            yield Static(
+                "Copies global/git/.editorconfig and .gitattributes to the project root, and hook scripts to .git/hooks/.\n"
+                "Requires git init to have been run in the project first.\n"
+                "[yellow]⚑ TODO (Unix): run chmod +x .git/hooks/* after apply — Windows copies do not preserve execute bit.[/yellow]\n"
+                "Test: ls .git/hooks/ → hook files present. Open a commit to confirm hooks fire.",
+                classes="help-text",
+            )
             yield Static("")
             yield DataTable(id="loc-preview", show_cursor=False)
             yield Static("")
@@ -1095,9 +1562,20 @@ class LocalScreen(Screen):
             sel = self.query_one("#loc-tpl-select", Select)
         except Exception:
             return None
-        if sel.value is Select.BLANK or sel.value is None:
+        if not isinstance(sel.value, str):
             return None
         return Path(sel.value)
+
+    def _open_browser(self) -> None:
+        raw = self.query_one("#loc-path", Input).value
+        start = Path(raw).expanduser()
+        if not start.is_dir():
+            start = Path.cwd()
+        def _cb(path: Path | None) -> None:
+            if path is not None:
+                self.query_one("#loc-path", Input).value = str(path)
+                self._refresh()
+        self.app.push_screen(FolderBrowserScreen(start), _cb)
 
     def _refresh(self) -> None:
         tbl = self.query_one("#loc-preview", DataTable)
@@ -1130,8 +1608,8 @@ class LocalScreen(Screen):
             git_src = GLOBAL_DIR / "git"
             git_dir = project / ".git"
             if not git_dir.exists():
-                tbl.add_row("git_init", ".git/", "[red]MISSING — run `git init` first[/red]")
-            elif not git_src.exists():
+                tbl.add_row("git_init", ".git/", "[yellow]will run git init[/yellow]")
+            if not git_src.exists():
                 tbl.add_row("git_init", "global/git/ in repo", "[red]MISSING[/red]")
             else:
                 hooks_src = git_src / "hooks"
@@ -1139,7 +1617,7 @@ class LocalScreen(Screen):
                     for f in sorted(hooks_src.iterdir()):
                         if f.is_file():
                             target = git_dir / "hooks" / f.name
-                            state = "[yellow]EXISTS — would OVERWRITE[/yellow]" if target.exists() else "[green]NEW[/green]"
+                            state = "[yellow]EXISTS — would OVERWRITE[/yellow]" if git_dir.exists() and target.exists() else "[green]NEW[/green]"
                             tbl.add_row("git_init", f".git/hooks/{f.name}", state)
                 for f in sorted(git_src.iterdir()):
                     if f.is_file():
@@ -1161,19 +1639,36 @@ class LocalScreen(Screen):
             sl = project / ".claude" / "settings.local.json"
             if not sl.exists():
                 sl.write_text('{\n  "permissions": {\n    "allow": []\n  }\n}\n', encoding="utf-8")
-            msgs.append("[green]✓ Created .claude/ scaffold[/green]")
+            msgs.append(
+                "[green]✓ Created .claude/ scaffold[/green]\n"
+                "  Verify: ls .claude/ → skills/, hooks/, settings.local.json\n"
+                "  [yellow]⚑ TODO: edit .claude/settings.local.json — add allow[] entries for this project's commands.[/yellow]"
+            )
 
         if sel["template"]:
             tpl = self._template_path()
             if tpl:
                 shutil.copy2(tpl, project / "CLAUDE.md")
-                msgs.append(f"[green]✓ Wrote CLAUDE.md from {tpl.stem}[/green]")
+                msgs.append(
+                    f"[green]✓ Wrote CLAUDE.md from {tpl.stem}[/green]\n"
+                    "  Verify: open a new Claude Code session here — SessionStart hook should invoke @load-project.\n"
+                    "  Review CLAUDE.md and customise stack conventions before committing."
+                )
             else:
                 msgs.append("[yellow]Skipped template — none picked[/yellow]")
 
         if sel["git"]:
             git_src = GLOBAL_DIR / "git"
             git_dir = project / ".git"
+            if not git_dir.exists():
+                if not shutil.which("git"):
+                    msgs.append("[red]✗ git not found on PATH — cannot run git init[/red]")
+                else:
+                    r = subprocess.run(["git", "init", str(project)], capture_output=True, text=True)
+                    if r.returncode == 0:
+                        msgs.append("[green]✓ git init[/green]")
+                    else:
+                        msgs.append(f"[red]✗ git init failed:[/red] {r.stderr.strip()}")
             if git_dir.exists() and git_src.exists():
                 hooks_src = git_src / "hooks"
                 if hooks_src.exists():
@@ -1185,9 +1680,13 @@ class LocalScreen(Screen):
                 for f in git_src.iterdir():
                     if f.is_file():
                         shutil.copy2(f, project / f.name)
-                msgs.append("[green]✓ Applied git repo-init template[/green]")
-            else:
-                msgs.append("[yellow]Skipped git_init — missing .git/ or template[/yellow]")
+                msgs.append(
+                    "[green]✓ Applied git repo-init template[/green]\n"
+                    "  Verify: ls .git/hooks/ → hook scripts present.\n"
+                    "  [yellow]⚑ TODO (Unix only): chmod +x .git/hooks/* — execute bit not preserved on Windows copy.[/yellow]"
+                )
+            elif not git_src.exists():
+                msgs.append("[yellow]Skipped git_init — template missing in repo[/yellow]")
 
         self.query_one("#loc-status", Static).update("\n".join(msgs))
         self._refresh()
@@ -1205,6 +1704,8 @@ class LocalScreen(Screen):
         bid = event.button.id or ""
         if bid == "loc-back":
             self.app.pop_screen()
+        elif bid == "loc-browse":
+            self._open_browser()
         elif bid == "loc-refresh":
             self._refresh()
         elif bid == "loc-apply":
@@ -1220,7 +1721,7 @@ class ToolsScreen(Screen):
     ]
 
     def compose(self) -> ComposeResult:
-        yield Header()
+        yield AppHeader()
         with VerticalScroll():
             yield Static(
                 "[bold bright_magenta]✦ Tools ✦[/bold bright_magenta]\n"
@@ -1323,6 +1824,35 @@ class HextravagantApp(App):
         margin: 1 2;
     }
 
+    #home-bottom {
+        height: 5;
+        align-vertical: middle;
+        padding: 0 2;
+        margin: 0;
+    }
+    .home-spacer { width: 1fr; }
+
+    .home-section {
+        border: round $accent;
+        margin: 1 2;
+        padding: 0 1 1 1;
+        height: auto;
+    }
+    .home-section-title {
+        color: $accent;
+        padding: 0 1;
+        height: 2;
+        content-align: left middle;
+    }
+
+    .ops-row {
+        height: 5;
+        align: center middle;
+        margin: 0 1;
+        padding: 0;
+    }
+    .ops-row Button { width: 1fr; }
+
     #home-nav, #ops-nav {
         height: 5;
         align: center middle;
@@ -1356,8 +1886,16 @@ class HextravagantApp(App):
         content-align: center middle;
     }
     .env-value { width: 1fr; }
+    .env-browse { min-width: 10; width: 10; margin: 0; }
 
     Checkbox { margin: 0 2; height: auto; }
+
+    .help-text {
+        color: $text-muted;
+        padding: 0 0 1 4;
+        margin: 0 2;
+        height: auto;
+    }
 
     OptionList { max-height: 20; margin: 0 2; }
 
@@ -1368,6 +1906,38 @@ class HextravagantApp(App):
     MarkdownViewer { background: $background; }
 
     Footer { background: $primary-darken-1; }
+
+    /* Folder browser modal */
+    FolderBrowserScreen {
+        align: center middle;
+        background: $background 70%;
+    }
+    #browser-dialog {
+        background: $panel;
+        border: double $accent;
+        padding: 1 2;
+        width: 72;
+        height: 28;
+    }
+    #browser-path {
+        height: 3;
+        padding: 0 1;
+        background: $boost;
+        border: round $primary;
+        margin: 0 0 1 0;
+        content-align: left middle;
+    }
+    #browser-list {
+        height: 1fr;
+        margin: 0;
+    }
+    #browser-actions {
+        height: 3;
+        margin: 1 0 0 0;
+        padding: 0;
+        align-horizontal: center;
+    }
+    #browser-actions Button { min-width: 16; }
     """
 
     BINDINGS = [
@@ -1375,6 +1945,8 @@ class HextravagantApp(App):
         Binding("left", "focus_previous", show=False),
         Binding("right", "focus_next", show=False),
     ]
+
+    COMMANDS = {AppCommandsProvider}
 
     def on_mount(self) -> None:
         self.title = "HEXTRAVAGANT"

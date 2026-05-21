@@ -29,6 +29,12 @@ Fixtures provided:
 
 ``pytest-httpx``'s ``httpx_mock`` fixture is auto-discovered from the
 installed plugin; no re-export is needed here.
+
+The ``fake_gh`` fixture supports ANY ``gh`` subcommand via behavior.json rule
+matching.  For issue-triage tests, queue rules like::
+
+    fake_gh.queue(["issue", "list", "--json"], stdout=json.dumps([...]))
+    fake_gh.queue(["issue", "comment"], returncode=0)
 """
 
 from __future__ import annotations

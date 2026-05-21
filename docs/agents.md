@@ -1,4 +1,4 @@
-# Agents — every subagent explained
+﻿# Agents — every subagent explained
 
 Agents are **separate Claude sessions with focused system prompts and restricted tools**. They protect the main conversation's context window and let you compose specialists.
 
@@ -41,7 +41,7 @@ Each one owns a stack. They give opinionated guidance, scaffold structure, and w
 - Pair with `@python-tester`.
 
 #### `@react-architect`
-- The 2025 React stack: Vite + TS + Zustand + Biome + Tailwind v4 + Zod + DOMPurify + MUI Icons, with light-to-moderate TanStack usage.
+- Current stable React stack: Vite + TS + Zustand + Biome + Tailwind + Zod + DOMPurify + MUI Icons, with light-to-moderate TanStack usage.
 - Use for feature structure, component boundaries, client/UI state boundaries, config setup, and React integration patterns.
 - If TanStack packages are the architecture itself, use `@tanstack-architect`.
 - If the project is Vue 3 or Next.js, use `@frontend-architect` instead.
@@ -53,7 +53,7 @@ Each one owns a stack. They give opinionated guidance, scaffold structure, and w
 - Pairs well with `@react-architect` for component/module shape and `@frontend-css` for styling.
 
 #### `@frontend-architect`
-- Vue 3, Next.js, or React projects **not** on the 2025 stack above.
+- Vue 3, Next.js, or React projects outside the Vite + Zustand + TanStack stack above.
 - Component design, state management, performance, accessibility.
 
 #### `@frontend-css`
@@ -123,7 +123,7 @@ See [`parallel-isolation.md`](parallel-isolation.md) for the dispatch contract, 
    ---
    ```
 2. Below the frontmatter, write the system prompt — what the agent does on activation, its rules, its output format.
-3. Run `python setup/apply.py`.
+3. Run `python setup/settings-configurator-ui.py`.
 4. Restart Claude Code.
 
 **Description-writing rule**: distinct enough that Claude can pick *only this one* when the trigger appears. Read [`architecture.md`](architecture.md#5-ready--how-claude-picks-a-tool) for the resolution algorithm.

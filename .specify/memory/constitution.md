@@ -1,4 +1,4 @@
-<!--
+﻿<!--
 SYNC IMPACT REPORT
 ==================
 Version change: 1.0.0 → 1.1.0
@@ -72,7 +72,7 @@ For any protocol surface (A2A endpoints, agent cards, JSON-RPC methods, REST con
 
 This repo is the source of truth for `~/.claude/`. Any change under `global/` (skills, agents, hooks, `settings.json`) MUST be:
 
-- Deployable via `python setup/apply.py` (or `setup/tools/apply-global-claude-settings.sh` as fallback).
+- Deployable via `python setup/settings-configurator-ui.py` (or `setup/tools/apply-global-claude-settings.sh` as fallback).
 - Revertable via the same flow — no one-way migrations to `~/.claude/`.
 - Documented in the PR or ADR with the rollback path explicitly stated.
 
@@ -90,7 +90,7 @@ Skill/agent proliferation degrades the harness — discoverability drops, confli
 
 ## Repository Structure & Deployment
 
-- `global/` is the deploy source for `~/.claude/`. Edits here ship to every project on the machine after `setup/apply.py` runs.
+- `global/` is the deploy source for `~/.claude/`. Edits here ship to every project on the machine after `setup/settings-configurator-ui.py` runs.
 - `.claude/` is project-local config for prompt-lib itself; it does not deploy globally.
 - `.specify/` holds spec-kit templates, memory, scripts, and (under `specs/`) per-feature spec/plan/tasks/contracts artifacts.
 - `setup/` holds the apply wizard and tooling. Never modify `~/.claude/` outside the apply flow.

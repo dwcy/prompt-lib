@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "prompt-lib",
+  "description": "Personal Claude Code library — skills, agents, hooks, MCP servers, and output styles.",
+  "author": {
+    "name": "Dawid",
+    "email": "pawzor@gmail.com"
+  },
+  "homepage": "https://github.com/dwcy/prompt-lib",
+  "repository": "https://github.com/dwcy/prompt-lib",
+  "keywords": ["skills", "agents", "hooks", "mcp", "claude-code"]
+}

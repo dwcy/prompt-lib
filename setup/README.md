@@ -2,16 +2,19 @@
 
 One-stop entry point for setting up this machine's Claude Code environment.
 
+> **Alternative**: if you only need the shareable surface (skills, agents, hooks, MCP servers, output styles) and don't need the global `CLAUDE.md` / permissions / theme / `rules/` / `project-templates/`, you can install prompt-lib as a Claude Code plugin instead of running this wizard. No clone, no Python required. See [`docs/plugin-install.md`](../docs/plugin-install.md).
+
 ## Primary
 
-**`apply.py`** — interactive TUI wizard. Deploys `global/` config to `~/.claude/`, initializes machine env vars, runs drift checks, restores backups, and scaffolds `.claude/` in other projects.
+**`settings-configurator-ui.py`** — interactive TUI wizard. Deploys `global/` config to `~/.claude/`, initializes machine env vars, runs drift checks, restores backups, and scaffolds `.claude/` in other projects.
 
-```bash
-python setup/apply.py        # any shell
-setup\apply.cmd              # Windows convenience launcher
-```
+Two run modes:
 
-First run auto-installs `rich` + `questionary` via pip.
+| Mode | Command | Notes |
+|---|---|---|
+| Terminal (source) | `python setup/settings-configurator-ui.py` | Any shell. First run auto-installs `textual` via pip. |
+| Terminal (Windows convenience) | `setup\settings-configurator-ui.cmd` | Same as above, finds `py` or `python` on PATH. |
+| Standalone exe | `setup/build/dist/HextravagantSetup[.exe]` | One-file binary that bundles Python, `textual`, `rich`, `global/`, and `setup/env/`. **No Python install required on the target machine.** Build with `python setup/build/build_exe.py`. See [`build/README.md`](build/README.md). |
 
 ### Modes
 
@@ -28,11 +31,12 @@ First run auto-installs `rich` + `questionary` via pip.
 
 ```
 setup/
-├── README.md           ← this file
-├── apply.py            ← primary wizard
-├── apply.cmd           ← Windows launcher
-├── env/                ← machine env var initialization
-└── tools/              ← supporting scripts (bash fallback, smoke test)
+├── README.md                       ← this file
+├── settings-configurator-ui.py     ← primary wizard (terminal mode)
+├── settings-configurator-ui.cmd    ← Windows launcher for terminal mode
+├── build/                          ← PyInstaller spec + driver for the .exe
+├── env/                            ← machine env var initialization
+└── tools/                          ← supporting scripts (bash fallback, smoke test)
 ```
 
-See `env/README.md` and `tools/README.md` for subfolder details.
+See `build/README.md`, `env/README.md`, and `tools/README.md` for subfolder details.

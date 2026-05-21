@@ -1,6 +1,6 @@
 ---
 name: frontend-architect
-description: Frontend architecture specialist for Vue 3, Next.js, and React projects NOT on the Vite + Zustand + TanStack 2025 stack. Use for component design, state management, performance, and accessibility. For Vite + Zustand + TanStack projects, use @react-architect instead.
+description: Frontend architecture specialist for Vue 3, Next.js, and React projects outside the Vite + Zustand + TanStack stack. Use for component design, state management, performance, and accessibility. For Vite + Zustand + TanStack projects, use @react-architect instead.
 tools: Read, Write, Edit, Glob, Bash
 ---
 

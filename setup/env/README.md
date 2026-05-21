@@ -1,4 +1,4 @@
-# setup/env/
+﻿# setup/env/
 
 Initializes machine-level environment variables that MCP servers in `global/settings.json` depend on (e.g. `GITHUB_PERSONAL_ACCESS_TOKEN`, `FIGMA_ACCESS_TOKEN`, `AZURE_DEVOPS_TOKEN`).
 
@@ -6,15 +6,15 @@ Initializes machine-level environment variables that MCP servers in `global/sett
 
 | File | Purpose |
 |---|---|
-| `setup.env.json` | Source of truth — fill in your values here |
-| `setup.py` | Reads `setup.env.json` and applies values via `setx` on Windows or shell rc files on Unix |
+| `setup.env.example.json` | Reference only — lists all expected variable names. Never written to or read for values. |
+| `setup.py` | Reads variable values from the system environment and writes them to shell rc files (Unix) or sets them via `setx` (Windows). |
 | `setup.sh` | Bash wrapper that locates `python3` / `python` and runs `setup.py` |
 
 ## Usage
 
-**Recommended:** go through `setup/apply.py` and pick **Initialize env vars**. It prompts for each variable interactively, writes the values back into `setup.env.json`, then applies them.
+**Recommended:** go through `setup/settings-configurator-ui.py` and pick **Env vars**. It pre-fills each field from the current system environment, lets you edit values, then applies them.
 
-**Standalone:** edit `setup.env.json` directly, then run:
+**Standalone:** set the variables in your environment first, then run:
 
 ```bash
 python setup/env/setup.py    # any platform
@@ -25,7 +25,7 @@ Restart your terminal afterwards so child processes pick up the new vars.
 
 ## Notes
 
-- `setup.env.json` is intended to be gitignored once filled in (it contains secrets). Verify your `.gitignore` covers it before committing.
+- Values are always read from the system environment — never from `setup.env.example.json`. That file is a reference for which variables are expected; it contains no secrets and is safe to commit.
 - On Windows, `setx` writes to the user-level registry — values persist across sessions but not into the current shell. Hence the restart requirement.
 - On Unix, the script appends `export` lines under a `# claude-code-env` marker in `~/.bashrc`, `~/.zshrc`, and `~/.profile` (skipping any that don't exist). Re-running replaces the previous block, so it's idempotent.
 

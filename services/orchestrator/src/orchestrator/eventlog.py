@@ -61,6 +61,12 @@ CREATE TABLE IF NOT EXISTS worktrees (
 
 CREATE INDEX IF NOT EXISTS worktrees_by_last_used ON worktrees (last_used_at);
 
+CREATE TABLE IF NOT EXISTS issue_cursor (
+    issue_number INTEGER PRIMARY KEY,
+    repo         TEXT    NOT NULL,
+    triaged_at   TEXT    NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS schema_version (
     version INTEGER NOT NULL
 );
@@ -313,6 +319,30 @@ def cursor_upsert(
         "ON CONFLICT(pr_number) DO UPDATE SET "
         "head_sha = excluded.head_sha, last_seen = excluded.last_seen",
         (pr_number, head_sha, last_seen_str),
+    )
+
+
+def issue_cursor_is_triaged(conn: sqlite3.Connection, issue_number: int, repo: str) -> bool:
+    """Return True if ``issue_number`` has already been successfully triaged for ``repo``."""
+    row = conn.execute(
+        "SELECT 1 FROM issue_cursor WHERE issue_number = ? AND repo = ?",
+        (issue_number, repo),
+    ).fetchone()
+    return row is not None
+
+
+def issue_cursor_mark_triaged(
+    conn: sqlite3.Connection,
+    issue_number: int,
+    repo: str,
+    *,
+    ts: datetime | None = None,
+) -> None:
+    """Insert or replace the triage-completion record for ``issue_number``."""
+    ts_str = (ts if ts is not None else datetime.now(UTC)).isoformat()
+    conn.execute(
+        "INSERT OR REPLACE INTO issue_cursor (issue_number, repo, triaged_at) VALUES (?, ?, ?)",
+        (issue_number, repo, ts_str),
     )
 
 

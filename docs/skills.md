@@ -1,4 +1,4 @@
-# Skills — every slash command explained
+﻿# Skills — every slash command explained
 
 A skill is a markdown file with frontmatter. When you type `/<name>`, Claude reads the file and treats its body as the next instruction. **No subagent is spawned** — the skill runs in the current conversation with the tools listed in `allowed-tools:`.
 
@@ -50,7 +50,7 @@ Skills are how you turn "things you keep doing" into one keystroke.
 
 ### `/react-init`
 - **Tools**: `Bash, Read, Write, Edit, Glob`
-- **What it does**: scaffolds a complete React 2025 project — Vite + TS + Zustand + TanStack + Biome + Tailwind v4 + Zod + MUI Icons. Asks all questions up front, then generates config files, folder structure, and `.cursorrules` without further interruptions.
+- **What it does**: scaffolds a complete current-stable React project — Vite + TS + Zustand + TanStack + Biome + Tailwind + Zod + MUI Icons. Asks all questions up front, requires choosing `pnpm` or `bun`, then generates config files, folder structure, and `.cursorrules` without further interruptions.
 - **Pairs with**: `@react-architect` for React structure decisions and `@tanstack-architect` for route/data/form/table architecture.
 
 ### `/react-review`
@@ -95,7 +95,7 @@ Skills are how you turn "things you keep doing" into one keystroke.
 - **What it does**: walks you through designing, writing, testing, and refining a new skill. Use this whenever a workflow you keep doing manually should become a `/command`.
 
 ### `/self-improvement` (project-local)
-- **Location**: `.claude/skills/self-improvement/` — directory-based skill, project-local (not deployed via `setup/apply.py`)
+- **Location**: `.claude/skills/self-improvement/` — directory-based skill, project-local (not deployed via `setup/settings-configurator-ui.py`)
 - **Tools**: `Read, Write, Edit, Glob, Grep, Bash`
 - **What it does**: maintains a structured project memory under `.claude/skills/self-improvement/memory/` — lessons learned, mistakes to avoid, durable preferences, and post-task self-evaluations. Reviews memory before non-trivial tasks. **Removes** lessons that have become stale (e.g., a tool that used to fail now works) rather than soft-deleting with `**STALE**` markers — git history is the audit trail.
 - **Helper**: `python .claude/skills/self-improvement/scripts/extract_lessons.py [list|remove|validate]` for listing IDs, removing entries by ID, and validating memory format.
@@ -184,6 +184,6 @@ A skill can call an agent (via the `Task` tool) and an agent can be invoked from
    ---
    ```
 2. Body = the instruction Claude follows when you invoke it.
-3. `python setup/apply.py` → restart.
+3. `python setup/settings-configurator-ui.py` → restart.
 
 Use `/skill-create` if you want guided drafting and trigger-accuracy checks.

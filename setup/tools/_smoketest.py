@@ -1,11 +1,11 @@
-"""Smoke test for apply.py — non-interactive."""
+"""Smoke test for settings-configurator-ui.py — non-interactive."""
 import importlib.util
 import sys
 from pathlib import Path
 
-spec = importlib.util.spec_from_file_location("apply", Path(__file__).resolve().parent.parent / "apply.py")
+spec = importlib.util.spec_from_file_location("settings-configurator-ui", Path(__file__).resolve().parent.parent / "settings-configurator-ui.py")
 m = importlib.util.module_from_spec(spec)
-sys.modules["apply"] = m
+sys.modules["settings-configurator-ui"] = m
 spec.loader.exec_module(m)
 
 print("import OK")

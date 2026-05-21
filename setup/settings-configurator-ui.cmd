@@ -1,5 +1,5 @@
 @echo off
-REM apply.cmd — Windows convenience launcher for apply.py
+REM settings-configurator-ui.cmd — Windows convenience launcher for settings-configurator-ui.py
 REM Resolves Python (py launcher preferred, then python) and runs the wizard.
 
 setlocal
@@ -8,13 +8,13 @@ set "SCRIPT_DIR=%~dp0"
 
 where py >nul 2>nul
 if %ERRORLEVEL%==0 (
-    py "%SCRIPT_DIR%apply.py" %*
+    py "%SCRIPT_DIR%settings-configurator-ui.py" %*
     goto :end
 )
 
 where python >nul 2>nul
 if %ERRORLEVEL%==0 (
-    python "%SCRIPT_DIR%apply.py" %*
+    python "%SCRIPT_DIR%settings-configurator-ui.py" %*
     goto :end
 )
 

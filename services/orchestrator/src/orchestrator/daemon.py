@@ -95,11 +95,34 @@ async def serve(config: Config) -> None:
         worktree_manager=worktree_manager,
     )
 
+    all_triggers = [trigger]
+    consume_tasks: list[asyncio.Task[None]] = []
+
+    if config.orchestrator_enable_issue_triage:
+        from orchestrator.agents.issue_triage import IssueTiageAgent
+        from orchestrator.triggers.github_issues_poll import GithubIssuesPollTrigger
+
+        issue_trigger = GithubIssuesPollTrigger(
+            repo=config.orchestrator_repo,
+            poll_seconds=float(config.orchestrator_poll_seconds),
+            eventlog_conn=conn,
+            notifier=notifier,
+        )
+        issue_agent = IssueTiageAgent(
+            delegation_client=client,
+            eventlog_conn=conn,
+            notifier=notifier,
+        )
+        all_triggers.append(issue_trigger)
+        consume_tasks.append(asyncio.create_task(
+            _consume(issue_trigger.events(), issue_agent, semaphore, in_flight, stop_event)
+        ))
+
     try:
         events_iter = trigger.events()
-        consume_task = asyncio.create_task(
+        consume_tasks.insert(0, asyncio.create_task(
             _consume(events_iter, agent, semaphore, in_flight, stop_event)
-        )
+        ))
         prune_task: asyncio.Task[None] | None = None
         if worktree_manager is not None:
             prune_task = asyncio.create_task(
@@ -107,19 +130,21 @@ async def serve(config: Config) -> None:
             )
 
         await stop_event.wait()
-        consume_task.cancel()
+        for ct in consume_tasks:
+            ct.cancel()
         if prune_task is not None:
             prune_task.cancel()
-        background_tasks: tuple[asyncio.Task[None], ...] = (
-            (consume_task, prune_task) if prune_task is not None else (consume_task,)
-        )
+        background_tasks: list[asyncio.Task[None]] = list(consume_tasks)
+        if prune_task is not None:
+            background_tasks.append(prune_task)
         for pending_task in background_tasks:
             try:
                 await pending_task
             except (asyncio.CancelledError, Exception):
                 pass
 
-        await trigger.aclose()
+        for t in all_triggers:
+            await t.aclose()
 
         if in_flight:
             done, pending = await asyncio.wait(

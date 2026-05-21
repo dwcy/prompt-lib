@@ -179,8 +179,8 @@ Read and write Azure DevOps work items, repos, pipelines, pull requests, and spr
 ```json
 "server-name": {
   "type": "stdio",
-  "command": "npx",
-  "args": ["-y", "@scope/package-name@latest"],
+  "command": "pnpm",
+  "args": ["dlx", "@scope/package-name@latest"],
   "env": {
     "API_KEY": "${MY_ENV_VAR}"
   }
@@ -201,8 +201,8 @@ Create `.mcp.json` in the project root (commit this to share with your team):
   "mcpServers": {
     "server-name": {
       "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "@scope/package-name@latest"],
+      "command": "pnpm",
+      "args": ["dlx", "@scope/package-name@latest"],
       "env": {
         "API_KEY": "${MY_ENV_VAR}"
       }

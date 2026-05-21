@@ -40,6 +40,8 @@ class Config(BaseSettings):
     a2a_peer_url: str = "http://127.0.0.1:8765"
     orchestrator_ntfy_base: str = "https://ntfy.sh"
 
+    orchestrator_enable_issue_triage: bool = False
+
     orchestrator_worktree_enabled: bool = False
     orchestrator_repo_path: Path = Path.cwd()
     orchestrator_worktree_root: Path = (

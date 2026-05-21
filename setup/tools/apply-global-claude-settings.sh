@@ -32,10 +32,15 @@ mkdir -p "$TARGET/agents"
 cp "$SCRIPT_DIR/agents/"*.md "$TARGET/agents/"
 echo "  Copied  agents/ ($(ls "$SCRIPT_DIR/agents/"*.md | wc -l) files)"
 
-# Copy hooks
+# Copy hooks (skip plugin-only hooks.json — loaded only when the prompt-lib plugin is installed)
 mkdir -p "$TARGET/hooks"
-cp "$SCRIPT_DIR/hooks/"* "$TARGET/hooks/"
-echo "  Copied  hooks/ ($(ls "$SCRIPT_DIR/hooks/"* | wc -l) files)"
+copied_hooks=0
+for f in "$SCRIPT_DIR/hooks/"*; do
+  [ "$(basename "$f")" = "hooks.json" ] && continue
+  cp "$f" "$TARGET/hooks/"
+  copied_hooks=$((copied_hooks + 1))
+done
+echo "  Copied  hooks/ ($copied_hooks files)"
 
 # Copy project-templates
 mkdir -p "$TARGET/project-templates"

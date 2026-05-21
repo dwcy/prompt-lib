@@ -106,9 +106,9 @@ Recommend `@tanstack/react-virtual` for any list the user expects to grow large.
 
 ```bash
 # Check what's in the bundle
-bunx vite-bundle-visualizer
+pnpm dlx vite-bundle-visualizer
 # or:
-npx vite-bundle-visualizer
+bunx vite-bundle-visualizer
 ```
 
 Flag:
