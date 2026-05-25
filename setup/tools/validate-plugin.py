@@ -5,7 +5,12 @@ Runs three checks. Exits 0 only if all pass.
 
 1. `claude plugin validate .` against repo root (manifest schema, frontmatter).
    Skipped (with WARN) if `claude` CLI is not on PATH.
-2. MCP parity: `global/.mcp.json` `mcpServers` MUST byte-equal `global/settings.json` `mcpServers`.
+2. MCP authority: `global/.mcp.json` MUST exist with non-empty `mcpServers`, AND
+   `global/settings.json` MUST NOT carry `mcpServers` / `mcpServersDisabled`.
+   Rationale: Claude Code never reads MCP definitions from settings.json — the
+   canonical sources are `~/.claude.json` (user scope, via `claude mcp add`) and
+   `.mcp.json` (project / plugin scope). Duplicating into settings.json creates
+   a false impression that the block is live. See global/skills/add-mcp.md.
 3. Hooks parity: for every event in {SessionStart, PreToolUse, PostToolUse, Stop}, the set of
    (matcher, script-basename) tuples in `global/hooks/hooks.json` MUST equal the same set in
    `global/settings.json.hooks`, ignoring the path prefix difference
@@ -51,19 +56,21 @@ def step_claude_validate() -> tuple[bool, str]:
     return (True, "OK     claude plugin validate")
 
 
-def step_mcp_parity() -> tuple[bool, str]:
-    settings = load_json(SETTINGS).get("mcpServers", {})
+def step_mcp_authority() -> tuple[bool, str]:
+    if not MCP_JSON.exists():
+        return (False, f"FAIL   mcp-authority: {MCP_JSON} is missing")
     mcp = load_json(MCP_JSON).get("mcpServers", {})
-    if settings == mcp:
-        return (True, f"OK     mcp-sync ({len(mcp)} servers in parity)")
-    diff_keys = sorted(set(settings) ^ set(mcp))
-    msg = ["FAIL   mcp-sync: global/.mcp.json != global/settings.json mcpServers"]
-    if diff_keys:
-        msg.append(f"       different keys: {diff_keys}")
-    for k in sorted(set(settings) & set(mcp)):
-        if settings[k] != mcp[k]:
-            msg.append(f"       key '{k}' differs")
-    return (False, "\n".join(msg))
+    if not mcp:
+        return (False, "FAIL   mcp-authority: global/.mcp.json has no mcpServers")
+    settings = load_json(SETTINGS)
+    leaks = [k for k in ("mcpServers", "mcpServersDisabled") if k in settings]
+    if leaks:
+        return (
+            False,
+            "FAIL   mcp-authority: global/settings.json contains dead keys "
+            f"{leaks} — strip them (see global/skills/add-mcp.md)",
+        )
+    return (True, f"OK     mcp-authority ({len(mcp)} servers in .mcp.json; settings.json clean)")
 
 
 def _script_basename(command: str) -> str | None:
@@ -120,7 +127,7 @@ def main() -> int:
     print("=" * 60)
     results = [
         step_claude_validate(),
-        step_mcp_parity(),
+        step_mcp_authority(),
         step_hooks_parity(),
     ]
     for ok, msg in results:
