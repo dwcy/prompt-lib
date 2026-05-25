@@ -19,7 +19,7 @@ Effective change-set: 4 new files, 1 small wizard edit, 1 README/docs update, 1 
 **Project Type**: Configuration packaging / distribution. Not application code.
 **Performance Goals**: SC-201 — under 2 minutes from "I heard of prompt-lib" to "everything works." No runtime-perf criteria for the plugin itself.
 **Constraints**: Apply path MUST keep working (SC-202); plugin MUST validate (SC-204); plugin MUST be the only modification needed — no users have to set anything beyond what they set today.
-**Scale/Scope**: One marketplace, one plugin, repackaging 19 skills + 16 agents + 4 output styles + 8 hooks + 8 MCP servers that already ship.
+**Scale/Scope**: One marketplace, one plugin, repackaging 22 skills + 17 agents + 4 output styles + 8 hooks + 8 MCP servers that already ship.
 
 ## Constitution Check
 

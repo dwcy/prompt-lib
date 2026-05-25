@@ -88,6 +88,17 @@ Skills are how you turn "things you keep doing" into one keystroke.
 - **Tools**: `Read, Edit, Glob, Bash`
 - **What it does**: strips all Lovable / GPTEngineer scaffolding from a project — `lovable-tagger` from `package.json` and `vite.config.ts`, cleans `index.html` metadata, removes injected `data-lovable-id` and `data-gptengineer-id` attributes from all source files, rewrites README, regenerates the lockfile.
 
+## GitHub repo skills
+
+### `/github-scaffold`
+- **Tools**: `Read, Write, Edit, Bash, Glob`
+- **What it does**: scaffolds `.github/` for a repo — `workflows/codeql.yml` (with a CodeQL language matrix detected from source files), `workflows/ci.yml` (skeleton with the user's test command), `dependabot.yml` (one ecosystem entry per detected `pyproject.toml` / `package.json` / `Cargo.toml` / etc.), and a commented `CODEOWNERS` stub. Idempotent — diffs before overwriting. Refuses to run outside a git repo. Does NOT touch repo-level settings (that's `@github-config-manager`).
+- **Use after**: `git init`, `gh repo create`, or `/github-audit` reporting missing files.
+
+### `/github-audit`
+- **Tools**: `Read, Bash, Glob, Grep`
+- **What it does**: read-only audit of a repo's GitHub hygiene. Half the report covers files in `.github/` (CodeQL workflow, CI workflow, Dependabot, CODEOWNERS); half covers repo-level settings via `gh api` (secret scanning, push protection, Dependabot alerts + security updates, code scanning state, branch protection on default branch, Copilot reviewer). Marks plan-restricted features as `[-] N/A on this plan` so the user isn't sent on a paid wild-goose chase. Suggests `/github-scaffold` or `@github-config-manager` for each gap. Never writes.
+
 ## Meta skills
 
 ### `/skill-create`

@@ -20,7 +20,7 @@ Eleven components for the card body zone. Pick the one whose data shape matches 
 
 ## bar — ranked breakdown
 
-For: how a total decomposes (16 agents = 8 architects + 1 designer + 3 auditors + …).
+For: how a total decomposes (17 agents = 8 architects + 1 designer + 1 github + 3 auditors + …).
 
 ```html
 <div class="bar">

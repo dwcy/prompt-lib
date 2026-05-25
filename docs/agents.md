@@ -86,6 +86,18 @@ Each one owns a stack. They give opinionated guidance, scaffold structure, and w
 #### `@python-tester`
 - pytest, async test patterns, fixture design, real-DB integration tests.
 
+### GitHub specialists
+
+#### `@github-config-manager`
+- Interactive configurator for GitHub repo-level settings via `gh api`. Use after `git init` + first push, after `gh repo create`, after `git clone` on a repo you own, or whenever `/github-audit` flags missing settings.
+- Tools: `Read, Bash, Glob, Grep` — calls `gh api` directly.
+- Walks one Q&A covering security alerts (default OFF), push protection, code scanning, branch protection (PR required, approval count, admin enforcement), and Copilot code review. Conservative defaults across the board.
+- Signed commits are never required (project-wide decision); the agent will not ask, will not enable.
+- Knows the free vs paid matrix (public free / private no GHAS / private + GHAS / Copilot Business+). Always prints a `COST CHECK:` block before flipping any paid toggle and requires a second confirmation with the price.
+- Always shows the exact `gh api` command before running it; backs up existing branch protection JSON before overwriting.
+- Refuses on repos the user doesn't own.
+- Composes with: `/github-scaffold` (writes the workflow files that branch protection then requires), `/github-audit` (read-only pre-flight), `@init-project` (optional post-push handoff).
+
 ### Read-only auditors
 
 These never modify code. They report findings; you decide what to fix.
