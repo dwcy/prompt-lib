@@ -69,6 +69,13 @@ except ImportError:
         subprocess.check_call([sys.executable, "-m", "pip", "install", "--quiet", "textual"])
     except Exception:
         _missing_textual()
+    import importlib
+    import site
+
+    user_site = site.getusersitepackages()
+    if user_site and user_site not in sys.path:
+        sys.path.append(user_site)
+    importlib.invalidate_caches()
     from rich.text import Text
     from textual.app import App, ComposeResult
     from textual.binding import Binding
@@ -213,6 +220,18 @@ def _is_plugin_only(rel_path: Path) -> bool:
         return True
     parts = rel_path.parts
     return bool(parts) and parts[0] == ".claude-plugin"
+
+
+def translate_for_os(filename: str, text: str) -> str:
+    """Rewrite OS-specific tokens in a config file before it is deployed.
+
+    The repo's settings.json is authored Windows-canonical ($USERPROFILE). On
+    POSIX shells that variable is empty, so hook/statusline command paths break.
+    Swap it for $HOME, which resolves correctly on Linux, macOS, and git-bash.
+    """
+    if filename != "settings.json" or platform.system() == "Windows":
+        return text
+    return text.replace("$USERPROFILE", "$HOME")
 
 
 @dataclass
@@ -392,17 +411,21 @@ def find_env_vars(path: Path) -> list[str]:
 
 
 def _effective_settings_text(src: Path) -> str:
-    """Return settings.json content stripped of dead `mcpServers` / `mcpServersDisabled`.
+    """Return settings.json content stripped of dead `mcpServers` / `mcpServersDisabled`,
+    with OS-specific tokens translated for the deploy target.
 
     Why: Claude Code does NOT read MCP server definitions from settings.json — those
     blocks are silently ignored. The canonical interface is `claude mcp add` which
     writes to `~/.claude.json`. Stripping these fields keeps the deployed file honest
     so future readers don't think the config is active. See global/skills/add-mcp.md.
+    Additionally, the repo authors paths with $USERPROFILE (Windows) — on POSIX
+    shells we swap to $HOME via translate_for_os so hook commands resolve.
     """
     data = json.loads(src.read_text(encoding="utf-8"))
     data.pop("mcpServers", None)
     data.pop("mcpServersDisabled", None)
-    return json.dumps(data, indent=2) + "\n"
+    text = json.dumps(data, indent=2) + "\n"
+    return translate_for_os(src.name, text)
 
 
 def _is_settings_json(src_file: Path) -> bool:
@@ -604,6 +627,7 @@ def apply_statuses(statuses: list[FileStatus]) -> tuple[int, int]:
             st.dst.parent.mkdir(parents=True, exist_ok=True)
             if _is_settings_json(st.src):
                 st.dst.write_text(_effective_settings_text(st.src), encoding="utf-8")
+                shutil.copystat(st.src, st.dst)
             else:
                 shutil.copy2(st.src, st.dst)
             copied += 1

@@ -3,7 +3,7 @@
   "name": "prompt-lib",
   "owner": {
     "name": "Dawid",
-    "email": "pawzor@gmail.com"
+    "email": "prompt@hextravagant.com"
   },
   "description": "Personal Claude Code library — skills, agents, hooks, MCP servers, and output styles.",
   "plugins": [
@@ -13,7 +13,7 @@
       "description": "Skills, agents, hooks, MCP servers, and output styles for Claude Code.",
       "author": {
         "name": "Dawid",
-        "email": "pawzor@gmail.com"
+        "email": "prompt@hextravagant.com"
       },
       "homepage": "https://github.com/dwcy/prompt-lib",
       "repository": "https://github.com/dwcy/prompt-lib",
