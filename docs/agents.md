@@ -63,6 +63,11 @@ Each one owns a stack. They give opinionated guidance, scaffold structure, and w
 #### `@unity-architect`
 - Scene architecture, ScriptableObject design, MonoBehaviour patterns, performance optimisation.
 
+#### `@pi-arduino-architect`
+- Hobby electronics for Raspberry Pi (Python) and Arduino (C++): GPIO, I2C/SPI/UART sensors, motor drivers, servos, basic robotics.
+- Includes an explicit Pi-vs-Arduino decision rubric for projects that could run on either.
+- Hard rules: level shifters for 5V→Pi, motors on their own supply with common ground, explicit pull-ups/pull-downs, no deprecated `RPi.GPIO` on Pi 5.
+
 ### Testing specialists
 
 #### `@dotnet-tester`

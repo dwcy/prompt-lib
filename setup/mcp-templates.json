@@ -1,0 +1,61 @@
+{
+  "_doc": "Canonical MCP server definitions in Unix-native form. The wizard reads this file and registers servers via `claude mcp add`, applying the Windows cmd /s /c wrapper at apply time. NOT read by Claude Code — settings.json `mcpServers` is dead, see global/skills/add-mcp.md.",
+  "templates": {
+    "context7": {
+      "transport": "stdio",
+      "command": "pnpm",
+      "args": ["dlx", "@upstash/context7-mcp@latest"],
+      "env_required": [],
+      "default_enabled": true
+    },
+    "playwright": {
+      "transport": "stdio",
+      "command": "pnpm",
+      "args": ["dlx", "@playwright/mcp@latest"],
+      "env_required": [],
+      "default_enabled": true
+    },
+    "github": {
+      "transport": "stdio",
+      "command": "pnpm",
+      "args": ["dlx", "@modelcontextprotocol/server-github@latest"],
+      "env_required": ["GITHUB_PERSONAL_ACCESS_TOKEN"],
+      "default_enabled": true
+    },
+    "supabase": {
+      "transport": "stdio",
+      "command": "pnpm",
+      "args": ["dlx", "@supabase/mcp-server-supabase@latest"],
+      "env_required": ["SUPABASE_ACCESS_TOKEN"],
+      "default_enabled": true
+    },
+    "azure-devops": {
+      "transport": "stdio",
+      "command": "pnpm",
+      "args": ["dlx", "@tiberriver256/mcp-server-azure-devops@latest"],
+      "env_required": ["AZURE_DEVOPS_ORG_URL", "AZURE_DEVOPS_TOKEN"],
+      "default_enabled": false
+    },
+    "figma": {
+      "transport": "stdio",
+      "command": "pnpm",
+      "args": ["dlx", "@figma/mcp-server@latest"],
+      "env_required": ["FIGMA_ACCESS_TOKEN"],
+      "default_enabled": false
+    },
+    "obsidian": {
+      "transport": "stdio",
+      "command": "pnpm",
+      "args": ["dlx", "obsidian-mcp@latest"],
+      "env_required": ["OBSIDIAN_API_KEY", "OBSIDIAN_HOST", "OBSIDIAN_PORT"],
+      "default_enabled": false
+    },
+    "docker": {
+      "transport": "stdio",
+      "command": "uvx",
+      "args": ["docker-mcp"],
+      "env_required": [],
+      "default_enabled": false
+    }
+  }
+}

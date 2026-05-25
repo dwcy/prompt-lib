@@ -117,6 +117,7 @@ REPO_DIR: Path | None = _detect_repo_dir()
 GLOBAL_DIR = RESOURCE_ROOT / "global"
 ENV_DIR = RESOURCE_ROOT / "setup" / "env" if IS_FROZEN else SCRIPT_DIR / "env"
 ENV_FILE = ENV_DIR / "setup.env.example.json"
+MCP_TEMPLATES_FILE = RESOURCE_ROOT / "setup" / "mcp-templates.json" if IS_FROZEN else SCRIPT_DIR / "mcp-templates.json"
 TARGET = Path.home() / ".claude"
 
 
@@ -390,12 +391,195 @@ def find_env_vars(path: Path) -> list[str]:
     return sorted(set(re.findall(r"\$\{([A-Z_][A-Z0-9_]*)\}", path.read_text(encoding="utf-8", errors="ignore"))))
 
 
+def _effective_settings_text(src: Path) -> str:
+    """Return settings.json content stripped of dead `mcpServers` / `mcpServersDisabled`.
+
+    Why: Claude Code does NOT read MCP server definitions from settings.json — those
+    blocks are silently ignored. The canonical interface is `claude mcp add` which
+    writes to `~/.claude.json`. Stripping these fields keeps the deployed file honest
+    so future readers don't think the config is active. See global/skills/add-mcp.md.
+    """
+    data = json.loads(src.read_text(encoding="utf-8"))
+    data.pop("mcpServers", None)
+    data.pop("mcpServersDisabled", None)
+    return json.dumps(data, indent=2) + "\n"
+
+
+def _is_settings_json(src_file: Path) -> bool:
+    return src_file.name == "settings.json" and src_file.parent == GLOBAL_DIR
+
+
+# ─── MCP server helpers (claude mcp add/list/remove) ───────────────────────────
+# Claude Code stores MCP servers in ~/.claude.json (NOT settings.json). The CLI
+# `claude mcp add/remove/list` is the only supported interface. See add-mcp skill.
+
+_WINDOWS_CMD_WRAPPED = frozenset({"pnpm", "npx", "bunx"})
+
+
+def _load_mcp_templates() -> dict:
+    if not MCP_TEMPLATES_FILE.exists():
+        return {}
+    try:
+        return json.loads(MCP_TEMPLATES_FILE.read_text(encoding="utf-8")).get("templates", {})
+    except Exception:
+        return {}
+
+
+def _claude_dot_json() -> dict:
+    p = Path.home() / ".claude.json"
+    if not p.exists():
+        return {}
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def _run_claude_cli(args: list[str], timeout: int = 30) -> tuple[int, str, str]:
+    """Run a `claude` CLI command with MSYS path conversion disabled (Git Bash safety)."""
+    env = {**os.environ, "MSYS_NO_PATHCONV": "1"}
+    try:
+        r = subprocess.run(["claude", *args], capture_output=True, text=True, timeout=timeout, env=env)
+        return r.returncode, r.stdout, r.stderr
+    except FileNotFoundError:
+        return 127, "", "claude CLI not found in PATH"
+    except subprocess.TimeoutExpired:
+        return 124, "", f"timed out after {timeout}s"
+    except Exception as e:
+        return 1, "", str(e)
+
+
+def _claude_mcp_list() -> list[dict]:
+    """Parse `claude mcp list` output. Returns [{name, command_line, connected, status_text}].
+
+    Line format: `<name>: <command> - <status>` — names may contain `:` (plugin:foo:bar),
+    so we split on `: ` (colon + space) to find the name/command boundary.
+    """
+    rc, out, _ = _run_claude_cli(["mcp", "list"], timeout=60)
+    if rc != 0:
+        return []
+    results = []
+    for line in out.splitlines():
+        line = line.strip()
+        if not line or " - " not in line or ": " not in line:
+            continue
+        head, _, status = line.rpartition(" - ")
+        name, _, cmdline = head.partition(": ")
+        results.append({
+            "name": name.strip(),
+            "command_line": cmdline.strip(),
+            "connected": "Connected" in status,
+            "status_text": status.strip(),
+        })
+    return results
+
+
+def enumerate_mcp_servers() -> dict[str, dict]:
+    """Aggregate every known MCP server across scopes into one view.
+
+    Returns: { name: { 'scopes': [str], 'active': bool, 'command_line': str,
+                       'env_required': [str], 'is_plugin': bool, 'definitions': {scope: cfg} } }
+
+    Scopes: 'plugin' | 'user' | 'local' | 'project' | 'template'
+    'template' means defined in mcp-templates.json but not yet registered.
+    """
+    aggregated: dict[str, dict] = {}
+
+    def _ensure(name: str) -> dict:
+        return aggregated.setdefault(name, {
+            "scopes": [], "active": False, "command_line": "",
+            "env_required": [], "is_plugin": name.startswith("plugin:"),
+            "definitions": {},
+        })
+
+    cj = _claude_dot_json()
+    for name, cfg in (cj.get("mcpServers") or {}).items():
+        e = _ensure(name)
+        e["scopes"].append("user")
+        e["definitions"]["user"] = cfg
+
+    for proj_path, proj_data in (cj.get("projects") or {}).items():
+        for name, cfg in (proj_data.get("mcpServers") or {}).items():
+            e = _ensure(name)
+            e["scopes"].append("local")
+            e["definitions"].setdefault("local", []).append({"path": proj_path, "def": cfg})
+
+    cwd_mcp = Path.cwd() / ".mcp.json"
+    if cwd_mcp.exists():
+        try:
+            d = json.loads(cwd_mcp.read_text(encoding="utf-8"))
+            entries = d.get("mcpServers") or d
+            for name, cfg in entries.items():
+                e = _ensure(name)
+                e["scopes"].append("project")
+                e["definitions"]["project"] = cfg
+        except Exception:
+            pass
+
+    for entry in _claude_mcp_list():
+        name = entry["name"]
+        e = _ensure(name)
+        e["active"] = entry["connected"]
+        e["command_line"] = entry["command_line"]
+        if e["is_plugin"] and "plugin" not in e["scopes"]:
+            e["scopes"].insert(0, "plugin")
+
+    for name, tmpl in _load_mcp_templates().items():
+        e = _ensure(name)
+        e["env_required"] = list(tmpl.get("env_required") or [])
+        e["definitions"]["template"] = tmpl
+        if not e["scopes"]:
+            e["scopes"].append("template")
+        if not e["command_line"]:
+            e["command_line"] = " ".join([tmpl.get("command", "")] + list(tmpl.get("args") or []))
+
+    return aggregated
+
+
+def claude_mcp_add_from_template(name: str, template: dict) -> tuple[bool, str]:
+    """Register a server via `claude mcp add -s user`, wrapping pnpm/npx/bunx on Windows."""
+    cmd = template.get("command", "")
+    args = list(template.get("args") or [])
+    transport = template.get("transport", "stdio")
+
+    if platform.system() == "Windows" and cmd in _WINDOWS_CMD_WRAPPED:
+        joined = " ".join([cmd] + args)
+        subcmd, subargs = "cmd", ["/s", "/c", joined]
+    else:
+        subcmd, subargs = cmd, args
+
+    full = ["mcp", "add", "-s", "user"]
+    if transport != "stdio":
+        full += ["--transport", transport]
+    for var in template.get("env_required") or []:
+        val = os.environ.get(var, "")
+        if not val:
+            return False, f"Missing env var: {var} (set it in your shell first)"
+        full += ["-e", f"{var}={val}"]
+    full += [name, "--", subcmd, *subargs]
+
+    rc, out, err = _run_claude_cli(full)
+    if rc == 0:
+        return True, (out or "Added").strip().splitlines()[0]
+    return False, (err or out or "unknown error").strip()
+
+
+def claude_mcp_remove(name: str, scope: str) -> tuple[bool, str]:
+    rc, out, err = _run_claude_cli(["mcp", "remove", "-s", scope, name])
+    if rc == 0:
+        return True, (out or "Removed").strip().splitlines()[0]
+    return False, (err or out or "unknown error").strip()
+
+
 def diff_component(comp: Component) -> list[FileStatus]:
     out: list[FileStatus] = []
     for src_file, rel in comp.list_files():
         dst_file = comp.dst_path / rel if comp.type == "dir" else comp.dst_path
         if not dst_file.exists():
             out.append(FileStatus(rel, src_file, dst_file, "NEW"))
+        elif _is_settings_json(src_file):
+            same = dst_file.read_text(encoding="utf-8") == _effective_settings_text(src_file)
+            out.append(FileStatus(rel, src_file, dst_file, "UNCHANGED" if same else "CHANGED"))
         elif filecmp.cmp(src_file, dst_file, shallow=False):
             out.append(FileStatus(rel, src_file, dst_file, "UNCHANGED"))
         else:
@@ -418,7 +602,10 @@ def apply_statuses(statuses: list[FileStatus]) -> tuple[int, int]:
             skipped += 1
         else:
             st.dst.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(st.src, st.dst)
+            if _is_settings_json(st.src):
+                st.dst.write_text(_effective_settings_text(st.src), encoding="utf-8")
+            else:
+                shutil.copy2(st.src, st.dst)
             copied += 1
     return copied, skipped
 
@@ -580,6 +767,72 @@ def cdt_install() -> tuple[bool, str]:
     return False, f"Unsupported platform: {sysname}"
 
 
+# ─── uv (Astral Python tool manager) ───────────────────────────────────────────
+
+def uv_install() -> tuple[bool, str]:
+    """Install `uv` using the OS-native installer. Returns (ok, message)."""
+    sysname = platform.system()
+    if sysname == "Windows":
+        if shutil.which("winget"):
+            r = subprocess.run(
+                ["winget", "install", "--id", "astral-sh.uv", "-e", "--silent",
+                 "--accept-source-agreements", "--accept-package-agreements"],
+                capture_output=True, text=True,
+            )
+            return r.returncode == 0, "winget install astral-sh.uv"
+        return False, "Install uv manually from https://docs.astral.sh/uv/"
+    if sysname == "Darwin":
+        if shutil.which("brew"):
+            r = subprocess.run(["brew", "install", "uv"], capture_output=True, text=True)
+            return r.returncode == 0, "brew install uv"
+        return False, "Install Homebrew first or see https://docs.astral.sh/uv/"
+    if sysname == "Linux":
+        r = subprocess.run(
+            ["bash", "-c", "curl -LsSf https://astral.sh/uv/install.sh | sh"],
+            capture_output=True, text=True,
+        )
+        return r.returncode == 0, "astral uv installer (curl)"
+    return False, f"Unsupported platform: {sysname}"
+
+
+# ─── Specify CLI (GitHub Spec Kit) ─────────────────────────────────────────────
+
+SPECIFY_SOURCE = "git+https://github.com/github/spec-kit.git"
+
+
+def specify_status() -> str:
+    if not shutil.which("specify"):
+        return "not installed"
+    r = subprocess.run(["specify", "--version"], capture_output=True, text=True)
+    v = (r.stdout or r.stderr or "").strip().splitlines()[0] if r.returncode == 0 else ""
+    return f"installed {v}" if v else "installed"
+
+
+def specify_install() -> tuple[bool, str]:
+    """Install or upgrade `specify` via `uv tool install`. Auto-installs uv if missing."""
+    if not shutil.which("uv"):
+        ok, msg = uv_install()
+        if not ok:
+            return False, f"uv missing — could not auto-install ({msg})"
+        if not shutil.which("uv"):
+            return False, "uv installed but not on PATH yet — open a new terminal and re-run"
+
+    if shutil.which("specify"):
+        r = subprocess.run(
+            ["uv", "tool", "upgrade", "specify-cli"],
+            capture_output=True, text=True,
+        )
+        out = (r.stdout or r.stderr or "").strip()
+        return r.returncode == 0, f"uv tool upgrade specify-cli — {out or 'ok'}"
+
+    r = subprocess.run(
+        ["uv", "tool", "install", "specify-cli", "--from", SPECIFY_SOURCE],
+        capture_output=True, text=True,
+    )
+    out = (r.stdout or r.stderr or "").strip()
+    return r.returncode == 0, out or "uv tool install specify-cli"
+
+
 # ─── Claude CLI ────────────────────────────────────────────────────────────────
 
 def claude_cli_status() -> str:
@@ -605,6 +858,96 @@ def gh_status() -> str:
     r = subprocess.run(["gh", "--version"], capture_output=True, text=True)
     v = (r.stdout or "").strip().splitlines()[0] if r.returncode == 0 else ""
     return f"installed {v}" if v else "installed"
+
+
+def gh_fetch_token() -> tuple[bool, str, str]:
+    """Get GitHub token via gh CLI. Returns (success, token, message).
+
+    Uses `gh auth token` as the primary check — if it returns a token the user
+    is authenticated regardless of what `gh auth status` reports (status can
+    return non-zero even when a valid token exists due to scope/keychain quirks).
+    """
+    if not shutil.which("gh"):
+        return False, "", "gh CLI not found — install GitHub CLI first"
+    token_r = subprocess.run(["gh", "auth", "token"], capture_output=True, text=True)
+    t = token_r.stdout.strip()
+    if token_r.returncode == 0 and t:
+        return True, t, "Token fetched from gh CLI"
+    return False, "", "Not logged in — click Login with GitHub, authenticate, then click Fetch via gh."
+
+
+# GitHub CLI's public client_id (visible in gh source: internal/authflow/flow.go).
+# Device flow does not require a client secret. Override via env var if you've
+# registered your own OAuth App.
+_GITHUB_CLIENT_ID = os.environ.get("PROMPT_LIB_GH_CLIENT_ID", "178c6fc778ccc68e1d6a")
+
+
+def gh_device_init(scopes: list[str]) -> dict | None:
+    """Start OAuth Device Authorization Grant. Returns response dict or None on failure."""
+    import urllib.parse, urllib.request
+    body = urllib.parse.urlencode({
+        "client_id": _GITHUB_CLIENT_ID,
+        "scope": " ".join(scopes),
+    }).encode("utf-8")
+    req = urllib.request.Request(
+        "https://github.com/login/device/code",
+        data=body,
+        headers={"Accept": "application/json", "User-Agent": "prompt-lib-wizard"},
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=15) as r:
+            return json.loads(r.read().decode("utf-8"))
+    except Exception:
+        return None
+
+
+def gh_device_poll(
+    device_code: str,
+    interval: int,
+    deadline: float,
+    cancelled: Callable[[], bool],
+) -> tuple[bool, str, str]:
+    """Poll for the access token until success, denial, expiry, cancel, or deadline.
+
+    Returns (ok, token, message). `cancelled()` is checked between sleeps so the UI can abort.
+    """
+    import time, urllib.parse, urllib.request
+    cur_interval = max(1, interval)
+    while time.monotonic() < deadline:
+        if cancelled():
+            return False, "", "cancelled"
+        time.sleep(cur_interval)
+        if cancelled():
+            return False, "", "cancelled"
+        body = urllib.parse.urlencode({
+            "client_id": _GITHUB_CLIENT_ID,
+            "device_code": device_code,
+            "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
+        }).encode("utf-8")
+        req = urllib.request.Request(
+            "https://github.com/login/oauth/access_token",
+            data=body,
+            headers={"Accept": "application/json", "User-Agent": "prompt-lib-wizard"},
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=15) as r:
+                data = json.loads(r.read().decode("utf-8"))
+        except Exception as e:
+            return False, "", f"network error: {e}"
+        if "access_token" in data:
+            return True, data["access_token"], "authorized"
+        err = data.get("error", "")
+        if err == "authorization_pending":
+            continue
+        if err == "slow_down":
+            cur_interval += 5
+            continue
+        if err == "expired_token":
+            return False, "", "code expired — try again"
+        if err == "access_denied":
+            return False, "", "access denied"
+        return False, "", f"oauth error: {err or 'unknown'}"
+    return False, "", "timed out"
 
 
 def gh_install() -> tuple[bool, str]:
@@ -669,6 +1012,19 @@ TOOLS: list[Tool] = [
         repo_url="https://github.com/cli/cli",
         install=gh_install,
         status=gh_status,
+    ),
+    Tool(
+        key="specify-cli",
+        name="Specify CLI (GitHub Spec Kit)",
+        description=(
+            "Spec-driven development CLI from GitHub. Installs via `uv tool install` "
+            "from the upstream git repo (will auto-install `uv` if missing). Provides "
+            "`specify init` for scaffolding .specify/ workflows in any project."
+        ),
+        homepage="https://github.com/github/spec-kit",
+        repo_url="https://github.com/github/spec-kit",
+        install=specify_install,
+        status=specify_status,
     ),
     Tool(
         key="claude-devtools",
@@ -861,6 +1217,7 @@ class ReadmeScreen(Screen):
 
 
 _PATH_KEYS: frozenset[str] = frozenset({"PROJECTS_PATH", "TEMP_PATH"})
+_GH_TOKEN_KEYS: frozenset[str] = frozenset({"GITHUB_PERSONAL_ACCESS_TOKEN"})
 
 
 class EnvScreen(Screen):
@@ -895,10 +1252,17 @@ class EnvScreen(Screen):
                     yield Static(icon, classes="env-icon")
                     if is_path:
                         yield Button("Browse…", id=f"browse-{key}", classes="env-browse")
+                    if key in _GH_TOKEN_KEYS:
+                        yield Button("Fetch via gh", id=f"gh-fetch-{key}", classes="env-browse")
+                        b = Button("Login with GitHub", id=f"gh-login-{key}", classes="env-browse")
+                        b.display = False
+                        yield b
                     yield Input(value=str(val), id=f"in-{key}", placeholder="(empty)", classes="env-value")
                 desc = ENV_DESCRIPTIONS.get(key)
                 if desc:
                     yield Static(desc, classes="help-text")
+                if key in _GH_TOKEN_KEYS:
+                    yield Static("", id=f"gh-status-{key}", classes="help-text")
             yield Static("")
             with Horizontal(id="env-actions"):
                 yield Button("Apply (Ctrl+A)", id="env-apply", variant="success")
@@ -906,12 +1270,78 @@ class EnvScreen(Screen):
             yield Static("", id="env-status")
         yield Footer()
 
+    def on_mount(self) -> None:
+        for key in _GH_TOKEN_KEYS:
+            if key in self.data:
+                self.run_worker(
+                    lambda k=key: self._check_gh_auth(k),
+                    thread=True, exclusive=False,
+                )
+
+    def _check_gh_auth(self, key: str) -> None:
+        logged_in = False
+        if not shutil.which("gh"):
+            label = "[dim]gh CLI not installed — cannot fetch token[/dim]"
+        else:
+            # Use `gh auth token` as the source of truth — `gh auth status` can return
+            # non-zero even when a valid token exists (scope/keychain quirks on Windows).
+            token_r = subprocess.run(["gh", "auth", "token"], capture_output=True, text=True)
+            if token_r.returncode == 0 and token_r.stdout.strip():
+                logged_in = True
+                # Also pull account info from auth status for display (best-effort)
+                status_r = subprocess.run(["gh", "auth", "status"], capture_output=True, text=True)
+                info = (status_r.stdout or status_r.stderr or "").strip().splitlines()[0] if (status_r.stdout or status_r.stderr).strip() else ""
+                label = f"[green]✓ gh: logged in[/green] [dim]{info}[/dim]"
+            else:
+                label = "[yellow]⚠ gh: not logged in — click Login with GitHub to authenticate[/yellow]"
+
+        def _apply() -> None:
+            try:
+                self.query_one(f"#gh-status-{key}", Static).update(label)
+                self.query_one(f"#gh-login-{key}", Button).display = not logged_in
+            except Exception:
+                pass
+
+        self.app.call_from_thread(_apply)
+
+    def _on_gh_token(self, key: str, token: str | None) -> None:
+        """Callback when GhDeviceFlowScreen dismisses. Populates input on success."""
+        status_widget = self.query_one("#env-status", Static)
+        if not token:
+            status_widget.update("[yellow]Login cancelled[/yellow]")
+            return
+        self.query_one(f"#in-{key}", Input).value = token
+        try:
+            self.query_one(f"#gh-status-{key}", Static).update("[green]✓ gh: logged in (via wizard)[/green]")
+            self.query_one(f"#gh-login-{key}", Button).display = False
+        except Exception:
+            pass
+        status_widget.update("[green]✓ Logged in — Apply (Ctrl+A) to persist[/green]")
+
     def _gather(self) -> dict[str, str]:
         out = {}
         for key in self.data.keys():
             inp = self.query_one(f"#in-{key}", Input)
             out[key] = inp.value
         return out
+
+    def _fetch_gh_token(self, key: str) -> None:
+        status_widget = self.query_one("#env-status", Static)
+        status_widget.update("[dim]Contacting gh CLI…[/dim]")
+
+        def _do() -> None:
+            ok, token, msg = gh_fetch_token()
+
+            def _apply() -> None:
+                if ok:
+                    self.query_one(f"#in-{key}", Input).value = token
+                    status_widget.update(f"[green]✓ {msg}[/green]")
+                else:
+                    status_widget.update(f"[yellow]{msg}[/yellow]")
+
+            self.app.call_from_thread(_apply)
+
+        self.run_worker(_do, thread=True, exclusive=False)
 
     def _open_browser(self, key: str) -> None:
         raw = self.query_one(f"#in-{key}", Input).value
@@ -957,6 +1387,29 @@ class EnvScreen(Screen):
             self.app.pop_screen()
         elif bid.startswith("browse-"):
             self._open_browser(bid.removeprefix("browse-"))
+        elif bid.startswith("gh-fetch-"):
+            self._fetch_gh_token(bid.removeprefix("gh-fetch-"))
+        elif bid.startswith("gh-login-"):
+            key = bid.removeprefix("gh-login-")
+            self.query_one("#env-status", Static).update("[dim]Starting GitHub device flow…[/dim]")
+
+            def _start(k=key) -> None:
+                device = gh_device_init(["repo", "read:org"])
+
+                def _push() -> None:
+                    if device is None:
+                        self.query_one("#env-status", Static).update(
+                            "[red]Could not reach github.com — check your connection[/red]"
+                        )
+                        return
+                    self.app.push_screen(
+                        GhDeviceFlowScreen(device),
+                        lambda token: self._on_gh_token(k, token),
+                    )
+
+                self.app.call_from_thread(_push)
+
+            self.run_worker(_start, thread=True, exclusive=False)
 
 
 class OperationsScreen(Screen):
@@ -1249,159 +1702,231 @@ class RestoreScreen(Screen):
 
 
 class McpScreen(Screen):
-    """List, toggle, and edit MCP servers — global or project scope."""
+    """Unified MCP view across all scopes (plugin/user/local/project/template).
+
+    Live status from `claude mcp list`. Toggle enables/disables via `claude mcp add/remove`.
+    Settings.json `mcpServers` is dead — Claude Code does not read it. See add-mcp skill.
+    """
 
     BINDINGS = [
         Binding("escape", "app.pop_screen", "Back"),
-        Binding("ctrl+e", "edit", "Open in editor"),
         Binding("ctrl+r", "refresh", "Refresh"),
+        Binding("space", "toggle", "Toggle"),
     ]
-
-    def __init__(self) -> None:
-        super().__init__()
-        self.settings_file: Path = GLOBAL_DIR / "settings.json"
-        self.is_global = True
 
     def compose(self) -> ComposeResult:
         yield AppHeader()
         with VerticalScroll():
             yield Static(
-                "[bold bright_magenta]✦ Manage MCP servers ✦[/bold bright_magenta]",
+                "[bold bright_magenta]✦ MCP servers ✦[/bold bright_magenta]\n"
+                "[dim]Live status from `claude mcp list`. Toggle = `claude mcp add` (from template) or `claude mcp remove`.[/dim]\n"
+                "[dim]Scopes: plugin (marketplace) · user (~/.claude.json, all projects) · local (this project only) · "
+                "project (.mcp.json) · template (defined here, not registered).[/dim]",
                 classes="panel",
             )
+            yield DataTable(id="mcp-table", show_cursor=True, cursor_type="row", zebra_stripes=True)
             with Horizontal():
-                yield Label("Scope: ")
-                yield RadioSet(
-                    RadioButton("Global (global/settings.json)", value=True, id="scope-global"),
-                    RadioButton("Project — enter path below", id="scope-project"),
-                    id="scope",
-                )
-            with Horizontal():
-                yield Label("Project path: ")
-                yield Input(value=str(Path.cwd()), id="proj-path", placeholder="(only for project scope)")
-            with Horizontal():
-                yield Label("Project file: ")
-                yield Select(
-                    [
-                        (".mcp.json", ".mcp.json"),
-                        (".claude/settings.json", ".claude/settings.json"),
-                        (".claude/settings.local.json", ".claude/settings.local.json"),
-                    ],
-                    id="proj-file",
-                    value=".mcp.json",
-                )
-                yield Button("Reload", id="mcp-reload")
-            yield Static("", id="mcp-target")
-            yield DataTable(id="mcp-table", show_cursor=True, cursor_type="row")
-            with Horizontal():
-                yield Button("Toggle selected (Space)", id="mcp-toggle", variant="primary")
-                yield Button("Open file in editor (Ctrl+E)", id="mcp-edit")
+                yield Button("Toggle (Space)", id="mcp-toggle", variant="primary")
+                yield Button("Refresh (Ctrl+R)", id="mcp-refresh")
                 yield Button("Back (Esc)", id="mcp-back")
             yield Static("", id="mcp-status", classes="panel")
         yield Footer()
 
     def on_mount(self) -> None:
         tbl = self.query_one("#mcp-table", DataTable)
-        tbl.add_columns("Name", "Status", "Command", "Env vars")
+        tbl.add_columns("Name", "Scope(s)", "Status", "Env", "Command")
         self._refresh()
-
-    def _resolve_settings_file(self) -> Path:
-        if self.is_global:
-            return GLOBAL_DIR / "settings.json"
-        proj = Path(self.query_one("#proj-path", Input).value).expanduser()
-        sub = self.query_one("#proj-file", Select).value
-        return proj / sub
-
-    def _load(self) -> dict:
-        if self.settings_file.exists():
-            try:
-                return json.loads(self.settings_file.read_text(encoding="utf-8"))
-            except json.JSONDecodeError as e:
-                self.query_one("#mcp-status", Static).update(f"[red]Invalid JSON: {e}[/red]")
-                return {}
-        return {}
-
-    def _save(self, data: dict) -> None:
-        self.settings_file.parent.mkdir(parents=True, exist_ok=True)
-        if not data.get("mcpServersDisabled"):
-            data.pop("mcpServersDisabled", None)
-        if not data.get("mcpServers"):
-            data.pop("mcpServers", None)
-        self.settings_file.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
 
     def _refresh(self) -> None:
-        self.settings_file = self._resolve_settings_file()
-        self.query_one("#mcp-target", Static).update(f"[cyan]Editing:[/cyan] {self.settings_file}")
-        data = self._load()
-        enabled = data.get("mcpServers") or {}
-        disabled = data.get("mcpServersDisabled") or {}
         tbl = self.query_one("#mcp-table", DataTable)
         tbl.clear()
-        rows = [(n, c, "enabled") for n, c in enabled.items()] + [(n, c, "disabled") for n, c in disabled.items()]
-        rows.sort(key=lambda x: x[0])
-        for name, cfg, status in rows:
-            cmd = (cfg.get("command", "") + " " + " ".join(cfg.get("args", []))).strip() or "—"
-            env_keys = list((cfg.get("env") or {}).keys())
-            env_disp = ", ".join(
-                f"{k}{'✓' if os.environ.get(k) else '✗'}" for k in env_keys
-            ) or "—"
-            status_disp = "✓ enabled" if status == "enabled" else "✗ disabled"
-            tbl.add_row(name, status_disp, cmd, env_disp, key=f"{status}:{name}")
-
-    def on_radio_set_changed(self, event: RadioSet.Changed) -> None:
-        self.is_global = event.pressed.id == "scope-global"
-        self._refresh()
+        try:
+            aggregated = enumerate_mcp_servers()
+        except Exception as e:
+            self.query_one("#mcp-status", Static).update(f"[red]Error enumerating: {e}[/red]")
+            return
+        for name in sorted(aggregated.keys()):
+            info = aggregated[name]
+            scopes_disp = _render_scopes(info["scopes"])
+            if info["is_plugin"]:
+                status_disp = "[green]✓ plugin[/green]" if info["active"] else "[red]✗ plugin[/red]"
+            elif info["active"]:
+                status_disp = "[green]✓ connected[/green]"
+            elif info["scopes"] == ["template"]:
+                status_disp = "[dim]○ available[/dim]"
+            else:
+                status_disp = "[yellow]✗ registered, not connected[/yellow]"
+            env_disp = "—"
+            if info["env_required"]:
+                env_disp = " ".join(
+                    f"{k}[{'green' if os.environ.get(k) else 'red'}]{'✓' if os.environ.get(k) else '✗'}[/]"
+                    for k in info["env_required"]
+                )
+            cmd_disp = (info["command_line"] or "—")[:80]
+            tbl.add_row(name, scopes_disp, status_disp, env_disp, cmd_disp, key=name)
+        self.query_one("#mcp-status", Static).update(
+            f"[dim]{tbl.row_count} servers shown. Space toggles. Plugin servers managed via /plugin.[/dim]"
+        )
 
     def action_refresh(self) -> None:
         self._refresh()
 
-    def action_edit(self) -> None:
-        editor = (
-            os.environ.get("VISUAL") or os.environ.get("EDITOR")
-            or ("notepad" if platform.system() == "Windows" else "nano")
-        )
-        with self.app.suspend():
-            try:
-                subprocess.call([editor, str(self.settings_file)])
-            except FileNotFoundError:
-                pass
-        self._refresh()
-        self.query_one("#mcp-status", Static).update(f"[dim]Reloaded after editor close.[/dim]")
+    def action_toggle(self) -> None:
+        self._toggle_selected()
 
     def _toggle_selected(self) -> None:
         tbl = self.query_one("#mcp-table", DataTable)
+        status_label = self.query_one("#mcp-status", Static)
         if tbl.cursor_row is None or tbl.row_count == 0:
             return
         row_key = tbl.coordinate_to_cell_key((tbl.cursor_row, 0)).row_key.value
         if not row_key:
             return
-        status, _, name = row_key.partition(":")
-        data = self._load()
-        enabled = data.get("mcpServers") or {}
-        disabled = data.get("mcpServersDisabled") or {}
-        if status == "enabled" and name in enabled:
-            disabled[name] = enabled.pop(name)
-        elif status == "disabled" and name in disabled:
-            enabled[name] = disabled.pop(name)
-        data["mcpServers"] = enabled
-        data["mcpServersDisabled"] = disabled
-        self._save(data)
-        msg = f"[green]✓ Toggled {name}[/green]"
-        if self.is_global:
-            msg += "  [dim](run Update to deploy to ~/.claude/)[/dim]"
-        self.query_one("#mcp-status", Static).update(msg)
+        name = row_key
+        info = enumerate_mcp_servers().get(name)
+        if not info:
+            status_label.update(f"[red]Not found: {name}[/red]")
+            return
+        if info["is_plugin"]:
+            status_label.update("[yellow]Plugin servers are managed via /plugin in Claude Code, not here.[/yellow]")
+            return
+        active_scopes = [s for s in info["scopes"] if s in ("user", "local")]
+        if active_scopes:
+            scope = active_scopes[0]
+            ok, msg = claude_mcp_remove(name, scope)
+            status_label.update(
+                f"[{'green' if ok else 'red'}]{'✓ removed' if ok else '✗ remove failed'} {name} ({scope}): {msg}[/]"
+            )
+        else:
+            tmpl = info["definitions"].get("template")
+            if not tmpl:
+                status_label.update(f"[red]No template for {name} — add manually via `claude mcp add`[/red]")
+                return
+            ok, msg = claude_mcp_add_from_template(name, tmpl)
+            status_label.update(
+                f"[{'green' if ok else 'red'}]{'✓ added' if ok else '✗ add failed'} {name} (user): {msg}[/]"
+            )
         self._refresh()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         bid = event.button.id or ""
         if bid == "mcp-back":
             self.app.pop_screen()
-        elif bid == "mcp-reload":
+        elif bid == "mcp-refresh":
             self._refresh()
         elif bid == "mcp-toggle":
             self._toggle_selected()
-        elif bid == "mcp-edit":
-            self.action_edit()
+
+
+_SCOPE_COLOURS = {
+    "plugin":   "magenta",
+    "user":     "cyan",
+    "local":    "blue",
+    "project":  "yellow",
+    "template": "dim",
+}
+
+
+def _render_scopes(scopes: list[str]) -> str:
+    if not scopes:
+        return "—"
+    out = []
+    for s in scopes:
+        c = _SCOPE_COLOURS.get(s, "white")
+        out.append(f"[{c}]{s}[/{c}]")
+    return " ".join(out)
+
+
+class GhDeviceFlowScreen(ModalScreen):
+    """Modal that drives a GitHub OAuth Device Authorization flow inside the wizard.
+
+    Dismisses with the access token on success, or None on cancel/error/timeout.
+    """
+
+    BINDINGS = [Binding("escape", "cancel", "Cancel")]
+
+    DEFAULT_CSS = """
+    GhDeviceFlowScreen { align: center middle; }
+    #gh-dialog {
+        width: 70; height: auto; padding: 1 2; border: round #FF55A5;
+        background: $panel;
+    }
+    #gh-code {
+        content-align: center middle; padding: 1 0;
+        text-style: bold; color: #FFB6C1;
+    }
+    #gh-url, #gh-instructions, #gh-status-line { content-align: center middle; padding: 0 0; }
+    #gh-actions { align: center middle; padding-top: 1; height: 3; }
+    #gh-actions Button { margin: 0 1; }
+    """
+
+    def __init__(self, device: dict) -> None:
+        super().__init__()
+        self._device = device
+        self._cancelled = False
+
+    def compose(self) -> ComposeResult:
+        with Container(id="gh-dialog"):
+            yield Static("[bold bright_magenta]Login with GitHub[/bold bright_magenta]", id="gh-instructions")
+            yield Static("\nEnter this code in your browser:\n", id="gh-instructions")
+            code = self._device.get("user_code", "????-????")
+            yield Static(f"╔══════════════╗\n║  [bold]{code}[/bold]  ║\n╚══════════════╝", id="gh-code")
+            url = self._device.get("verification_uri", "https://github.com/login/device")
+            yield Static(f"\n[dim]Browser opened to[/dim] [cyan]{url}[/cyan]", id="gh-url")
+            yield Static("\n[dim]Waiting for authorization…[/dim]", id="gh-status-line")
+            with Horizontal(id="gh-actions"):
+                yield Button("Cancel (Esc)", id="gh-cancel", variant="error")
+
+    def on_mount(self) -> None:
+        import webbrowser
+        try:
+            webbrowser.open(self._device.get("verification_uri", "https://github.com/login/device"))
+        except Exception:
+            pass
+        self.run_worker(self._poll, thread=True, exclusive=True)
+
+    def _poll(self) -> None:
+        import time
+        interval = int(self._device.get("interval", 5))
+        expires_in = int(self._device.get("expires_in", 900))
+        deadline = time.monotonic() + expires_in
+        device_code = self._device.get("device_code", "")
+        start = time.monotonic()
+
+        def _tick() -> None:
+            elapsed = int(time.monotonic() - start)
+            try:
+                self.query_one("#gh-status-line", Static).update(
+                    f"[dim]Waiting for authorization… {elapsed}s[/dim]"
+                )
+            except Exception:
+                pass
+
+        self.app.call_from_thread(_tick)
+
+        ok, token, msg = gh_device_poll(
+            device_code, interval, deadline, lambda: self._cancelled,
+        )
+
+        def _finish() -> None:
+            if ok:
+                self.dismiss(token)
+            else:
+                try:
+                    self.query_one("#gh-status-line", Static).update(f"[red]✗ {msg}[/red]")
+                except Exception:
+                    pass
+                self.dismiss(None)
+
+        self.app.call_from_thread(_finish)
+
+    def action_cancel(self) -> None:
+        self._cancelled = True
+        self.dismiss(None)
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "gh-cancel":
+            self.action_cancel()
 
 
 class FolderBrowserScreen(ModalScreen):
@@ -1530,6 +2055,15 @@ class LocalScreen(Screen):
                 "Test: ls .git/hooks/ → hook files present. Open a commit to confirm hooks fire.",
                 classes="help-text",
             )
+            yield Checkbox("Initialize Spec Kit (specify init --here --integration claude)", value=False, id="loc-speckit")
+            yield Static(
+                "Runs `specify init --here --integration claude` in the project to scaffold the Spec Kit workflow "
+                "(.specify/, slash commands like /speckit-specify, /speckit-plan, /speckit-tasks).\n"
+                "Requires the `specify` CLI — install it from the Tools screen (or run `uv tool install specify-cli --from git+https://github.com/github/spec-kit.git`).\n"
+                "If the target directory already contains .specify/, this passes `--force` to merge.\n"
+                "Test: ls .specify/ → templates, scripts, memory all present. Open Claude Code → /speckit-specify should be listed.",
+                classes="help-text",
+            )
             yield Static("")
             yield DataTable(id="loc-preview", show_cursor=False)
             yield Static("")
@@ -1553,6 +2087,7 @@ class LocalScreen(Screen):
             "scaffold": self.query_one("#loc-scaffold", Checkbox).value,
             "template": self.query_one("#loc-template", Checkbox).value,
             "git": self.query_one("#loc-git", Checkbox).value,
+            "speckit": self.query_one("#loc-speckit", Checkbox).value,
         }
 
     def _template_path(self) -> Path | None:
@@ -1625,6 +2160,16 @@ class LocalScreen(Screen):
                         state = "[yellow]EXISTS — would OVERWRITE[/yellow]" if target.exists() else "[green]NEW[/green]"
                         tbl.add_row("git_init", f.name, state)
 
+        if sel["speckit"]:
+            if not shutil.which("specify"):
+                tbl.add_row("speckit", "specify CLI", "[red]not installed — see Tools screen[/red]")
+            else:
+                specify_dir = project / ".specify"
+                if specify_dir.exists():
+                    tbl.add_row("speckit", ".specify/", "[yellow]EXISTS — will run with --force[/yellow]")
+                else:
+                    tbl.add_row("speckit", ".specify/", "[green]NEW (specify init --here --integration claude)[/green]")
+
     def action_apply(self) -> None:
         project = self._project()
         if not project.is_dir():
@@ -1687,6 +2232,32 @@ class LocalScreen(Screen):
                 )
             elif not git_src.exists():
                 msgs.append("[yellow]Skipped git_init — template missing in repo[/yellow]")
+
+        if sel["speckit"]:
+            if not shutil.which("specify"):
+                msgs.append(
+                    "[red]✗ specify CLI not on PATH[/red] — install it from the Tools screen "
+                    "(or `uv tool install specify-cli --from git+https://github.com/github/spec-kit.git`), "
+                    "then re-run."
+                )
+            else:
+                cmd = [
+                    "specify", "init", "--here",
+                    "--integration", "claude",
+                    "--ignore-agent-tools",
+                ]
+                if (project / ".specify").exists():
+                    cmd.append("--force")
+                with self.app.suspend():
+                    r = subprocess.run(cmd, cwd=str(project))
+                if r.returncode == 0:
+                    msgs.append(
+                        f"[green]✓ Spec Kit initialized[/green]  [dim]({' '.join(cmd)})[/dim]\n"
+                        "  Verify: ls .specify/ → templates/, scripts/, memory/ present.\n"
+                        "  In Claude Code, /speckit-specify, /speckit-plan, /speckit-tasks should be available."
+                    )
+                else:
+                    msgs.append(f"[red]✗ specify init failed (exit {r.returncode})[/red]")
 
         self.query_one("#loc-status", Static).update("\n".join(msgs))
         self._refresh()

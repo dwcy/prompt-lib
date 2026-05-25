@@ -24,8 +24,8 @@ Two run modes:
 | Initialize env vars | Prompt for each var in `env/setup.env.json`, write to `setx` (Windows) or shell rc (Unix). |
 | Doctor | Compare `~/.claude/` against `global/` and report drift (missing, changed, extra files). |
 | Restore | Roll back `~/.claude/settings.json` from a timestamped backup. |
-| Local project setup | In the current cwd: scaffold `.claude/`, pick a `CLAUDE.md` template, apply git repo-init template. |
-| Tools | Install / update optional companion tools (currently `claude-devtools` — desktop GUI for visualizing Claude Code session logs). Pulls the latest release from GitHub and runs the platform-native installer. |
+| Local project setup | In the current cwd: scaffold `.claude/`, pick a `CLAUDE.md` template, apply git repo-init template, run `specify init` to bootstrap Spec Kit (`.specify/`). |
+| Tools | Install / update optional companion tools (Claude CLI, GitHub CLI, **Specify CLI** for GitHub Spec Kit, `claude-devtools`). Spec Kit's `specify` is installed via `uv tool install` from the upstream git repo and auto-installs `uv` if missing. |
 
 ## Structure
 

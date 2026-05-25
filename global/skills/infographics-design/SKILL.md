@@ -24,7 +24,7 @@ Not for:
 
 ### 1. Audit before you design
 
-Count every feature from its **actual source files** — not what the README claims, not from memory. Use `scripts/audit_features.py` or run `Glob`/`Bash` equivalents. Cite the path in the cell footer so the infographic doubles as a lookup table (e.g. "14 agents · `global/agents/*.md`").
+Count every feature from its **actual source files** — not what the README claims, not from memory. Use `scripts/audit_features.py` or run `Glob`/`Bash` equivalents. Cite the path in the cell footer so the infographic doubles as a lookup table (e.g. "15 agents · `global/agents/*.md`").
 
 This is non-negotiable. Stale numbers undermine the whole sheet.
 

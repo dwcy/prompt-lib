@@ -3,12 +3,5 @@
     "azure@claude-plugins-official": true,
     "microsoft-docs@claude-plugins-official": true,
     "ui-components@local": true
-  },
-  "mcpServers": {
-    "docker": {
-      "type": "stdio",
-      "command": "uvx",
-      "args": ["docker-mcp"]
-    }
   }
 }

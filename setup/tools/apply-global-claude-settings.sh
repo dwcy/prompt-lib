@@ -23,9 +23,21 @@ if [ -f "$TARGET/settings.json" ]; then
   echo "  Backed up existing settings.json -> settings.json.bak"
 fi
 
-# Copy settings.json
-cp "$SCRIPT_DIR/settings.json" "$TARGET/settings.json"
-echo "  Copied  settings.json"
+# Copy settings.json, stripping dead `mcpServers` / `mcpServersDisabled` fields.
+# Why: Claude Code does NOT read MCP definitions from settings.json — `claude mcp add`
+# writes the real config to `~/.claude.json`. Stripping keeps the deployed file honest.
+# See global/skills/add-mcp.md.
+SRC="$SCRIPT_DIR/settings.json" DST="$TARGET/settings.json" python -c '
+import json, os
+from pathlib import Path
+src = Path(os.environ["SRC"])
+dst = Path(os.environ["DST"])
+data = json.loads(src.read_text(encoding="utf-8"))
+data.pop("mcpServers", None)
+data.pop("mcpServersDisabled", None)
+dst.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+'
+echo "  Copied  settings.json (mcpServers stripped — managed via claude mcp add)"
 
 # Copy agents
 mkdir -p "$TARGET/agents"
@@ -37,6 +49,7 @@ mkdir -p "$TARGET/hooks"
 copied_hooks=0
 for f in "$SCRIPT_DIR/hooks/"*; do
   [ "$(basename "$f")" = "hooks.json" ] && continue
+  [ -d "$f" ] && continue
   cp "$f" "$TARGET/hooks/"
   copied_hooks=$((copied_hooks + 1))
 done

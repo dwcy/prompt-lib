@@ -66,9 +66,9 @@ global/
 
 `commit.md`, `css.md`, `design.md`, `docs.md`, `executing-plans.md`, `finishing-a-development-branch.md`, `git.md`, `lovable-cleanup.md`, `pr.md`, `react-init.md`, `react-perf.md`, `react-review.md`, `react-safe.md`, `react-test.md`, `review.md`, `skill-create.md`, `ui-component.md`, `using-git-worktrees.md`, `infographics-design/SKILL.md`
 
-**Agents** (14 entries):
+**Agents** (15 entries):
 
-`code-plan-verifier.md`, `dotnet-architect.md`, `dotnet-tester.md`, `frontend-architect.md`, `frontend-css.md`, `gitignore-auditor.md`, `init-project.md`, `load-project.md`, `python-architect.md`, `python-tester.md`, `react-architect.md`, `secret-auditor.md`, `tanstack-architect.md`, `unity-architect.md`
+`code-plan-verifier.md`, `dotnet-architect.md`, `dotnet-tester.md`, `frontend-architect.md`, `frontend-css.md`, `gitignore-auditor.md`, `init-project.md`, `load-project.md`, `pi-arduino-architect.md`, `python-architect.md`, `python-tester.md`, `react-architect.md`, `secret-auditor.md`, `tanstack-architect.md`, `unity-architect.md`
 
 **Output styles** (4 entries):
 
