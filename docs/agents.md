@@ -68,6 +68,15 @@ Each one owns a stack. They give opinionated guidance, scaffold structure, and w
 - Includes an explicit Pi-vs-Arduino decision rubric for projects that could run on either.
 - Hard rules: level shifters for 5V→Pi, motors on their own supply with common ground, explicit pull-ups/pull-downs, no deprecated `RPi.GPIO` on Pi 5.
 
+### Design specialists
+
+#### `@frontend-designer`
+- Visual UI + UX designer. Runs the Design Discovery Loop (language, fonts, colors, mobile-first, audience, theme, a11y floor) before any visual decision.
+- If no direction exists: recommends wireframes, mockups, vision-paste of a reference screenshot, or AI exploration via Stitch / Google Antigravity — picks the cheapest fit for the project phase.
+- Writes / edits a project-local `DESIGN.md` (tokens, breakpoints, components with full state coverage, do's and don'ts). Treats `~/.claude/design.md` as reference language, never as the default.
+- Ends every pass with the work split into **UX issues** (flows, states, IA, a11y, copy) and **UI issues** (tokens, type, spacing, components, motion).
+- Hard rules: never writes CSS or component code (hands off to `@frontend-css` / `@react-architect` / `@tanstack-architect` / `@frontend-architect`); never `#000`; mobile-first means base CSS is mobile and queries are `min-width`; touch targets ≥ 44×44 px; every animation has a `prefers-reduced-motion` fallback.
+
 ### Testing specialists
 
 #### `@dotnet-tester`
