@@ -23,13 +23,25 @@ if [ -f "$TARGET/settings.json" ]; then
   echo "  Backed up existing settings.json -> settings.json.bak"
 fi
 
-# Copy settings.json — authored Windows-canonical ($USERPROFILE). On non-Windows
-# shells that variable is empty, so swap it for $HOME (resolves on Linux/macOS).
-case "$(uname -s)" in
-  MINGW*|MSYS*|CYGWIN*) cp "$SCRIPT_DIR/settings.json" "$TARGET/settings.json" ;;
-  *) sed 's/\$USERPROFILE/$HOME/g' "$SCRIPT_DIR/settings.json" > "$TARGET/settings.json" ;;
-esac
-echo "  Copied  settings.json"
+# Copy settings.json with two transforms:
+#   1. Strip dead `mcpServers` / `mcpServersDisabled` (Claude Code does NOT read MCP from
+#      settings.json — `claude mcp add` writes the real config to `~/.claude.json`).
+#   2. On non-Windows shells, swap $USERPROFILE -> $HOME so hook command paths resolve.
+SRC="$SCRIPT_DIR/settings.json" DST="$TARGET/settings.json" OS_NAME="$(uname -s)" python -c '
+import json, os
+from pathlib import Path
+src = Path(os.environ["SRC"])
+dst = Path(os.environ["DST"])
+data = json.loads(src.read_text(encoding="utf-8"))
+data.pop("mcpServers", None)
+data.pop("mcpServersDisabled", None)
+text = json.dumps(data, indent=2) + "\n"
+os_name = os.environ.get("OS_NAME", "")
+if not (os_name.startswith("MINGW") or os_name.startswith("MSYS") or os_name.startswith("CYGWIN")):
+    text = text.replace("$USERPROFILE", "$HOME")
+dst.write_text(text, encoding="utf-8")
+'
+echo "  Copied  settings.json (mcpServers stripped; \$USERPROFILE translated on non-Windows)"
 
 # Copy agents
 mkdir -p "$TARGET/agents"
@@ -41,6 +53,7 @@ mkdir -p "$TARGET/hooks"
 copied_hooks=0
 for f in "$SCRIPT_DIR/hooks/"*; do
   [ "$(basename "$f")" = "hooks.json" ] && continue
+  [ -d "$f" ] && continue
   cp "$f" "$TARGET/hooks/"
   copied_hooks=$((copied_hooks + 1))
 done

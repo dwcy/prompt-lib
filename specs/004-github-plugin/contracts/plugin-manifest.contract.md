@@ -62,13 +62,13 @@ global/
 
 (Validation MUST verify all of these exist.)
 
-**Skills** (19 entries — exact list MAY change as new skills are added; the *count* and any specific listed file are testable assertions):
+**Skills** (22 entries — exact list MAY change as new skills are added; the *count* and any specific listed file are testable assertions):
 
-`commit.md`, `css.md`, `design.md`, `docs.md`, `executing-plans.md`, `finishing-a-development-branch.md`, `git.md`, `lovable-cleanup.md`, `pr.md`, `react-init.md`, `react-perf.md`, `react-review.md`, `react-safe.md`, `react-test.md`, `review.md`, `skill-create.md`, `ui-component.md`, `using-git-worktrees.md`, `infographics-design/SKILL.md`
+`add-mcp.md`, `commit.md`, `css.md`, `design.md`, `docs.md`, `executing-plans.md`, `finishing-a-development-branch.md`, `git.md`, `github-audit.md`, `github-scaffold.md`, `lovable-cleanup.md`, `pr.md`, `react-init.md`, `react-perf.md`, `react-review.md`, `react-safe.md`, `react-test.md`, `review.md`, `skill-create.md`, `ui-component.md`, `using-git-worktrees.md`, `infographics-design/SKILL.md`
 
-**Agents** (14 entries):
+**Agents** (17 entries):
 
-`code-plan-verifier.md`, `dotnet-architect.md`, `dotnet-tester.md`, `frontend-architect.md`, `frontend-css.md`, `gitignore-auditor.md`, `init-project.md`, `load-project.md`, `python-architect.md`, `python-tester.md`, `react-architect.md`, `secret-auditor.md`, `tanstack-architect.md`, `unity-architect.md`
+`code-plan-verifier.md`, `dotnet-architect.md`, `dotnet-tester.md`, `frontend-architect.md`, `frontend-css.md`, `frontend-designer.md`, `github-config-manager.md`, `gitignore-auditor.md`, `init-project.md`, `load-project.md`, `pi-arduino-architect.md`, `python-architect.md`, `python-tester.md`, `react-architect.md`, `secret-auditor.md`, `tanstack-architect.md`, `unity-architect.md`
 
 **Output styles** (4 entries):
 

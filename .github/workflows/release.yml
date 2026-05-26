@@ -1,0 +1,90 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: read     # default; the release job re-elevates to write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build wheel + sdist
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install build
+        run: python -m pip install --upgrade build
+      - name: Build
+        run: python -m build
+      - name: Inspect wheel contents
+        run: |
+          ls -lah dist/
+          python -m zipfile -l dist/cabal-*.whl | head -50
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/*
+
+  publish-pypi:
+    name: Publish to PyPI (OIDC)
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: pypi
+      url: https://pypi.org/project/cabal/
+    permissions:
+      id-token: write     # required for Trusted Publishing OIDC
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+
+  build-exe:
+    name: Build standalone .exe (Windows)
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install runtime deps
+        run: python -m pip install --upgrade textual rich pyinstaller
+      - name: Build exe
+        run: python setup/build/build_exe.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cabal-exe
+          path: setup/build/dist/cabal.exe
+
+  release:
+    name: Create GitHub Release
+    needs: [publish-pypi, build-exe]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write   # for the GitHub Release
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+      - name: List artifacts
+        run: ls -laR artifacts/
+      - uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            artifacts/dist/*
+            artifacts/cabal-exe/*

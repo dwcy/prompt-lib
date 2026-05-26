@@ -63,6 +63,20 @@ Each one owns a stack. They give opinionated guidance, scaffold structure, and w
 #### `@unity-architect`
 - Scene architecture, ScriptableObject design, MonoBehaviour patterns, performance optimisation.
 
+#### `@pi-arduino-architect`
+- Hobby electronics for Raspberry Pi (Python) and Arduino (C++): GPIO, I2C/SPI/UART sensors, motor drivers, servos, basic robotics.
+- Includes an explicit Pi-vs-Arduino decision rubric for projects that could run on either.
+- Hard rules: level shifters for 5V→Pi, motors on their own supply with common ground, explicit pull-ups/pull-downs, no deprecated `RPi.GPIO` on Pi 5.
+
+### Design specialists
+
+#### `@frontend-designer`
+- Visual UI + UX designer. Runs the Design Discovery Loop (language, fonts, colors, mobile-first, audience, theme, a11y floor) before any visual decision.
+- If no direction exists: recommends wireframes, mockups, vision-paste of a reference screenshot, or AI exploration via Stitch / Google Antigravity — picks the cheapest fit for the project phase.
+- Writes / edits a project-local `DESIGN.md` (tokens, breakpoints, components with full state coverage, do's and don'ts). Treats `~/.claude/design.md` as reference language, never as the default.
+- Ends every pass with the work split into **UX issues** (flows, states, IA, a11y, copy) and **UI issues** (tokens, type, spacing, components, motion).
+- Hard rules: never writes CSS or component code (hands off to `@frontend-css` / `@react-architect` / `@tanstack-architect` / `@frontend-architect`); never `#000`; mobile-first means base CSS is mobile and queries are `min-width`; touch targets ≥ 44×44 px; every animation has a `prefers-reduced-motion` fallback.
+
 ### Testing specialists
 
 #### `@dotnet-tester`
@@ -71,6 +85,18 @@ Each one owns a stack. They give opinionated guidance, scaffold structure, and w
 
 #### `@python-tester`
 - pytest, async test patterns, fixture design, real-DB integration tests.
+
+### GitHub specialists
+
+#### `@github-config-manager`
+- Interactive configurator for GitHub repo-level settings via `gh api`. Use after `git init` + first push, after `gh repo create`, after `git clone` on a repo you own, or whenever `/github-audit` flags missing settings.
+- Tools: `Read, Bash, Glob, Grep` — calls `gh api` directly.
+- Walks one Q&A covering security alerts (default OFF), push protection, code scanning, branch protection (PR required, approval count, admin enforcement), and Copilot code review. Conservative defaults across the board.
+- Signed commits are never required (project-wide decision); the agent will not ask, will not enable.
+- Knows the free vs paid matrix (public free / private no GHAS / private + GHAS / Copilot Business+). Always prints a `COST CHECK:` block before flipping any paid toggle and requires a second confirmation with the price.
+- Always shows the exact `gh api` command before running it; backs up existing branch protection JSON before overwriting.
+- Refuses on repos the user doesn't own.
+- Composes with: `/github-scaffold` (writes the workflow files that branch protection then requires), `/github-audit` (read-only pre-flight), `@init-project` (optional post-push handoff).
 
 ### Read-only auditors
 

@@ -144,6 +144,7 @@ if system == "Windows":
     winget_ensure("Microsoft.DotNet.SDK.9", ".NET SDK 9")
     winget_ensure("OpenJS.NodeJS.LTS",  "Node.js LTS")
     winget_ensure("GitHub.cli",         "GitHub CLI")
+    winget_ensure("astral-sh.uv",       "uv (Astral Python tool manager)")
 
 elif system == "Linux":
     print(f"{DIM}Assuming Fedora / dnf{RESET}")
@@ -155,6 +156,12 @@ elif system == "Linux":
     dnf_ensure("nodejs", "npm")
     banner("GitHub CLI")
     dnf_ensure("gh")
+    banner("uv (Astral Python tool manager)")
+    if shutil.which("uv"):
+        ok("uv  already installed")
+    else:
+        miss("uv not installed — running official installer")
+        run_visible("bash", "-c", "curl -LsSf https://astral.sh/uv/install.sh | sh")
 
 else:
     print(f"{RED}Unsupported platform: {system}{RESET}")
@@ -176,5 +183,23 @@ npm_ensure("@google/gemini-cli", binary="gemini")
 
 banner("Codex CLI")
 npm_ensure("@openai/codex", binary="codex")
+
+# ── Specify CLI (GitHub Spec Kit) ─────────────────────────────────────────
+# Installed via `uv tool install` from the upstream git repo. Requires `uv`
+# (installed above). Provides the `specify init` command used to scaffold
+# Spec Kit projects (.specify/, templates, commands).
+banner("Specify CLI (GitHub Spec Kit)")
+if not shutil.which("uv"):
+    miss("uv not on PATH — open a new terminal so PATH refreshes, then re-run this script")
+else:
+    installed = cli_version("specify")
+    if installed:
+        ok(f"specify  {installed}  (upgrade: uv tool upgrade specify-cli)")
+    else:
+        miss("specify not installed")
+        run_visible(
+            "uv", "tool", "install", "specify-cli",
+            "--from", "git+https://github.com/github/spec-kit.git",
+        )
 
 print(f"\n{GREEN}{BOLD}✓ Done.{RESET}  Restart your terminal to pick up PATH changes.\n")

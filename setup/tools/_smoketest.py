@@ -1,12 +1,17 @@
-"""Smoke test for settings-configurator-ui.py — non-interactive."""
-import importlib.util
+"""Smoke test for the cabal wizard — non-interactive.
+
+Adds `setup/src/` to sys.path so the test runs against the source tree
+regardless of whether the wheel is installed. Verifies the core helpers
+(`detect_env`, `find_env_vars`, `diff_component`) work without raising.
+"""
+
 import sys
 from pathlib import Path
 
-spec = importlib.util.spec_from_file_location("settings-configurator-ui", Path(__file__).resolve().parent.parent / "settings-configurator-ui.py")
-m = importlib.util.module_from_spec(spec)
-sys.modules["settings-configurator-ui"] = m
-spec.loader.exec_module(m)
+REPO_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO_ROOT / "setup" / "src"))
+
+from cabal import wizard as m  # noqa: E402
 
 print("import OK")
 print(f"Components: {len(m.COMPONENTS)}")
