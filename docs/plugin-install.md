@@ -4,14 +4,15 @@ This page is the user-facing install guide for the GitHub plugin path. The full 
 
 ---
 
-## Two install paths
+## Three install paths
 
 | Path | For who | What it ships |
 |---|---|---|
-| **Plugin (this page)** | Anyone who just wants the skills, agents, hooks, MCP servers — no clone, no Python script, namespaced as `/prompt-lib:*`. Best for teammates, second machines, evaluators. | Skills, agents, output-styles, hooks, MCP servers. |
-| **Apply script** ([setup/](../setup/README.md)) | Power users who want the full setup including global behaviour rules, permissions, theme, statusline, file-pattern rules, project templates. | All of the above **plus** `global/CLAUDE.md`, `global/rules/`, `global/project-templates/`, `global/keybindings.json`, `global/statusline.py`, and the `settings.json`-level fields (permissions/model/theme/statusLine/defaultMode). |
+| **Plugin (this page)** | Anyone who just wants the slash commands, agents, hooks, MCP servers — no clone, no Python script, namespaced as `/prompt-lib:*`. Best for teammates, second machines, evaluators. | Skills, agents, output-styles, hooks, MCP servers. |
+| **`cabal` from PyPI** ([setup/README](../setup/README.md)) | Anyone who wants the full setup including global behaviour rules, permissions, theme, statusline, file-pattern rules, project templates — without cloning the repo. | All of the above **plus** `global/CLAUDE.md`, `global/rules/`, `global/project-templates/`, `global/keybindings.json`, `global/statusline.py`, and the `settings.json`-level fields. Run via `uv tool install cabal` then `cabal`. |
+| **Apply script** (git checkout + [setup/](../setup/README.md)) | Power users who already have a clone of prompt-lib and want to run the wizard or apply script directly from source. | Same surface as `cabal`, just driven from `python setup/settings-configurator-ui.py` against the local working tree. |
 
-The two paths are complementary, not exclusive. The plugin is an additional distribution channel; the apply path keeps working unchanged.
+The three paths are complementary, not exclusive. The plugin is the lightest channel (slash-commands only). The `cabal` package is the full wizard without needing a clone. The apply script is for contributors.
 
 ---
 

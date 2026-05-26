@@ -22,6 +22,12 @@ htmlcov/
 # Build / dist
 dist/
 build/
+# Exception: the setup/build/ tree holds the PyInstaller driver, .spec, README,
+# and build.cmd — those ARE source and must ship. Only the PyInstaller output
+# directories (dist/, intermediate build/) inside setup/build/ stay ignored.
+!setup/build/
+setup/build/dist/
+setup/build/build/
 
 # IDE
 .vscode/
