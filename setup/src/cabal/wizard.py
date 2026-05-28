@@ -39,6 +39,7 @@ IS_FROZEN = getattr(sys, "frozen", False)
 # wheel) or bundled into the PyInstaller .exe. The dev-mode shim at
 # setup/settings-configurator-ui.py handles the fresh-checkout case where
 # they may be missing on the host interpreter.
+from rich.markup import escape as escape_markup
 from rich.text import Text
 from textual.app import App, ComposeResult
 from textual.binding import Binding
@@ -51,7 +52,7 @@ from textual.widgets import (
 from textual.widget import Widget
 from textual.widgets.option_list import Option
 from textual.widgets._header import HeaderIcon
-from textual.command import DiscoveryHit, Hits
+from textual.command import DiscoveryHit, Hit, Hits, Provider
 from textual.system_commands import SystemCommandsProvider
 
 
@@ -107,66 +108,175 @@ TARGET = Path.home() / ".claude"
 
 # ─── Visual constants ──────────────────────────────────────────────────────────
 
-MASCOT = r"""  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/
-__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/
-  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/
-__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/"""
+GRID_HEIGHT = 10  # tall enough to wrap the 6-line logo with 2 hex rows above/below
+_TILE_WIDTH = 6   # each hex tile is 6 cells wide
 
-LOGO = r"""  ██████╗ █████╗ ██████╗  █████╗ ██╗
-██╔════╝██╔══██╗██╔══██╗██╔══██╗██║
-██║     ███████║██████╔╝███████║██║
-██║     ██╔══██║██╔══██╗██╔══██║██║
-╚██████╗██║  ██║██████╔╝██║  ██║███████╗
- ╚═════╝╚═╝  ╚═╝╚═════╝ ╚═╝  ╚═╝╚══════╝"""
+LOGO_LINES = [
+    " ██████╗ █████╗ ██████╗  █████╗ ██╗",
+    "██╔════╝██╔══██╗██╔══██╗██╔══██╗██║",
+    "██║     ███████║██████╔╝███████║██║",
+    "██║     ██╔══██║██╔══██╗██╔══██║██║",
+    "╚██████╗██║  ██║██████╔╝██║  ██║███████╗",
+    " ╚═════╝╚═╝  ╚═╝╚═════╝ ╚═╝  ╚═╝╚══════╝",
+]
+LOGO_MAX_WIDTH = max(len(l) for l in LOGO_LINES)
+LOGO_GUTTER = 1  # cells of clear space between hex and any logo char on the same row
+# Enough tiles to wrap the logo with a 1-tile margin on each side.
+_MIN_TILES = (LOGO_MAX_WIDTH + 2 * (LOGO_GUTTER + _TILE_WIDTH)) // _TILE_WIDTH + 1
 
 LOGO_GRADIENT = ["#FFB6C1", "#FF85B3", "#FF55A5", "#FF2897", "#FF0080", "#CC006B"]
 MASCOT_GRADIENT = ["#CC006B", "#FF2897", "#FF85B3", "#FFB6C1"]
 
 
-def render_banner() -> Text:
-    """Mascot + logo + tagline as a single Rich Text with gradient coloring."""
+def render_banner(target_width: int | None = None) -> Text:
+    """Honeycomb grid hugging a centered CABAL logo, sized to `target_width` cells."""
+    if target_width is None or target_width <= 0:
+        target_width = (_MIN_TILES + 4) * _TILE_WIDTH  # sensible default outside Textual
+    tiles = max(_MIN_TILES, target_width // _TILE_WIDTH)
+    grid_row_a = "  \\__/" * tiles
+    grid_row_b = "__/" + "  \\__/" * (tiles - 1) + "  \\"
+    grid_width = len(grid_row_a)
+
     txt = Text()
-    mascot_lines = MASCOT.splitlines()
-    n = len(mascot_lines)
-    for i, line in enumerate(mascot_lines):
-        idx = (i * len(MASCOT_GRADIENT)) // max(1, n - 1) if n > 1 else 0
-        idx = min(idx, len(MASCOT_GRADIENT) - 1)
-        txt.append(line + "\n", style=f"bold {MASCOT_GRADIENT[idx]}")
-    txt.append("\n")
-    logo_lines = LOGO.splitlines()
-    n = len(logo_lines)
-    for i, line in enumerate(logo_lines):
-        idx = (i * len(LOGO_GRADIENT)) // max(1, n - 1) if n > 1 else 0
-        idx = min(idx, len(LOGO_GRADIENT) - 1)
-        txt.append(line + "\n", style=f"bold {LOGO_GRADIENT[idx]}")
-    txt.append("\n« Claude Code Setup Wizard »", style="italic bright_cyan")
+    logo_start = (GRID_HEIGHT - len(LOGO_LINES)) // 2
+    left_pad = (grid_width - LOGO_MAX_WIDTH) // 2
+
+    for i in range(GRID_HEIGHT):
+        base = (grid_row_a if i % 2 == 0 else grid_row_b).ljust(grid_width)
+
+        mascot_idx = min((i * len(MASCOT_GRADIENT)) // max(1, GRID_HEIGHT - 1), len(MASCOT_GRADIENT) - 1)
+        mascot_style = f"bold {MASCOT_GRADIENT[mascot_idx]}"
+
+        li = i - logo_start
+        if 0 <= li < len(LOGO_LINES):
+            raw = LOGO_LINES[li]
+            stripped = raw.rstrip()
+            if not stripped:
+                txt.append(base + "\n", style=mascot_style)
+                continue
+            left_char = len(raw) - len(raw.lstrip())
+            right_char = len(stripped)
+
+            logo_color_idx = min((li * len(LOGO_GRADIENT)) // max(1, len(LOGO_LINES) - 1), len(LOGO_GRADIENT) - 1)
+            logo_style = f"bold {LOGO_GRADIENT[logo_color_idx]}"
+
+            cz_start = max(0, left_pad + left_char - LOGO_GUTTER)
+            cz_end = min(grid_width, left_pad + right_char + LOGO_GUTTER)
+            gutter_left = (left_pad + left_char) - cz_start
+            gutter_right = cz_end - (left_pad + right_char)
+
+            txt.append(base[:cz_start], style=mascot_style)
+            txt.append(" " * gutter_left, style=mascot_style)
+            txt.append(raw[left_char:right_char], style=logo_style)
+            txt.append(" " * gutter_right, style=mascot_style)
+            txt.append(base[cz_end:] + "\n", style=mascot_style)
+        else:
+            txt.append(base + "\n", style=mascot_style)
+
+    txt.append("\n« Agent Orchestration Setup »", style="italic bright_cyan")
     return txt
 
 
-def render_env_summary() -> Text:
+class HexBanner(Static):
+    """Static that re-renders the honeycomb banner whenever its width changes."""
+
+    def on_mount(self) -> None:
+        self._refresh()
+
+    def on_resize(self) -> None:
+        self._refresh()
+
+    def _refresh(self) -> None:
+        self.update(render_banner(self.size.width or None))
+
+
+def _short_docker_version(raw: str | None) -> str | None:
+    # "Docker version 24.0.7, build afdd53b" → "24.0.7"
+    if not raw:
+        return None
+    parts = raw.split()
+    return parts[2].rstrip(",") if len(parts) >= 3 and parts[0].lower() == "docker" else raw
+
+
+def _short_podman_version(raw: str | None) -> str | None:
+    # "podman version 4.7.0" → "4.7.0"
+    if not raw:
+        return None
+    parts = raw.split()
+    return parts[-1] if parts else raw
+
+
+def _short_terraform_version(raw: str | None) -> str | None:
+    # "Terraform v1.7.0" → "v1.7.0"
+    if not raw:
+        return None
+    parts = raw.split()
+    if len(parts) >= 2 and parts[0].lower() == "terraform":
+        return parts[1]
+    return raw
+
+
+def _short_az_version(raw: str | None) -> str | None:
+    # First line of `az --version`: "azure-cli                         2.50.0"
+    if not raw:
+        return None
+    parts = raw.split()
+    return parts[-1] if parts else raw
+
+
+def _short_gcloud_version(raw: str | None) -> str | None:
+    # First line: "Google Cloud SDK 458.0.1"
+    if not raw:
+        return None
+    parts = raw.split()
+    return parts[-1] if parts else raw
+
+
+def _short_aws_version(raw: str | None) -> str | None:
+    # "aws-cli/2.15.0 Python/3.11.6 ..." → "2.15.0"
+    if not raw:
+        return None
+    if raw.startswith("aws-cli/"):
+        return raw.split()[0].removeprefix("aws-cli/")
+    return raw
+
+
+def _version_field(label: str, value: str | None) -> str:
+    head = f"[bold bright_blue]{label}:[/] "
+    return head + (f"[white]{value}[/]" if value else "")
+
+
+def _presence_field(label: str, present: bool) -> str:
+    head = f"[bold bright_blue]{label}:[/] "
+    return head + ("[green]✓ installed[/]" if present else "")
+
+
+def render_env_summary() -> str:
+    """Plain-text env summary (no install controls). EnvPanel adds buttons inline."""
     env = detect_env()
-    txt = Text()
-    txt.append("OS: ", style="bold bright_blue")
-    txt.append(f"{env['os']} {env['release']}    ", style="white")
-    txt.append("Python: ", style="bold bright_blue")
-    txt.append(f"{env['python']}    ", style="white")
-    txt.append("git/bash: ", style="bold bright_blue")
-    txt.append("✓" if env["git"] else "✗", style="green" if env["git"] else "red")
-    txt.append("/")
-    txt.append("✓" if env["bash"] else "✗", style="green" if env["bash"] else "red")
-    txt.append("    Claude CLI: ", style="bold bright_blue")
-    txt.append("✓ installed" if env["claude"] else "✗ not found", style="green" if env["claude"] else "red")
-    txt.append("    gh: ", style="bold bright_blue")
-    txt.append("✓ installed" if env["gh"] else "✗ not found", style="green" if env["gh"] else "red")
-    txt.append("\nSource: ", style="bold bright_blue")
-    txt.append(f"{GLOBAL_DIR}\n", style="cyan")
-    txt.append("Target: ", style="bold bright_blue")
-    txt.append(f"{TARGET} ", style="cyan")
-    txt.append(
-        "(exists)" if env["target_exists"] else "(will be created)",
-        style="green" if env["target_exists"] else "yellow",
-    )
-    return txt
+    pkg = env["pkg_manager"]
+    pkg_str = f"[green]{pkg}[/]" if pkg else "[red]✗ none detected[/]"
+    git_mark = "[green]✓[/]" if env["git"] else "[red]✗[/]"
+    bash_mark = "[green]✓[/]" if env["bash"] else "[red]✗[/]"
+
+    parts = [
+        f"[bold bright_blue]OS:[/] {env['os']} {env['release']}    ",
+        f"[bold bright_blue]Pkg:[/] {pkg_str}    ",
+        f"[bold bright_blue]Python:[/] {env['python']}    ",
+        _version_field("Node", env["node"]) + "    ",
+        _version_field("npm", env["npm"]) + "    ",
+        _version_field("Docker", _short_docker_version(env["docker"])) + "    ",
+        f"[bold bright_blue]git/bash:[/] {git_mark}/{bash_mark}\n",
+        _presence_field("Claude CLI", env["claude"]) + "    ",
+        _presence_field("Gemini CLI", env["gemini"]) + "    ",
+        _presence_field("Codex CLI", env["codex"]) + "    ",
+        _presence_field("OpenCode", env["opencode"]) + "    ",
+        _presence_field("gh", env["gh"]),
+        f"\n[bold bright_blue]Source:[/] [cyan]{GLOBAL_DIR}[/]\n",
+        f"[bold bright_blue]Target:[/] [cyan]{TARGET}[/] ",
+        "[green](exists)[/]" if env["target_exists"] else "[yellow](will be created)[/]",
+    ]
+    return "".join(parts)
 
 
 # ─── Components ────────────────────────────────────────────────────────────────
@@ -346,8 +456,42 @@ def check_for_updates() -> dict:
         remote_hash = remote.stdout.split()[0]
         short = lambda h: h[:8]
         if local_hash == remote_hash:
-            return {"status": "up_to_date", "hash": short(local_hash)}
-        return {"status": "behind", "local": short(local_hash), "remote": short(remote_hash)}
+            date = ""
+            d = subprocess.run(
+                ["git", "log", "-1", "--format=%cs", local_hash],  # %cs = committer date, short ISO
+                capture_output=True, text=True, cwd=str(REPO_DIR), timeout=5,
+            )
+            if d.returncode == 0:
+                date = d.stdout.strip()
+            return {"status": "up_to_date", "hash": short(local_hash), "date": date}
+
+        # Behind — fetch (quietly) to count commits and read the latest remote subject.
+        behind_count: int | None = None
+        subject = ""
+        fetch = subprocess.run(
+            ["git", "fetch", "origin", "--quiet"],
+            capture_output=True, text=True, cwd=str(REPO_DIR), timeout=30,
+        )
+        if fetch.returncode == 0:
+            cnt = subprocess.run(
+                ["git", "rev-list", "--count", f"{local_hash}..{remote_hash}"],
+                capture_output=True, text=True, cwd=str(REPO_DIR), timeout=5,
+            )
+            if cnt.returncode == 0 and cnt.stdout.strip().isdigit():
+                behind_count = int(cnt.stdout.strip())
+            subj = subprocess.run(
+                ["git", "log", "-1", "--format=%s", remote_hash],
+                capture_output=True, text=True, cwd=str(REPO_DIR), timeout=5,
+            )
+            if subj.returncode == 0:
+                subject = subj.stdout.strip()
+        return {
+            "status": "behind",
+            "local": short(local_hash),
+            "remote": short(remote_hash),
+            "behind_count": behind_count,
+            "subject": subject,
+        }
     except Exception:
         return {"status": "error"}
 
@@ -367,16 +511,210 @@ def do_git_pull() -> tuple[bool, str]:
 
 # ─── Pure helpers ──────────────────────────────────────────────────────────────
 
+def _probe_version(cmd: str, *args: str) -> str | None:
+    """Run `cmd args...`, return trimmed first stdout line on success, else None.
+
+    Uses the absolute path from shutil.which so Windows .CMD/.BAT shims
+    (npm, gemini, opencode, etc.) execute via subprocess without `shell=True`.
+    """
+    resolved = shutil.which(cmd)
+    if not resolved:
+        return None
+    try:
+        result = subprocess.run(
+            [resolved, *args], capture_output=True, text=True, timeout=5, check=False
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if result.returncode != 0:
+        return None
+    out = (result.stdout or result.stderr).strip().splitlines()
+    return out[0] if out else None
+
+
+def _detect_pkg_manager() -> str | None:
+    """Return the name of the OS-native package manager the wizard would use."""
+    sysname = platform.system()
+    if sysname == "Windows":
+        for pm in ("winget", "scoop", "choco"):
+            if shutil.which(pm):
+                return pm
+    elif sysname == "Darwin":
+        for pm in ("brew", "port"):
+            if shutil.which(pm):
+                return pm
+    elif sysname == "Linux":
+        for pm in ("apt-get", "dnf", "pacman", "zypper", "apk", "emerge"):
+            if shutil.which(pm):
+                return pm
+    return None
+
+
+def _git_user_name() -> str | None:
+    git = shutil.which("git")
+    if not git:
+        return None
+    try:
+        r = subprocess.run(
+            [git, "config", "user.name"], capture_output=True, text=True, timeout=3, check=False
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    name = (r.stdout or "").strip()
+    return name or None
+
+
+def _kubectl_version() -> str | None:
+    """Return kubectl client version string (e.g. 'v1.30.0'), or None."""
+    cmd = shutil.which("kubectl")
+    if not cmd:
+        return None
+    try:
+        r = subprocess.run(
+            [cmd, "version", "--client", "--output=json"],
+            capture_output=True, text=True, timeout=5, check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if r.returncode != 0:
+        return None
+    try:
+        data = json.loads(r.stdout)
+    except json.JSONDecodeError:
+        return None
+    return (data.get("clientVersion") or {}).get("gitVersion")
+
+
+def _dotnet_sdks() -> list[str]:
+    """Return installed .NET SDK major.minor versions, sorted, deduped. Empty if dotnet missing."""
+    dotnet = shutil.which("dotnet")
+    if not dotnet:
+        return []
+    try:
+        r = subprocess.run(
+            [dotnet, "--list-sdks"],
+            capture_output=True, text=True, timeout=5, check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return []
+    if r.returncode != 0:
+        return []
+    versions: set[str] = set()
+    for line in (r.stdout or "").splitlines():
+        first = line.split(None, 1)[0].strip() if line.strip() else ""
+        parts = first.split(".")
+        if len(parts) >= 2 and parts[0].isdigit() and parts[1].isdigit():
+            versions.add(f"{parts[0]}.{parts[1]}")
+    return sorted(versions, key=lambda v: tuple(int(p) for p in v.split(".")))
+
+
+def _has_rider() -> bool:
+    """JetBrains Rider — Toolbox usually puts `rider` (or `rider64` on Windows) on PATH."""
+    return shutil.which("rider") is not None or shutil.which("rider64") is not None
+
+
+def _has_visual_studio() -> bool:
+    """Visual Studio — `devenv` on PATH, or any edition discoverable via `vswhere`."""
+    if shutil.which("devenv"):
+        return True
+    if platform.system() != "Windows":
+        return False
+    vswhere = Path("C:/Program Files (x86)/Microsoft Visual Studio/Installer/vswhere.exe")
+    if not vswhere.exists():
+        return False
+    try:
+        r = subprocess.run(
+            [str(vswhere), "-products", "*", "-property", "installationPath"],
+            capture_output=True, text=True, timeout=5, check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return r.returncode == 0 and bool(r.stdout.strip())
+
+
+def _ollama_models() -> list[str]:
+    """Return locally installed Ollama model names (empty list if none or unavailable)."""
+    ollama = shutil.which("ollama")
+    if not ollama:
+        return []
+    try:
+        r = subprocess.run(
+            [ollama, "list"],
+            capture_output=True, text=True, timeout=5, check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return []
+    if r.returncode != 0:
+        return []
+    models: list[str] = []
+    for line in (r.stdout or "").splitlines()[1:]:  # skip header row
+        name = line.split(None, 1)[0].strip() if line.strip() else ""
+        if name:
+            models.append(name)
+    return models
+
+
+def _gh_login() -> str | None:
+    """Return the authenticated GitHub username, or None.
+
+    Uses `gh api user --jq .login` which requires `gh auth login` to have run.
+    """
+    gh = shutil.which("gh")
+    if not gh:
+        return None
+    try:
+        r = subprocess.run(
+            [gh, "api", "user", "--jq", ".login"],
+            capture_output=True, text=True, timeout=5, check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if r.returncode != 0:
+        return None
+    login = (r.stdout or "").strip()
+    return login or None
+
+
 def detect_env() -> dict:
     return {
         "os": platform.system(),
         "release": platform.release(),
         "python": platform.python_version(),
         "shell": os.environ.get("SHELL") or os.environ.get("COMSPEC", "?"),
+        "pkg_manager": _detect_pkg_manager(),
         "git": shutil.which("git") is not None,
+        "git_user": _git_user_name(),
+        "git_version": _probe_version("git", "--version"),
+        "gh_login": _gh_login(),
         "bash": shutil.which("bash") is not None,
         "claude": shutil.which("claude") is not None,
         "gh": shutil.which("gh") is not None,
+        "node": _probe_version("node", "--version"),
+        "npm": _probe_version("npm", "--version"),
+        "pnpm": _probe_version("pnpm", "--version"),
+        "bun": _probe_version("bun", "--version"),
+        "dotnet": _probe_version("dotnet", "--version"),
+        "dotnet_sdks": _dotnet_sdks(),
+        "docker": _probe_version("docker", "--version"),
+        "podman": _probe_version("podman", "--version"),
+        "kubectl": _kubectl_version(),
+        "terraform": _probe_version("terraform", "--version"),
+        "az": _probe_version("az", "--version"),
+        "gcloud": _probe_version("gcloud", "--version"),
+        "aws": _probe_version("aws", "--version"),
+        "gemini": shutil.which("gemini") is not None,
+        "codex": shutil.which("codex") is not None,
+        "opencode": shutil.which("opencode") is not None,
+        "grok": shutil.which("grok") is not None,
+        "cursor": shutil.which("cursor") is not None,
+        "windsurf": shutil.which("windsurf") is not None,
+        "copilot": shutil.which("copilot") is not None or shutil.which("gh-copilot") is not None,
+        "antigravity": shutil.which("antigravity") is not None,
+        "vscode": shutil.which("code") is not None,
+        "rider": _has_rider(),
+        "visualstudio": _has_visual_studio(),
+        "ollama": shutil.which("ollama") is not None,
+        "ollama_models": _ollama_models(),
         "target_exists": TARGET.exists(),
     }
 
@@ -978,6 +1316,560 @@ def gh_install() -> tuple[bool, str]:
     return False, f"Unsupported platform: {sysname}"
 
 
+# ─── Env-panel installers (Node, npm, Docker, Git, Gemini, Codex, OpenCode) ────
+# These prefer the OS-native package manager (winget / brew / apt / dnf / pacman)
+# and run with output streaming to the terminal — the calling button suspends
+# the Textual app so winget/apt prompts (license accept, sudo password) work.
+
+_WINGET_FLAGS = ["-e", "--accept-source-agreements", "--accept-package-agreements"]
+
+
+def _run_install(cmd: list[str]) -> tuple[bool, str]:
+    """Resolve argv[0] via PATH (handles Windows .CMD shims), capture output.
+
+    Output is captured (not streamed) so the EnvPanel install worker can
+    display the result inside the TUI rather than dumping into the terminal.
+    """
+    head, *rest = cmd
+    resolved = shutil.which(head) or head
+    try:
+        r = subprocess.run(
+            [resolved, *rest], capture_output=True, text=True, timeout=600,
+        )
+    except (OSError, subprocess.SubprocessError) as e:
+        return False, f"failed to launch: {e}"
+    out = ((r.stdout or "") + (r.stderr or "")).strip()
+    return r.returncode == 0, out or " ".join(cmd)
+
+
+def node_install() -> tuple[bool, str]:
+    sysname = platform.system()
+    if sysname == "Windows":
+        if shutil.which("winget"):
+            return _run_install(["winget", "install", "--id", "OpenJS.NodeJS.LTS", *_WINGET_FLAGS])
+        if shutil.which("scoop"):
+            return _run_install(["scoop", "install", "nodejs-lts"])
+        return False, "Install manually from https://nodejs.org"
+    if sysname == "Darwin":
+        if shutil.which("brew"):
+            return _run_install(["brew", "install", "node"])
+        return False, "Install Homebrew or download from https://nodejs.org"
+    if sysname == "Linux":
+        if shutil.which("apt-get"):
+            subprocess.run(["sudo", "apt-get", "update", "-y"])
+            return _run_install(["sudo", "apt-get", "install", "-y", "nodejs", "npm"])
+        if shutil.which("dnf"):
+            return _run_install(["sudo", "dnf", "install", "-y", "nodejs", "npm"])
+        if shutil.which("pacman"):
+            return _run_install(["sudo", "pacman", "-S", "--noconfirm", "nodejs", "npm"])
+        return False, "Install manually from https://nodejs.org"
+    return False, f"Unsupported platform: {sysname}"
+
+
+def npm_install() -> tuple[bool, str]:
+    # npm ships with Node.js — installing Node installs npm.
+    return node_install()
+
+
+def pnpm_install() -> tuple[bool, str]:
+    sysname = platform.system()
+    if sysname == "Windows":
+        if shutil.which("winget"):
+            return _run_install(["winget", "install", "--id", "pnpm.pnpm", *_WINGET_FLAGS])
+        if shutil.which("npm"):
+            return _run_install(["npm", "install", "-g", "pnpm"])
+        return False, "Install Node/npm first, or see https://pnpm.io/installation"
+    if sysname == "Darwin":
+        if shutil.which("brew"):
+            return _run_install(["brew", "install", "pnpm"])
+        if shutil.which("npm"):
+            return _run_install(["npm", "install", "-g", "pnpm"])
+        return False, "Install Homebrew or see https://pnpm.io/installation"
+    if sysname == "Linux":
+        if shutil.which("npm"):
+            return _run_install(["npm", "install", "-g", "pnpm"])
+        return False, "See https://pnpm.io/installation"
+    return False, f"Unsupported platform: {sysname}"
+
+
+def bun_install() -> tuple[bool, str]:
+    sysname = platform.system()
+    if sysname == "Windows":
+        if shutil.which("winget"):
+            return _run_install(["winget", "install", "--id", "Oven-sh.Bun", *_WINGET_FLAGS])
+        if shutil.which("npm"):
+            return _run_install(["npm", "install", "-g", "bun"])
+        return False, "Install manually from https://bun.sh"
+    if sysname == "Darwin":
+        if shutil.which("brew"):
+            return _run_install(["brew", "install", "oven-sh/bun/bun"])
+        return False, "Install Homebrew or see https://bun.sh"
+    if sysname == "Linux":
+        if shutil.which("npm"):
+            return _run_install(["npm", "install", "-g", "bun"])
+        return False, "See https://bun.sh"
+    return False, f"Unsupported platform: {sysname}"
+
+
+def python_install() -> tuple[bool, str]:
+    sysname = platform.system()
+    if sysname == "Windows":
+        if shutil.which("winget"):
+            return _run_install(["winget", "install", "--id", "Python.Python.3.13", *_WINGET_FLAGS])
+        if shutil.which("scoop"):
+            return _run_install(["scoop", "install", "python"])
+        return False, "Install manually from https://www.python.org/downloads/"
+    if sysname == "Darwin":
+        if shutil.which("brew"):
+            return _run_install(["brew", "install", "python@3.13"])
+        return False, "Install Homebrew or download from https://www.python.org/downloads/"
+    if sysname == "Linux":
+        if shutil.which("apt-get"):
+            subprocess.run(["sudo", "apt-get", "update", "-y"])
+            return _run_install(["sudo", "apt-get", "install", "-y", "python3", "python3-pip", "python3-venv"])
+        if shutil.which("dnf"):
+            return _run_install(["sudo", "dnf", "install", "-y", "python3", "python3-pip"])
+        if shutil.which("pacman"):
+            return _run_install(["sudo", "pacman", "-S", "--noconfirm", "python", "python-pip"])
+        return False, "Install via your distro's package manager"
+    return False, f"Unsupported platform: {sysname}"
+
+
+def dotnet_install() -> tuple[bool, str]:
+    sysname = platform.system()
+    if sysname == "Windows":
+        if shutil.which("winget"):
+            return _run_install(["winget", "install", "--id", "Microsoft.DotNet.SDK.9", *_WINGET_FLAGS])
+        return False, "Install manually from https://dotnet.microsoft.com/download"
+    if sysname == "Darwin":
+        if shutil.which("brew"):
+            return _run_install(["brew", "install", "--cask", "dotnet-sdk"])
+        return False, "Install Homebrew or download from https://dotnet.microsoft.com/download"
+    if sysname == "Linux":
+        if shutil.which("apt-get"):
+            return _run_install(["sudo", "apt-get", "install", "-y", "dotnet-sdk-9.0"])
+        if shutil.which("dnf"):
+            return _run_install(["sudo", "dnf", "install", "-y", "dotnet-sdk-9.0"])
+        if shutil.which("pacman"):
+            return _run_install(["sudo", "pacman", "-S", "--noconfirm", "dotnet-sdk"])
+        return False, "See https://learn.microsoft.com/dotnet/core/install/linux for distro-specific steps"
+    return False, f"Unsupported platform: {sysname}"
+
+
+def docker_install() -> tuple[bool, str]:
+    sysname = platform.system()
+    if sysname == "Windows":
+        if shutil.which("winget"):
+            return _run_install(["winget", "install", "--id", "Docker.DockerDesktop", *_WINGET_FLAGS])
+        return False, "Install manually from https://docker.com/products/docker-desktop"
+    if sysname == "Darwin":
+        if shutil.which("brew"):
+            return _run_install(["brew", "install", "--cask", "docker"])
+        return False, "Install manually from https://docker.com/products/docker-desktop"
+    if sysname == "Linux":
+        # Docker on Linux varies by distro (engine vs desktop). Send user to docs.
+        return False, "See https://docs.docker.com/engine/install/ for distro-specific steps"
+    return False, f"Unsupported platform: {sysname}"
+
+
+def podman_install() -> tuple[bool, str]:
+    sysname = platform.system()
+    if sysname == "Windows":
+        if shutil.which("winget"):
+            return _run_install(["winget", "install", "--id", "RedHat.Podman", *_WINGET_FLAGS])
+        return False, "Install manually from https://podman.io"
+    if sysname == "Darwin":
+        if shutil.which("brew"):
+            return _run_install(["brew", "install", "podman"])
+        return False, "Install manually from https://podman.io"
+    if sysname == "Linux":
+        if shutil.which("apt-get"):
+            return _run_install(["sudo", "apt-get", "install", "-y", "podman"])
+        if shutil.which("dnf"):
+            return _run_install(["sudo", "dnf", "install", "-y", "podman"])
+        if shutil.which("pacman"):
+            return _run_install(["sudo", "pacman", "-S", "--noconfirm", "podman"])
+        return False, "Install via your distro's package manager"
+    return False, f"Unsupported platform: {sysname}"
+
+
+def kubectl_install() -> tuple[bool, str]:
+    sysname = platform.system()
+    if sysname == "Windows":
+        if shutil.which("winget"):
+            return _run_install(["winget", "install", "--id", "Kubernetes.kubectl", *_WINGET_FLAGS])
+        return False, "Install manually from https://kubernetes.io/docs/tasks/tools/"
+    if sysname == "Darwin":
+        if shutil.which("brew"):
+            return _run_install(["brew", "install", "kubectl"])
+        return False, "Install manually from https://kubernetes.io/docs/tasks/tools/"
+    if sysname == "Linux":
+        if shutil.which("apt-get"):
+            return _run_install(["sudo", "apt-get", "install", "-y", "kubectl"])
+        if shutil.which("dnf"):
+            return _run_install(["sudo", "dnf", "install", "-y", "kubectl"])
+        if shutil.which("pacman"):
+            return _run_install(["sudo", "pacman", "-S", "--noconfirm", "kubectl"])
+        return False, "Install manually from https://kubernetes.io/docs/tasks/tools/"
+    return False, f"Unsupported platform: {sysname}"
+
+
+def terraform_install() -> tuple[bool, str]:
+    sysname = platform.system()
+    if sysname == "Windows":
+        if shutil.which("winget"):
+            return _run_install(["winget", "install", "--id", "Hashicorp.Terraform", *_WINGET_FLAGS])
+        if shutil.which("choco"):
+            return _run_install(["choco", "install", "terraform", "-y"])
+        return False, "Install manually from https://developer.hashicorp.com/terraform/install"
+    if sysname == "Darwin":
+        if shutil.which("brew"):
+            return _run_install(["brew", "install", "hashicorp/tap/terraform"])
+        return False, "Install manually from https://developer.hashicorp.com/terraform/install"
+    if sysname == "Linux":
+        if shutil.which("apt-get"):
+            # HashiCorp apt repo must be configured first; bare `apt install terraform` may fail.
+            return _run_install(["sudo", "apt-get", "install", "-y", "terraform"])
+        if shutil.which("dnf"):
+            return _run_install(["sudo", "dnf", "install", "-y", "terraform"])
+        return False, "See https://developer.hashicorp.com/terraform/install for distro-specific steps"
+    return False, f"Unsupported platform: {sysname}"
+
+
+def az_install() -> tuple[bool, str]:
+    sysname = platform.system()
+    if sysname == "Windows":
+        if shutil.which("winget"):
+            return _run_install(["winget", "install", "--id", "Microsoft.AzureCLI", *_WINGET_FLAGS])
+        return False, "Install manually from https://aka.ms/installazurecliwindows"
+    if sysname == "Darwin":
+        if shutil.which("brew"):
+            return _run_install(["brew", "install", "azure-cli"])
+        return False, "Install manually from https://docs.microsoft.com/cli/azure/install-azure-cli-macos"
+    if sysname == "Linux":
+        if shutil.which("apt-get"):
+            return _run_install(["sudo", "apt-get", "install", "-y", "azure-cli"])
+        if shutil.which("dnf"):
+            return _run_install(["sudo", "dnf", "install", "-y", "azure-cli"])
+        return False, "See https://docs.microsoft.com/cli/azure/install-azure-cli-linux for distro-specific steps"
+    return False, f"Unsupported platform: {sysname}"
+
+
+def gcloud_install() -> tuple[bool, str]:
+    sysname = platform.system()
+    if sysname == "Windows":
+        if shutil.which("winget"):
+            return _run_install(["winget", "install", "--id", "Google.CloudSDK", *_WINGET_FLAGS])
+        return False, "Install manually from https://cloud.google.com/sdk/docs/install"
+    if sysname == "Darwin":
+        if shutil.which("brew"):
+            return _run_install(["brew", "install", "--cask", "google-cloud-sdk"])
+        return False, "Install manually from https://cloud.google.com/sdk/docs/install"
+    if sysname == "Linux":
+        if shutil.which("apt-get"):
+            return _run_install(["sudo", "apt-get", "install", "-y", "google-cloud-cli"])
+        return False, "See https://cloud.google.com/sdk/docs/install for distro-specific steps"
+    return False, f"Unsupported platform: {sysname}"
+
+
+def aws_install() -> tuple[bool, str]:
+    sysname = platform.system()
+    if sysname == "Windows":
+        if shutil.which("winget"):
+            return _run_install(["winget", "install", "--id", "Amazon.AWSCLI", *_WINGET_FLAGS])
+        return False, "Install manually from https://aws.amazon.com/cli/"
+    if sysname == "Darwin":
+        if shutil.which("brew"):
+            return _run_install(["brew", "install", "awscli"])
+        return False, "Install manually from https://aws.amazon.com/cli/"
+    if sysname == "Linux":
+        if shutil.which("apt-get"):
+            return _run_install(["sudo", "apt-get", "install", "-y", "awscli"])
+        if shutil.which("dnf"):
+            return _run_install(["sudo", "dnf", "install", "-y", "awscli"])
+        return False, "See https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-linux.html"
+    return False, f"Unsupported platform: {sysname}"
+
+
+def git_install() -> tuple[bool, str]:
+    sysname = platform.system()
+    if sysname == "Windows":
+        if shutil.which("winget"):
+            return _run_install(["winget", "install", "--id", "Git.Git", *_WINGET_FLAGS])
+        if shutil.which("scoop"):
+            return _run_install(["scoop", "install", "git"])
+        return False, "Install manually from https://git-scm.com"
+    if sysname == "Darwin":
+        if shutil.which("brew"):
+            return _run_install(["brew", "install", "git"])
+        return False, "Run `xcode-select --install` or install from https://git-scm.com"
+    if sysname == "Linux":
+        if shutil.which("apt-get"):
+            return _run_install(["sudo", "apt-get", "install", "-y", "git"])
+        if shutil.which("dnf"):
+            return _run_install(["sudo", "dnf", "install", "-y", "git"])
+        if shutil.which("pacman"):
+            return _run_install(["sudo", "pacman", "-S", "--noconfirm", "git"])
+        return False, "Install via your distro's package manager"
+    return False, f"Unsupported platform: {sysname}"
+
+
+def _npm_global_install(pkg: str) -> tuple[bool, str]:
+    if not shutil.which("npm"):
+        return False, "npm not found — install Node.js first"
+    return _run_install(["npm", "install", "-g", pkg])
+
+
+def gemini_install() -> tuple[bool, str]:
+    return _npm_global_install("@google/gemini-cli")
+
+
+def codex_install() -> tuple[bool, str]:
+    return _npm_global_install("@openai/codex")
+
+
+def opencode_install() -> tuple[bool, str]:
+    return _npm_global_install("opencode-ai")
+
+
+def grok_install() -> tuple[bool, str]:
+    # xAI's Grok CLI ships via npm.
+    return _npm_global_install("@vibe-kit/grok-cli")
+
+
+def cursor_install() -> tuple[bool, str]:
+    sysname = platform.system()
+    if sysname == "Windows":
+        if shutil.which("winget"):
+            return _run_install(["winget", "install", "--id", "Anysphere.Cursor", *_WINGET_FLAGS])
+        return False, "Install manually from https://cursor.com"
+    if sysname == "Darwin":
+        if shutil.which("brew"):
+            return _run_install(["brew", "install", "--cask", "cursor"])
+        return False, "Install manually from https://cursor.com"
+    return False, "Install manually from https://cursor.com"
+
+
+def windsurf_install() -> tuple[bool, str]:
+    sysname = platform.system()
+    if sysname == "Windows":
+        if shutil.which("winget"):
+            return _run_install(["winget", "install", "--id", "Codeium.Windsurf", *_WINGET_FLAGS])
+        return False, "Install manually from https://windsurf.com"
+    if sysname == "Darwin":
+        if shutil.which("brew"):
+            return _run_install(["brew", "install", "--cask", "windsurf"])
+        return False, "Install manually from https://windsurf.com"
+    return False, "Install manually from https://windsurf.com"
+
+
+def copilot_install() -> tuple[bool, str]:
+    # Best path is the `gh` extension — needs gh CLI to be installed and authenticated.
+    if not shutil.which("gh"):
+        return False, "gh CLI not found — install GitHub CLI first, then run `gh extension install github/gh-copilot`"
+    return _run_install(["gh", "extension", "install", "github/gh-copilot"])
+
+
+def antigravity_install() -> tuple[bool, str]:
+    # Google Antigravity has no native installer yet — point at the download page.
+    return False, "Install manually from https://antigravity.google"
+
+
+def ollama_install() -> tuple[bool, str]:
+    sysname = platform.system()
+    if sysname == "Windows":
+        if shutil.which("winget"):
+            return _run_install(["winget", "install", "--id", "Ollama.Ollama", *_WINGET_FLAGS])
+        return False, "Install manually from https://ollama.com/download"
+    if sysname == "Darwin":
+        if shutil.which("brew"):
+            return _run_install(["brew", "install", "--cask", "ollama"])
+        return False, "Install manually from https://ollama.com/download"
+    if sysname == "Linux":
+        return False, "Install via `curl -fsSL https://ollama.com/install.sh | sh` (official installer)"
+    return False, f"Unsupported platform: {sysname}"
+
+
+def vscode_install() -> tuple[bool, str]:
+    sysname = platform.system()
+    if sysname == "Windows":
+        if shutil.which("winget"):
+            return _run_install(["winget", "install", "--id", "Microsoft.VisualStudioCode", *_WINGET_FLAGS])
+        return False, "Install manually from https://code.visualstudio.com"
+    if sysname == "Darwin":
+        if shutil.which("brew"):
+            return _run_install(["brew", "install", "--cask", "visual-studio-code"])
+        return False, "Install manually from https://code.visualstudio.com"
+    if sysname == "Linux":
+        if shutil.which("apt-get"):
+            return _run_install(["sudo", "apt-get", "install", "-y", "code"])
+        if shutil.which("dnf"):
+            return _run_install(["sudo", "dnf", "install", "-y", "code"])
+        return False, "Install manually from https://code.visualstudio.com"
+    return False, f"Unsupported platform: {sysname}"
+
+
+# Maps env keys → winget package IDs (mirrors the install fns above). Used to spot
+# upgrade availability via `winget upgrade`. macOS/Linux outdated-checks are best-effort
+# and currently no-op (return empty set), so those platforms always render "Latest".
+WINGET_IDS: dict[str, str] = {
+    "git":       "Git.Git",
+    "python":    "Python.Python.3.13",
+    "dotnet":    "Microsoft.DotNet.SDK.9",
+    "node":      "OpenJS.NodeJS.LTS",
+    "pnpm":      "pnpm.pnpm",
+    "bun":       "Oven-sh.Bun",
+    "docker":    "Docker.DockerDesktop",
+    "podman":    "RedHat.Podman",
+    "kubectl":   "Kubernetes.kubectl",
+    "terraform": "Hashicorp.Terraform",
+    "az":        "Microsoft.AzureCLI",
+    "gcloud":    "Google.CloudSDK",
+    "aws":       "Amazon.AWSCLI",
+    "cursor":    "Anysphere.Cursor",
+    "windsurf":  "Codeium.Windsurf",
+    "ollama":    "Ollama.Ollama",
+    "vscode":    "Microsoft.VisualStudioCode",
+    "gh":        "GitHub.cli",
+}
+
+
+def _probe_key(key: str) -> object:
+    """Detect a single env key in isolation — same value detect_env() would put there.
+    Used to populate ToolsScreen one group at a time so fast groups render before slow ones.
+    """
+    if key == "python":       return platform.python_version()
+    if key == "dotnet":       return _probe_version("dotnet", "--version")
+    if key == "node":         return _probe_version("node", "--version")
+    if key == "npm":          return _probe_version("npm", "--version")
+    if key == "pnpm":         return _probe_version("pnpm", "--version")
+    if key == "bun":          return _probe_version("bun", "--version")
+    if key == "docker":       return _probe_version("docker", "--version")
+    if key == "podman":       return _probe_version("podman", "--version")
+    if key == "kubectl":      return _kubectl_version()
+    if key == "terraform":    return _probe_version("terraform", "--version")
+    if key == "az":           return _probe_version("az", "--version")
+    if key == "gcloud":       return _probe_version("gcloud", "--version")
+    if key == "aws":          return _probe_version("aws", "--version")
+    if key == "rider":        return _has_rider()
+    if key == "visualstudio": return _has_visual_studio()
+    if key == "copilot":
+        return shutil.which("copilot") is not None or shutil.which("gh-copilot") is not None
+    if key == "vscode":       return shutil.which("code") is not None
+    return shutil.which(key) is not None
+
+
+# Minimum major.minor we consider "current" for keys where our install target is a
+# specific versioned package. The winget upgrade check can't catch these because
+# the user's older version is a *different* package ID — e.g. Python.Python.3.11
+# vs Python.Python.3.13. If the detected version is below the floor, we flag the
+# key as outdated even if winget says nothing.
+VERSION_FLOORS: dict[str, tuple[int, int]] = {
+    "python": (3, 13),
+    "dotnet": (9, 0),
+    "node":   (22, 0),  # current LTS line
+}
+
+
+def _parse_major_minor(raw: str | None) -> tuple[int, int] | None:
+    if not raw:
+        return None
+    # Strip leading 'v' (e.g. node prints 'v22.16.0') and split on the first dot.
+    cleaned = raw.strip().lstrip("vV")
+    parts = cleaned.split(".")
+    if len(parts) >= 2 and parts[0].isdigit() and parts[1].isdigit():
+        return int(parts[0]), int(parts[1])
+    return None
+
+
+def _below_floor(key: str, env_value: object) -> bool:
+    """Return True if the detected version of `key` is older than our install target."""
+    floor = VERSION_FLOORS.get(key)
+    if floor is None:
+        return False
+    if key == "python":
+        cur = _parse_major_minor(platform.python_version())
+    elif key == "dotnet":
+        # dotnet_sdks gives the highest installed major.minor — fall back to CLI version.
+        cur = None
+        if isinstance(env_value, list) and env_value:
+            cur = _parse_major_minor(env_value[-1])
+    elif key == "node":
+        cur = _parse_major_minor(env_value if isinstance(env_value, str) else None)
+    else:
+        cur = None
+    return cur is not None and cur < floor
+
+
+def _outdated_packages() -> set[str]:
+    """Env keys whose package has an upgrade available. Windows/winget only for now."""
+    if platform.system() != "Windows" or not shutil.which("winget"):
+        return set()
+    try:
+        r = subprocess.run(
+            ["winget", "upgrade", "--include-unknown",
+             "--accept-source-agreements", "--disable-interactivity"],
+            capture_output=True, text=True, timeout=20, check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return set()
+    if r.returncode != 0:
+        return set()
+    text = r.stdout or ""
+    return {key for key, wid in WINGET_IDS.items() if wid in text}
+
+
+# Maps env-panel keys to (install fn, button label). Order here determines button order.
+ENV_INSTALLERS: list[tuple[str, str, Callable[[], tuple[bool, str]]]] = [
+    ("git",         "Git",        git_install),
+    ("python",      "Python",     python_install),
+    ("dotnet",      ".NET SDK",   dotnet_install),
+    ("node",        "Node",       node_install),
+    ("npm",         "npm",        npm_install),
+    ("pnpm",        "pnpm",       pnpm_install),
+    ("bun",         "bun",        bun_install),
+    ("docker",      "Docker",     docker_install),
+    ("podman",      "Podman",     podman_install),
+    ("kubectl",     "kubectl",    kubectl_install),
+    ("terraform",   "Terraform",  terraform_install),
+    ("az",          "Azure CLI",  az_install),
+    ("gcloud",      "Google Cloud", gcloud_install),
+    ("aws",         "AWS CLI",    aws_install),
+    ("claude",      "Claude CLI", claude_cli_install),
+    ("gemini",      "Gemini CLI", gemini_install),
+    ("codex",       "Codex CLI",  codex_install),
+    ("opencode",    "OpenCode",   opencode_install),
+    ("grok",        "Grok",       grok_install),
+    ("cursor",      "Cursor",     cursor_install),
+    ("windsurf",    "Windsurf",   windsurf_install),
+    ("copilot",     "Copilot",    copilot_install),
+    ("antigravity", "Antigravity",antigravity_install),
+    ("vscode",      "VS Code",    vscode_install),
+    ("ollama",      "Ollama",     ollama_install),
+    ("gh",          "GitHub",     gh_install),
+]
+
+
+# Groups used by ToolsScreen — order = display order, keys reference ENV_INSTALLERS.
+ENV_TOOL_GROUPS: list[tuple[str, list[str]]] = [
+    ("System & VCS",      ["git", "gh"]),
+    ("Runtimes",          ["python", "dotnet", "node"]),
+    ("Package Managers",  ["npm", "pnpm", "bun"]),
+    ("Container & Cloud", ["docker", "podman", "kubectl", "terraform", "az", "gcloud", "aws"]),
+    ("AI CLIs",           ["claude", "gemini", "codex", "opencode", "grok", "copilot"]),
+    ("Local AI",          ["ollama"]),
+    ("AI Editors",        ["cursor", "windsurf", "antigravity", "vscode"]),
+]
+
+
+def _installer_for(key: str) -> tuple[str, Callable[[], tuple[bool, str]]] | None:
+    """Return (label, install_fn) for the given env-installer key, or None."""
+    for k, label, fn in ENV_INSTALLERS:
+        if k == key:
+            return label, fn
+    return None
+
+
 @dataclass
 class Tool:
     key: str
@@ -1045,6 +1937,273 @@ TOOLS: list[Tool] = [
 
 # ─── Screens ───────────────────────────────────────────────────────────────────
 
+class EnvPanel(Widget):
+    """Env summary with real, compact Install buttons inline next to each missing tool."""
+
+    DEFAULT_CSS = """
+    EnvPanel {
+        height: auto;
+        /* outer border/padding/margin come from the global #env-summary rule */
+    }
+    EnvPanel > Vertical {
+        height: auto;
+        padding: 0;
+        margin: 0;
+    }
+    EnvPanel #env-info {
+        height: auto;
+        padding: 1 2;
+        margin: 1 0 0 0;
+        background: $boost;
+        border: round $accent;
+    }
+    EnvPanel .env-panel-row {
+        layout: horizontal;
+        height: 1;
+        margin: 0;
+        padding: 0;
+    }
+    EnvPanel .env-cell {
+        width: auto;
+        height: 1;
+        margin: 0 2 0 0;
+        padding: 0;
+    }
+    EnvPanel Button.env-install,
+    EnvPanel Button.env-install:hover,
+    EnvPanel Button.env-install:focus {
+        width: 11;
+        min-width: 11;
+        max-width: 11;
+        height: 1;
+        min-height: 1;
+        max-height: 1;
+        padding: 0;
+        margin: 0 2 0 0;
+        border: none;
+        border-top: none;
+        border-bottom: none;
+        color: #000000;
+        text-style: bold;
+        content-align: center middle;
+        tint: rgba(0,0,0,0);
+    }
+    EnvPanel Button.env-install        { background: #ffc107; }
+    EnvPanel Button.env-install:hover  { background: #ffd54f; }
+    EnvPanel Button.env-install:focus  { background: #ffb300; }
+    EnvPanel #env-tools-row {
+        layout: horizontal;
+        height: 3;
+        margin: 1 0 0 0;
+        padding: 0;
+        align-vertical: middle;
+    }
+    EnvPanel .env-spacer { width: 1fr; height: 1; }
+    EnvPanel #env-paths {
+        height: auto;
+        width: 1fr;
+        margin: 1 2 0 2;
+        padding: 0 1;
+        content-align: left middle;
+    }
+    EnvPanel #btn-op-tools { margin: 0; }
+    EnvPanel #env-status {
+        height: auto;
+        max-height: 12;
+        margin: 1 0 0 0;
+        padding: 0 2;
+    }
+    """
+
+    def compose(self) -> ComposeResult:
+        with Vertical():
+            yield UpdatePanel()
+            with Vertical(id="env-info"):
+                yield Horizontal(classes="env-panel-row", id="env-row-system")     # OS, Pkg, git, github
+                yield Horizontal(classes="env-panel-row", id="env-row-runtimes")   # Python, Node, .NET
+                yield Horizontal(classes="env-panel-row", id="env-row-pkg-mgrs")   # npm, pnpm, bun
+                yield Horizontal(classes="env-panel-row", id="env-row-infra")      # containers, k8s, IaC, clouds
+                yield Horizontal(classes="env-panel-row", id="env-row-clis")       # AI CLIs
+                yield Horizontal(classes="env-panel-row", id="env-row-local-ai")   # Local AI runtimes (Ollama)
+                yield Horizontal(classes="env-panel-row", id="env-row-editors")    # AI-augmented editors
+                with Horizontal(id="env-tools-row"):
+                    yield Static("", classes="env-spacer")
+                    yield Button("⌬  Tools", id="btn-op-tools", variant="warning")
+            yield Static("", id="env-paths")
+            yield Static("", id="env-status")
+
+    def on_mount(self) -> None:
+        self.query_one("#env-info", Vertical).border_title = "Current setup"
+        self._apply_env(detect_env())
+
+    _LABEL = "bold #5FAFFF"  # light blue for every Label:
+
+    @classmethod
+    def _lbl(cls, label: str) -> str:
+        return f"[{cls._LABEL}]{label}:[/]"
+
+    def _apply_env(self, env: dict) -> None:
+        system = self.query_one("#env-row-system", Horizontal)
+        runtimes = self.query_one("#env-row-runtimes", Horizontal)
+        pkg_mgrs = self.query_one("#env-row-pkg-mgrs", Horizontal)
+        infra = self.query_one("#env-row-infra", Horizontal)
+        clis = self.query_one("#env-row-clis", Horizontal)
+        local_ai = self.query_one("#env-row-local-ai", Horizontal)
+        editors = self.query_one("#env-row-editors", Horizontal)
+        for row in (system, runtimes, pkg_mgrs, infra, clis, local_ai, editors):
+            for w in list(row.children):
+                w.remove()
+
+        # Row 1 — system & VCS (always show OS / Python; rest only if installed)
+        system.mount(Static(
+            f"{self._lbl('OS')} {env['os']} {env['release']}", classes="env-cell",
+        ))
+        if env["pkg_manager"]:
+            system.mount(Static(
+                f"{self._lbl('Pkg')} {env['pkg_manager']}", classes="env-cell",
+            ))
+        if env["git"]:
+            raw = env.get("git_version") or ""
+            parts = raw.split()
+            ver = parts[2] if len(parts) >= 3 and parts[0].lower() == "git" else (raw or "installed")
+            system.mount(Static(f"{self._lbl('git')} {ver}", classes="env-cell"))
+        if env["gh"]:
+            login = env.get("gh_login")
+            cell = Text()
+            cell.append("github:", style=self._LABEL)
+            cell.append(" ")
+            if login:
+                cell.append("● ", style="bright_green")
+                cell.append(login, style="bright_green")
+            else:
+                cell.append("● ", style="bright_red")
+                cell.append("(not logged in)", style="bright_red")
+            system.mount(Static(cell, classes="env-cell"))
+
+        # Row 2 — runtimes (Python is always present in this app)
+        runtimes.mount(Static(f"{self._lbl('Python')} {env['python']}", classes="env-cell"))
+        self._mount_installed(runtimes, "Node", env["node"])
+        sdks = env.get("dotnet_sdks") or []
+        if sdks:
+            runtimes.mount(Static(
+                f"{self._lbl('.NET')} {', '.join(sdks)}", classes="env-cell",
+            ))
+
+        # Row 3 — JS/TS package managers (only installed ones show)
+        self._mount_installed(pkg_mgrs, "npm",  env["npm"])
+        self._mount_installed(pkg_mgrs, "pnpm", env["pnpm"])
+        self._mount_installed(pkg_mgrs, "bun",  env["bun"])
+
+        # Row 3 — containers, orchestration, IaC, cloud CLIs (only installed)
+        self._mount_installed(infra, "Docker",    _short_docker_version(env["docker"]))
+        self._mount_installed(infra, "Podman",    _short_podman_version(env["podman"]))
+        self._mount_installed(infra, "k8s",       env["kubectl"])
+        self._mount_installed(infra, "Terraform", _short_terraform_version(env["terraform"]))
+        self._mount_installed(infra, "Azure CLI", _short_az_version(env["az"]))
+        self._mount_installed(infra, "Google Cloud", _short_gcloud_version(env["gcloud"]))
+        self._mount_installed(infra, "AWS CLI",   _short_aws_version(env["aws"]))
+
+        # Row 4 — AI coding CLIs (only installed; no version source → use checkmark)
+        for label, key in (
+            ("Claude CLI",  "claude"),
+            ("Gemini CLI",  "gemini"),
+            ("Codex CLI",   "codex"),
+            ("OpenCode",    "opencode"),
+            ("Grok",        "grok"),
+            ("Copilot",     "copilot"),
+        ):
+            self._mount_present(clis, label, env[key])
+
+        # Row 5 — Local AI runtimes (Ollama gets its own section)
+        if env["ollama"]:
+            models = env.get("ollama_models") or []
+            cell = Text()
+            cell.append("Ollama:", style=self._LABEL)
+            cell.append(" ")
+            if models:
+                cell.append("✓ ", style="bright_green")
+                cell.append(", ".join(models), style="bright_white")
+            else:
+                cell.append("✓ ", style="bright_green")
+                cell.append("No local models installed", style="yellow")
+            local_ai.mount(Static(cell, classes="env-cell"))
+
+        # Row 6 — AI-augmented editors / IDEs (only installed)
+        for label, key in (
+            ("Cursor",        "cursor"),
+            ("Windsurf",      "windsurf"),
+            ("Antigravity",   "antigravity"),
+            ("VS Code",       "vscode"),
+            ("Rider",         "rider"),
+            ("Visual Studio", "visualstudio"),
+        ):
+            self._mount_present(editors, label, env[key])
+
+        # Hide empty rows so the panel doesn't reserve blank lines for nothing.
+        for row in (runtimes, pkg_mgrs, infra, clis, local_ai, editors):
+            row.display = bool(row.children)
+
+        exists = "[bright_green](exists)[/]" if env["target_exists"] else "[bright_yellow](will be created)[/]"
+        self.query_one("#env-paths", Static).update(
+            f"{self._lbl('Source')} [cyan]{GLOBAL_DIR}[/]\n"
+            f"{self._lbl('Target')} [cyan]{TARGET}[/] {exists}"
+        )
+
+    def _mount_installed(self, parent: Horizontal, label: str, value: str | None) -> None:
+        """Mount a `label: <version>` cell only when the tool reports a version."""
+        if value:
+            parent.mount(Static(f"{self._lbl(label)} {value}", classes="env-cell"))
+
+    def _mount_present(self, parent: Horizontal, label: str, present: bool) -> None:
+        """Mount a `label: ✓` cell only when the tool is installed."""
+        if present:
+            parent.mount(Static(
+                f"{self._lbl(label)} [bright_green]✓[/]", classes="env-cell",
+            ))
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        bid = event.button.id or ""
+        if not bid.startswith("env-install-"):
+            return
+        event.stop()
+        key = bid[len("env-install-"):]
+        installer = next((fn for k, _l, fn in ENV_INSTALLERS if k == key), None)
+        if installer is None:
+            return
+        btn = event.button
+        btn.disabled = True
+        btn.label = "Installing…"
+        status = self.query_one("#env-status", Static)
+        status.update(
+            f"[yellow]⏳ Installing {key}…[/yellow]  "
+            f"[dim](running in background — UI stays responsive)[/dim]"
+        )
+        self.run_worker(
+            lambda: self._do_install(key, installer, btn),
+            thread=True, exclusive=False,
+        )
+
+    def _do_install(self, key: str, installer: Callable[[], tuple[bool, str]], button: Button) -> None:
+        try:
+            ok, msg = installer()
+        except Exception as e:
+            ok, msg = False, f"error: {e}"
+
+        def _done() -> None:
+            mark = "[green bold]✓[/green bold]" if ok else "[red bold]✗[/red bold]"
+            # Tail the captured output so a screenful of apt/winget chatter doesn't blow up the panel.
+            lines = msg.splitlines() if msg else []
+            snippet = "\n".join(lines[-8:]) if lines else ""
+            body = f"\n[dim]{snippet}[/dim]" if snippet else ""
+            self.query_one("#env-status", Static).update(
+                f"{mark} {key} {'installed' if ok else 'failed'}{body}"
+            )
+            button.disabled = False
+            button.label = "Install"
+            self._refresh()
+        self.app.call_from_thread(_done)
+
+
 class UpdatePanel(Widget):
     """Async update checker — compares local HEAD to origin and offers git pull."""
 
@@ -1071,7 +2230,7 @@ class UpdatePanel(Widget):
     def compose(self) -> ComposeResult:
         with Horizontal(id="update-row"):
             yield Static("[dim]Checking for updates…[/dim]", id="update-msg")
-            yield Button("⬆ Pull update", id="btn-pull", variant="warning")
+            yield Button("⬇ Pull update", id="btn-pull", variant="warning")
 
     def on_mount(self) -> None:
         self.query_one("#btn-pull").display = False
@@ -1085,11 +2244,21 @@ class UpdatePanel(Widget):
         msg = self.query_one("#update-msg", Static)
         btn = self.query_one("#btn-pull", Button)
         if result["status"] == "up_to_date":
-            msg.update(f"[green]✓ Up to date[/green]  [dim]{result['hash']}[/dim]")
-        elif result["status"] == "behind":
+            date = result.get("date", "")
+            date_suffix = f"  [dim]{date}[/dim]" if date else ""
             msg.update(
-                f"[yellow bold]⬆ Update available[/yellow bold]  "
+                f"[green bold]✓ Latest version[/green bold]  "
+                f"[dim]{result['hash']}[/dim]{date_suffix}"
+            )
+        elif result["status"] == "behind":
+            count = result.get("behind_count")
+            subject = result.get("subject", "")
+            count_str = f" ({count})" if count else ""
+            subject_line = f"\n[dim]· {subject}[/dim]" if subject else ""
+            msg.update(
+                f"[yellow bold]⬆ Update available{count_str}[/yellow bold]  "
                 f"[dim]{result['local']} → {result['remote']}[/dim]"
+                f"{subject_line}"
             )
             btn.display = True
         elif result["status"] == "no_git":
@@ -1116,22 +2285,342 @@ class UpdatePanel(Widget):
         self.app.call_from_thread(_done)
 
 
-class AppCommandsProvider(SystemCommandsProvider):
-    """System commands with Quit pinned to the bottom of the discovery list."""
+class GitConfigScreen(Screen):
+    """View and edit global git config — user.name and user.email."""
+
+    BINDINGS = [Binding("escape", "app.pop_screen", "Back")]
+
+    CSS = """
+    GitConfigScreen { align: center middle; }
+    #git-card {
+        width: 70;
+        height: auto;
+        padding: 1 2;
+        background: $boost;
+        border: round $primary;
+    }
+    #git-card Label { margin: 1 0 0 0; color: #5FAFFF; text-style: bold; }
+    #git-card Input { margin: 0 0 0 0; }
+    #git-actions { height: 3; margin-top: 1; align-horizontal: center; }
+    #git-actions Button { margin: 0 1; }
+    #git-status { height: auto; margin: 1 0 0 0; }
+    """
+
+    def compose(self) -> ComposeResult:
+        yield AppHeader()
+        with Vertical(id="git-card"):
+            yield Static(
+                "[bold bright_magenta]✦ Git config ✦[/bold bright_magenta]\n"
+                "[dim]Edits write to your global `~/.gitconfig` via `git config --global`.[/dim]"
+            )
+            yield Label("user.name")
+            yield Input(id="git-name", placeholder="Your name (e.g. for commit authorship)")
+            yield Label("user.email")
+            yield Input(id="git-email", placeholder="you@example.com")
+            with Horizontal(id="git-actions"):
+                yield Button("Save", id="git-save", variant="primary")
+                yield Button("Reload", id="git-reload", variant="default")
+                yield Button("Back", id="git-back", variant="default")
+            yield Static("", id="git-status")
+        yield Footer()
+
+    def on_mount(self) -> None:
+        self._load()
+
+    def _git(self) -> str | None:
+        return shutil.which("git")
+
+    def _read(self, key: str) -> str | None:
+        git = self._git()
+        if not git:
+            return None
+        try:
+            r = subprocess.run(
+                [git, "config", "--global", key],
+                capture_output=True, text=True, timeout=3, check=False,
+            )
+        except (OSError, subprocess.SubprocessError):
+            return None
+        v = (r.stdout or "").strip()
+        return v or None
+
+    def _write(self, key: str, value: str) -> tuple[bool, str]:
+        git = self._git()
+        if not git:
+            return False, "git not found"
+        try:
+            r = subprocess.run(
+                [git, "config", "--global", key, value],
+                capture_output=True, text=True, timeout=3, check=False,
+            )
+        except (OSError, subprocess.SubprocessError) as e:
+            return False, str(e)
+        return r.returncode == 0, (r.stderr or "").strip()
+
+    def _load(self) -> None:
+        if not self._git():
+            self.query_one("#git-status", Static).update(
+                "[red]✗ git not found on PATH — install git first[/red]"
+            )
+            return
+        self.query_one("#git-name", Input).value = self._read("user.name") or ""
+        self.query_one("#git-email", Input).value = self._read("user.email") or ""
+        self.query_one("#git-status", Static).update(
+            "[dim]Loaded current values from global config.[/dim]"
+        )
+
+    def _save(self) -> None:
+        name = self.query_one("#git-name", Input).value.strip()
+        email = self.query_one("#git-email", Input).value.strip()
+        results: list[tuple[str, bool, str]] = []
+        for key, value in (("user.name", name), ("user.email", email)):
+            if value:
+                ok, msg = self._write(key, value)
+                results.append((key, ok, msg))
+        if not results:
+            self.query_one("#git-status", Static).update("[yellow]Nothing to save — both fields are empty.[/yellow]")
+            return
+        lines = []
+        for key, ok, msg in results:
+            mark = "[green]✓[/]" if ok else "[red]✗[/]"
+            extra = f" [dim]{msg}[/dim]" if msg else ""
+            lines.append(f"{mark} {key}{extra}")
+        self.query_one("#git-status", Static).update("\n".join(lines))
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        bid = event.button.id or ""
+        if bid == "git-back":
+            self.app.pop_screen()
+        elif bid == "git-save":
+            self._save()
+        elif bid == "git-reload":
+            self._load()
+
+
+class GitHubReposScreen(Screen):
+    """List repos owned by the gh-authenticated user via `gh repo list --json`."""
+
+    BINDINGS = [
+        Binding("escape", "app.pop_screen", "Back"),
+        Binding("ctrl+r", "refresh", "Refresh"),
+    ]
+
+    CSS = """
+    GitHubReposScreen { align: center middle; }
+    #gh-repos-card {
+        width: 95%;
+        height: 90%;
+        padding: 1 2;
+        background: $boost;
+        border: round $primary;
+    }
+    #gh-repos-status { height: auto; margin: 0 0 1 0; }
+    #gh-repos-list { height: 1fr; }
+    #gh-repos-actions { height: 3; margin-top: 1; align-horizontal: center; }
+    #gh-repos-actions Button { margin: 0 1; }
+    """
+
+    def compose(self) -> ComposeResult:
+        yield AppHeader()
+        with Vertical(id="gh-repos-card"):
+            yield Static(
+                "[bold bright_magenta]✦ GitHub repos ✦[/bold bright_magenta]\n"
+                "[dim]Lists repos owned by your gh-authenticated account.[/dim]"
+            )
+            yield Static("", id="gh-repos-status")
+            yield DataTable(id="gh-repos-list")
+            with Horizontal(id="gh-repos-actions"):
+                yield Button("Refresh", id="gh-repos-refresh", variant="default")
+                yield Button("Back", id="gh-repos-back", variant="default")
+        yield Footer()
+
+    def on_mount(self) -> None:
+        tbl = self.query_one("#gh-repos-list", DataTable)
+        tbl.add_columns("Name", "Visibility", "Updated", "Description")
+        tbl.cursor_type = "row"
+        self.action_refresh()
+
+    def action_refresh(self) -> None:
+        self.query_one("#gh-repos-status", Static).update(
+            "[yellow]⏳ Fetching repos via gh CLI…[/yellow]"
+        )
+        self.run_worker(self._fetch, thread=True, exclusive=True)
+
+    def _fetch(self) -> None:
+        try:
+            repos = self._gh_repos()
+        except Exception as e:
+            self.app.call_from_thread(self._set_error, str(e))
+            return
+        self.app.call_from_thread(self._set_repos, repos)
+
+    def _gh_repos(self) -> list[dict]:
+        gh = shutil.which("gh")
+        if not gh:
+            raise RuntimeError("gh not found on PATH — install GitHub CLI first")
+        r = subprocess.run(
+            [
+                gh, "repo", "list",
+                "--limit", "200",
+                "--json", "name,description,visibility,updatedAt,url",
+            ],
+            capture_output=True, text=True, timeout=30, check=False,
+        )
+        if r.returncode != 0:
+            err = (r.stderr or "").strip()
+            raise RuntimeError(err or f"gh repo list failed (exit {r.returncode})")
+        try:
+            data = json.loads(r.stdout)
+        except json.JSONDecodeError as e:
+            raise RuntimeError(f"could not parse gh output: {e}") from None
+        return data if isinstance(data, list) else []
+
+    def _set_error(self, message: str) -> None:
+        self.query_one("#gh-repos-status", Static).update(f"[red]✗ {message}[/red]")
+
+    def _set_repos(self, repos: list[dict]) -> None:
+        tbl = self.query_one("#gh-repos-list", DataTable)
+        tbl.clear()
+        for repo in repos:
+            updated = (repo.get("updatedAt") or "")[:10]  # ISO YYYY-MM-DD
+            vis = (repo.get("visibility") or "").lower()
+            # vis is one of "public" / "private" / "internal" — safe for markup.
+            vis_styled = Text.from_markup(
+                f"[red]{vis}[/red]" if vis == "private"
+                else f"[yellow]{vis}[/yellow]" if vis == "internal"
+                else f"[green]{vis}[/green]"
+            )
+            desc = (repo.get("description") or "")[:80]
+            tbl.add_row(
+                escape_markup(repo.get("name", "")),
+                vis_styled,
+                updated,
+                escape_markup(desc),
+            )
+        self.query_one("#gh-repos-status", Static).update(
+            f"[green]✓[/green] {len(repos)} repos loaded"
+        )
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        bid = event.button.id or ""
+        if bid == "gh-repos-back":
+            self.app.pop_screen()
+        elif bid == "gh-repos-refresh":
+            self.action_refresh()
+
+
+class GlobalEnvScreen(Screen):
+    """Browse every environment variable currently set on this machine."""
+
+    BINDINGS = [Binding("escape", "app.pop_screen", "Back")]
+
+    CSS = """
+    GlobalEnvScreen { align: center middle; }
+    #gv-card {
+        width: 95%;
+        height: 90%;
+        padding: 1 2;
+        background: $boost;
+        border: round $primary;
+    }
+    #gv-search { margin: 0 0 1 0; }
+    #gv-list { height: 1fr; }
+    #gv-actions { height: 3; margin-top: 1; align-horizontal: center; }
+    #gv-actions Button { margin: 0 1; }
+    """
+
+    def compose(self) -> ComposeResult:
+        yield AppHeader()
+        with Vertical(id="gv-card"):
+            yield Static(
+                "[bold bright_magenta]✦ All environment variables ✦[/bold bright_magenta]\n"
+                "[dim]Snapshot of os.environ — type to filter by name or value.[/dim]"
+            )
+            yield Input(placeholder="Filter by name or value…", id="gv-search")
+            yield Static("", id="gv-count")
+            yield DataTable(id="gv-list")
+            with Horizontal(id="gv-actions"):
+                yield Button("Back", id="gv-back", variant="default")
+        yield Footer()
+
+    def on_mount(self) -> None:
+        tbl = self.query_one("#gv-list", DataTable)
+        tbl.add_columns("Name", "Value")
+        tbl.cursor_type = "row"
+        self._all: list[tuple[str, str]] = sorted(os.environ.items())
+        self._render_rows(self._all)
+
+    def _render_rows(self, items: list[tuple[str, str]]) -> None:
+        tbl = self.query_one("#gv-list", DataTable)
+        tbl.clear()
+        for name, value in items:
+            shown = value if len(value) <= 200 else value[:200] + " …"
+            # Escape so values containing `[...]` (e.g., PATH segments) aren't
+            # parsed as Rich/Textual markup, which crashes DataTable rendering.
+            tbl.add_row(escape_markup(name), escape_markup(shown))
+        self.query_one("#gv-count", Static).update(
+            f"[dim]{len(items)} of {len(self._all)} variables[/dim]"
+        )
+
+    def on_input_changed(self, event: Input.Changed) -> None:
+        q = (event.value or "").lower().strip()
+        if not q:
+            self._render_rows(self._all)
+            return
+        filtered = [(n, v) for n, v in self._all if q in n.lower() or q in v.lower()]
+        self._render_rows(filtered)
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "gv-back":
+            self.app.pop_screen()
+
+
+class AppCommandsProvider(Provider):
+    """Header dropdown — same bottom-bar actions plus Quit. No search."""
 
     async def discover(self) -> Hits:
-        commands = list(self.app.get_system_commands(self.screen))
-        quit_cmd = next((c for c in commands if c.title == "Quit"), None)
-        for cmd in sorted((c for c in commands if c.title != "Quit"), key=lambda c: c.title):
-            if cmd.discover:
-                yield DiscoveryHit(cmd.title, cmd.callback, help=cmd.help)
-        if quit_cmd and quit_cmd.discover:
-            yield DiscoveryHit(quit_cmd.title, quit_cmd.callback, help=quit_cmd.help)
+        app = self.app
+        yield DiscoveryHit(
+            "README",
+            lambda: app.push_screen(ReadmeScreen()),
+            help="View the prompt-lib README",
+        )
+        yield DiscoveryHit(
+            "Env vars",
+            lambda: app.push_screen(EnvScreen()),
+            help="Edit the curated env vars used by skills/hooks",
+        )
+        yield DiscoveryHit(
+            "Git config",
+            lambda: app.push_screen(GitConfigScreen()),
+            help="View and edit your global git config (user.name, user.email)",
+        )
+        yield DiscoveryHit(
+            "GitHub",
+            lambda: app.push_screen(GitHubReposScreen()),
+            help="List repos owned by your gh-authenticated account",
+        )
+        yield DiscoveryHit(
+            "All env",
+            lambda: app.push_screen(GlobalEnvScreen()),
+            help="Browse every environment variable on this machine",
+        )
+        yield DiscoveryHit(
+            "Quit",
+            app.action_quit,
+            help="Exit the wizard",
+        )
+
+    async def search(self, query: str) -> Hits:
+        return
+        yield  # type: ignore[unreachable]  # keep this an async generator
 
 
 class AppHeader(Header):
     def on_mount(self) -> None:
-        self.query_one(HeaderIcon).icon = "▼"
+        icon = self.query_one(HeaderIcon)
+        icon.icon = "▼"
+        icon.tooltip = "Menu"
 
 
 class HomeScreen(Screen):
@@ -1140,17 +2629,17 @@ class HomeScreen(Screen):
     BINDINGS = [
         Binding("r", "go('readme')", "README"),
         Binding("e", "go('env')", "Env"),
+        Binding("g", "go('git')", "Git"),
+        Binding("h", "go('github')", "GitHub"),
+        Binding("v", "go('allenv')", "All env"),
         Binding("q", "app.quit", "Quit"),
     ]
 
     def compose(self) -> ComposeResult:
         yield AppHeader(show_clock=True)
         with VerticalScroll(id="home-scroll"):
-            yield Static(render_banner(), id="banner", classes="centered")
-            yield Static(render_env_summary(), id="env-summary", classes="panel")
-            yield UpdatePanel()
-            with Horizontal(id="home-nav"):
-                yield Button("[E] Env vars", id="btn-env", variant="primary")
+            yield HexBanner(id="banner", classes="centered")
+            yield EnvPanel(id="env-summary")
             with Vertical(classes="home-section"):
                 yield Static("[bold]Global Claude Settings[/bold]", classes="home-section-title")
                 with Horizontal(classes="ops-row"):
@@ -1163,9 +2652,12 @@ class HomeScreen(Screen):
                     yield Button("[L] Local", id="btn-op-local", variant="default")
             with Horizontal(classes="ops-row"):
                 yield Button("[M] MCP", id="btn-op-mcp", variant="default")
-                yield Button("[T] Tools", id="btn-op-tools", variant="default")
         with Horizontal(id="home-bottom"):
             yield Button("[R] README", id="btn-readme", variant="primary")
+            yield Button("[E] Env vars", id="btn-env", variant="primary")
+            yield Button("[G] Git config", id="btn-git", variant="primary")
+            yield Button("[H] GitHub", id="btn-github", variant="primary")
+            yield Button("[V] All env", id="btn-allenv", variant="primary")
             yield Static("", classes="home-spacer")
             yield Button("[Q] Quit", id="btn-quit", variant="error")
         yield Footer()
@@ -1178,6 +2670,12 @@ class HomeScreen(Screen):
             self.app.push_screen(ReadmeScreen())
         elif name == "env":
             self.app.push_screen(EnvScreen())
+        elif name == "git":
+            self.app.push_screen(GitConfigScreen())
+        elif name == "github":
+            self.app.push_screen(GitHubReposScreen())
+        elif name == "allenv":
+            self.app.push_screen(GlobalEnvScreen())
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         bid = event.button.id or ""
@@ -1193,6 +2691,12 @@ class HomeScreen(Screen):
             self.action_go("readme")
         elif bid == "btn-env":
             self.action_go("env")
+        elif bid == "btn-git":
+            self.action_go("git")
+        elif bid == "btn-github":
+            self.action_go("github")
+        elif bid == "btn-allenv":
+            self.action_go("allenv")
         elif bid == "btn-quit":
             self.app.exit()
         elif bid in op_screens:
@@ -1739,13 +3243,27 @@ class McpScreen(Screen):
         self._refresh()
 
     def _refresh(self) -> None:
-        tbl = self.query_one("#mcp-table", DataTable)
-        tbl.clear()
+        self.loading = True
+        self.query_one("#mcp-status", Static).update(
+            "[dim italic]Listing MCP servers — `claude mcp list` can take up to 60s…[/]"
+        )
+        self.run_worker(self._load, thread=True, exclusive=True)
+
+    def _load(self) -> None:
         try:
             aggregated = enumerate_mcp_servers()
         except Exception as e:
-            self.query_one("#mcp-status", Static).update(f"[red]Error enumerating: {e}[/red]")
+            self.app.call_from_thread(self._on_load_error, str(e))
             return
+        self.app.call_from_thread(self._apply_servers, aggregated)
+
+    def _on_load_error(self, msg: str) -> None:
+        self.query_one("#mcp-status", Static).update(f"[red]Error enumerating: {msg}[/red]")
+        self.loading = False
+
+    def _apply_servers(self, aggregated: dict[str, dict]) -> None:
+        tbl = self.query_one("#mcp-table", DataTable)
+        tbl.clear()
         for name in sorted(aggregated.keys()):
             info = aggregated[name]
             scopes_disp = _render_scopes(info["scopes"])
@@ -1768,6 +3286,7 @@ class McpScreen(Screen):
         self.query_one("#mcp-status", Static).update(
             f"[dim]{tbl.row_count} servers shown. Space toggles. Plugin servers managed via /plugin.[/dim]"
         )
+        self.loading = False
 
     def action_refresh(self) -> None:
         self._refresh()
@@ -2004,6 +3523,208 @@ class FolderBrowserScreen(ModalScreen):
             self.action_cancel()
 
 
+GITIGNORE_BY_TEMPLATE: dict[str, str] = {
+    "python": """\
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+# Virtualenvs
+.venv/
+venv/
+env/
+ENV/
+# Tooling caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.coverage
+htmlcov/
+# Notebooks
+.ipynb_checkpoints/
+# Editors / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+# Env
+.env
+.env.local
+""",
+    "dotnet": """\
+# .NET build outputs
+bin/
+obj/
+out/
+artifacts/
+# Visual Studio / Rider
+.vs/
+.vshistory/
+.idea/
+*.user
+*.suo
+*.userprefs
+*.userosscache
+*.sln.docstates
+# Symbols / coverage
+*.pdb
+*.opendb
+TestResults/
+coverage/
+*.coverage
+*.coverage.xml
+# NuGet
+*.nupkg
+packages/
+# Editor / OS
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+# Env
+.env
+""",
+    "frontend": """\
+# Dependencies
+node_modules/
+.pnpm-store/
+# Build / output
+dist/
+build/
+out/
+.next/
+.nuxt/
+.output/
+.svelte-kit/
+.vercel/
+.netlify/
+.astro/
+.expo/
+# Cache
+.cache/
+.parcel-cache/
+.turbo/
+.eslintcache
+.stylelintcache
+# Coverage / test
+coverage/
+playwright-report/
+test-results/
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+# Editor / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+# Env
+.env
+.env.*
+!.env.example
+""",
+    "monorepo": """\
+# Monorepo orchestrators
+.turbo/
+.nx/
+.rush/
+# Common build outputs
+node_modules/
+dist/
+build/
+out/
+.next/
+.svelte-kit/
+coverage/
+# Cache
+.cache/
+.parcel-cache/
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+# Env
+.env
+.env.*
+!.env.example
+""",
+    "unity": """\
+# Unity-generated
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Mm]emoryCaptures/
+[Rr]ecordings/
+# Generated solution / project files
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+# Build artifacts
+ExportedObj/
+.consulo/
+*.apk
+*.aab
+*.unitypackage
+crashlytics-build.properties
+# OS / editor
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+""",
+    "other": """\
+# OS
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+# Logs
+*.log
+# Env
+.env
+.env.local
+""",
+}
+
+
 class LocalScreen(Screen):
     """Set up .claude/ in another project."""
 
@@ -2048,6 +3769,17 @@ class LocalScreen(Screen):
             )
             if self.template_options:
                 yield Select(self.template_options, id="loc-tpl-select", prompt="Pick template…")
+            yield Checkbox(
+                "Add .gitignore matching the project template",
+                value=False, id="loc-gitignore",
+            )
+            yield Static(
+                "Writes a stack-specific .gitignore using the template picked above "
+                "(python / dotnet / frontend / monorepo / unity / other).\n"
+                "If a .gitignore already exists, the new entries are appended (with a header comment) instead of overwriting.\n"
+                "Test: cat .gitignore → see the additions; `git status` should immediately ignore build dirs.",
+                classes="help-text",
+            )
             yield Checkbox("Apply git repo-init template (hooks + .editorconfig + .gitattributes)", value=False, id="loc-git")
             yield Static(
                 "Copies global/git/.editorconfig and .gitattributes to the project root, and hook scripts to .git/hooks/.\n"
@@ -2085,10 +3817,11 @@ class LocalScreen(Screen):
 
     def _selected(self) -> dict:
         return {
-            "scaffold": self.query_one("#loc-scaffold", Checkbox).value,
-            "template": self.query_one("#loc-template", Checkbox).value,
-            "git": self.query_one("#loc-git", Checkbox).value,
-            "speckit": self.query_one("#loc-speckit", Checkbox).value,
+            "scaffold":  self.query_one("#loc-scaffold", Checkbox).value,
+            "template":  self.query_one("#loc-template", Checkbox).value,
+            "gitignore": self.query_one("#loc-gitignore", Checkbox).value,
+            "git":       self.query_one("#loc-git", Checkbox).value,
+            "speckit":   self.query_one("#loc-speckit", Checkbox).value,
         }
 
     def _template_path(self) -> Path | None:
@@ -2139,6 +3872,17 @@ class LocalScreen(Screen):
                 tbl.add_row("template", f"CLAUDE.md  (from {tpl.stem})", state)
             else:
                 tbl.add_row("template", "—", "[yellow]Pick a template above[/yellow]")
+
+        if sel["gitignore"]:
+            picked = self._template_path()
+            if picked is None:
+                tbl.add_row("gitignore", ".gitignore", "[yellow]Pick a template above[/yellow]")
+            elif picked.stem not in GITIGNORE_BY_TEMPLATE:
+                tbl.add_row("gitignore", ".gitignore", f"[yellow]no preset for '{picked.stem}'[/yellow]")
+            else:
+                target = project / ".gitignore"
+                state = "[yellow]EXISTS — will APPEND[/yellow]" if target.exists() else "[green]NEW[/green]"
+                tbl.add_row("gitignore", f".gitignore  ({picked.stem} preset)", state)
 
         if sel["git"]:
             git_src = GLOBAL_DIR / "git"
@@ -2202,6 +3946,34 @@ class LocalScreen(Screen):
                 )
             else:
                 msgs.append("[yellow]Skipped template — none picked[/yellow]")
+
+        if sel["gitignore"]:
+            picked = self._template_path()
+            if picked is None:
+                msgs.append("[yellow]Skipped .gitignore — no template selected[/yellow]")
+            else:
+                ignore_text = GITIGNORE_BY_TEMPLATE.get(picked.stem)
+                if not ignore_text:
+                    msgs.append(f"[yellow]Skipped .gitignore — no preset for '{picked.stem}'[/yellow]")
+                else:
+                    target = project / ".gitignore"
+                    header = f"# Added by cabal wizard ({picked.stem} preset)\n"
+                    if target.exists():
+                        existing = target.read_text(encoding="utf-8")
+                        combined = existing.rstrip() + "\n\n" + header + ignore_text
+                        target.write_text(combined, encoding="utf-8")
+                        msgs.append(
+                            f"[green]✓ Appended .gitignore ({picked.stem} preset)[/green]\n"
+                            f"  Verify: cat .gitignore → new {picked.stem} block at the bottom.\n"
+                            "  Review for overlap with existing entries before committing."
+                        )
+                    else:
+                        target.write_text(header + ignore_text, encoding="utf-8")
+                        msgs.append(
+                            f"[green]✓ Wrote .gitignore ({picked.stem} preset)[/green]\n"
+                            "  Verify: cat .gitignore → stack-specific ignore rules present.\n"
+                            "  `git status` should immediately ignore build/cache dirs."
+                        )
 
         if sel["git"]:
             git_src = GLOBAL_DIR / "git"
@@ -2285,83 +4057,274 @@ class LocalScreen(Screen):
 
 
 class ToolsScreen(Screen):
-    """Install / update optional companion tools."""
+    """Install missing dependencies, grouped by category. Each group is its own panel."""
 
     BINDINGS = [
         Binding("escape", "app.pop_screen", "Back"),
         Binding("ctrl+r", "refresh", "Refresh"),
     ]
 
+    CSS = """
+    ToolsScreen .tool-group {
+        height: auto;
+        padding: 1 2;
+        margin: 0 2 1 2;
+        background: $boost;
+        border: round $accent;
+    }
+    ToolsScreen .tool-group-title {
+        text-style: bold;
+        color: #5FAFFF;
+        margin: 0 0 1 0;
+    }
+    ToolsScreen .tool-row {
+        layout: horizontal;
+        height: 1;
+        margin: 0;
+    }
+    ToolsScreen .tool-name { width: 18; }
+    ToolsScreen .tool-state { width: 1fr; }
+    ToolsScreen Button.tool-install {
+        width: 11;
+        min-width: 11;
+        max-width: 11;
+        height: 1;
+        min-height: 1;
+        max-height: 1;
+        padding: 0;
+        margin: 0;
+        border: none;
+        background: #2196F3;
+        color: white;
+        text-style: bold;
+        content-align: center middle;
+    }
+    ToolsScreen Button.tool-install:hover  { background: #42A5F5; color: white; }
+    ToolsScreen Button.tool-install:focus  { background: #1976D2; color: white; }
+    ToolsScreen Button.tool-install.-update         { background: #ffc107; color: black; }
+    ToolsScreen Button.tool-install.-update:hover   { background: #ffd54f; color: black; }
+    ToolsScreen Button.tool-install.-update:focus   { background: #ffb300; color: black; }
+    ToolsScreen Button.tool-install:disabled {
+        background: $surface;
+        color: $text-muted;
+    }
+    """
+
     def compose(self) -> ComposeResult:
         yield AppHeader()
         with VerticalScroll():
             yield Static(
                 "[bold bright_magenta]✦ Tools ✦[/bold bright_magenta]\n"
-                "[dim]Optional companion tools for Claude Code. "
-                "Install runs in the terminal — UI returns when done.[/dim]",
+                "[dim]Install missing dependencies. Each group is a panel; "
+                "tools you already have are shown checked off.[/dim]",
                 classes="panel",
             )
-            for tool in TOOLS:
-                with Vertical(classes="panel"):
-                    yield Static(f"[bold cyan]{tool.name}[/bold cyan]")
-                    yield Static(tool.description)
-                    yield Static(
-                        f"[dim]Home:[/dim] [blue]{tool.homepage}[/blue]\n"
-                        f"[dim]GitHub:[/dim] [blue]{tool.repo_url}[/blue]"
-                    )
-                    yield Static("", id=f"tool-status-{tool.key}")
-                    with Horizontal():
-                        yield Button(
-                            "Install / Update",
-                            id=f"tool-install-{tool.key}",
-                            variant="success",
-                        )
+            for group_name, keys in ENV_TOOL_GROUPS:
+                slug = re.sub(r"[^a-z0-9]+", "-", group_name.lower()).strip("-")
+                with Vertical(classes="tool-group", id=f"tool-group-{slug}"):
+                    yield Static(f"✦ {group_name}", classes="tool-group-title")
+                    for key in keys:
+                        meta = _installer_for(key)
+                        if meta is None:
+                            continue
+                        label, _fn = meta
+                        with Horizontal(classes="tool-row"):
+                            yield Static(f"[white]{label}[/]", classes="tool-name")
+                            yield Static("", classes="tool-state", id=f"tool-state-{key}")
+                            yield Button("Install", id=f"tool-install-{key}", classes="tool-install")
             yield Static("", id="tools-status", classes="panel")
         yield Footer()
 
     def on_mount(self) -> None:
         self._refresh()
 
-    def _refresh(self) -> None:
-        for tool in TOOLS:
-            try:
-                state = tool.status()
-            except Exception as e:
-                state = f"status check failed: {e}"
-            color = "green" if state.startswith("installed") else "yellow"
-            self.query_one(f"#tool-status-{tool.key}", Static).update(
-                f"[bold]Status:[/bold] [{color}]{state}[/{color}]"
-            )
-
     def action_refresh(self) -> None:
         self._refresh()
+
+    def _refresh(self) -> None:
+        self._installed_keys: set[str] = set()
+        self._installed_details: dict[str, str] = {}
+        for group in self.query(".tool-group"):
+            group.loading = True
+        # Single worker iterates groups sequentially, but renders each group's rows
+        # immediately when ready (via call_from_thread). The UI updates after each
+        # group, so panels clear one-by-one in declared order rather than all at once.
+        self.run_worker(self._load_groups, thread=True, exclusive=True)
+
+    def _load_groups(self) -> None:
+        for group_name, keys in ENV_TOOL_GROUPS:
+            slug = re.sub(r"[^a-z0-9]+", "-", group_name.lower()).strip("-")
+            try:
+                env_subset = {k: _probe_key(k) for k in keys}
+                if "dotnet" in keys:
+                    env_subset["dotnet_sdks"] = _dotnet_sdks()
+            except Exception as e:
+                self.app.call_from_thread(self._group_error, slug, str(e))
+                continue
+            self.app.call_from_thread(self._apply_group, list(keys), env_subset, slug)
+        # All groups rendered — now spawn the slower update check.
+        self.app.call_from_thread(self._start_outdated_check)
+
+    def _start_outdated_check(self) -> None:
+        self.query_one("#tools-status", Static).update(
+            "[dim italic]Checking for updates…[/]"
+        )
+        self.run_worker(self._load_outdated, thread=True, exclusive=False)
+
+    def _load_outdated(self) -> None:
+        try:
+            outdated = _outdated_packages()
+            env_value: object
+            for key in VERSION_FLOORS:
+                if key == "dotnet":
+                    env_value = _dotnet_sdks()
+                else:
+                    env_value = _probe_key(key)
+                if _below_floor(key, env_value):
+                    outdated.add(key)
+        except Exception as e:
+            self.app.call_from_thread(
+                self.query_one("#tools-status", Static).update,
+                f"[red]Update check failed: {e}[/red]",
+            )
+            return
+        self.app.call_from_thread(self._apply_outdated, outdated)
+
+    def _group_error(self, slug: str, msg: str) -> None:
+        self.query_one("#tools-status", Static).update(
+            f"[red]Group {slug} failed: {msg}[/red]"
+        )
+        try:
+            self.query_one(f"#tool-group-{slug}", Vertical).loading = False
+        except Exception:
+            pass
+
+    def _apply_group(self, keys: list[str], env_subset: dict, slug: str) -> None:
+        try:
+            for key in keys:
+                installed, detail = self._tool_state(key, env_subset)
+                try:
+                    state_w = self.query_one(f"#tool-state-{key}", Static)
+                    btn = self.query_one(f"#tool-install-{key}", Button)
+                except Exception:
+                    continue  # widget missing — skip this key, don't trap the group
+                if installed:
+                    self._installed_keys.add(key)
+                    self._installed_details[key] = detail
+                    suffix = f" [dim]{detail}[/dim]" if detail else ""
+                    state_w.update(
+                        f"[bright_green]✓ installed[/bright_green]{suffix}  "
+                        f"[dim](checking for updates…)[/dim]"
+                    )
+                    btn.display = False
+                    btn.remove_class("-update")
+                else:
+                    state_w.update("[red]✗ not installed[/red]")
+                    btn.display = True
+                    btn.disabled = False
+                    btn.label = "Install"
+                    btn.remove_class("-update")
+        finally:
+            # Always clear loading, even if rendering raised partway through.
+            try:
+                self.query_one(f"#tool-group-{slug}", Vertical).loading = False
+            except Exception:
+                pass
+
+    def _apply_outdated(self, outdated: set[str]) -> None:
+        for key in list(self._installed_keys):
+            state_w = self.query_one(f"#tool-state-{key}", Static)
+            btn = self.query_one(f"#tool-install-{key}", Button)
+            detail = self._installed_details.get(key, "")
+            suffix = f" [dim]{detail}[/dim]" if detail else ""
+            if key in outdated:
+                state_w.update(f"[bright_yellow]⬇ update available[/bright_yellow]{suffix}")
+                btn.display = True
+                btn.disabled = False
+                btn.label = "Update"
+                btn.add_class("-update")
+            else:
+                state_w.update(f"[bright_green]✓ Latest[/bright_green]{suffix}")
+                btn.display = False
+                btn.remove_class("-update")
+
+    def _tool_state(self, key: str, env: dict) -> tuple[bool, str]:
+        """Return (installed, detail) — detail is the version string when known."""
+        val = env.get(key)
+        if isinstance(val, str) and val:
+            # versioned probe (e.g. node → 'v22.16.0')
+            return True, val
+        return bool(val), ""
+
+    _SPINNER_FRAMES = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         bid = event.button.id or ""
         if not bid.startswith("tool-install-"):
             return
         key = bid.removeprefix("tool-install-")
-        tool = next((t for t in TOOLS if t.key == key), None)
-        if not tool:
+        meta = _installer_for(key)
+        if meta is None:
             return
+        label, installer = meta
+        btn = event.button
+        self._start_spinner(btn)
         self.query_one("#tools-status", Static).update(
-            f"[yellow]Installing {tool.name}…[/yellow]  "
-            f"[dim](terminal output below — UI resumes when installer exits)[/dim]"
+            f"[yellow]⏳ Installing {label}…[/yellow]"
         )
-        with self.app.suspend():
-            try:
-                ok, msg = tool.install()
-            except Exception as e:
-                ok, msg = False, f"Unhandled error: {e}"
-        mark = "[green]✓[/green]" if ok else "[red]✗[/red]"
-        self.query_one("#tools-status", Static).update(f"{mark} {tool.name}: {msg}")
-        self._refresh()
+        self.run_worker(
+            lambda: self._do_install(key, label, installer, btn),
+            thread=True, exclusive=False,
+        )
+
+    def _start_spinner(self, button: Button) -> None:
+        button.disabled = True
+        state = {"frame": 0}
+        def tick() -> None:
+            state["frame"] = (state["frame"] + 1) % len(self._SPINNER_FRAMES)
+            button.label = self._SPINNER_FRAMES[state["frame"]]
+        button.label = self._SPINNER_FRAMES[0]
+        state["timer"] = self.set_interval(0.08, tick)
+        if not hasattr(self, "_spinners"):
+            self._spinners = {}
+        self._spinners[button.id] = state
+
+    def _stop_spinner(self, button_id: str) -> None:
+        state = getattr(self, "_spinners", {}).pop(button_id, None)
+        if state and "timer" in state:
+            state["timer"].stop()
+
+    def _do_install(
+        self,
+        key: str,
+        label: str,
+        installer: Callable[[], tuple[bool, str]],
+        button: Button,
+    ) -> None:
+        try:
+            ok, msg = installer()
+        except Exception as e:
+            ok, msg = False, f"error: {e}"
+
+        def _done() -> None:
+            self._stop_spinner(button.id)
+            mark = "[green bold]✓[/green bold]" if ok else "[red bold]✗[/red bold]"
+            lines = msg.splitlines() if msg else []
+            snippet = "\n".join(lines[-8:]) if lines else ""
+            body = f"\n[dim]{snippet}[/dim]" if snippet else ""
+            self.query_one("#tools-status", Static).update(
+                f"{mark} {label} {'installed' if ok else 'failed'}{body}"
+            )
+            button.disabled = False
+            button.label = "Install"
+            self._refresh()
+        self.app.call_from_thread(_done)
 
 
 # ─── App ───────────────────────────────────────────────────────────────────────
 
 class CabalApp(App):
-    """CABAL — Claude Code Setup Wizard."""
+    """CABAL — Agent Orchestration Setup."""
 
     CSS = """
     Screen { background: $background; }
@@ -2522,7 +4485,7 @@ class CabalApp(App):
 
     def on_mount(self) -> None:
         self.title = "CABAL"
-        self.sub_title = "Claude Code Setup Wizard"
+        self.sub_title = "Agent Orchestration Setup"
         self.push_screen(HomeScreen())
 
 
