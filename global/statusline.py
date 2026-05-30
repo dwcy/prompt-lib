@@ -2,12 +2,16 @@ import json
 import re
 import subprocess
 import sys
+import time
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
 sys.stdout.reconfigure(encoding="utf-8")
 
 STATE_FILE = Path.home() / ".claude" / ".session_state.json"
+UPDATE_FILE = Path.home() / ".claude" / ".update_state.json"
+UPDATE_TTL = 6 * 3600
+UPDATE_CHECKER = Path.home() / ".claude" / "hooks" / "check_claude_update.py"
 
 
 def rgb(text, r, g, b):
@@ -75,6 +79,40 @@ def fmt_duration(ms):
 def seg_model(data):
     name = data.get("model", {}).get("display_name") or "Claude"
     return rgb(f"✦ {name}", 139, 196, 255)
+
+
+def _maybe_refresh_update_cache():
+    try:
+        if UPDATE_FILE.exists() and (time.time() - UPDATE_FILE.stat().st_mtime) < UPDATE_TTL:
+            return
+        if not UPDATE_CHECKER.exists():
+            return
+        kwargs = {
+            "stdin": subprocess.DEVNULL,
+            "stdout": subprocess.DEVNULL,
+            "stderr": subprocess.DEVNULL,
+        }
+        if sys.platform == "win32":
+            kwargs["creationflags"] = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+        subprocess.Popen(["python", str(UPDATE_CHECKER)], **kwargs)
+    except Exception:
+        pass
+
+
+def seg_update(data):
+    _maybe_refresh_update_cache()
+    current = data.get("version")
+    if not current or not UPDATE_FILE.exists():
+        return None
+    try:
+        with UPDATE_FILE.open(encoding="utf-8") as f:
+            state = json.load(f)
+    except Exception:
+        return None
+    latest = state.get("latest")
+    if not latest or latest == current:
+        return None
+    return rgb(f"⬆ {latest}", 255, 180, 80)
 
 
 def seg_ctx_or_warn(data):
@@ -393,6 +431,7 @@ SEP = rgb("  │  ", 70, 70, 90)
 
 row1 = [
     seg_model(data),
+    seg_update(data),
     seg_ctx_or_warn(data),
     seg_cost(data),
     seg_diff(data),

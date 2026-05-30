@@ -27,7 +27,7 @@ Versioned source for everything in `~/.claude/` — agents, skills, hooks, rules
 The "tile bar" Claude Code renders at the bottom of the terminal. Script: [`global/statusline.py`](global/statusline.py). Wired up via `statusLine` in [`global/settings.json`](global/settings.json). Two rows — row 1 is session state from the stdin JSON snapshot Claude Code passes per turn, row 2 is workspace state from cheap git + filesystem probes.
 
 ```
-✦ Opus 4.7  │  ◐ 34%  │  💰 $0.42 · 12m  │  Δ +142 -38  │  📝 explanatory  │  ⏳ 5h:78%  │  ⊙ C:/projects/prompt-lib
+✦ Opus 4.7  │  ⬆ 2.1.158  │  ◐ 34%  │  💰 $0.42 · 12m  │  Δ +142 -38  │  📝 explanatory  │  ⏳ 5h:78%  │  ⊙ C:/projects/prompt-lib
 ⎇ 005-cabal-tools-polish  │  ↑3 ↓1  │  ±5f  │  ⚑ 2  │  🐳 docker  │  ✓ 47  │  🎯 P3 8/14  │  🤖 3 · 🛠 14
 ```
 
@@ -36,7 +36,7 @@ The "tile bar" Claude Code renders at the bottom of the terminal. Script: [`glob
 | Segment | Source | What it shows | Hides when | Color logic |
 |---|---|---|---|---|
 | `✦ <model>` | `model.display_name` | Active model name (e.g. Opus 4.7) | never | cyan |
-| `◐ <pct>%` / `⚠ 200k+` | `context_window.used_percentage`, `exceeds_200k_tokens` | % of the 200k context window used; red warning replaces it when the model has exceeded 200k input tokens | never | green <50% → yellow <75% → orange <90% → red ≥90%; red flash when over 200k |
+| `⬆ <version>` | `~/.claude/.update_state.json` (populated by [`hooks/check_claude_update.py`](global/hooks/check_claude_update.py) — npm registry GET, 6-hour TTL cache) | Latest available Claude Code version on npm — shown only when a newer release exists | running version matches npm latest, or cache file not yet populated | orange |
 | `💰 $<usd> · <duration>` | `total_cost_usd`, `total_duration_ms` | Session cost so far + wall-clock duration | cost field missing | green <$1 → yellow <$3 → orange <$10 → red ≥$10 |
 | `Δ +<a> -<r>` | `total_lines_added`, `total_lines_removed` | Lines added / removed across all edits this session | both counters 0 | adds green, removes red |
 | `📝 <style>` | `output_style.name` | Active output style — reminds you a non-default style is biasing responses | style is `default` | cyan |
@@ -62,6 +62,7 @@ The "tile bar" Claude Code renders at the bottom of the terminal. Script: [`glob
 - **Multi-row layout.** Every `\n` printed becomes a new row; vertical spacing comes from `settings.json → padding`.
 - **Cheap reads only.** Every git / filesystem call is timeout-guarded (1s) and falls back silently on error — the statusline never blocks the prompt.
 - **Activity counters.** The `🤖 · 🛠` segment is driven by [`global/hooks/post_tool_use.py`](global/hooks/post_tool_use.py), a `PostToolUse` hook that increments per-session counters in `~/.claude/.session_state.json`. Counters reset automatically when `session_id` changes.
+- **Update check.** The `⬆` segment reads `~/.claude/.update_state.json`, populated by [`global/hooks/check_claude_update.py`](global/hooks/check_claude_update.py). The statusline fire-and-forgets that script (detached subprocess, no console flash on Windows) whenever the cache is older than 6 hours, so the next render picks up a fresh result. Network call hits the public npm registry only — no Claude API traffic, no rate-limit cost.
 - **OSC 8 hyperlink.** The cwd segment uses an ANSI OSC 8 escape with the SGR color codes wrapping the hyperlink (not nested inside it) so Windows Terminal hit-tests the link region correctly. If clicking does nothing, verify the URI handler with `start vscode://file/C:/projects/prompt-lib` in PowerShell.
 
 ### Customize / disable
@@ -137,6 +138,7 @@ Every command available in this project, grouped by purpose. Source links point 
 | Command | When to use | Links |
 |---|---|---|
 | `/docs` | Generate a `/docs` folder for a project — index + architecture + per-component reference + workflows + learning path | [src](global/skills/docs.md) · [docs](docs/README.md) |
+| `/readme` | Drift-check the top-level README against the live repo state (skills, agents, hooks, MCP servers, statusline segments) and propose surgical patches | [src](global/skills/readme.md) |
 | `/self-improvement` | Maintain project memory (lessons / mistakes / preferences / evals); stale-detect and remove obsolete entries | [src](.claude/skills/self-improvement/SKILL.md) · [docs](docs/skills.md#self-improvement-project-local) |
 | `/skill-create` | Design, write, test, and refine a new skill — scaffolds the Agent Skill folder with `scripts/`, `references/`, `assets/` | [src](global/skills/skill-create.md) · [docs](docs/skills.md#skill-create) |
 
