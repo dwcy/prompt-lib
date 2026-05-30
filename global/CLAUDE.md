@@ -49,8 +49,25 @@ When committing — whether I asked via `/git` or just "commit this" — follow 
   git commit -c user.email="my@agent.commit" -c user.name="Claude Agent" -m "..."
   ```
 - Do **not** add `Co-Authored-By: Claude` trailers — the `-c` author override replaces that convention.
-- Show the proposed message and wait for confirmation before committing.
+- Show the proposed message and wait for confirmation before committing — **except** at plan-completion checkpoints (see *Auto-commit at plan completion* below).
 - Never push unless I explicitly ask.
+
+### Auto-commit at plan completion
+
+When a planning skill (`/plan`, `/speckit-plan`, `/speckit-tasks`, `/speckit-implement`) reaches its done state — all tasks completed, verification passed, the slice is shipped — commit immediately without asking. Keep follow-up changes in small per-feature commits rather than batching.
+
+- **Trigger:** all plan tasks done + verified; or I say "considered done"; or a single self-contained slice finishes in conversation.
+- **Pre-flight: stage only this session's changes.** Before editing any file as part of a plan, run `git diff HEAD --name-only` to see what already has uncommitted modifications. If a file you plan to edit was already modified before the session, treat it as off-limits for this commit — either skip the edit, or fold it into the unrelated in-flight work later. Never sweep pre-existing in-flight changes into your auto-commit.
+- **Separate commits per distinct feature**, BUT do not split a single file across two commits via an intermediate file-state dance. If two features both touch `settings.json` (or any shared file), prefer one combined commit ("feat: add X + Y") over rewriting → committing → restoring.
+- **Use `git -C <repo>` for every git command.** Never prepend `cd <repo> && git ...` — the harness's safety guardrail treats compound commands as suspicious and denies them, even on a safe branch.
+- **Branch-safety check pattern:** chain verification and commit in one bash invocation so the check is the immediate precondition of the commit:
+  ```bash
+  BRANCH=$(git -C <repo> rev-parse --abbrev-ref HEAD)
+  if [ "$BRANCH" != "main" ] && [ "$BRANCH" != "master" ]; then
+    git -C <repo> -c user.email="my@agent.commit" -c user.name="Claude Agent" commit -m "..."
+  fi
+  ```
+- **On a guardrail denial after a verified-safe branch, retry the exact same command once before escalating.** The branch-safety check is occasionally flaky on back-to-back commits and usually clears on retry. Only escalate to me if it denies twice in a row.
 
 ## Parallel subagent isolation
 
@@ -73,6 +90,6 @@ See [`docs/parallel-isolation.md`](docs/parallel-isolation.md) for the full rule
 
 - Never add features I didn't ask for.
 - Never rename variables or methods just to satisfy your preference.
-- Never commit without being asked explicitly.
+- Never commit without being asked explicitly — **except** at plan-completion checkpoints (see *Auto-commit at plan completion*).
 - Never push to remote without being asked explicitly.
 - Never delete files without confirmation.
