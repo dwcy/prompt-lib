@@ -1,8 +1,9 @@
 {
   "autoUpdatesChannel": "latest",
   "theme": "dark",
-  "model": "sonnet",
-  "defaultMode": "acceptEdits",
+  "model": "opus",
+  "defaultMode": "plan",
+  "feedbackSurveyRate": 0,
   "statusLine": {
     "type": "command",
     "command": "python \"$USERPROFILE/.claude/statusline.py\""
@@ -166,6 +167,15 @@
       }
     ],
     "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$USERPROFILE/.claude/hooks/post_tool_use.py\""
+          }
+        ]
+      },
       {
         "matcher": "Write",
         "hooks": [

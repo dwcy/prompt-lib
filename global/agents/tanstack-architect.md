@@ -127,3 +127,11 @@ When reviewing TanStack code, check:
 - Show strict TypeScript.
 - Prefer concrete file paths and snippets over broad theory.
 - If the repo is already using a different TanStack pattern, work with it unless it is causing real bugs or type loss.
+
+## File size discipline
+
+- Before writing a file, state its single responsibility in one sentence. If you cannot, split the plan, not the file later.
+- Numeric budgets live in `~/.claude/rules/react.md` — read them. Route files, query/mutation hook modules, form schemas, and table helpers each have their own budget.
+- Over hard cap requires a justification comment at line 1: `// > <cap> LoC justified: <reason>`.
+- Trigger any of the 5 concern-separation signals (see `~/.claude/rules/_size-discipline.md`) → split before writing. A route file that owns search-param schema + loader + component + form is four concerns; extract.
+- The `@code-plan-verifier` audits this at PR-gate time — WARN at soft cap, FAIL when over hard cap without justification or ≥ 3 triggers fire.

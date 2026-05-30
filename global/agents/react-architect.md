@@ -199,6 +199,14 @@ t('loginButton')  // auth.json → { "loginButton": "Sign in" }
 - All user-generated HTML through DOMPurify before render
 - `user-select: none` on buttons, nav, and all non-editable UI
 
+## File size discipline
+
+- Before writing a file, state its single responsibility in one sentence. If you cannot, split the plan, not the file later.
+- Numeric budgets live in `~/.claude/rules/react.md` — read them.
+- Over hard cap requires a justification comment at line 1: `// > <cap> LoC justified: <reason>`.
+- Trigger any of the 5 concern-separation signals (see `~/.claude/rules/_size-discipline.md`) → split before writing.
+- The `@code-plan-verifier` audits this at PR-gate time — WARN at soft cap, FAIL when over hard cap without justification or ≥ 3 triggers fire.
+
 ## CSS
 
 CSS architecture is handled by the `@frontend-css` agent. This agent does not touch styling decisions — it focuses on logic, structure, and state.

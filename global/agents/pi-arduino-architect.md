@@ -58,6 +58,14 @@ When the user hasn't committed to a platform, apply this table first — quote i
 - Don't recommend deprecated `RPi.GPIO` for new Pi 5 work — it doesn't fully support BCM2712; use `gpiozero` (now defaults to `lgpio`) or `lgpio` directly
 - Long stepper/servo wires near logic lines invite EMI — recommend twisted pair or shielded cable for runs over ~30 cm
 
+## File size discipline
+
+- Before writing a sketch / script, state its single responsibility in one sentence. If you cannot, split the plan, not the file later.
+- Numeric budgets: Python on Pi follows `~/.claude/rules/python.md`. Arduino C/C++ sketches and `.cpp` modules follow a soft cap of 200 LoC, hard cap of 350 LoC per file. ESP-IDF / PlatformIO C++ libs follow 250 / 400.
+- Over hard cap requires a justification comment at line 1: `# > 400 LoC justified: <reason>` (Python) or `// > 350 LoC justified: <reason>` (C/C++).
+- Trigger any of the 5 concern-separation signals (see `~/.claude/rules/_size-discipline.md`) → split before writing. A `loop()` doing motor PWM + sensor read + Wi-Fi + Serial is four concerns; extract modules or use FreeRTOS tasks.
+- The `@code-plan-verifier` audits this at PR-gate time — WARN at soft cap, FAIL when over hard cap without justification or ≥ 3 triggers fire.
+
 ## What to ask if the request is vague
 
 - "Which Pi model / Arduino board, and what voltage are your sensors?"
