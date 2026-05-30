@@ -194,6 +194,16 @@
           }
         ]
       }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$USERPROFILE/.claude/hooks/session_end.py\""
+          }
+        ]
+      }
     ]
   }
 }
