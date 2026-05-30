@@ -210,7 +210,13 @@ def seg_branch(cwd):
     if out:
         lines = out.splitlines()
         if len(lines) == 2:
-            is_worktree = lines[0] != lines[1]
+            # Resolve both against cwd before comparing — git returns
+            # absolute git-dir but relative common-dir when invoked from a
+            # subdirectory, which would falsely flag the main checkout as a
+            # linked worktree.
+            base = Path(cwd) if cwd else Path.cwd()
+            resolved = [str((base / p).resolve()) for p in lines]
+            is_worktree = resolved[0] != resolved[1]
     body = rgb(f"⎇ {branch}", 255, 200, 80)
     if is_worktree:
         body = rgb("🌳 worktree: ", 100, 220, 120) + body
