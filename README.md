@@ -22,6 +22,56 @@ Versioned source for everything in `~/.claude/` — agents, skills, hooks, rules
 | Tool-call safety | `PreToolUse` hooks (`command_guard.py`, `file_write_guard.py`) and `PostToolUse` audit (`write_audit.py`) intercept risky operations |
 | Authoring new skills | `/skill-create` — scaffolds, tests, and refines new slash commands |
 
+## Statusline
+
+The "tile bar" Claude Code renders at the bottom of the terminal. Script: [`global/statusline.py`](global/statusline.py). Wired up via `statusLine` in [`global/settings.json`](global/settings.json). Two rows — row 1 is session state from the stdin JSON snapshot Claude Code passes per turn, row 2 is workspace state from cheap git + filesystem probes.
+
+```
+✦ Opus 4.7  │  ◐ 34%  │  💰 $0.42 · 12m  │  Δ +142 -38  │  📝 explanatory  │  ⏳ 5h:78%  │  ⊙ C:/projects/prompt-lib
+⎇ 005-cabal-tools-polish  │  ↑3 ↓1  │  ±5f  │  ⚑ 2  │  🐳 docker  │  ✓ 47  │  🎯 P3 8/14  │  🤖 3 · 🛠 14
+```
+
+### Row 1 — session state (from stdin JSON, zero I/O)
+
+| Segment | Source | What it shows | Hides when | Color logic |
+|---|---|---|---|---|
+| `✦ <model>` | `model.display_name` | Active model name (e.g. Opus 4.7) | never | cyan |
+| `◐ <pct>%` / `⚠ 200k+` | `context_window.used_percentage`, `exceeds_200k_tokens` | % of the 200k context window used; red warning replaces it when the model has exceeded 200k input tokens | never | green <50% → yellow <75% → orange <90% → red ≥90%; red flash when over 200k |
+| `💰 $<usd> · <duration>` | `total_cost_usd`, `total_duration_ms` | Session cost so far + wall-clock duration | cost field missing | green <$1 → yellow <$3 → orange <$10 → red ≥$10 |
+| `Δ +<a> -<r>` | `total_lines_added`, `total_lines_removed` | Lines added / removed across all edits this session | both counters 0 | adds green, removes red |
+| `📝 <style>` | `output_style.name` | Active output style — reminds you a non-default style is biasing responses | style is `default` | cyan |
+| `⏳ 5h:<%>` `7d:<%>` | `five_hour`, `seven_day` | % quota remaining before 5-hour / 7-day rate limits hit | both quotas have >90% headroom (nothing to worry about) | green >50% → yellow >25% → red ≤25% |
+| `⊙ <cwd>` | `workspace.current_dir` | Project path rendered as a clickable VS Code link (OSC 8 hyperlink → `vscode://file/<path>`). **Ctrl+Click to open** in Windows Terminal | cwd missing | violet |
+
+### Row 2 — workspace state (git + filesystem, 1s timeout-guarded)
+
+| Segment | Source | What it shows | Hides when | Color logic |
+|---|---|---|---|---|
+| `⎇ <branch>` (with `🌳 worktree:` prefix) | `git branch --show-current` + `git rev-parse --git-dir --git-common-dir` | Current branch; worktree prefix appears when this checkout is a git worktree (not the main checkout) | not a git repo | gold; worktree prefix green |
+| `↑<a> ↓<b>` or `↕ sync` | `git rev-list --count --left-right @{u}...HEAD` | Commits ahead of / behind upstream — `↕ sync` when both are 0 | branch has no upstream | ahead green, behind orange |
+| `±<n>f` | `git status --porcelain` | Number of dirty files (staged + unstaged) | working tree is clean | yellow |
+| `⚑ <n>` | `git stash list` | Stash count | zero stashes | violet |
+| `🐳 docker` | filesystem probe — `Dockerfile`, `docker-compose.{yml,yaml}`, `compose.{yml,yaml}` | Whether the project is dockerized | never (shows `🐳 N/A` when absent) | bright cyan when present, gray when absent |
+| `✓ <n>` / `✗ <f>/<n>` / `◑ <pct>%cov` | First detector that matches: .NET `TestResults/*.trx` → pytest `.pytest_cache/v/cache/lastfailed`+`nodeids` → Jest/Vitest `coverage/coverage-summary.json` → Playwright `test-results/results.json` or `playwright-report/results.json` | Pass count, failure ratio, or coverage % from the most recent test run | no detector matches (shows `✓ N/A`) | green pass, red fail, yellow low coverage |
+| `🎯 P<n> <m>/<t>` or `🎯 ✓ all` | Parses `specs/<branch>/tasks.md` for the first non-`✅` `**Status**: …(M/N — T###–T###)` line | Active speckit phase + M/N task progress; `✓ all` when every phase is complete | not on a `NNN-feature-name` branch, or no `tasks.md` | gold mid-flow, green when complete |
+| `🤖 <a> · 🛠 <t>` | `~/.claude/.session_state.json` written by the `PostToolUse` hook | Agents dispatched · tools called this session — proves work is happening even when output is quiet | hook hasn't fired yet, or `session_id` doesn't match | agents violet, tools gray |
+
+### How it works
+
+- **Snapshot, not live.** Claude Code invokes the statusline command once per turn boundary and passes session state on stdin per the [statusline contract](https://docs.claude.com/en/docs/claude-code/statusline). There is no streaming or refresh — segments update on the next turn.
+- **Multi-row layout.** Every `\n` printed becomes a new row; vertical spacing comes from `settings.json → padding`.
+- **Cheap reads only.** Every git / filesystem call is timeout-guarded (1s) and falls back silently on error — the statusline never blocks the prompt.
+- **Activity counters.** The `🤖 · 🛠` segment is driven by [`global/hooks/post_tool_use.py`](global/hooks/post_tool_use.py), a `PostToolUse` hook that increments per-session counters in `~/.claude/.session_state.json`. Counters reset automatically when `session_id` changes.
+- **OSC 8 hyperlink.** The cwd segment uses an ANSI OSC 8 escape with the SGR color codes wrapping the hyperlink (not nested inside it) so Windows Terminal hit-tests the link region correctly. If clicking does nothing, verify the URI handler with `start vscode://file/C:/projects/prompt-lib` in PowerShell.
+
+### Customize / disable
+
+- **Disable entirely:** delete the `statusLine` block from `global/settings.json` and reapply.
+- **Hide a segment:** comment out its entry in the `row1` or `row2` list at the bottom of `global/statusline.py`.
+- **Add a segment:** write a `seg_*` function returning a colored string (or `None` to hide), and append to `row1` / `row2`. Falsy returns are filtered before the `SEP.join`.
+- **Change colors:** every segment passes RGB tuples through the `rgb()` helper — no theme indirection, just edit the literal tuples.
+- **Change thresholds:** color bands live in `ctx_color()`, `cost_color()`, `headroom_color()` near the top of the file.
+
 ## Slash commands
 
 Every command available in this project, grouped by purpose. Source links point at the SKILL/command file; docs links point at the relevant section in [`docs/`](docs/).
