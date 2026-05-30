@@ -172,6 +172,10 @@
           {
             "type": "command",
             "command": "python \"$USERPROFILE/.claude/hooks/write_audit.py\""
+          },
+          {
+            "type": "command",
+            "command": "python \"$USERPROFILE/.claude/hooks/format_on_write.py\""
           }
         ]
       },
@@ -181,6 +185,10 @@
           {
             "type": "command",
             "command": "python \"$USERPROFILE/.claude/hooks/write_audit.py\""
+          },
+          {
+            "type": "command",
+            "command": "python \"$USERPROFILE/.claude/hooks/format_on_write.py\""
           }
         ]
       }
