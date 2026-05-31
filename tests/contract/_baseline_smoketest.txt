@@ -1,0 +1,16 @@
+import OK
+Components: 12
+OS: Windows | git: True | bash: True
+Env vars in settings.json: []
+  settings.json             new=  0 changed=  1 unchanged=  0
+  CLAUDE.md                 new=  0 changed=  0 unchanged=  1
+  DESIGN.md                 new=  0 changed=  0 unchanged=  1
+  keybindings.json          new=  0 changed=  1 unchanged=  0
+  statusline.py             new=  0 changed=  0 unchanged=  1
+  agents/                   new=  2 changed=  0 unchanged= 15
+  hooks/                    new=  2 changed=  0 unchanged=  3
+  skills/                   new=  2 changed=  0 unchanged= 19
+  rules/                    new=  0 changed=  0 unchanged=  4
+  output-styles/            new=  0 changed=  0 unchanged=  4
+  project-templates/        new=  0 changed=  0 unchanged=  6
+  git/ templates            new=  0 changed=  0 unchanged=  7

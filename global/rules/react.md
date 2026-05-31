@@ -26,9 +26,23 @@ UI component → custom hook → query/mutation hook → API client
 - Data access → `api/` layer or feature query hooks. Never raw `fetch`/`axios` in component bodies.
 - Avoid circular dependencies between layers.
 
+## Numeric LoC budgets
+
+| File kind | Soft cap | Hard cap |
+|---|---:|---:|
+| React component `.tsx` | 100 | 200 |
+| Custom hook `.ts` (`use*`) | 80 | 150 |
+| TanStack route / loader | 100 | 200 |
+| Zustand store | 100 | 200 |
+| Shared utility `.ts` | 150 | 300 |
+
+- **Hard cap** = split, OR write a justification at line 1: `// > 200 LoC justified: <one-line structural reason>`.
+- Non-substantive reasons ("needed", "for now") fail the verifier audit.
+- The 5 concern-separation triggers live in `_size-discipline.md` — two or more firing = split before writing.
+
 ## Component rules
 
-- Break large components into smaller focused ones — if it scrolls, it's too big.
+- Break large components into smaller focused ones — hard cap 200 LoC for `.tsx`.
 - Lazy-load heavy components: `const HeavyComponent = lazy(() => import('./HeavyComponent'))`
 - No inline `style={{}}` unless the value is computed at runtime.
 - `user-select: none` on all non-editable interactive elements (buttons, nav, labels).

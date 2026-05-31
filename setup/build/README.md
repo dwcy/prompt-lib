@@ -52,7 +52,7 @@ Antivirus on first run may quarantine the exe (PyInstaller's bootloader is unsig
 | Standalone exe | `./cabal[.exe]` | bundled inside the exe | only if `.git` is found near the exe |
 | Installed | `cabal` | bundled inside the wheel under `cabal/_data/` | n/a (immutable; reinstall to update) |
 
-Resolution is centralised in `_resource_root()` / `_detect_repo_dir()` at the top of `setup/src/cabal/wizard.py`. All three run modes execute the same wizard code; those two helpers detect frozen / wheel-installed / source-checkout layouts.
+Resolution is centralised in `_resource_root()` / `_detect_repo_dir()` in `setup/src/cabal/_paths.py` (re-exported by `cabal.wizard` for backward compatibility). All three run modes execute the same wizard code; those two helpers detect frozen / wheel-installed / source-checkout layouts.
 
 ## Files
 

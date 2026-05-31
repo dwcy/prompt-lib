@@ -31,6 +31,8 @@ You must flag:
 - architectural boundary violations
 - changes that modify unrelated files
 - missing tests required by the plan
+- files over the per-language hard cap without a substantive line-1 justification comment
+- files triggering ≥ 2 of the 5 concern-separation signals (see `~/.claude/rules/_size-discipline.md`)
 
 Rules:
 - Do not edit files.
@@ -76,6 +78,26 @@ PASS / PASS WITH WARNINGS / FAIL
 - TODO placeholder? yes/no/not verified
 - Unplanned files changed? yes/no/not verified
 - Real DB/API path used? yes/no/not verified
+
+## Size Audit
+
+For every file changed in the implementation, audit against the per-language rules in `~/.claude/rules/<lang>.md` and the 5 concern-separation triggers in `~/.claude/rules/_size-discipline.md`. Output one row per file that warrants attention:
+
+| File | LoC | Cap (soft / hard) | Triggers firing | Justification at line 1 | Verdict |
+|---|---:|---|---|---|---|
+| path/to/file.py | 412 | 200 / 400 | (2) > 5 import domains, mixes UI + subprocess | none | **WARN** |
+
+Verdict ladder:
+- **PASS** — under soft cap, ≤ 1 trigger fires. Do not list these unless explicitly asked.
+- **WARN** — between soft and hard cap, OR exactly 2 triggers fire, OR over hard cap *with* a substantive line-1 justification. Reported in the table; rolls up into "PASS WITH WARNINGS".
+- **FAIL** (blocker) — over hard cap *without* substantive justification, OR ≥ 3 triggers fire, OR the justification is non-substantive (e.g. "needed", "complex", "for now"). Each FAIL becomes a BLOCKER row in `## Findings`.
+
+The 5 triggers:
+1. > 3 unrelated public symbols in one file.
+2. Imports span > 5 logical domains.
+3. > 15 methods on one class.
+4. File approaches soft cap AND mixes UI with side-effecting I/O (subprocess / network / persistence).
+5. Any single method does > 2 context switches.
 
 ## Version Check
 - Library/framework:

@@ -76,6 +76,31 @@ The new session sees its own working tree and shares history with main. This is 
 
 Stale worktrees aren't dangerous but they take disk space and pollute `git worktree list`. Run `/using-git-worktrees prune` periodically.
 
+## Runtime enforcement
+
+The rule used to live only in docs and CLAUDE.md — easy to forget. Two hooks now enforce it at runtime.
+
+### SessionStart auto-worktree on collision
+
+`global/hooks/session_start.py` claims a per-branch lock at `<git-common-dir>/claude-session-locks/<branch>.json` when the first Claude session lands on a non-`main` branch. If a second session starts in the same cwd on the same branch while the first PID is alive, the hook:
+
+1. Picks the next free sibling slot — branch `<branch>-s<N>` and directory `../<repo>-<branch>-s<N>`.
+2. Runs `git worktree add ../<repo>-<branch>-s<N> -b <branch>-s<N>` from the main checkout.
+3. Emits `additionalContext` telling Claude to refuse writes in the current cwd and walk the user through `cd <new-path>` + restart `claude`.
+
+Linked worktrees, `main`/`master`, detached HEAD, and non-repo dirs are exempt. The lock is released on `SessionEnd` by `session_end_release_lock.py`; stale locks self-heal via a cross-platform PID-alive check (POSIX `os.kill(pid, 0)`, Windows `tasklist`).
+
+**Opt-out**: set `CLAUDE_WORKTREE_AUTO=0` and the hook emits a warning instead of creating a worktree.
+
+### PreToolUse `Task` guardrail
+
+`global/hooks/pretool_task_isolation.py` runs on every `Task` dispatch. It blocks the most common anti-pattern — a `subagent_type` not in the read-only allowlist, with `run_in_background: true`, and no `isolation: "worktree"`. Block surfaces as `decision: "block"` with the documented reason.
+
+**Read-only allowlist** (no `Write`/`Edit` in declared `tools:`):
+`Explore`, `Plan`, `claude-code-guide`, `statusline-setup`, `code-plan-verifier`, `gitignore-auditor`, `github-config-manager`, `load-project`, `secret-auditor`.
+
+**V1 gap (acknowledged)**: two foreground concurrent `Task` calls in the same assistant message both see `run_in_background: false` and slip through. Closing this needs cross-invocation state (a small lockfile of in-flight Task IDs) and is deferred.
+
 ## How the rule appears in each file
 
 | File | What it says |
@@ -86,6 +111,9 @@ Stale worktrees aren't dangerous but they take disk space and pollute `git workt
 | `.specify/templates/plan-template.md` | Gate 6 in Constitution Check + "Parallel Execution Map" subsection |
 | `.specify/templates/tasks-template.md` | Extended `Format:` line with optional `Parallel: yes` field + dispatch rule |
 | `.claude/commands/plan.md` | Step 6 sets `isolation: "worktree"` on both full-stack dispatches |
+| `global/hooks/session_start.py` | Claims per-branch lock; auto-creates sibling worktree on collision |
+| `global/hooks/session_end_release_lock.py` | Releases the per-branch lock on session exit |
+| `global/hooks/pretool_task_isolation.py` | Blocks background `Task` dispatches without `isolation: "worktree"` |
 | `docs/parallel-isolation.md` | (this file) — canonical explainer |
 
 ## The `Parallel: yes` task convention

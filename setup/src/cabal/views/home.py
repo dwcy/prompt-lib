@@ -1,0 +1,199 @@
+# -*- coding: utf-8 -*-
+"""HomeScreen — extracted from setup/src/cabal/wizard.py for feature 005."""
+
+from __future__ import annotations
+
+import filecmp
+import json
+import os
+import platform
+import re
+import shutil
+import subprocess
+import sys
+from datetime import datetime
+from pathlib import Path
+from typing import Callable
+
+from rich.markup import escape as escape_markup
+from rich.text import Text
+from textual.app import ComposeResult
+from textual.binding import Binding
+from textual.containers import Center, Container, Horizontal, ScrollableContainer, Vertical, VerticalScroll
+from textual.screen import ModalScreen, Screen
+from textual.widgets import (
+    Button, Checkbox, DataTable, Footer, Header, Input, Label,
+    MarkdownViewer, OptionList, RadioButton, RadioSet, Rule, Select, Static,
+)
+from textual.widgets.option_list import Option
+from textual.widget import Widget
+
+from cabal._paths import GLOBAL_DIR, TARGET, REPO_DIR, ENV_DIR, ENV_FILE, RESOURCE_ROOT
+from cabal.app_widgets import AppHeader
+from cabal.banner import HexBanner, render_banner
+from cabal.components import COMPONENTS, Component, ENV_DESCRIPTIONS, FileStatus
+from cabal.diff_apply import (
+    apply_statuses,
+    backup_settings,
+    diff_component,
+    find_extras,
+    prune_backups,
+)
+from cabal.env_detect import detect_env, find_env_vars
+from cabal.env_summary import render_env_summary
+from cabal.git_config import apply_git_line_endings, recommended_autocrlf
+from cabal.installers.gh import gh_device_init, gh_device_poll, gh_fetch_token
+from cabal.mcp_ops import (
+    claude_mcp_add_from_template,
+    claude_mcp_remove,
+    enumerate_mcp_servers,
+)
+from cabal.tools import (
+    ENV_INSTALLERS,
+    ENV_TOOL_GROUPS,
+    TOOLS,
+    Tool,
+    VERSION_FLOORS,
+    WINGET_IDS,
+    _below_floor,
+    _installer_for,
+    _outdated_packages,
+    _probe_key,
+)
+from cabal.updates import check_for_updates, do_git_pull
+from cabal.widgets.claude_stats_panel import ClaudeStatsPanel
+from cabal.widgets.env_panel import EnvPanel
+from cabal.widgets.update_panel import UpdatePanel
+
+class HomeScreen(Screen):
+    """Landing screen — banner + horizontal nav."""
+
+    BINDINGS = [
+        Binding("r", "go('readme')", "README"),
+        Binding("e", "go('env')", "Env"),
+        Binding("g", "go('git')", "Git"),
+        Binding("h", "go('github')", "GitHub"),
+        Binding("v", "go('allenv')", "All env"),
+        Binding("i", "init_project", "Init"),
+        Binding("o", "open_project", "Open"),
+        Binding("ctrl+s", "refresh_claude_stats", "Refresh stats"),
+        Binding("q", "app.quit", "Quit"),
+    ]
+
+    def compose(self) -> ComposeResult:
+        yield AppHeader(show_clock=True)
+        with VerticalScroll(id="home-scroll"):
+            yield HexBanner(id="banner", classes="centered")
+            yield EnvPanel(id="env-summary")
+            yield ClaudeStatsPanel(id="claude-stats")
+            with Vertical(classes="home-section"):
+                yield Static("[bold]Project[/bold]", classes="home-section-title")
+                with Horizontal(classes="ops-row"):
+                    yield Button("[I] Init new project", id="btn-op-init", variant="primary")
+                    yield Button("[O] Open existing project", id="btn-op-open-project", variant="primary")
+            with Vertical(classes="home-section"):
+                yield Static("[bold]Global Claude Settings[/bold]", classes="home-section-title")
+                with Horizontal(classes="ops-row"):
+                    yield Button("[U] Update", id="btn-op-update", variant="default")
+                    yield Button("[R] Restore", id="btn-op-restore", variant="default")
+            with Vertical(classes="home-section"):
+                yield Static("[bold]Local Claude Settings[/bold]", classes="home-section-title")
+                with Horizontal(classes="ops-row"):
+                    yield Button("[D] Doctor", id="btn-op-doctor", variant="default")
+                    yield Button("[L] Local", id="btn-op-local", variant="default")
+            with Horizontal(classes="ops-row"):
+                yield Button("[M] MCP", id="btn-op-mcp", variant="default")
+        with Horizontal(id="home-bottom"):
+            yield Button("[R] README", id="btn-readme", variant="primary")
+            yield Button("[E] Env vars", id="btn-env", variant="primary")
+            yield Button("[G] Git config", id="btn-git", variant="primary")
+            yield Button("[H] GitHub", id="btn-github", variant="primary")
+            yield Button("[V] All env", id="btn-allenv", variant="primary")
+            yield Static("", classes="home-spacer")
+            yield Button("[Q] Quit", id="btn-quit", variant="error")
+        yield Footer()
+
+    def on_mount(self) -> None:
+        self.query_one("#btn-readme", Button).focus()
+
+    def action_go(self, name: str) -> None:
+        from cabal.views.readme import ReadmeScreen
+        from cabal.views.env import EnvScreen
+        from cabal.views.git_config import GitConfigScreen
+        from cabal.views.github_repos import GitHubReposScreen
+        from cabal.views.global_env import GlobalEnvScreen
+        if name == "readme":
+            self.app.push_screen(ReadmeScreen())
+        elif name == "env":
+            self.app.push_screen(EnvScreen())
+        elif name == "git":
+            self.app.push_screen(GitConfigScreen())
+        elif name == "github":
+            self.app.push_screen(GitHubReposScreen())
+        elif name == "allenv":
+            self.app.push_screen(GlobalEnvScreen())
+
+    def action_init_project(self) -> None:
+        from cabal.views.init_project import InitProjectScreen
+        self.app.push_screen(InitProjectScreen())
+
+    def action_open_project(self) -> None:
+        from cabal.views.folder_browser import FolderBrowserScreen
+        self.app.push_screen(FolderBrowserScreen(Path.cwd()), self._after_folder_picked)
+
+    def action_refresh_claude_stats(self) -> None:
+        try:
+            self.query_one("#claude-stats", ClaudeStatsPanel).refresh_stats()
+        except Exception:
+            pass
+
+    def _after_folder_picked(self, path: Path | None) -> None:
+        if path is None:
+            return
+        from cabal.views.local import LocalScreen
+        screen = LocalScreen()
+        self.app.push_screen(screen)
+        def _seed(_) -> None:
+            try:
+                screen.query_one("#loc-path", Input).value = str(path)
+                screen._refresh()
+            except Exception:
+                pass
+        self.app.call_after_refresh(_seed)
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        from cabal.views.update import UpdateScreen
+        from cabal.views.mcp import McpScreen
+        from cabal.views.doctor import DoctorScreen
+        from cabal.views.restore import RestoreScreen
+        from cabal.views.local import LocalScreen
+        from cabal.views.tools import ToolsScreen
+        bid = event.button.id or ""
+        op_screens = {
+            "btn-op-update":  UpdateScreen,
+            "btn-op-mcp":     McpScreen,
+            "btn-op-doctor":  DoctorScreen,
+            "btn-op-restore": RestoreScreen,
+            "btn-op-local":   LocalScreen,
+            "btn-op-tools":   ToolsScreen,
+        }
+        if bid == "btn-readme":
+            self.action_go("readme")
+        elif bid == "btn-env":
+            self.action_go("env")
+        elif bid == "btn-git":
+            self.action_go("git")
+        elif bid == "btn-github":
+            self.action_go("github")
+        elif bid == "btn-allenv":
+            self.action_go("allenv")
+        elif bid == "btn-quit":
+            self.app.exit()
+        elif bid == "btn-op-init":
+            self.action_init_project()
+        elif bid == "btn-op-open-project":
+            self.action_open_project()
+        elif bid in op_screens:
+            self.app.push_screen(op_screens[bid]())
+
+

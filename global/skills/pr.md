@@ -1,23 +1,52 @@
 ---
 name: pr
-description: Generate a pull request title and description from branch changes, then create the PR with gh cli
+description: Sync the branch with main, then draft a PR title and description from the diff, then create it with `gh pr create`. Always runs the sync step first so merge conflicts surface locally where they can be resolved with full context, not in GitHub's web UI.
 allowed-tools: Bash, Read
 ---
 
-Gather context:
+## 1 — Sync with main first
+
+Always pull the latest main into the feature branch before creating a PR. This catches conflicts now (where you can fix them locally with full context) instead of after the PR is opened.
 
 ```bash
-git log main...HEAD --oneline
-git diff main...HEAD --stat
+git -C <repo> fetch origin --prune
+git -C <repo> checkout main
+git -C <repo> merge --ff-only origin/main
+git -C <repo> checkout <feature-branch>
+git -C <repo> merge main --no-edit
 ```
 
-Also read `CLAUDE.md` if it exists to understand project conventions.
+Interpret the merge result:
 
-Generate a PR with:
+- **"Already up to date"** — continue to step 2.
+- **Clean merge with a merge commit** — continue to step 2; the merge commit will be part of the PR.
+- **Conflicts reported** — STOP. Resolve conflicts, run the relevant test suite, then `git commit` the merge. Do not push or create the PR until clean.
+- **Fast-forward of main fails** (someone rewrote main history) — STOP and ask the user.
 
-**Title** — `type(scope): short description` (max 72 chars, conventional commits format)
+Never push or open a PR for a branch that hasn't been sync'd against latest main.
 
-**Description** using this template:
+## 2 — Gather context
+
+```bash
+git -C <repo> log main..HEAD --oneline
+git -C <repo> diff main..HEAD --stat
+```
+
+Also `Read` `CLAUDE.md` (project root) if it exists, to pick up scope/voice conventions.
+
+## 3 — Push the branch
+
+```bash
+git -C <repo> push -u origin <feature-branch>
+```
+
+If the branch already has an upstream, plain `git -C <repo> push` is enough.
+
+## 4 — Draft and create the PR
+
+**Title** — `type(scope): short description` (max 72 chars, conventional commits format).
+
+**Description** — use this template:
 
 ```markdown
 ## What
@@ -39,6 +68,12 @@ Generate a PR with:
 ```
 
 Show me the title and description and ask for confirmation, then run:
+
 ```bash
-gh pr create --title "..." --body "..."
+gh pr create --title "..." --body "$(cat <<'EOF'
+...body here...
+EOF
+)"
 ```
+
+Pass the body via a heredoc so multi-line markdown and special characters survive intact.

@@ -142,4 +142,5 @@ This drops administrative refs to worktrees whose directory was deleted out from
 ## Integration
 
 - `/executing-plans` declares this skill as a required workflow dependency. When invoked from there, the caller already validated that we are not on `main`/`master`; this skill still re-checks (cheap and safe).
+- `global/hooks/session_start.py` invokes the same `git worktree add` flow programmatically when it detects a second Claude session colliding on a feature branch — sibling layout, branch-slug rule, and target naming all match this skill so manual + automatic creations live alongside each other.
 - For orchestrator-daemon use, see `services/orchestrator/src/orchestrator/worktree.py:WorktreeManager` — separate codebase, same convention.

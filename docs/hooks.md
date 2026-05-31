@@ -24,6 +24,8 @@ cwd has CLAUDE.md?
 
 **Output**: emits a JSON object with `additionalContext` on stdout. Never fails the session.
 
+**Also enforces parallel-session isolation** (see `docs/parallel-isolation.md`): on non-`main` feature branches, claims a per-branch lock at `<git-common-dir>/claude-session-locks/<branch>.json`. If a second session lands on the same branch in the same cwd while the first PID is alive, auto-creates a sibling worktree on a new branch (`<branch>-s2`, `-s3`, …) and tells the user to switch. Opt-out with `CLAUDE_WORKTREE_AUTO=0`.
+
 ## PreToolUse (Bash / PowerShell) — `command_guard.py`
 
 **Fires**: before every shell command, on both Bash and PowerShell tools.
@@ -58,6 +60,20 @@ Everything else under `~/.claude/` is freely editable. This is a narrow, deliber
 
 **Why it's narrow**: a broader "no edits to `~/.claude/`" rule would block your own legitimate config edits. The guard only fences itself and its sibling.
 
+## PreToolUse (Task) — `pretool_task_isolation.py`
+
+**Fires**: before every `Task` (subagent dispatch) tool call.
+
+**What it does**: enforces the parallel-isolation rule documented in `docs/parallel-isolation.md`. Blocks a `Task` call when **all** of these hold:
+
+- `subagent_type` is **not** in the read-only allowlist (`Explore`, `Plan`, `claude-code-guide`, `statusline-setup`, `code-plan-verifier`, `gitignore-auditor`, `github-config-manager`, `load-project`, `secret-auditor`).
+- `run_in_background: true`.
+- `isolation` is not `"worktree"`.
+
+**Why**: two background writing agents on the same working tree silently overwrite each other (no git conflict, no warning — just a missing diff). The rule existed only in docs; this hook closes the doc-only gap for the most common anti-pattern.
+
+**V1 gap**: two foreground concurrent `Task` calls in one assistant message both see `run_in_background: false` and slip through. Closing that needs cross-invocation state and is deferred.
+
 ## PostToolUse (Write / Edit) — `write_audit.py`
 
 **Fires**: after every successful `Write` or `Edit` tool call.
@@ -82,6 +98,16 @@ Consider committing or stashing before closing.
 ```
 
 **Why**: you stop forgetting to commit the change you just made. The hook is non-fatal — if anything fails, the session still stops cleanly.
+
+## SessionEnd — `session_end_release_lock.py`
+
+**Fires**: once, when the session terminates (alongside `session_end.py` which prints a farewell).
+
+**What it does**: looks up the per-branch lock file at `<git-common-dir>/claude-session-locks/<branch>.json` (the same path the SessionStart hook writes). If the lock's `cwd` matches the current session's cwd, deletes it.
+
+**Why cwd, not PID**: the SessionEnd hook runs as a subprocess of the same Claude process that claimed the lock, but PIDs can be reused across sessions. cwd is the unique key per session.
+
+**Stale locks**: if the session was killed (no SessionEnd fires), the lock stays on disk. The SessionStart hook's PID-alive check (POSIX `os.kill(pid, 0)`, Windows `tasklist`) treats it as stale and reclaims it on the next start.
 
 ## Hook composition with skills
 
