@@ -46,6 +46,15 @@
             "command": "python \"${CLAUDE_PLUGIN_ROOT}/hooks/file_write_guard.py\""
           }
         ]
+      },
+      {
+        "matcher": "Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PLUGIN_ROOT}/hooks/pretool_task_isolation.py\""
+          }
+        ]
       }
     ],
     "PostToolUse": [
@@ -74,6 +83,16 @@
           {
             "type": "command",
             "command": "python \"${CLAUDE_PLUGIN_ROOT}/hooks/stop_session.py\""
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PLUGIN_ROOT}/hooks/session_end_release_lock.py\""
           }
         ]
       }

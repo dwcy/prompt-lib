@@ -164,6 +164,15 @@
             "command": "python \"$USERPROFILE/.claude/hooks/file_write_guard.py\""
           }
         ]
+      },
+      {
+        "matcher": "Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$USERPROFILE/.claude/hooks/pretool_task_isolation.py\""
+          }
+        ]
       }
     ],
     "PostToolUse": [
@@ -219,6 +228,10 @@
           {
             "type": "command",
             "command": "python \"$USERPROFILE/.claude/hooks/session_end.py\""
+          },
+          {
+            "type": "command",
+            "command": "python \"$USERPROFILE/.claude/hooks/session_end_release_lock.py\""
           }
         ]
       }
