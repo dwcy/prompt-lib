@@ -1,6 +1,6 @@
 """Integration tests for ClaudeStatsPanel (T088).
 
-Exercises parse_status, read_claude_dot_json_fallback, and the panel's _render
+Exercises parse_status, read_claude_dot_json_fallback, and the panel's _render_body
 method directly — no Textual driver, no async pilot. Token-leak guarantees are
 enforced via dataclass field whitelist and rendered-output regex checks.
 """
@@ -156,7 +156,7 @@ def test_render_dataclass_path_has_no_literal_tokens():
     )
     panel = ClaudeStatsPanel()
 
-    plain = str(panel._render(st))
+    plain = str(panel._render_body(st))
 
     assert "a@b.com" in plain
     assert "Pro" in plain
@@ -170,6 +170,6 @@ def test_render_raw_output_path_shows_raw_verbatim():
     st = ClaudeAccountStatus(raw_status_output=raw)
     panel = ClaudeStatsPanel()
 
-    plain = str(panel._render(st))
+    plain = str(panel._render_body(st))
 
     assert "sk-fakeXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" in plain

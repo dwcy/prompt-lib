@@ -147,9 +147,9 @@ class ClaudeStatsPanel(Widget):
 
     def _set_status(self, st: ClaudeAccountStatus) -> None:
         self._status = st
-        self.query_one("#cs-body", Static).update(self._render(st))
+        self.query_one("#cs-body", Static).update(self._render_body(st))
 
-    def _render(self, st: ClaudeAccountStatus) -> Text:
+    def _render_body(self, st: ClaudeAccountStatus) -> Text:
         lines: list[str] = []
         if st.error:
             lines.append(f"[yellow]{st.error}[/yellow]")
