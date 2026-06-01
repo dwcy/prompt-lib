@@ -11,6 +11,7 @@ from textual.containers import Horizontal, Vertical
 from textual.widget import Widget
 from textual.widgets import Button, Static
 
+from cabal import widget_cache
 from cabal._paths import GLOBAL_DIR, TARGET
 from cabal.env_detect import detect_env
 from cabal.env_summary import (
@@ -23,6 +24,8 @@ from cabal.env_summary import (
 )
 from cabal.tools import ENV_INSTALLERS
 from cabal.widgets.update_panel import UpdatePanel
+
+_CACHE_KEY = "env"
 
 
 class EnvPanel(Widget):
@@ -123,7 +126,21 @@ class EnvPanel(Widget):
 
     def on_mount(self) -> None:
         self.query_one("#env-info", Vertical).border_title = "Current setup"
-        self._apply_env(detect_env())
+        cached = widget_cache.load_entry(_CACHE_KEY)
+        if isinstance(cached, dict):
+            self._apply_env(cached)
+        self.query_one("#env-status", Static).update("[dim italic]refreshing…[/]")
+        self.run_worker(self._refresh_env, thread=True, exclusive=True)
+
+    def _refresh_env(self) -> None:
+        fresh = detect_env()
+        widget_cache.save_entry(_CACHE_KEY, fresh)
+
+        def _apply() -> None:
+            self._apply_env(fresh)
+            self.query_one("#env-status", Static).update("")
+
+        self.app.call_from_thread(_apply)
 
     _LABEL = "bold #5FAFFF"  # light blue for every Label:
 
@@ -299,5 +316,5 @@ class EnvPanel(Widget):
             )
             button.disabled = False
             button.label = "Install"
-            self._refresh()
+            self.run_worker(self._refresh_env, thread=True, exclusive=True)
         self.app.call_from_thread(_done)
