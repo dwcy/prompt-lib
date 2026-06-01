@@ -153,7 +153,7 @@ class HomeScreen(Screen):
         from cabal.views.local import LocalScreen
         screen = LocalScreen()
         self.app.push_screen(screen)
-        def _seed(_) -> None:
+        def _seed() -> None:
             try:
                 screen.query_one("#loc-path", Input).value = str(path)
                 screen._refresh()
