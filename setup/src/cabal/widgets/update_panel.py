@@ -32,15 +32,23 @@ class UpdatePanel(Widget):
         height: 3;
     }
     #btn-pull { margin: 0; }
+    #update-branch {
+        height: 1;
+        padding: 0 1;
+        margin: 0 0 0 0;
+        display: none;
+    }
     """
 
     def compose(self) -> ComposeResult:
         with Horizontal(id="update-row"):
             yield Static("[dim]Checking for updates…[/dim]", id="update-msg")
             yield Button("⬇ Pull update", id="btn-pull", variant="warning")
+        yield Static("", id="update-branch")
 
     def on_mount(self) -> None:
         self.query_one("#btn-pull").display = False
+        self.query_one("#update-branch").display = False
         self.run_worker(self._check, thread=True, exclusive=True)
 
     def _check(self) -> None:
@@ -68,6 +76,11 @@ class UpdatePanel(Widget):
                 f"{subject_line}"
             )
             btn.display = True
+            branch = result.get("branch")
+            if branch:
+                branch_row = self.query_one("#update-branch", Static)
+                branch_row.update(f"[dim]↳ pulls into active branch: [/dim][bold]{branch}[/bold]")
+                branch_row.display = True
         elif result["status"] == "no_git":
             msg.update("[dim]git not found — cannot check for updates[/dim]")
         else:
@@ -77,6 +90,7 @@ class UpdatePanel(Widget):
         if event.button.id == "btn-pull":
             event.stop()
             self.query_one("#btn-pull").display = False
+            self.query_one("#update-branch").display = False
             self.query_one("#update-msg", Static).update("[yellow]Pulling…[/yellow]")
             self.run_worker(self._pull, thread=True, exclusive=True)
 

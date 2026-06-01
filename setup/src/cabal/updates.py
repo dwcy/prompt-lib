@@ -13,6 +13,20 @@ import subprocess
 from cabal._paths import REPO_DIR
 
 
+def _current_branch() -> str | None:
+    try:
+        r = subprocess.run(
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+            capture_output=True, text=True, cwd=str(REPO_DIR), timeout=5,
+        )
+        if r.returncode != 0:
+            return None
+        name = r.stdout.strip()
+        return name or None
+    except Exception:
+        return None
+
+
 def check_for_updates() -> dict:
     if REPO_DIR is None:
         return {"status": "no_repo"}
@@ -29,6 +43,7 @@ def check_for_updates() -> dict:
         )
         if local.returncode != 0 or remote.returncode != 0 or not remote.stdout.strip():
             return {"status": "error"}
+        branch = _current_branch()
         local_hash = local.stdout.strip()
         remote_hash = remote.stdout.split()[0]
         short = lambda h: h[:8]
@@ -68,6 +83,7 @@ def check_for_updates() -> dict:
             "remote": short(remote_hash),
             "behind_count": behind_count,
             "subject": subject,
+            "branch": branch,
         }
     except Exception:
         return {"status": "error"}
