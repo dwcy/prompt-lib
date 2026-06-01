@@ -40,6 +40,7 @@ from cabal.diff_apply import (
     prune_backups,
 )
 from cabal.env_detect import detect_env, find_env_vars
+from cabal.env_profile import update_profile
 from cabal.env_summary import render_env_summary
 from cabal.git_config import apply_git_line_endings, recommended_autocrlf
 from cabal.installers.gh import gh_device_init, gh_device_poll, gh_fetch_token
@@ -63,6 +64,10 @@ from cabal.tools import (
 from cabal.updates import check_for_updates, do_git_pull
 from cabal.widgets.env_panel import EnvPanel
 from cabal.widgets.update_panel import UpdatePanel
+
+_PATH_KEYS: frozenset[str] = frozenset({"PROJECTS_PATH", "TEMP_PATH"})
+_GH_TOKEN_KEYS: frozenset[str] = frozenset({"GITHUB_PERSONAL_ACCESS_TOKEN"})
+
 
 class EnvScreen(Screen):
     """Show env vars (values from system env) and apply via setx / shell rc + git config."""

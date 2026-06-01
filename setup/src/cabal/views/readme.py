@@ -81,8 +81,3 @@ class ReadmeScreen(Screen):
             yield Static("[yellow]No README.md found.[/yellow]")
         yield Footer()
 
-
-_PATH_KEYS: frozenset[str] = frozenset({"PROJECTS_PATH", "TEMP_PATH"})
-_GH_TOKEN_KEYS: frozenset[str] = frozenset({"GITHUB_PERSONAL_ACCESS_TOKEN"})
-
-
