@@ -1,0 +1,120 @@
+#!/usr/bin/env python3
+"""Pre-commit: refuse commits that shadow Textual base-class internals.
+
+Flags methods on classes inheriting from `textual.*` whose name collides with a
+base-class member (excluding dunders). See global/rules/python.md "Textual widgets".
+
+Per-method bypass: append `# noqa: textual-shadow` to the `def` line.
+
+Enable once per clone:
+    git config core.hooksPath .githooks
+"""
+
+from __future__ import annotations
+
+import ast
+import importlib
+import subprocess
+import sys
+from pathlib import Path
+
+
+def staged_python_files() -> list[Path]:
+    out = subprocess.run(
+        ["git", "diff", "--cached", "--name-only", "--diff-filter=ACMR"],
+        capture_output=True, text=True, check=True,
+    ).stdout
+    return [Path(p) for p in out.splitlines() if p.endswith(".py")]
+
+
+def textual_base_imports(tree: ast.AST) -> dict[str, str]:
+    bases: dict[str, str] = {}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom) and node.module and node.module.startswith("textual"):
+            for alias in node.names:
+                local = alias.asname or alias.name
+                bases[local] = f"{node.module}.{alias.name}"
+    return bases
+
+
+def base_local_name(base: ast.expr) -> str | None:
+    if isinstance(base, ast.Name):
+        return base.id
+    if isinstance(base, ast.Attribute):
+        cur: ast.expr = base
+        while isinstance(cur, ast.Attribute):
+            cur = cur.value
+        if isinstance(cur, ast.Name):
+            return cur.id
+    return None
+
+
+def check_file(path: Path) -> list[str]:
+    src = path.read_text(encoding="utf-8")
+    try:
+        tree = ast.parse(src)
+    except SyntaxError as e:
+        return [f"{path}: SyntaxError {e}"]
+    imports = textual_base_imports(tree)
+    if not imports:
+        return []
+    src_lines = src.splitlines()
+
+    errors: list[str] = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.ClassDef):
+            continue
+        for base in node.bases:
+            local = base_local_name(base)
+            if local not in imports:
+                continue
+            dotted = imports[local]
+            module_path, _, attr = dotted.rpartition(".")
+            try:
+                base_cls = getattr(importlib.import_module(module_path), attr)
+            except Exception:
+                continue
+            base_members = set(dir(base_cls))
+            for child in node.body:
+                if not isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    continue
+                name = child.name
+                if name.startswith("__"):
+                    continue
+                if not name.startswith("_"):
+                    continue
+                if name not in base_members:
+                    continue
+                line_src = src_lines[child.lineno - 1] if 0 < child.lineno <= len(src_lines) else ""
+                if "# noqa: textual-shadow" in line_src:
+                    continue
+                errors.append(
+                    f"{path}:{child.lineno}: {node.name}.{name} shadows {dotted}.{name} "
+                    f"— rename to a role-based name (e.g. _render_body)."
+                )
+    return errors
+
+
+def main() -> int:
+    errors: list[str] = []
+    for path in staged_python_files():
+        if not path.exists():
+            continue
+        errors.extend(check_file(path))
+    if not errors:
+        return 0
+    print("Textual shadow check failed:\n", file=sys.stderr)
+    for e in errors:
+        print(f"  {e}", file=sys.stderr)
+    print(
+        "\nSingle-underscore is convention-only in Python — overrides of Textual\n"
+        "base methods compile silently and crash at layout time.\n"
+        "See global/rules/python.md \"Textual widgets\".\n"
+        "Bypass for a legitimate one-off: append `# noqa: textual-shadow` to the def line.",
+        file=sys.stderr,
+    )
+    return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

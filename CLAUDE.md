@@ -48,6 +48,14 @@ See `setup/README.md` for the wizard's structure and modes.
 - **Change MCP servers:** edit `global/settings.json` → apply → update `global/MCP.md`
 - **Change hooks:** edit `global/hooks/<name>` → apply
 
+### One-time per clone
+
+Enable repo git hooks (currently: Textual base-class shadow check):
+
+```bash
+git config core.hooksPath .githooks
+```
+
 <!-- SPECKIT START -->
 Active spec-kit feature: **005-cabal-tools-polish** — Part A: Refactor `cabal/wizard.py` into maintainable modules. Part B (extended 2026-05-28): Add Init Project wizard view + Project MCP screen + Claude Stats panel.
 For technical context, structure, stack decisions, and constitution gate status, read [`specs/005-cabal-tools-polish/plan.md`](specs/005-cabal-tools-polish/plan.md). The full design tree is at `specs/005-cabal-tools-polish/` (spec, plan, research, data-model, contracts, quickstart).
