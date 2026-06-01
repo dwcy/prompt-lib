@@ -1,8 +1,8 @@
-"""Integration tests for ClaudeStatsPanel (T088).
+"""Integration tests for ClaudeStatsPanel.
 
-Exercises parse_status, read_claude_dot_json_fallback, and the panel's _render_body
-method directly — no Textual driver, no async pilot. Token-leak guarantees are
-enforced via dataclass field whitelist and rendered-output regex checks.
+After the `claude -p /status` switch-out, plan/usage/model fields are gone —
+they were never reliably populated since `-p` interprets `/status` as a prompt,
+not a slash command. The panel now reads `~/.claude.json` only.
 """
 
 from __future__ import annotations
@@ -17,123 +17,64 @@ import pytest
 from cabal.widgets.claude_stats_panel import (
     ClaudeAccountStatus,
     ClaudeStatsPanel,
-    parse_status,
-    read_claude_dot_json_fallback,
+    read_claude_account_state,
 )
 
 
-_FULL_FIXTURE = """\
-Claude Code v1.2.3
-Account: pawzor@gmail.com (Max 20x)
-Active model: claude-opus-4-7
-5-hour message usage: 42%
-Weekly cap: 18%
-Session: signed in
-"""
-
-_PRO_FIXTURE = """\
-Claude Code v1.2.3
-Account: x@y.com (Pro)
-Active model: claude-sonnet-4-5
-"""
-
-_MAX_5X_FIXTURE = "Account: a@b.io (Max 5x)\n"
-_MAX_20X_FIXTURE = "Account: a@b.io (Max 20x)\n"
-
-
-def test_parse_status_full_happy_path():
-    st = parse_status(_FULL_FIXTURE)
-
-    assert st.email == "pawzor@gmail.com"
-    assert st.account_type == "Max 20x"
-    assert st.active_model == "claude-opus-4-7"
-    assert st.five_hour_used_pct == 42
-    assert st.weekly_cap_used_pct == 18
-    assert st.signed_in is True
-    assert st.raw_status_output is None
-
-
-def test_parse_status_pro_account():
-    st = parse_status(_PRO_FIXTURE)
-
-    assert st.account_type == "Pro"
-
-
-def test_parse_status_max_5x_vs_20x_ordering():
-    st5 = parse_status(_MAX_5X_FIXTURE)
-    st20 = parse_status(_MAX_20X_FIXTURE)
-
-    assert st5.account_type == "Max 5x"
-    assert st20.account_type == "Max 20x"
-
-
-def test_parse_status_only_email_partial_parse():
-    st = parse_status("Account: foo@bar.io (Pro)\n")
-
-    assert st.email == "foo@bar.io"
-    assert st.account_type == "Pro"
-    assert st.active_model is None
-    assert st.five_hour_used_pct is None
-    assert st.weekly_cap_used_pct is None
-    assert st.raw_status_output is None
-
-
-def test_parse_status_garbage_populates_raw():
-    st = parse_status("completely unrelated text\nfoo bar")
-
-    assert st.account_type == "unknown"
-    assert st.email is None
-    assert st.raw_status_output is not None
-    assert st.raw_status_output.strip().startswith("completely unrelated")
-
-
-def test_parse_status_signed_in_from_text_only():
-    st = parse_status("Session: signed in\n")
-
-    assert st.signed_in is True
-
-
-def test_fallback_reads_email_from_oauth_account(tmp_project_dir, monkeypatch):
-    monkeypatch.setenv("HOME", str(tmp_project_dir))
+def test_read_returns_email_from_oauth_account(tmp_project_dir, monkeypatch):
     monkeypatch.setattr(Path, "home", lambda: tmp_project_dir)
     payload = {"oauthAccount": {"emailAddress": "alice@example.com", "organizationUuid": "abc-123"}}
     (tmp_project_dir / ".claude.json").write_text(json.dumps(payload), encoding="utf-8")
 
-    st = read_claude_dot_json_fallback()
+    st = read_claude_account_state()
 
     assert st.email == "alice@example.com"
+
+
+def test_read_marks_signed_in_when_email_present(tmp_project_dir, monkeypatch):
+    monkeypatch.setattr(Path, "home", lambda: tmp_project_dir)
+    payload = {"oauthAccount": {"emailAddress": "a@b.io", "organizationUuid": "x"}}
+    (tmp_project_dir / ".claude.json").write_text(json.dumps(payload), encoding="utf-8")
+
+    st = read_claude_account_state()
+
     assert st.signed_in is True
+
+
+def test_read_marks_token_present_from_organization_uuid(tmp_project_dir, monkeypatch):
+    monkeypatch.setattr(Path, "home", lambda: tmp_project_dir)
+    payload = {"oauthAccount": {"emailAddress": "a@b.io", "organizationUuid": "org-uuid"}}
+    (tmp_project_dir / ".claude.json").write_text(json.dumps(payload), encoding="utf-8")
+
+    st = read_claude_account_state()
+
     assert st.token_present is True
-    assert st.error == "claude CLI not installed"
 
 
-def test_fallback_missing_file_returns_error_only(tmp_project_dir, monkeypatch):
+def test_read_missing_file_returns_error(tmp_project_dir, monkeypatch):
     monkeypatch.setattr(Path, "home", lambda: tmp_project_dir)
 
-    st = read_claude_dot_json_fallback()
+    st = read_claude_account_state()
 
     assert st.email is None
+    assert st.signed_in is False
     assert st.token_present is False
-    assert st.error == "claude CLI not installed"
+    assert "not found" in (st.error or "")
 
 
-def test_fallback_corrupt_json_returns_error_only(tmp_project_dir, monkeypatch):
+def test_read_corrupt_json_returns_error(tmp_project_dir, monkeypatch):
     monkeypatch.setattr(Path, "home", lambda: tmp_project_dir)
     (tmp_project_dir / ".claude.json").write_text("garbage {", encoding="utf-8")
 
-    st = read_claude_dot_json_fallback()
+    st = read_claude_account_state()
 
     assert st.email is None
     assert st.token_present is False
-    assert st.error == "claude CLI not installed"
+    assert "could not be parsed" in (st.error or "")
 
 
-def test_status_dataclass_has_no_token_fields():
-    allowed = {
-        "account_type", "email", "signed_in", "five_hour_used_pct",
-        "weekly_cap_used_pct", "active_model", "token_present",
-        "raw_status_output", "error",
-    }
+def test_status_dataclass_field_whitelist():
+    allowed = {"email", "signed_in", "token_present", "error"}
     forbidden_substrings = ("apikey", "api_key", "secret", "password", "refresh")
 
     names = {f.name for f in dataclasses.fields(ClaudeAccountStatus)}
@@ -148,28 +89,22 @@ def test_status_dataclass_has_no_token_fields():
             assert sub not in lower
 
 
-def test_render_dataclass_path_has_no_literal_tokens():
-    st = ClaudeAccountStatus(
-        account_type="Pro", email="a@b.com", signed_in=True,
-        active_model="claude-opus-4-7", five_hour_used_pct=10,
-        weekly_cap_used_pct=5, token_present=True,
-    )
+def test_render_does_not_leak_tokenlike_strings():
+    st = ClaudeAccountStatus(email="a@b.com", signed_in=True, token_present=True)
     panel = ClaudeStatsPanel()
 
     plain = str(panel._render_body(st))
 
     assert "a@b.com" in plain
-    assert "Pro" in plain
     for needle in ("oauthToken", "accessToken", "apiKey", "refreshToken", "sk-"):
         assert needle not in plain
     assert not re.search(r"[0-9a-f]{32,}", plain, re.IGNORECASE)
 
 
-def test_render_raw_output_path_shows_raw_verbatim():
-    raw = "some weird /status output sk-fakeXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-    st = ClaudeAccountStatus(raw_status_output=raw)
+def test_render_signed_out_shows_login_hint():
+    st = ClaudeAccountStatus()
     panel = ClaudeStatsPanel()
 
     plain = str(panel._render_body(st))
 
-    assert "sk-fakeXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" in plain
+    assert "claude /login" in plain
