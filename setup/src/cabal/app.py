@@ -90,6 +90,12 @@ class CabalApp(App):
         height: 2;
         content-align: left middle;
     }
+    .home-section-desc {
+        padding: 0 1;
+        margin: 0 0 1 0;
+        height: auto;
+        content-align: left top;
+    }
 
     .ops-row {
         height: 5;
@@ -188,6 +194,7 @@ class CabalApp(App):
 
     BINDINGS = [
         Binding("ctrl+q", "quit", "Quit", show=True),
+        Binding("ctrl+c", "quit", "Quit", show=False, priority=True),
         Binding("q", "quit", "Quit", show=False),
         Binding("left", "focus_previous", show=False),
         Binding("right", "focus_next", show=False),

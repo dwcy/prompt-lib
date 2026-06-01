@@ -8,7 +8,10 @@ from textual.containers import Horizontal
 from textual.widget import Widget
 from textual.widgets import Button, Static
 
+from cabal import widget_cache
 from cabal.updates import check_for_updates, do_git_pull
+
+_CACHE_KEY = "updates"
 
 
 class UpdatePanel(Widget):
@@ -49,10 +52,14 @@ class UpdatePanel(Widget):
     def on_mount(self) -> None:
         self.query_one("#btn-pull").display = False
         self.query_one("#update-branch").display = False
+        cached = widget_cache.load_entry(_CACHE_KEY)
+        if isinstance(cached, dict):
+            self._apply(cached)
         self.run_worker(self._check, thread=True, exclusive=True)
 
     def _check(self) -> None:
         result = check_for_updates()
+        widget_cache.save_entry(_CACHE_KEY, result)
         self.app.call_from_thread(self._apply, result)
 
     def _apply(self, result: dict) -> None:

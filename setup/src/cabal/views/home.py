@@ -76,6 +76,7 @@ class HomeScreen(Screen):
         Binding("v", "go('allenv')", "All env"),
         Binding("i", "init_project", "Init"),
         Binding("o", "open_project", "Open"),
+        Binding("c", "go_configure", "Configure"),
         Binding("ctrl+s", "refresh_claude_stats", "Refresh stats"),
         Binding("q", "app.quit", "Quit"),
     ]
@@ -93,9 +94,12 @@ class HomeScreen(Screen):
                     yield Button("[O] Open existing project", id="btn-op-open-project", variant="primary")
             with Vertical(classes="home-section"):
                 yield Static("[bold]Global Claude Settings[/bold]", classes="home-section-title")
+                yield Static(
+                    "[dim]Deploy and tune the files in ~/.claude — agents, hooks, skills, MCP servers, settings.[/dim]",
+                    classes="home-section-desc",
+                )
                 with Horizontal(classes="ops-row"):
-                    yield Button("[U] Update", id="btn-op-update", variant="default")
-                    yield Button("[R] Restore", id="btn-op-restore", variant="default")
+                    yield Button("[C] Configure", id="btn-op-update", variant="default")
             with Vertical(classes="home-section"):
                 yield Static("[bold]Local Claude Settings[/bold]", classes="home-section-title")
                 with Horizontal(classes="ops-row"):
@@ -141,6 +145,10 @@ class HomeScreen(Screen):
         from cabal.views.folder_browser import FolderBrowserScreen
         self.app.push_screen(FolderBrowserScreen(Path.cwd()), self._after_folder_picked)
 
+    def action_go_configure(self) -> None:
+        from cabal.views.update import UpdateScreen
+        self.app.push_screen(UpdateScreen())
+
     def action_refresh_claude_stats(self) -> None:
         try:
             self.query_one("#claude-stats", ClaudeStatsPanel).refresh_stats()
@@ -165,7 +173,6 @@ class HomeScreen(Screen):
         from cabal.views.update import UpdateScreen
         from cabal.views.mcp import McpScreen
         from cabal.views.doctor import DoctorScreen
-        from cabal.views.restore import RestoreScreen
         from cabal.views.local import LocalScreen
         from cabal.views.tools import ToolsScreen
         bid = event.button.id or ""
@@ -173,7 +180,6 @@ class HomeScreen(Screen):
             "btn-op-update":  UpdateScreen,
             "btn-op-mcp":     McpScreen,
             "btn-op-doctor":  DoctorScreen,
-            "btn-op-restore": RestoreScreen,
             "btn-op-local":   LocalScreen,
             "btn-op-tools":   ToolsScreen,
         }
