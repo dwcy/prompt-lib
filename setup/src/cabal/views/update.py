@@ -61,6 +61,7 @@ from cabal.tools import (
     _probe_key,
 )
 from cabal.updates import check_for_updates, do_git_pull
+from cabal.views.restore import RestoreScreen
 from cabal.widgets.env_panel import EnvPanel
 from cabal.widgets.update_panel import UpdatePanel
 
@@ -77,7 +78,7 @@ class UpdateScreen(Screen):
         yield AppHeader()
         with VerticalScroll():
             yield Static(
-                "[bold bright_magenta]✦ Update global settings ✦[/bold bright_magenta]\n"
+                "[bold bright_magenta]✦ Configure global settings ✦[/bold bright_magenta]\n"
                 f"[dim]Deploy {GLOBAL_DIR} → {TARGET}.[/dim]\n"
                 "[dim]Toggle components, then Apply (Ctrl+A).[/dim]",
                 classes="panel",
@@ -99,7 +100,7 @@ class UpdateScreen(Screen):
             with Horizontal():
                 yield Button("Refresh preview (Ctrl+R)", id="upd-refresh")
                 yield Button("Apply (Ctrl+A)", id="upd-apply", variant="success")
-                yield Button("Back (Esc)", id="upd-back")
+                yield Button("Restore", id="upd-restore", variant="warning")
             yield Static("", id="upd-status", classes="panel")
         yield Footer()
 
@@ -182,7 +183,7 @@ class UpdateScreen(Screen):
             self._refresh_preview()
         elif bid == "upd-apply":
             self.action_apply()
-        elif bid == "upd-back":
-            self.app.pop_screen()
+        elif bid == "upd-restore":
+            self.app.push_screen(RestoreScreen())
 
 
