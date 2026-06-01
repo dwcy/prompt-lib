@@ -58,6 +58,16 @@ Inline justifications that pass the verifier:
 - Use `pathlib.Path` not `os.path`.
 - `from __future__ import annotations` at the top of every module.
 
+## Textual widgets
+
+When subclassing `textual.widget.Widget`, `textual.screen.Screen`, or any Textual base:
+
+- **Do not name helpers with single-underscore framework verbs.** Reserved prefixes: `_render`, `_render_*`, `_compose`, `_compose_*`, `_on_*`, `_watch_*`, `_action_*`, `_get_*_lines`, `_arrange_*`. Python's single underscore is convention-only, so an override compiles silently and crashes at layout time with confusing `Visual.to_strips` / `_render_content` tracebacks — not at import time.
+- **Documented user override is `render(self)` (no underscore).** Anything starting with `_` on a Textual base class is framework territory.
+- **Name helpers by role, not by verb.** `_build_status_text`, `_format_body`, `_collect_rows` — these can never collide. `_render`, `_compose`, `_update` — these can.
+- **Every custom widget needs one mount-and-render smoke test** using `App.run_test()` / `Pilot` with at least one `pilot.pause()`. Tests that call helper methods directly bypass the render pipeline and miss shadow bugs entirely.
+- **Enforced by `.githooks/pre-commit`** in this repo: any staged `.py` file that subclasses a `textual.*` import is checked, and method names colliding with the resolved base class block the commit. Bypass a single legitimate override with `# noqa: textual-shadow` on the `def` line.
+
 ## Imports order
 
 ```python
