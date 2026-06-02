@@ -178,6 +178,15 @@ Do **not** run `git push` unless the user explicitly says to push. End with:
 
 > Committed. Run `/git push` or `git push` when you're ready to push.
 
+When the user *does* ask to push, always route git auth through `gh` first — a raw `git push` against an HTTPS remote triggers an interactive askpass prompt that hangs/fails in a non-interactive shell, even when `gh` is authenticated:
+
+```bash
+gh auth setup-git
+git push -u origin <branch>
+```
+
+If `gh auth status` shows you are not logged in, stop and ask the user to run `! gh auth login` rather than falling back to a raw `git push`.
+
 ---
 
 ## /git branch \<name\>

@@ -36,11 +36,16 @@ Also `Read` `CLAUDE.md` (project root) if it exists, to pick up scope/voice conv
 
 ## 3 — Push the branch
 
+Always route git auth through `gh`. A plain `git push` against an HTTPS remote triggers an interactive askpass prompt that fails in a non-interactive shell, even when `gh` is already authenticated. Run `gh auth setup-git` first so git uses gh's credential helper:
+
 ```bash
+gh auth setup-git
 git -C <repo> push -u origin <feature-branch>
 ```
 
-If the branch already has an upstream, plain `git -C <repo> push` is enough.
+If the branch already has an upstream, plain `git -C <repo> push` is enough (still after `gh auth setup-git`).
+
+If `gh auth status` shows you are not logged in, stop and ask the user to run `! gh auth login` — do not fall back to a raw `git push` that will hang on a credential prompt.
 
 ## 4 — Draft and create the PR
 
