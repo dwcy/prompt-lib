@@ -1,0 +1,11 @@
+{
+  "$schema_version": 1,
+  "agent_name": "Claude Agent",
+  "agent_email": "my@agent.commit",
+  "allowed_types": ["feat", "task", "fix", "refactor", "test", "docs"],
+  "refuse_on_branches": ["main", "master"],
+  "tags": {
+    "agent_may_tag": false,
+    "auto_push": false
+  }
+}
