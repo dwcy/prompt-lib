@@ -122,6 +122,25 @@ Read and write Azure DevOps work items, repos, pipelines, pull requests, and spr
 
 ---
 
+### mcp-bus
+Local message bus, shared key-value memory, and agent registry for inter-agent communication. Lets subagents dispatched by `/orchestrate` post to channels, read shared state, and discover each other. State is durable in SQLite at `~/.claude/mcp-bus/bus.db`. Localhost only, no auth, no network.
+
+**Setup:**
+1. Install the server (from the prompt-lib repo):
+   ```bash
+   uv tool install --from /path/to/prompt-lib/services/mcp-bus mcp-bus
+   ```
+2. Register it with Claude Code:
+   ```bash
+   claude mcp add mcp-bus -- mcp-bus
+   ```
+3. Restart Claude Code — the 10 bus tools appear automatically.
+
+**Tools:** `bus_post`, `bus_read`, `bus_channels`, `mem_set`, `mem_get`, `mem_list`, `mem_delete`, `agent_register`, `agent_list`, `agent_heartbeat`
+**Source:** `services/mcp-bus/` (in this repo) — see [`docs/orchestration.md`](docs/orchestration.md) and `specs/007-mcp-bus/`
+
+---
+
 ## Suggested MCP servers
 
 ### Developer workflow

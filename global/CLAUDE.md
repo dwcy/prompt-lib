@@ -81,6 +81,29 @@ When two or more subagents are dispatched to operate concurrently on the same re
 
 See [`docs/parallel-isolation.md`](docs/parallel-isolation.md) for the full rule, edge cases, and anti-patterns.
 
+## Subagent routing
+
+When a task clearly belongs to a specialist domain, invoke `/orchestrate` proactively — do not wait to be asked. The user should not need to know which agent exists.
+
+**Invoke `/orchestrate` automatically when:**
+- The task involves .NET / C# architecture or testing
+- The task involves Python service design or pytest authoring
+- The task involves React, Vue, Next.js, TanStack, or CSS architecture
+- The task involves Unity3D scene or MonoBehaviour design
+- The task involves Raspberry Pi or Arduino hardware
+- The task involves GitHub repo settings configuration
+- The user says "write tests", "architect this", "design the UX", or "verify the implementation"
+- The task is full-stack (two or more domains) — dispatch parallel agents
+
+**Do not invoke `/orchestrate` for:**
+- Quick one-line questions or explanations
+- File reads, git commands, or simple edits that need no specialist
+- Tasks the user has explicitly asked to handle in the main session
+
+When auto-routing, tell the user: "This looks like a [domain] task — routing to `@<agent>`." before dispatching.
+
+See [`docs/orchestration.md`](docs/orchestration.md) for the full routing table and agent registry.
+
 ## Package managers
 
 - For frontend and Node.js work, use only `pnpm` or `bun`.
