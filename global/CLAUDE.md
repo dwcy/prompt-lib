@@ -40,17 +40,45 @@ Personal preferences and conventions that apply to every project and session.
 
 ## Git commits
 
-When committing — whether I asked via `/git` or just "commit this" — follow the `/git` skill rules:
+When committing — whether I asked via `/git` or just "commit this" — use the `git-identity` wrapper script. All commit-policy values (agent name, agent email, allowed types, branch-refusal list, tag rules) live in **`~/.claude/git-policy.json`** — edit that file to change any of them.
 
-- Refuse to commit on `main` / `master`. Ask me to create a feature branch first (`/git branch <name>`).
-- Subject line: `<type>: <subject>` where type ∈ `feat | task | fix | refactor | test | docs`. Imperative mood, ≤72 chars, no trailing period.
-- Always use agent authorship via `-c` flags (do not modify global git config):
+- **Use the wrapper, not raw `git commit`.** The wrapper snapshots your real `--global` identity to `~/.claude/identity/git-original.json` (idempotent, one-time), sets the agent identity in `--local` scope, runs the commit, and restores `--local` after — so your real identity is never overwritten in `--global`.
+  ```bash
+  python ~/.claude/scripts/git-identity.py commit -m "<type>: <subject>"
   ```
-  git commit -c user.email="my@agent.commit" -c user.name="Claude Agent" -m "..."
-  ```
-- Do **not** add `Co-Authored-By: Claude` trailers — the `-c` author override replaces that convention.
+- **Subject line format:** `<type>: <subject>`. The wrapper enforces `<type>` against `policy.allowed_types`. Defaults: `feat | task | fix | refactor | test | docs`. Imperative mood, ≤72 chars, no trailing period.
+- **Branch refusal:** the wrapper refuses to commit on any branch listed in `policy.refuse_on_branches` (default `["main", "master"]`). Create a feature branch first (`/git branch <name>`).
+- **Multi-paragraph messages:** repeat `-m` per paragraph — `... commit -m "feat: X" -m "Body line 1" -m "Body line 2"`.
+- Do **not** add `Co-Authored-By: Claude` trailers — the wrapper's `--local` identity override replaces that convention.
 - Show the proposed message and wait for confirmation before committing — **except** at plan-completion checkpoints (see *Auto-commit at plan completion* below).
 - Never push unless I explicitly ask.
+
+### Tags
+
+`git tag` is gated by policy and **off by default**. Edit `~/.claude/git-policy.json`:
+
+```json
+"tags": { "agent_may_tag": false, "auto_push": false }
+```
+
+- `agent_may_tag: false` (default) — the wrapper's `tag` subcommand refuses. Don't fall back to raw `git tag`; ask me first.
+- `agent_may_tag: true` — wrapper creates annotated tags only: `python ~/.claude/scripts/git-identity.py tag v1.0.0 -m "release notes"`.
+- `auto_push: false` (default) — tags stay local until I push them myself. Never `git push --tags` automatically.
+
+### Editing the policy
+
+Two equivalent ways to change values:
+
+- Edit `~/.claude/git-policy.json` in your editor.
+- `python ~/.claude/scripts/git-identity.py policy set --agent-email "you@example.com"` (or `--agent-name`, `--agent-may-tag true|false`, `--auto-push true|false`).
+- `python ~/.claude/scripts/git-identity.py policy add-type wip` / `policy remove-type docs` to change the allowed-type list.
+- `python ~/.claude/scripts/git-identity.py policy show` to see current values + source file.
+
+If `~/.claude/git-policy.json` doesn't exist yet, the wrapper falls back to `~/.claude/git/git-policy.default.json` (seeded by the apply script) and then to its built-in defaults.
+
+### Recovery
+
+If a commit crashes mid-flight and `.git/config --local` is stuck on agent identity, run `/git-restore-identity` (or `python ~/.claude/scripts/git-identity.py restore`) in the affected repo.
 
 ### Auto-commit at plan completion
 
@@ -60,12 +88,13 @@ When a planning skill (`/plan`, `/speckit-plan`, `/speckit-tasks`, `/speckit-imp
 - **Pre-flight: stage only this session's changes.** Before editing any file as part of a plan, run `git diff HEAD --name-only` to see what already has uncommitted modifications. If a file you plan to edit was already modified before the session, treat it as off-limits for this commit — either skip the edit, or fold it into the unrelated in-flight work later. Never sweep pre-existing in-flight changes into your auto-commit.
 - **Separate commits per distinct feature**, BUT do not split a single file across two commits via an intermediate file-state dance. If two features both touch `settings.json` (or any shared file), prefer one combined commit ("feat: add X + Y") over rewriting → committing → restoring.
 - **Use `git -C <repo>` for every git command.** Never prepend `cd <repo> && git ...` — the harness's safety guardrail treats compound commands as suspicious and denies them, even on a safe branch.
-- **Branch-safety check pattern:** chain verification and commit in one bash invocation so the check is the immediate precondition of the commit:
+- **Branch-safety check pattern:** the `git-identity` wrapper already enforces `policy.refuse_on_branches`, so a simple one-liner suffices at plan completion:
   ```bash
-  BRANCH=$(git -C <repo> rev-parse --abbrev-ref HEAD)
-  if [ "$BRANCH" != "main" ] && [ "$BRANCH" != "master" ]; then
-    git -C <repo> -c user.email="my@agent.commit" -c user.name="Claude Agent" commit -m "..."
-  fi
+  python ~/.claude/scripts/git-identity.py commit --repo <repo> -m "<type>: <subject>"
+  ```
+  If you need to chain a staged-file check first, do it in the same bash invocation:
+  ```bash
+  git -C <repo> diff --cached --quiet || python ~/.claude/scripts/git-identity.py commit --repo <repo> -m "..."
   ```
 - **On a guardrail denial after a verified-safe branch, retry the exact same command once before escalating.** The branch-safety check is occasionally flaky on back-to-back commits and usually clears on retry. Only escalate to me if it denies twice in a row.
 

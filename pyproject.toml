@@ -53,3 +53,9 @@ include = [
   "LICENSE",
   "setup/src/cabal/README.md",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["setup/tests", "global/hooks/tests"]
+filterwarnings = [
+  "ignore::DeprecationWarning:textual",
+]

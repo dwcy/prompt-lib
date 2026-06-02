@@ -91,6 +91,23 @@ if [ -d "$SCRIPT_DIR/git" ]; then
   echo "  Copied  git/ ($(find "$SCRIPT_DIR/git" -type f | wc -l) files)"
 fi
 
+# Seed git-policy.json from default (idempotent — never overwrites user edits)
+if [ -f "$SCRIPT_DIR/git/git-policy.default.json" ]; then
+  if [ ! -f "$TARGET/git-policy.json" ]; then
+    cp "$SCRIPT_DIR/git/git-policy.default.json" "$TARGET/git-policy.json"
+    echo "  Seeded  git-policy.json (new file — edit to change agent identity / allowed commit types / tag rules)"
+  else
+    echo "  Kept    git-policy.json (existing user file preserved)"
+  fi
+fi
+
+# Copy scripts/ (git-identity helper invoked by the commit rule in CLAUDE.md)
+if [ -d "$SCRIPT_DIR/scripts" ]; then
+  mkdir -p "$TARGET/scripts"
+  cp "$SCRIPT_DIR/scripts/"* "$TARGET/scripts/"
+  echo "  Copied  scripts/ ($(find "$SCRIPT_DIR/scripts" -type f | wc -l) files)"
+fi
+
 # Copy rules
 mkdir -p "$TARGET/rules"
 cp "$SCRIPT_DIR/rules/"*.md "$TARGET/rules/"
