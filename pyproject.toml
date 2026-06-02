@@ -53,3 +53,36 @@ include = [
   "LICENSE",
   "setup/src/cabal/README.md",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["setup/tests", "global/hooks/tests"]
+asyncio_mode = "strict"
+filterwarnings = [
+  "ignore::DeprecationWarning:textual",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+extend-exclude = [
+  "services/*/.venv",
+  "**/__pycache__",
+  "build",
+  "setup/build",
+]
+
+[tool.ruff.lint]
+# Bug-catchers only — no style churn.
+# F  = pyflakes (F821 undefined names, F401 unused imports, F811 redefined, etc.)
+# E9 = syntax errors
+# B  = flake8-bugbear (likely-bug patterns)
+select = ["F", "E9", "B"]
+ignore = [
+  "F401",  # unused imports — common in re-export modules like cabal/app.py
+  "F841",  # unused locals — common in views during incremental edits
+  "B008",  # function call in default arg — fine for FastAPI/Textual patterns
+]
+
+[tool.ruff.lint.per-file-ignores]
+"setup/tests/**" = ["F811"]
+"global/hooks/**" = ["F841"]

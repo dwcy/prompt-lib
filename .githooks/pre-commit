@@ -1,19 +1,27 @@
 #!/usr/bin/env python3
-"""Pre-commit: refuse commits that shadow Textual base-class internals.
+"""Pre-commit: lint staged Python + refuse commits that shadow Textual internals.
 
-Flags methods on classes inheriting from `textual.*` whose name collides with a
-base-class member (excluding dunders). See global/rules/python.md "Textual widgets".
+Runs two checks on staged `.py` files:
 
-Per-method bypass: append `# noqa: textual-shadow` to the `def` line.
+1. `ruff check` with the F821 (undefined-name) rule and friends — catches the
+   `NameError: name 'X' is not defined` class of bug at commit time instead
+   of at runtime. Hard-fails if ruff is missing.
+2. Textual base-class shadow check (see global/rules/python.md "Textual widgets").
+
+Per-method bypass for shadow check: append `# noqa: textual-shadow` to the def.
 
 Enable once per clone:
     git config core.hooksPath .githooks
+
+Install ruff once per machine:
+    uv tool install ruff      # or: pipx install ruff
 """
 
 from __future__ import annotations
 
 import ast
 import importlib
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -95,25 +103,48 @@ def check_file(path: Path) -> list[str]:
     return errors
 
 
-def main() -> int:
-    errors: list[str] = []
-    for path in staged_python_files():
-        if not path.exists():
-            continue
-        errors.extend(check_file(path))
-    if not errors:
+def run_ruff(files: list[Path]) -> int:
+    """Run ruff on staged .py files. Returns 0 (pass) or 1 (fail/missing)."""
+    if not files:
         return 0
-    print("Textual shadow check failed:\n", file=sys.stderr)
-    for e in errors:
-        print(f"  {e}", file=sys.stderr)
-    print(
-        "\nSingle-underscore is convention-only in Python — overrides of Textual\n"
-        "base methods compile silently and crash at layout time.\n"
-        "See global/rules/python.md \"Textual widgets\".\n"
-        "Bypass for a legitimate one-off: append `# noqa: textual-shadow` to the def line.",
-        file=sys.stderr,
+    if shutil.which("ruff") is None:
+        print(
+            "pre-commit: ruff not found on PATH.\n"
+            "  Install once:  uv tool install ruff   (or: pipx install ruff)\n"
+            "  Then re-commit. This check exists to catch undefined-name bugs\n"
+            "  (F821) before they ship — like `NameError: GITIGNORE_BY_TEMPLATE`.",
+            file=sys.stderr,
+        )
+        return 1
+    rel = [str(p) for p in files]
+    result = subprocess.run(
+        ["ruff", "check", "--no-cache", "--output-format=concise", *rel],
+        capture_output=False,
     )
-    return 1
+    return 0 if result.returncode == 0 else 1
+
+
+def main() -> int:
+    files = [p for p in staged_python_files() if p.exists()]
+
+    ruff_rc = run_ruff(files)
+
+    shadow_errors: list[str] = []
+    for path in files:
+        shadow_errors.extend(check_file(path))
+    if shadow_errors:
+        print("Textual shadow check failed:\n", file=sys.stderr)
+        for e in shadow_errors:
+            print(f"  {e}", file=sys.stderr)
+        print(
+            "\nSingle-underscore is convention-only in Python — overrides of Textual\n"
+            "base methods compile silently and crash at layout time.\n"
+            "See global/rules/python.md \"Textual widgets\".\n"
+            "Bypass for a legitimate one-off: append `# noqa: textual-shadow` to the def line.",
+            file=sys.stderr,
+        )
+
+    return 1 if (ruff_rc or shadow_errors) else 0
 
 
 if __name__ == "__main__":

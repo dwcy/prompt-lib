@@ -42,6 +42,7 @@ from cabal.diff_apply import (
 from cabal.env_detect import detect_env, find_env_vars
 from cabal.env_summary import render_env_summary
 from cabal.git_config import apply_git_line_endings, recommended_autocrlf
+from cabal.gitignore_presets import GITIGNORE_BY_TEMPLATE
 from cabal.installers.gh import gh_device_init, gh_device_poll, gh_fetch_token
 from cabal.mcp_ops import (
     claude_mcp_add_from_template,
