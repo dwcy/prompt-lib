@@ -17,6 +17,7 @@ from textual.screen import Screen
 from textual.widgets import Button, DataTable, Footer, Static
 
 from cabal.app_widgets import AppHeader
+from cabal.init_project_service import ensure_mcp_gitignored
 from cabal.mcp_ops import enumerate_mcp_servers
 
 _WINDOWS_CMD_WRAPPED = frozenset({"pnpm", "npx", "bunx"})
@@ -212,11 +213,9 @@ class ProjectMcpScreen(Screen):
         if platform.system() == "Windows" and cmd in _WINDOWS_CMD_WRAPPED:
             joined = " ".join([cmd] + args)
             cmd, args = "cmd", ["/s", "/c", joined]
-        env: dict[str, str] = {}
-        for var in tmpl.get("env_required") or []:
-            val = os.environ.get(var, "")
-            if val:
-                env[var] = val
+        env: dict[str, str] = {
+            var: f"${{{var}}}" for var in tmpl.get("env_required") or []
+        }
         return {"command": cmd, "args": args, "env": env}
 
     def _write_project_mcp(self, entries: dict) -> None:
@@ -237,6 +236,7 @@ class ProjectMcpScreen(Screen):
             tmp_path = f.name
         os.replace(tmp_path, final)
         json.loads(final.read_text(encoding="utf-8"))
+        ensure_mcp_gitignored(self._target_dir)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         bid = event.button.id or ""
