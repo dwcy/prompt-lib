@@ -15,9 +15,8 @@ from pathlib import Path
 
 from rich.text import Text
 from textual.app import ComposeResult
-from textual.containers import Horizontal
 from textual.widget import Widget
-from textual.widgets import Button, Static
+from textual.widgets import Static
 
 
 @dataclass
@@ -66,8 +65,6 @@ class ClaudeStatsPanel(Widget):
     }
     ClaudeStatsPanel #cs-title { content-align: left middle; height: 1; }
     ClaudeStatsPanel #cs-body { height: auto; padding: 0 0 0 0; }
-    ClaudeStatsPanel #cs-actions { height: 3; padding: 0; margin: 1 0 0 0; }
-    ClaudeStatsPanel #cs-actions Button { min-width: 16; height: 3; }
     """
 
     def __init__(self, **kwargs) -> None:
@@ -75,10 +72,10 @@ class ClaudeStatsPanel(Widget):
         self._status: ClaudeAccountStatus | None = None
 
     def compose(self) -> ComposeResult:
-        yield Static("[bold bright_magenta]✦ Claude account[/bold bright_magenta]", id="cs-title")
+        yield Static(
+            "[bold bright_magenta]✦ Claude account[/bold bright_magenta]", id="cs-title"
+        )
         yield Static("[dim]Loading…[/dim]", id="cs-body")
-        with Horizontal(id="cs-actions"):
-            yield Button("Refresh (Ctrl+S)", id="cs-refresh", variant="default")
 
     def on_mount(self) -> None:
         self.refresh_stats()
@@ -97,13 +94,15 @@ class ClaudeStatsPanel(Widget):
             lines.append(f"[bold]Signed in:[/bold] {st.email}")
         else:
             lines.append("[dim]not signed in — run `claude /login`[/dim]")
-        token_disp = "[green]✓ token present[/green]" if st.token_present else "[dim]✗ no token[/dim]"
+        token_disp = (
+            "[green]✓ token present[/green]"
+            if st.token_present
+            else "[dim]✗ no token[/dim]"
+        )
         lines.append(f"[bold]Auth:[/bold] {token_disp}")
         if st.error:
             lines.append(f"[yellow]{st.error}[/yellow]")
-        lines.append("[dim]Plan, usage and active model only visible from the interactive `claude` UI (`/status`).[/dim]")
+        lines.append(
+            "[dim]Plan, usage and active model only visible from the interactive `claude` UI (`/status`).[/dim]"
+        )
         return Text.from_markup("\n".join(lines))
-
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        if (event.button.id or "") == "cs-refresh":
-            self.refresh_stats()

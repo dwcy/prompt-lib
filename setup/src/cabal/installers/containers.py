@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Container + Kubernetes tooling — Docker, Podman, kubectl."""
+"""Container + Kubernetes tooling — Docker, Podman, kubectl, OpenShift CLI."""
 
 from __future__ import annotations
 
@@ -13,7 +13,9 @@ def docker_install() -> tuple[bool, str]:
     sysname = platform.system()
     if sysname == "Windows":
         if shutil.which("winget"):
-            return _run_install(["winget", "install", "--id", "Docker.DockerDesktop", *_WINGET_FLAGS])
+            return _run_install(
+                ["winget", "install", "--id", "Docker.DockerDesktop", *_WINGET_FLAGS]
+            )
         return False, "Install manually from https://docker.com/products/docker-desktop"
     if sysname == "Darwin":
         if shutil.which("brew"):
@@ -21,7 +23,10 @@ def docker_install() -> tuple[bool, str]:
         return False, "Install manually from https://docker.com/products/docker-desktop"
     if sysname == "Linux":
         # Docker on Linux varies by distro (engine vs desktop). Send user to docs.
-        return False, "See https://docs.docker.com/engine/install/ for distro-specific steps"
+        return (
+            False,
+            "See https://docs.docker.com/engine/install/ for distro-specific steps",
+        )
     return False, f"Unsupported platform: {sysname}"
 
 
@@ -29,7 +34,9 @@ def podman_install() -> tuple[bool, str]:
     sysname = platform.system()
     if sysname == "Windows":
         if shutil.which("winget"):
-            return _run_install(["winget", "install", "--id", "RedHat.Podman", *_WINGET_FLAGS])
+            return _run_install(
+                ["winget", "install", "--id", "RedHat.Podman", *_WINGET_FLAGS]
+            )
         return False, "Install manually from https://podman.io"
     if sysname == "Darwin":
         if shutil.which("brew"):
@@ -46,11 +53,39 @@ def podman_install() -> tuple[bool, str]:
     return False, f"Unsupported platform: {sysname}"
 
 
+def openshift_install() -> tuple[bool, str]:
+    sysname = platform.system()
+    if sysname == "Windows":
+        if shutil.which("winget"):
+            return _run_install(
+                ["winget", "install", "--id", "RedHat.OpenShift-Client", *_WINGET_FLAGS]
+            )
+        return (
+            False,
+            "Install manually from https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/",
+        )
+    if sysname == "Darwin":
+        if shutil.which("brew"):
+            return _run_install(["brew", "install", "openshift-cli"])
+        return (
+            False,
+            "Install manually from https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/",
+        )
+    if sysname == "Linux":
+        return (
+            False,
+            "Download the `oc` client from https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/",
+        )
+    return False, f"Unsupported platform: {sysname}"
+
+
 def kubectl_install() -> tuple[bool, str]:
     sysname = platform.system()
     if sysname == "Windows":
         if shutil.which("winget"):
-            return _run_install(["winget", "install", "--id", "Kubernetes.kubectl", *_WINGET_FLAGS])
+            return _run_install(
+                ["winget", "install", "--id", "Kubernetes.kubectl", *_WINGET_FLAGS]
+            )
         return False, "Install manually from https://kubernetes.io/docs/tasks/tools/"
     if sysname == "Darwin":
         if shutil.which("brew"):

@@ -1,29 +1,19 @@
-"""Regression guard for Ctrl+C quitting the CabalApp from any screen.
+"""Guard: Ctrl+C must NOT be bound to quit on CabalApp.
 
-The default Textual binding set does NOT include ctrl+c — the terminal driver
-silently swallows it in raw mode. This test makes sure we don't lose the
-explicit binding on the next refactor of BINDINGS.
+Textual >= 8 uses Ctrl+C as the native copy shortcut for selected text.
+Binding ctrl+c -> quit breaks terminal copy and terminates the app whenever
+the user tries to copy content. Quit is on Ctrl+Q (and the `q` key).
+
+If Ctrl+C ever "appears to do nothing" in the wizard, that is because no text
+is selected -- not because the binding is missing. Do not re-add it.
 """
 
 from __future__ import annotations
 
-import pytest
-
 from cabal.app import CabalApp
 
 
-@pytest.mark.asyncio
-async def test_ctrl_c_quits_from_home_screen():
-    app = CabalApp()
-    async with app.run_test() as pilot:
-        await pilot.pause()
-        await pilot.press("ctrl+c")
-        await pilot.pause()
-
-        assert app._exit is True
-
-
-def test_ctrl_c_binding_present_on_cabal_app():
+def test_ctrl_c_not_bound_on_cabal_app():
     binding_keys = {b.key for b in CabalApp.BINDINGS}
 
-    assert "ctrl+c" in binding_keys
+    assert "ctrl+c" not in binding_keys

@@ -42,7 +42,11 @@ class Component:
                 return []
             return [(self.src_path, Path(self.src).name)]
         out: list[tuple[Path, Path]] = []
-        iterator = self.src_path.rglob("*") if self.recursive else self.src_path.glob(self.glob)
+        iterator = (
+            self.src_path.rglob("*")
+            if self.recursive
+            else self.src_path.glob(self.glob)
+        )
         for f in iterator:
             if not f.is_file() or _os_should_skip(f.name):
                 continue
@@ -54,18 +58,45 @@ class Component:
 
 
 COMPONENTS: list[Component] = [
-    Component("settings",          "settings.json",      "file", "settings.json",      "settings.json"),
-    Component("claude_md",         "CLAUDE.md",          "file", "CLAUDE.md",          "CLAUDE.md"),
-    Component("design_md",         "DESIGN.md",          "file", "DESIGN.md",          "DESIGN.md"),
-    Component("keybindings",       "keybindings.json",   "file", "keybindings.json",   "keybindings.json"),
-    Component("statusline",        "statusline.py",      "file", "statusline.py",      "statusline.py"),
-    Component("agents",            "agents/",            "dir",  "agents",             "agents",           glob="*.md"),
-    Component("hooks",             "hooks/",             "dir",  "hooks",              "hooks",            glob="*"),
-    Component("skills",            "skills/",            "dir",  "skills",             "skills",           glob="*.md"),
-    Component("rules",             "rules/",             "dir",  "rules",              "rules",            glob="*.md"),
-    Component("output_styles",     "output-styles/",     "dir",  "output-styles",      "output-styles",    glob="*.md"),
-    Component("project_templates", "project-templates/", "dir",  "project-templates",  "project-templates", glob="*.md"),
-    Component("git_templates",     "git/ templates",     "dir",  "git",                "git",              recursive=True),
+    Component("settings", "settings.json", "file", "settings.json", "settings.json"),
+    Component("claude_md", "CLAUDE.md", "file", "CLAUDE.md", "CLAUDE.md"),
+    Component("design_md", "DESIGN.md", "file", "DESIGN.md", "DESIGN.md"),
+    Component(
+        "keybindings",
+        "keybindings.json",
+        "file",
+        "keybindings.json",
+        "keybindings.json",
+    ),
+    Component("statusline", "statusline.py", "file", "statusline.py", "statusline.py"),
+    Component(
+        "statusline_segments",
+        "statusline-segments.json",
+        "file",
+        "statusline-segments.json",
+        "statusline-segments.json",
+    ),
+    Component("agents", "agents/", "dir", "agents", "agents", glob="*.md"),
+    Component("hooks", "hooks/", "dir", "hooks", "hooks", glob="*"),
+    Component("skills", "skills/", "dir", "skills", "skills", glob="*.md"),
+    Component("rules", "rules/", "dir", "rules", "rules", glob="*.md"),
+    Component(
+        "output_styles",
+        "output-styles/",
+        "dir",
+        "output-styles",
+        "output-styles",
+        glob="*.md",
+    ),
+    Component(
+        "project_templates",
+        "project-templates/",
+        "dir",
+        "project-templates",
+        "project-templates",
+        glob="*.md",
+    ),
+    Component("git_templates", "git/ templates", "dir", "git", "git", recursive=True),
 ]
 
 ENV_DESCRIPTIONS: dict[str, str] = {

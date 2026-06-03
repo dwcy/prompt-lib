@@ -30,6 +30,7 @@ from cabal.views.operations import OperationsScreen  # noqa: F401
 from cabal.views.project_mcp import ProjectMcpScreen  # noqa: F401
 from cabal.views.readme import ReadmeScreen  # noqa: F401
 from cabal.views.restore import RestoreScreen  # noqa: F401
+from cabal.views.statusline import StatuslineScreen  # noqa: F401
 from cabal.views.tools import ToolsScreen  # noqa: F401
 from cabal.views.update import UpdateScreen  # noqa: F401
 
@@ -194,7 +195,6 @@ class CabalApp(App):
 
     BINDINGS = [
         Binding("ctrl+q", "quit", "Quit", show=True),
-        Binding("ctrl+c", "quit", "Quit", show=False, priority=True),
         Binding("q", "quit", "Quit", show=False),
         Binding("left", "focus_previous", show=False),
         Binding("right", "focus_next", show=False),

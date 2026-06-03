@@ -1,0 +1,21 @@
+{
+  "$schema_version": 1,
+  "segments": [
+    { "key": "model", "label": "Model", "row": 1, "enabled": true, "description": "Active Claude model display name (e.g. Opus 4.8)." },
+    { "key": "update", "label": "Update available", "row": 1, "enabled": true, "description": "Shows ⬆ <version> when a newer Claude Code release is published. Hidden when up to date." },
+    { "key": "context", "label": "Context usage", "row": 1, "enabled": true, "description": "Percent of the context window used, colour-coded; shows ⚠ when over 200k tokens." },
+    { "key": "cost", "label": "Cost & duration", "row": 1, "enabled": true, "description": "Session cost in USD plus elapsed wall-clock time." },
+    { "key": "diff", "label": "Lines changed", "row": 1, "enabled": true, "description": "Lines added / removed across the session." },
+    { "key": "output_style", "label": "Output style", "row": 1, "enabled": true, "description": "Active output style. Hidden when set to default." },
+    { "key": "ratelimit", "label": "Rate limits", "row": 1, "enabled": true, "description": "Remaining 5-hour and 7-day quota headroom. Hidden while headroom is high." },
+    { "key": "cwd", "label": "Working directory", "row": 1, "enabled": true, "description": "Current working directory, clickable to open in your editor." },
+    { "key": "branch", "label": "Git branch", "row": 2, "enabled": true, "description": "Current git branch; flags linked worktrees with 🌳." },
+    { "key": "ahead_behind", "label": "Ahead / behind", "row": 2, "enabled": true, "description": "Commits ahead/behind the upstream branch, or ↕ sync when even." },
+    { "key": "uncommitted", "label": "Uncommitted files", "row": 2, "enabled": true, "description": "Count of files with uncommitted changes." },
+    { "key": "stash", "label": "Stashes", "row": 2, "enabled": true, "description": "Number of git stash entries. Hidden when none." },
+    { "key": "docker", "label": "Docker", "row": 2, "enabled": true, "description": "Whether a Dockerfile / compose file is present in the project." },
+    { "key": "tests", "label": "Tests", "row": 2, "enabled": true, "description": "Latest test results parsed from dotnet / pytest / jest / playwright output." },
+    { "key": "speckit", "label": "Spec Kit", "row": 2, "enabled": true, "description": "Active spec-kit phase progress when on a NNN-* feature branch." },
+    { "key": "activity", "label": "Activity", "row": 2, "enabled": true, "description": "Agent and tool-call counters for the current session." }
+  ]
+}

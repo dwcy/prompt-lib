@@ -14,9 +14,11 @@ two purposes:
 
 from __future__ import annotations
 
+import json
 import platform
 import shutil
 import subprocess
+import urllib.request
 from dataclasses import dataclass
 from typing import Callable
 
@@ -52,6 +54,7 @@ from cabal.installers.databases import (
 from cabal.installers.containers import (
     docker_install,
     kubectl_install,
+    openshift_install,
     podman_install,
 )
 from cabal.installers.editors import cursor_install, vscode_install, windsurf_install
@@ -71,25 +74,26 @@ from cabal.installers.vcs import git_install
 # upgrade availability via `winget upgrade`. macOS/Linux outdated-checks are best-effort
 # and currently no-op (return empty set), so those platforms always render "Latest".
 WINGET_IDS: dict[str, str] = {
-    "git":       "Git.Git",
-    "python":    "Python.Python.3.13",
-    "dotnet":    "Microsoft.DotNet.SDK.9",
-    "node":      "OpenJS.NodeJS.LTS",
-    "pnpm":      "pnpm.pnpm",
-    "bun":       "Oven-sh.Bun",
-    "docker":    "Docker.DockerDesktop",
-    "podman":    "RedHat.Podman",
-    "kubectl":   "Kubernetes.kubectl",
+    "git": "Git.Git",
+    "python": "Python.Python.3.13",
+    "dotnet": "Microsoft.DotNet.SDK.9",
+    "node": "OpenJS.NodeJS.LTS",
+    "pnpm": "pnpm.pnpm",
+    "bun": "Oven-sh.Bun",
+    "docker": "Docker.DockerDesktop",
+    "podman": "RedHat.Podman",
+    "kubectl": "Kubernetes.kubectl",
+    "oc": "RedHat.OpenShift-Client",
     "terraform": "Hashicorp.Terraform",
-    "az":        "Microsoft.AzureCLI",
-    "gcloud":    "Google.CloudSDK",
-    "aws":       "Amazon.AWSCLI",
-    "cursor":    "Anysphere.Cursor",
-    "windsurf":  "Codeium.Windsurf",
-    "ollama":    "Ollama.Ollama",
-    "vscode":    "Microsoft.VisualStudioCode",
-    "gh":        "GitHub.cli",
-    "sqlcmd":    "Microsoft.Sqlcmd",
+    "az": "Microsoft.AzureCLI",
+    "gcloud": "Google.CloudSDK",
+    "aws": "Amazon.AWSCLI",
+    "cursor": "Anysphere.Cursor",
+    "windsurf": "Codeium.Windsurf",
+    "ollama": "Ollama.Ollama",
+    "vscode": "Microsoft.VisualStudioCode",
+    "gh": "GitHub.cli",
+    "sqlcmd": "Microsoft.Sqlcmd",
 }
 
 
@@ -97,24 +101,45 @@ def _probe_key(key: str) -> object:
     """Detect a single env key in isolation — same value detect_env() would put there.
     Used to populate ToolsScreen one group at a time so fast groups render before slow ones.
     """
-    if key == "python":       return platform.python_version()
-    if key == "dotnet":       return _probe_version("dotnet", "--version")
-    if key == "node":         return _probe_version("node", "--version")
-    if key == "npm":          return _probe_version("npm", "--version")
-    if key == "pnpm":         return _probe_version("pnpm", "--version")
-    if key == "bun":          return _probe_version("bun", "--version")
-    if key == "docker":       return _probe_version("docker", "--version")
-    if key == "podman":       return _probe_version("podman", "--version")
-    if key == "kubectl":      return _kubectl_version()
-    if key == "terraform":    return _probe_version("terraform", "--version")
-    if key == "az":           return _probe_version("az", "--version")
-    if key == "gcloud":       return _probe_version("gcloud", "--version")
-    if key == "aws":          return _probe_version("aws", "--version")
-    if key == "rider":        return _has_rider()
-    if key == "visualstudio": return _has_visual_studio()
+    if key == "python":
+        return platform.python_version()
+    if key == "dotnet":
+        return _probe_version("dotnet", "--version")
+    if key == "node":
+        return _probe_version("node", "--version")
+    if key == "npm":
+        return _probe_version("npm", "--version")
+    if key == "pnpm":
+        return _probe_version("pnpm", "--version")
+    if key == "bun":
+        return _probe_version("bun", "--version")
+    if key == "docker":
+        return _probe_version("docker", "--version")
+    if key == "podman":
+        return _probe_version("podman", "--version")
+    if key == "kubectl":
+        return _kubectl_version()
+    if key == "oc":
+        return _probe_version("oc", "version", "--client")
+    if key == "terraform":
+        return _probe_version("terraform", "--version")
+    if key == "az":
+        return _probe_version("az", "--version")
+    if key == "gcloud":
+        return _probe_version("gcloud", "--version")
+    if key == "aws":
+        return _probe_version("aws", "--version")
+    if key == "rider":
+        return _has_rider()
+    if key == "visualstudio":
+        return _has_visual_studio()
     if key == "copilot":
-        return shutil.which("copilot") is not None or shutil.which("gh-copilot") is not None
-    if key == "vscode":       return shutil.which("code") is not None
+        return (
+            shutil.which("copilot") is not None
+            or shutil.which("gh-copilot") is not None
+        )
+    if key == "vscode":
+        return shutil.which("code") is not None
     return shutil.which(key) is not None
 
 
@@ -126,7 +151,7 @@ def _probe_key(key: str) -> object:
 VERSION_FLOORS: dict[str, tuple[int, int]] = {
     "python": (3, 13),
     "dotnet": (9, 0),
-    "node":   (22, 0),  # current LTS line
+    "node": (22, 0),  # current LTS line
 }
 
 
@@ -139,6 +164,58 @@ def _parse_major_minor(raw: str | None) -> tuple[int, int] | None:
     if len(parts) >= 2 and parts[0].isdigit() and parts[1].isdigit():
         return int(parts[0]), int(parts[1])
     return None
+
+
+def _parse_semver(raw: str | None) -> tuple[int, int, int] | None:
+    """Parse 'x.y.z' (optionally prefixed with 'v' or trailed by extra text) into a tuple."""
+    if not raw:
+        return None
+    head = raw.strip().lstrip("vV").split()[0]
+    head = head.split("-")[0].split("+")[0]
+    parts = head.split(".")[:3]
+    try:
+        nums = [int(p) for p in parts]
+    except ValueError:
+        return None
+    while len(nums) < 3:
+        nums.append(0)
+    return (nums[0], nums[1], nums[2])
+
+
+def _npm_latest_version(package: str, timeout: float = 5.0) -> str | None:
+    """Fetch the latest published version of an npm package via the public registry."""
+    url = f"https://registry.npmjs.org/{package}/latest"
+    try:
+        with urllib.request.urlopen(url, timeout=timeout) as resp:
+            payload = json.load(resp)
+    except Exception:
+        return None
+    v = payload.get("version")
+    return v if isinstance(v, str) and v else None
+
+
+CLAUDE_CLI_PACKAGE = "@anthropic-ai/claude-code"
+
+
+def _claude_cli_outdated() -> bool:
+    """True if local `claude --version` is older than the latest @anthropic-ai/claude-code on npm."""
+    if not shutil.which("claude"):
+        return False
+    try:
+        r = subprocess.run(
+            ["claude", "--version"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+    if r.returncode != 0:
+        return False
+    local = _parse_semver((r.stdout or r.stderr).strip())
+    latest = _parse_semver(_npm_latest_version(CLAUDE_CLI_PACKAGE) or "")
+    return local is not None and latest is not None and local < latest
 
 
 def _below_floor(key: str, env_value: object) -> bool:
@@ -161,68 +238,87 @@ def _below_floor(key: str, env_value: object) -> bool:
 
 
 def _outdated_packages() -> set[str]:
-    """Env keys whose package has an upgrade available. Windows/winget only for now."""
-    if platform.system() != "Windows" or not shutil.which("winget"):
-        return set()
-    try:
-        r = subprocess.run(
-            ["winget", "upgrade", "--include-unknown",
-             "--accept-source-agreements", "--disable-interactivity"],
-            capture_output=True, text=True, timeout=20, check=False,
-        )
-    except (OSError, subprocess.SubprocessError):
-        return set()
-    if r.returncode != 0:
-        return set()
-    text = r.stdout or ""
-    return {key for key, wid in WINGET_IDS.items() if wid in text}
+    """Env keys whose package has an upgrade available.
+
+    Winget covers most CLIs on Windows; the Claude CLI ships via npm, so it
+    needs a separate check against the npm registry to surface the Update
+    button on the Tools view.
+    """
+    result: set[str] = set()
+    if platform.system() == "Windows" and shutil.which("winget"):
+        try:
+            r = subprocess.run(
+                [
+                    "winget",
+                    "upgrade",
+                    "--include-unknown",
+                    "--accept-source-agreements",
+                    "--disable-interactivity",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=20,
+                check=False,
+            )
+        except (OSError, subprocess.SubprocessError):
+            r = None
+        if r is not None and r.returncode == 0:
+            text = r.stdout or ""
+            result.update(key for key, wid in WINGET_IDS.items() if wid in text)
+    if _claude_cli_outdated():
+        result.add("claude")
+    return result
 
 
 # Maps env-panel keys to (install fn, button label). Order here determines button order.
 ENV_INSTALLERS: list[tuple[str, str, Callable[[], tuple[bool, str]]]] = [
-    ("git",         "Git",        git_install),
-    ("python",      "Python",     python_install),
-    ("dotnet",      ".NET SDK",   dotnet_install),
-    ("node",        "Node",       node_install),
-    ("npm",         "npm",        npm_install),
-    ("pnpm",        "pnpm",       pnpm_install),
-    ("bun",         "bun",        bun_install),
-    ("docker",      "Docker",     docker_install),
-    ("podman",      "Podman",     podman_install),
-    ("kubectl",     "kubectl",    kubectl_install),
-    ("terraform",   "Terraform",  terraform_install),
-    ("az",          "Azure CLI",  az_install),
-    ("gcloud",      "Google Cloud", gcloud_install),
-    ("aws",         "AWS CLI",    aws_install),
-    ("claude",      "Claude CLI", claude_cli_install),
-    ("gemini",      "Gemini CLI", gemini_install),
-    ("codex",       "Codex CLI",  codex_install),
-    ("opencode",    "OpenCode",   opencode_install),
-    ("grok",        "Grok",       grok_install),
-    ("cursor",      "Cursor",     cursor_install),
-    ("windsurf",    "Windsurf",   windsurf_install),
-    ("copilot",     "Copilot",    copilot_install),
-    ("antigravity", "Antigravity",antigravity_install),
-    ("vscode",      "VS Code",    vscode_install),
-    ("ollama",      "Ollama",     ollama_install),
-    ("gh",          "GitHub",     gh_install),
-    ("sqlcmd",      "MSSQL",      sqlcmd_install),
-    ("psql",        "Postgres",   postgres_install),
-    ("supabase",    "Supabase",   supabase_install),
-    ("neonctl",     "Neon",       neon_install),
+    ("git", "Git", git_install),
+    ("python", "Python", python_install),
+    ("dotnet", ".NET SDK", dotnet_install),
+    ("node", "Node", node_install),
+    ("npm", "npm", npm_install),
+    ("pnpm", "pnpm", pnpm_install),
+    ("bun", "bun", bun_install),
+    ("docker", "Docker", docker_install),
+    ("podman", "Podman", podman_install),
+    ("kubectl", "kubectl", kubectl_install),
+    ("oc", "OpenShift CLI", openshift_install),
+    ("terraform", "Terraform", terraform_install),
+    ("az", "Azure CLI", az_install),
+    ("gcloud", "Google Cloud", gcloud_install),
+    ("aws", "AWS CLI", aws_install),
+    ("claude", "Claude CLI", claude_cli_install),
+    ("gemini", "Gemini CLI", gemini_install),
+    ("codex", "Codex CLI", codex_install),
+    ("opencode", "OpenCode", opencode_install),
+    ("grok", "Grok", grok_install),
+    ("cursor", "Cursor", cursor_install),
+    ("windsurf", "Windsurf", windsurf_install),
+    ("copilot", "Copilot", copilot_install),
+    ("antigravity", "Antigravity", antigravity_install),
+    ("vscode", "VS Code", vscode_install),
+    ("ollama", "Ollama", ollama_install),
+    ("gh", "GitHub", gh_install),
+    ("sqlcmd", "MSSQL", sqlcmd_install),
+    ("psql", "Postgres", postgres_install),
+    ("supabase", "Supabase", supabase_install),
+    ("neonctl", "Neon", neon_install),
 ]
 
 
 # Groups used by ToolsScreen — order = display order, keys reference ENV_INSTALLERS.
 ENV_TOOL_GROUPS: list[tuple[str, list[str]]] = [
-    ("System & VCS",      ["git", "gh"]),
-    ("Runtimes",          ["python", "dotnet", "node"]),
-    ("Package Managers",  ["npm", "pnpm", "bun"]),
-    ("Container & Cloud", ["docker", "podman", "kubectl", "terraform", "az", "gcloud", "aws"]),
-    ("Databases",         ["sqlcmd", "psql", "supabase", "neonctl"]),
-    ("AI CLIs",           ["claude", "gemini", "codex", "opencode", "grok", "copilot"]),
-    ("Local AI",          ["ollama"]),
-    ("AI Editors",        ["cursor", "windsurf", "antigravity", "vscode"]),
+    ("System & VCS", ["git", "gh"]),
+    ("Runtimes", ["python", "dotnet", "node"]),
+    ("Package Managers", ["npm", "pnpm", "bun"]),
+    (
+        "Container & Cloud",
+        ["docker", "podman", "kubectl", "oc", "terraform", "az", "gcloud", "aws"],
+    ),
+    ("Databases", ["sqlcmd", "psql", "supabase", "neonctl"]),
+    ("AI CLIs", ["claude", "gemini", "codex", "opencode", "grok", "copilot"]),
+    ("Local AI", ["ollama"]),
+    ("AI Editors", ["cursor", "windsurf", "antigravity", "vscode"]),
 ]
 
 

@@ -19,11 +19,30 @@ from rich.markup import escape as escape_markup
 from rich.text import Text
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Center, Container, Horizontal, ScrollableContainer, Vertical, VerticalScroll
+from textual.containers import (
+    Center,
+    Container,
+    Horizontal,
+    ScrollableContainer,
+    Vertical,
+    VerticalScroll,
+)
 from textual.screen import ModalScreen, Screen
 from textual.widgets import (
-    Button, Checkbox, DataTable, Footer, Header, Input, Label,
-    MarkdownViewer, OptionList, RadioButton, RadioSet, Rule, Select, Static,
+    Button,
+    Checkbox,
+    DataTable,
+    Footer,
+    Header,
+    Input,
+    Label,
+    MarkdownViewer,
+    OptionList,
+    RadioButton,
+    RadioSet,
+    Rule,
+    Select,
+    Static,
 )
 from textual.widgets.option_list import Option
 from textual.widget import Widget
@@ -43,6 +62,7 @@ from cabal.env_detect import detect_env, find_env_vars
 from cabal.env_summary import render_env_summary
 from cabal.git_config import apply_git_line_endings, recommended_autocrlf
 from cabal.installers.gh import gh_device_init, gh_device_poll, gh_fetch_token
+from cabal.local_setup import apply_group, build_plan
 from cabal.mcp_ops import (
     claude_mcp_add_from_template,
     claude_mcp_remove,
@@ -65,6 +85,7 @@ from cabal.views.folder_browser import GITIGNORE_BY_TEMPLATE
 from cabal.widgets.env_panel import EnvPanel
 from cabal.widgets.update_panel import UpdatePanel
 
+
 class LocalScreen(Screen):
     """Set up .claude/ in another project."""
 
@@ -75,7 +96,11 @@ class LocalScreen(Screen):
 
     def __init__(self) -> None:
         super().__init__()
-        tpls = sorted((GLOBAL_DIR / "project-templates").glob("*.md")) if (GLOBAL_DIR / "project-templates").exists() else []
+        tpls = (
+            sorted((GLOBAL_DIR / "project-templates").glob("*.md"))
+            if (GLOBAL_DIR / "project-templates").exists()
+            else []
+        )
         self.template_options = [(p.stem, str(p)) for p in tpls]
 
     def compose(self) -> ComposeResult:
@@ -90,7 +115,11 @@ class LocalScreen(Screen):
                 yield Label("Project path: ")
                 yield Button("Browse…", id="loc-browse")
                 yield Input(value=str(Path.cwd()), id="loc-path")
-            yield Checkbox("Create .claude/ scaffolding (skills/, hooks/, settings.local.json)", value=True, id="loc-scaffold")
+            yield Checkbox(
+                "Create .claude/ scaffolding (skills/, hooks/, settings.local.json)",
+                value=True,
+                id="loc-scaffold",
+            )
             yield Static(
                 "Creates .claude/skills/, .claude/hooks/, and settings.local.json with an empty permissions stub.\n"
                 "Claude Code discovers project-local agents and skills from these dirs at session start (docs/architecture.md).\n"
@@ -99,7 +128,9 @@ class LocalScreen(Screen):
                 "Test: ls .claude/ → skills/, hooks/, settings.local.json all present.",
                 classes="help-text",
             )
-            yield Checkbox("Apply CLAUDE.md project template", value=False, id="loc-template")
+            yield Checkbox(
+                "Apply CLAUDE.md project template", value=False, id="loc-template"
+            )
             yield Static(
                 "Copies a starter CLAUDE.md from global/project-templates/ into the project root.\n"
                 "Sets project conventions and stack hints that Claude reads at every session start (docs/rules-output-styles.md).\n"
@@ -108,10 +139,13 @@ class LocalScreen(Screen):
                 classes="help-text",
             )
             if self.template_options:
-                yield Select(self.template_options, id="loc-tpl-select", prompt="Pick template…")
+                yield Select(
+                    self.template_options, id="loc-tpl-select", prompt="Pick template…"
+                )
             yield Checkbox(
                 "Add .gitignore matching the project template",
-                value=False, id="loc-gitignore",
+                value=False,
+                id="loc-gitignore",
             )
             yield Static(
                 "Writes a stack-specific .gitignore using the template picked above "
@@ -120,7 +154,11 @@ class LocalScreen(Screen):
                 "Test: cat .gitignore → see the additions; `git status` should immediately ignore build dirs.",
                 classes="help-text",
             )
-            yield Checkbox("Apply git repo-init template (hooks + .editorconfig + .gitattributes)", value=False, id="loc-git")
+            yield Checkbox(
+                "Apply git repo-init template (hooks + .editorconfig + .gitattributes)",
+                value=False,
+                id="loc-git",
+            )
             yield Static(
                 "Copies global/git/.editorconfig and .gitattributes to the project root, and hook scripts to .git/hooks/.\n"
                 "Requires git init to have been run in the project first.\n"
@@ -128,7 +166,11 @@ class LocalScreen(Screen):
                 "Test: ls .git/hooks/ → hook files present. Open a commit to confirm hooks fire.",
                 classes="help-text",
             )
-            yield Checkbox("Initialize Spec Kit (specify init --here --integration claude)", value=False, id="loc-speckit")
+            yield Checkbox(
+                "Initialize Spec Kit (specify init --here --integration claude)",
+                value=False,
+                id="loc-speckit",
+            )
             yield Static(
                 "Runs `specify init --here --integration claude` in the project to scaffold the Spec Kit workflow "
                 "(.specify/, slash commands like /speckit-specify, /speckit-plan, /speckit-tasks).\n"
@@ -138,7 +180,7 @@ class LocalScreen(Screen):
                 classes="help-text",
             )
             yield Static("")
-            yield DataTable(id="loc-preview", show_cursor=False)
+            yield DataTable(id="loc-preview")
             yield Static("")
             with Horizontal():
                 yield Button("Refresh preview", id="loc-refresh")
@@ -148,20 +190,49 @@ class LocalScreen(Screen):
         yield Footer()
 
     def on_mount(self) -> None:
+        self._use: dict[str, bool] = {}
+        self._child_keys: dict[str, list[str]] = {}
         tbl = self.query_one("#loc-preview", DataTable)
-        tbl.add_columns("Action", "Path", "State")
+        tbl.cursor_type = "row"
+        tbl.add_columns("Use", "Item", "State")
         self._refresh()
+
+    @staticmethod
+    def _box(symbol: str, color: str = "green") -> str:
+        return rf"[{color}]\[{symbol}][/{color}]"
+
+    def _parent_state(self, action: str) -> str:
+        keys = self._child_keys.get(action, [])
+        if not keys:
+            return "empty"
+        selected = sum(1 for k in keys if self._use.get(k))
+        if selected == 0:
+            return "none"
+        if selected == len(keys):
+            return "all"
+        return "partial"
+
+    def _parent_cell(self, action: str) -> str:
+        return {
+            "all": self._box("✓"),
+            "none": self._box(" "),
+            "partial": self._box("~"),
+            "empty": self._box(" ", "dim"),
+        }[self._parent_state(action)]
+
+    def _leaf_cell(self, use_key: str) -> str:
+        return self._box("✓") if self._use.get(use_key) else self._box(" ")
 
     def _project(self) -> Path:
         return Path(self.query_one("#loc-path", Input).value).expanduser()
 
     def _selected(self) -> dict:
         return {
-            "scaffold":  self.query_one("#loc-scaffold", Checkbox).value,
-            "template":  self.query_one("#loc-template", Checkbox).value,
+            "scaffold": self.query_one("#loc-scaffold", Checkbox).value,
+            "template": self.query_one("#loc-template", Checkbox).value,
             "gitignore": self.query_one("#loc-gitignore", Checkbox).value,
-            "git":       self.query_one("#loc-git", Checkbox).value,
-            "speckit":   self.query_one("#loc-speckit", Checkbox).value,
+            "git": self.query_one("#loc-git", Checkbox).value,
+            "speckit": self.query_one("#loc-speckit", Checkbox).value,
         }
 
     def _template_path(self) -> Path | None:
@@ -177,204 +248,124 @@ class LocalScreen(Screen):
 
     def _open_browser(self) -> None:
         from cabal.views.folder_browser import FolderBrowserScreen
+
         raw = self.query_one("#loc-path", Input).value
         start = Path(raw).expanduser()
         if not start.is_dir():
             start = Path.cwd()
+
         def _cb(path: Path | None) -> None:
             if path is not None:
                 self.query_one("#loc-path", Input).value = str(path)
                 self._refresh()
+
         self.app.push_screen(FolderBrowserScreen(start), _cb)
 
-    def _refresh(self) -> None:
-        tbl = self.query_one("#loc-preview", DataTable)
-        tbl.clear()
-        project = self._project()
+    def _plan(self, project: Path) -> list[dict]:
         sel = self._selected()
         tpl = self._template_path() if sel["template"] else None
+        return build_plan(project, sel, tpl, self._template_path())
+
+    def _refresh(self) -> None:
+        if not hasattr(self, "_use"):
+            self._use = {}
+        tbl = self.query_one("#loc-preview", DataTable)
+        tbl.clear()
+        self._child_keys = {}
+        project = self._project()
 
         if not project.exists() or not project.is_dir():
-            tbl.add_row("[red]Path not a directory[/red]", str(project), "[red]ERROR[/red]")
+            tbl.add_row(
+                self._box("✗", "red"),
+                "[red]Path not a directory[/red]",
+                f"[red]{project}[/red]",
+            )
             return
 
-        if sel["scaffold"]:
-            for sub in [".claude", ".claude/skills", ".claude/hooks"]:
-                p = project / sub
-                state = "[dim]exists (kept)[/dim]" if p.exists() else "[green]NEW[/green]"
-                tbl.add_row("scaffold", sub + "/", state)
-            sl = project / ".claude" / "settings.local.json"
-            tbl.add_row("scaffold", ".claude/settings.local.json", "[dim]exists (kept)[/dim]" if sl.exists() else "[green]NEW[/green]")
-
-        if sel["template"]:
-            if tpl:
-                target = project / "CLAUDE.md"
-                state = "[yellow]EXISTS — would OVERWRITE[/yellow]" if target.exists() else "[green]NEW[/green]"
-                tbl.add_row("template", f"CLAUDE.md  (from {tpl.stem})", state)
-            else:
-                tbl.add_row("template", "—", "[yellow]Pick a template above[/yellow]")
-
-        if sel["gitignore"]:
-            picked = self._template_path()
-            if picked is None:
-                tbl.add_row("gitignore", ".gitignore", "[yellow]Pick a template above[/yellow]")
-            elif picked.stem not in GITIGNORE_BY_TEMPLATE:
-                tbl.add_row("gitignore", ".gitignore", f"[yellow]no preset for '{picked.stem}'[/yellow]")
-            else:
-                target = project / ".gitignore"
-                state = "[yellow]EXISTS — will APPEND[/yellow]" if target.exists() else "[green]NEW[/green]"
-                tbl.add_row("gitignore", f".gitignore  ({picked.stem} preset)", state)
-
-        if sel["git"]:
-            git_src = GLOBAL_DIR / "git"
-            git_dir = project / ".git"
-            if not git_dir.exists():
-                tbl.add_row("git_init", ".git/", "[yellow]will run git init[/yellow]")
-            if not git_src.exists():
-                tbl.add_row("git_init", "global/git/ in repo", "[red]MISSING[/red]")
-            else:
-                hooks_src = git_src / "hooks"
-                if hooks_src.exists():
-                    for f in sorted(hooks_src.iterdir()):
-                        if f.is_file():
-                            target = git_dir / "hooks" / f.name
-                            state = "[yellow]EXISTS — would OVERWRITE[/yellow]" if git_dir.exists() and target.exists() else "[green]NEW[/green]"
-                            tbl.add_row("git_init", f".git/hooks/{f.name}", state)
-                for f in sorted(git_src.iterdir()):
-                    if f.is_file():
-                        target = project / f.name
-                        state = "[yellow]EXISTS — would OVERWRITE[/yellow]" if target.exists() else "[green]NEW[/green]"
-                        tbl.add_row("git_init", f.name, state)
-
-        if sel["speckit"]:
-            if not shutil.which("specify"):
-                tbl.add_row("speckit", "specify CLI", "[red]not installed — see Tools screen[/red]")
-            else:
-                specify_dir = project / ".specify"
-                if specify_dir.exists():
-                    tbl.add_row("speckit", ".specify/", "[yellow]EXISTS — will run with --force[/yellow]")
+        for g in self._plan(project):
+            action = g["action"]
+            selectable = [ch for ch in g["children"] if ch["op"] is not None]
+            for ch in selectable:
+                self._use.setdefault(ch["key"], True)
+            self._child_keys[action] = [ch["key"] for ch in selectable]
+            tbl.add_row(
+                self._parent_cell(action),
+                f"[bold]{g['label']}[/bold]",
+                "",
+                key=f"action::{action}",
+            )
+            for i, ch in enumerate(g["children"]):
+                if ch["op"] is not None:
+                    box = self._leaf_cell(ch["key"])
+                    row_key = ch["key"]
                 else:
-                    tbl.add_row("speckit", ".specify/", "[green]NEW (specify init --here --integration claude)[/green]")
+                    box = self._box(" ", "dim")
+                    row_key = f"noop::{action}::{i}"
+                tbl.add_row(box, f"  └ {ch['label']}", ch["state"], key=row_key)
 
     def action_apply(self) -> None:
         project = self._project()
         if not project.is_dir():
-            self.query_one("#loc-status", Static).update(f"[red]Not a directory:[/red] {project}")
-            return
-        sel = self._selected()
-        msgs = []
-
-        if sel["scaffold"]:
-            (project / ".claude" / "skills").mkdir(parents=True, exist_ok=True)
-            (project / ".claude" / "hooks").mkdir(parents=True, exist_ok=True)
-            sl = project / ".claude" / "settings.local.json"
-            if not sl.exists():
-                sl.write_text('{\n  "permissions": {\n    "allow": []\n  }\n}\n', encoding="utf-8")
-            msgs.append(
-                "[green]✓ Created .claude/ scaffold[/green]\n"
-                "  Verify: ls .claude/ → skills/, hooks/, settings.local.json\n"
-                "  [yellow]⚑ TODO: edit .claude/settings.local.json — add allow[] entries for this project's commands.[/yellow]"
+            self.query_one("#loc-status", Static).update(
+                f"[red]Not a directory:[/red] {project}"
             )
-
-        if sel["template"]:
-            tpl = self._template_path()
-            if tpl:
-                shutil.copy2(tpl, project / "CLAUDE.md")
-                msgs.append(
-                    f"[green]✓ Wrote CLAUDE.md from {tpl.stem}[/green]\n"
-                    "  Verify: open a new Claude Code session here — SessionStart hook should invoke @load-project.\n"
-                    "  Review CLAUDE.md and customise stack conventions before committing."
-                )
+            return
+        msgs: list[str] = []
+        for g in self._plan(project):
+            action = g["action"]
+            chosen = [
+                ch
+                for ch in g["children"]
+                if ch["op"] is not None and self._use.get(ch["key"])
+            ]
+            if not chosen:
+                continue
+            if action == "speckit":
+                msgs.extend(self._apply_speckit(project))
             else:
-                msgs.append("[yellow]Skipped template — none picked[/yellow]")
+                msgs.extend(apply_group(action, chosen, project))
 
-        if sel["gitignore"]:
-            picked = self._template_path()
-            if picked is None:
-                msgs.append("[yellow]Skipped .gitignore — no template selected[/yellow]")
-            else:
-                ignore_text = GITIGNORE_BY_TEMPLATE.get(picked.stem)
-                if not ignore_text:
-                    msgs.append(f"[yellow]Skipped .gitignore — no preset for '{picked.stem}'[/yellow]")
-                else:
-                    target = project / ".gitignore"
-                    header = f"# Added by cabal wizard ({picked.stem} preset)\n"
-                    if target.exists():
-                        existing = target.read_text(encoding="utf-8")
-                        combined = existing.rstrip() + "\n\n" + header + ignore_text
-                        target.write_text(combined, encoding="utf-8")
-                        msgs.append(
-                            f"[green]✓ Appended .gitignore ({picked.stem} preset)[/green]\n"
-                            f"  Verify: cat .gitignore → new {picked.stem} block at the bottom.\n"
-                            "  Review for overlap with existing entries before committing."
-                        )
-                    else:
-                        target.write_text(header + ignore_text, encoding="utf-8")
-                        msgs.append(
-                            f"[green]✓ Wrote .gitignore ({picked.stem} preset)[/green]\n"
-                            "  Verify: cat .gitignore → stack-specific ignore rules present.\n"
-                            "  `git status` should immediately ignore build/cache dirs."
-                        )
-
-        if sel["git"]:
-            git_src = GLOBAL_DIR / "git"
-            git_dir = project / ".git"
-            if not git_dir.exists():
-                if not shutil.which("git"):
-                    msgs.append("[red]✗ git not found on PATH — cannot run git init[/red]")
-                else:
-                    r = subprocess.run(["git", "init", str(project)], capture_output=True, text=True)
-                    if r.returncode == 0:
-                        msgs.append("[green]✓ git init[/green]")
-                    else:
-                        msgs.append(f"[red]✗ git init failed:[/red] {r.stderr.strip()}")
-            if git_dir.exists() and git_src.exists():
-                hooks_src = git_src / "hooks"
-                if hooks_src.exists():
-                    hd = git_dir / "hooks"
-                    hd.mkdir(parents=True, exist_ok=True)
-                    for f in hooks_src.iterdir():
-                        if f.is_file():
-                            shutil.copy2(f, hd / f.name)
-                for f in git_src.iterdir():
-                    if f.is_file():
-                        shutil.copy2(f, project / f.name)
-                msgs.append(
-                    "[green]✓ Applied git repo-init template[/green]\n"
-                    "  Verify: ls .git/hooks/ → hook scripts present.\n"
-                    "  [yellow]⚑ TODO (Unix only): chmod +x .git/hooks/* — execute bit not preserved on Windows copy.[/yellow]"
-                )
-            elif not git_src.exists():
-                msgs.append("[yellow]Skipped git_init — template missing in repo[/yellow]")
-
-        if sel["speckit"]:
-            if not shutil.which("specify"):
-                msgs.append(
-                    "[red]✗ specify CLI not on PATH[/red] — install it from the Tools screen "
-                    "(or `uv tool install specify-cli --from git+https://github.com/github/spec-kit.git`), "
-                    "then re-run."
-                )
-            else:
-                cmd = [
-                    "specify", "init", "--here",
-                    "--integration", "claude",
-                    "--ignore-agent-tools",
-                ]
-                if (project / ".specify").exists():
-                    cmd.append("--force")
-                with self.app.suspend():
-                    r = subprocess.run(cmd, cwd=str(project))
-                if r.returncode == 0:
-                    msgs.append(
-                        f"[green]✓ Spec Kit initialized[/green]  [dim]({' '.join(cmd)})[/dim]\n"
-                        "  Verify: ls .specify/ → templates/, scripts/, memory/ present.\n"
-                        "  In Claude Code, /speckit-specify, /speckit-plan, /speckit-tasks should be available."
-                    )
-                else:
-                    msgs.append(f"[red]✗ specify init failed (exit {r.returncode})[/red]")
-
+        if not msgs:
+            msgs.append("[yellow]Nothing selected.[/yellow]")
         self.query_one("#loc-status", Static).update("\n".join(msgs))
         self._refresh()
+
+    def _apply_speckit(self, project: Path) -> list[str]:
+        cmd = [
+            "specify",
+            "init",
+            "--here",
+            "--integration",
+            "claude",
+            "--ignore-agent-tools",
+        ]
+        if (project / ".specify").exists():
+            cmd.append("--force")
+        with self.app.suspend():
+            r = subprocess.run(cmd, cwd=str(project))
+        if r.returncode == 0:
+            return [
+                f"[green]✓ Spec Kit initialized[/green]  [dim]({' '.join(cmd)})[/dim]\n"
+                "  Verify: ls .specify/ → templates/, scripts/, memory/ present."
+            ]
+        return [f"[red]✗ specify init failed (exit {r.returncode})[/red]"]
+
+    def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
+        key = event.row_key.value
+        if key.startswith("noop::"):
+            return
+        if key.startswith("action::"):
+            action = key.split("::", 1)[1]
+            kids = self._child_keys.get(action, [])
+            if not kids:
+                return
+            turn_on = self._parent_state(action) != "all"
+            for k in kids:
+                self._use[k] = turn_on
+        else:
+            self._use[key] = not self._use.get(key, False)
+        self._refresh()
+        self.query_one("#loc-preview", DataTable).move_cursor(row=event.cursor_row)
 
     def on_input_changed(self, event: Input.Changed) -> None:
         self._refresh()
@@ -395,5 +386,3 @@ class LocalScreen(Screen):
             self._refresh()
         elif bid == "loc-apply":
             self.action_apply()
-
-
