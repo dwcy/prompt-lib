@@ -369,14 +369,16 @@ def _playwright_tests(cwd):
 
 def seg_tests(cwd):
     if not cwd:
-        return rgb("✓ N/A", 100, 100, 120)
-    return (
+        return rgb("🧪 N/A", 100, 100, 120)
+    result = (
         _dotnet_tests(cwd)
         or _pytest_tests(cwd)
         or _jest_tests(cwd)
         or _playwright_tests(cwd)
-        or rgb("✓ N/A", 100, 100, 120)
     )
+    if result is None:
+        return rgb("🧪 N/A", 100, 100, 120)
+    return rgb("🧪 ", 180, 180, 200) + result
 
 
 _SPEC_BRANCH_RE = re.compile(r"^(\d{3,}-[a-z0-9][a-z0-9-]*)")
