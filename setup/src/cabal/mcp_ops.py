@@ -23,7 +23,9 @@ def _load_mcp_templates() -> dict:
     if not MCP_TEMPLATES_FILE.exists():
         return {}
     try:
-        return json.loads(MCP_TEMPLATES_FILE.read_text(encoding="utf-8")).get("templates", {})
+        return json.loads(MCP_TEMPLATES_FILE.read_text(encoding="utf-8")).get(
+            "templates", {}
+        )
     except Exception:
         return {}
 
@@ -54,12 +56,14 @@ def _claude_mcp_list() -> list[dict]:
             continue
         head, _, status = line.rpartition(" - ")
         name, _, cmdline = head.partition(": ")
-        results.append({
-            "name": name.strip(),
-            "command_line": cmdline.strip(),
-            "connected": "Connected" in status,
-            "status_text": status.strip(),
-        })
+        results.append(
+            {
+                "name": name.strip(),
+                "command_line": cmdline.strip(),
+                "connected": "Connected" in status,
+                "status_text": status.strip(),
+            }
+        )
     return results
 
 
@@ -75,11 +79,20 @@ def enumerate_mcp_servers() -> dict[str, dict]:
     aggregated: dict[str, dict] = {}
 
     def _ensure(name: str) -> dict:
-        return aggregated.setdefault(name, {
-            "scopes": [], "active": False, "command_line": "",
-            "env_required": [], "is_plugin": name.startswith("plugin:"),
-            "definitions": {},
-        })
+        return aggregated.setdefault(
+            name,
+            {
+                "scopes": [],
+                "active": False,
+                "command_line": "",
+                "env_required": [],
+                "is_plugin": name.startswith("plugin:"),
+                "definitions": {},
+                "plugin_id": None,
+                "plugin_enabled": None,
+                "plugin_scope": None,
+            },
+        )
 
     cj = _claude_dot_json()
     for name, cfg in (cj.get("mcpServers") or {}).items():
@@ -91,7 +104,9 @@ def enumerate_mcp_servers() -> dict[str, dict]:
         for name, cfg in (proj_data.get("mcpServers") or {}).items():
             e = _ensure(name)
             e["scopes"].append("local")
-            e["definitions"].setdefault("local", []).append({"path": proj_path, "def": cfg})
+            e["definitions"].setdefault("local", []).append(
+                {"path": proj_path, "def": cfg}
+            )
 
     cwd_mcp = Path.cwd() / ".mcp.json"
     if cwd_mcp.exists():
@@ -113,6 +128,31 @@ def enumerate_mcp_servers() -> dict[str, dict]:
         if e["is_plugin"] and "plugin" not in e["scopes"]:
             e["scopes"].insert(0, "plugin")
 
+    # Plugin-provided servers, incl. disabled plugins (absent from `claude mcp list`).
+    for plug in claude_plugin_list():
+        pid = plug.get("id") or ""
+        if not pid:
+            continue
+        short = pid.split("@", 1)[0]
+        enabled = bool(plug.get("enabled"))
+        pscope = plug.get("scope")
+        for server, cfg in (plug.get("mcpServers") or {}).items():
+            e = _ensure(f"plugin:{short}:{server}")
+            e["is_plugin"] = True
+            if "plugin" not in e["scopes"]:
+                e["scopes"].insert(0, "plugin")
+            e["plugin_id"] = pid
+            e["plugin_enabled"] = enabled
+            e["plugin_scope"] = pscope
+            e["definitions"]["plugin"] = cfg
+            if not e["command_line"]:
+                cmd = cfg.get("command") or ""
+                e["command_line"] = (
+                    " ".join([cmd, *(cfg.get("args") or [])]).strip()
+                    if cmd
+                    else (cfg.get("url") or "")
+                )
+
     for name, tmpl in _load_mcp_templates().items():
         e = _ensure(name)
         e["env_required"] = list(tmpl.get("env_required") or [])
@@ -120,7 +160,9 @@ def enumerate_mcp_servers() -> dict[str, dict]:
         if not e["scopes"]:
             e["scopes"].append("template")
         if not e["command_line"]:
-            e["command_line"] = " ".join([tmpl.get("command", "")] + list(tmpl.get("args") or []))
+            e["command_line"] = " ".join(
+                [tmpl.get("command", "")] + list(tmpl.get("args") or [])
+            )
 
     return aggregated
 
@@ -157,4 +199,41 @@ def claude_mcp_remove(name: str, scope: str) -> tuple[bool, str]:
     rc, out, err = _run_claude_cli(["mcp", "remove", "-s", scope, name])
     if rc == 0:
         return True, (out or "Removed").strip().splitlines()[0]
+    return False, (err or out or "unknown error").strip()
+
+
+def claude_plugin_list(available: bool = False) -> list[dict]:
+    """Parse `claude plugin list --json`. Each item carries id/version/scope/enabled/mcpServers."""
+    args = ["plugin", "list", "--json"]
+    if available:
+        args.append("--available")
+    rc, out, _ = _run_claude_cli(args, timeout=60)
+    if rc != 0 or not out:
+        return []
+    text = out.strip()
+    try:
+        data = json.loads(text)
+    except Exception:
+        start, end = text.find("["), text.rfind("]")
+        if start == -1 or end == -1 or end < start:
+            return []
+        try:
+            data = json.loads(text[start : end + 1])
+        except Exception:
+            return []
+    return data if isinstance(data, list) else []
+
+
+def claude_plugin_set_enabled(
+    plugin: str, enabled: bool, scope: str | None = None
+) -> tuple[bool, str]:
+    """Enable/disable a whole plugin via `claude plugin enable/disable` — cycles all its MCP servers."""
+    args = ["plugin", "enable" if enabled else "disable", plugin]
+    if scope:
+        args += ["-s", scope]
+    rc, out, err = _run_claude_cli(args, timeout=120)
+    fallback = "Enabled" if enabled else "Disabled"
+    if rc == 0:
+        msg = (out or fallback).strip()
+        return True, msg.splitlines()[0] if msg else fallback
     return False, (err or out or "unknown error").strip()
