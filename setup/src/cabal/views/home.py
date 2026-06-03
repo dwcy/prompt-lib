@@ -34,7 +34,6 @@ from textual.widgets import (
     DataTable,
     Footer,
     Header,
-    Input,
     Label,
     MarkdownViewer,
     OptionList,
@@ -182,7 +181,7 @@ class HomeScreen(Screen):
     def action_init_project(self) -> None:
         from cabal.views.init_project import InitProjectScreen
 
-        self.app.push_screen(InitProjectScreen())
+        self.app.push_screen(InitProjectScreen(on_created=self._project_changed))
 
     def action_open_project(self) -> None:
         from cabal.views.folder_browser import FolderBrowserScreen
@@ -208,19 +207,20 @@ class HomeScreen(Screen):
     def _after_folder_picked(self, path: Path | None) -> None:
         if path is None:
             return
-        from cabal.views.local import LocalScreen
+        self._project_changed(path)
 
-        screen = LocalScreen()
-        self.app.push_screen(screen)
+    def _project_changed(self, path: Path) -> None:
+        self.app.selected_project = path
+        self._refresh_env_panel()
 
-        def _seed() -> None:
-            try:
-                screen.query_one("#loc-path", Input).value = str(path)
-                screen._refresh()
-            except Exception:
-                pass
+    def _refresh_env_panel(self) -> None:
+        try:
+            self.query_one("#env-summary", EnvPanel).refresh_project()
+        except Exception:
+            pass
 
-        self.app.call_after_refresh(_seed)
+    def on_screen_resume(self) -> None:
+        self._refresh_env_panel()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         from cabal.views.update import UpdateScreen
@@ -257,6 +257,6 @@ class HomeScreen(Screen):
         elif bid == "btn-op-open-project":
             self.action_open_project()
         elif bid == "btn-op-local-mcp":
-            self.app.push_screen(ProjectMcpScreen(target_dir=Path.cwd()))
+            self.app.push_screen(ProjectMcpScreen(target_dir=self.app.project_path()))
         elif bid in op_screens:
             self.app.push_screen(op_screens[bid]())

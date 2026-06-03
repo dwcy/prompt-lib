@@ -114,7 +114,7 @@ class LocalScreen(Screen):
             with Horizontal():
                 yield Label("Project path: ")
                 yield Button("Browse…", id="loc-browse")
-                yield Input(value=str(Path.cwd()), id="loc-path")
+                yield Input(value=str(self.app.project_path()), id="loc-path")
             yield Checkbox(
                 "Create .claude/ scaffolding (skills/, hooks/, settings.local.json)",
                 value=True,
@@ -252,7 +252,7 @@ class LocalScreen(Screen):
         raw = self.query_one("#loc-path", Input).value
         start = Path(raw).expanduser()
         if not start.is_dir():
-            start = Path.cwd()
+            start = self.app.project_path()
 
         def _cb(path: Path | None) -> None:
             if path is not None:

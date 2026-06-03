@@ -22,10 +22,10 @@ from cabal.mcp_ops import enumerate_mcp_servers
 _WINDOWS_CMD_WRAPPED = frozenset({"pnpm", "npx", "bunx"})
 
 _SCOPE_COLOURS = {
-    "plugin":   "magenta",
-    "user":     "cyan",
-    "local":    "blue",
-    "project":  "yellow",
+    "plugin": "magenta",
+    "user": "cyan",
+    "local": "blue",
+    "project": "yellow",
     "template": "dim",
 }
 
@@ -49,7 +49,9 @@ class ProjectMcpScreen(Screen):
         Binding("space", "toggle", "Toggle"),
     ]
 
-    def __init__(self, target_dir: Path, on_change: Callable[[int], None] | None = None) -> None:
+    def __init__(
+        self, target_dir: Path, on_change: Callable[[int], None] | None = None
+    ) -> None:
         super().__init__()
         self._target_dir = target_dir
         self._on_change = on_change
@@ -62,7 +64,9 @@ class ProjectMcpScreen(Screen):
                 f"[dim]Writes to {self._target_dir / '.mcp.json'}. Plugin and user scopes are read-only here.[/dim]",
                 classes="panel",
             )
-            yield DataTable(id="pmcp-table", show_cursor=True, cursor_type="row", zebra_stripes=True)
+            yield DataTable(
+                id="pmcp-table", show_cursor=True, cursor_type="row", zebra_stripes=True
+            )
             with Horizontal():
                 yield Button("Toggle (Space)", id="pmcp-toggle", variant="primary")
                 yield Button("Refresh (Ctrl+R)", id="pmcp-refresh")
@@ -84,7 +88,7 @@ class ProjectMcpScreen(Screen):
 
     def _load(self) -> None:
         try:
-            agg = enumerate_mcp_servers()
+            agg = enumerate_mcp_servers(project_dir=self._target_dir)
             proj_entries = self._read_project_mcp()
         except Exception as e:
             self.app.call_from_thread(self._on_load_error, str(e))
@@ -92,7 +96,9 @@ class ProjectMcpScreen(Screen):
         self.app.call_from_thread(self._apply_servers, agg, proj_entries)
 
     def _on_load_error(self, msg: str) -> None:
-        self.query_one("#pmcp-status", Static).update(f"[red]Error enumerating: {msg}[/red]")
+        self.query_one("#pmcp-status", Static).update(
+            f"[red]Error enumerating: {msg}[/red]"
+        )
         self.loading = False
 
     def _read_project_mcp(self) -> dict:
@@ -112,22 +118,37 @@ class ProjectMcpScreen(Screen):
             info = aggregated[name]
             scopes = info["scopes"]
             in_project_file = name in proj_entries
-            editable = (("project" in scopes) or ("template" in scopes)) and not info["is_plugin"]
+            editable = (("project" in scopes) or ("template" in scopes)) and not info[
+                "is_plugin"
+            ]
             if in_project_file:
                 editable = True
             if info["is_plugin"]:
                 editable = False
-            editable_label = "[green]✓[/green]" if editable else "[dim](read-only)[/dim]"
+            editable_label = (
+                "[green]✓[/green]" if editable else "[dim](read-only)[/dim]"
+            )
             env_required = info.get("env_required") or []
-            env_disp = "—" if not env_required else " ".join(
-                f"{k}[{'green' if os.environ.get(k) else 'red'}]{'✓' if os.environ.get(k) else '✗'}[/]"
-                for k in env_required
+            env_disp = (
+                "—"
+                if not env_required
+                else " ".join(
+                    f"{k}[{'green' if os.environ.get(k) else 'red'}]{'✓' if os.environ.get(k) else '✗'}[/]"
+                    for k in env_required
+                )
             )
             scopes_for_render = list(scopes)
             if in_project_file and "project" not in scopes_for_render:
                 scopes_for_render.append("project")
             cmd_disp = (info.get("command_line") or "—")[:80]
-            tbl.add_row(name, _render_scopes(scopes_for_render), editable_label, env_disp, cmd_disp, key=name)
+            tbl.add_row(
+                name,
+                _render_scopes(scopes_for_render),
+                editable_label,
+                env_disp,
+                cmd_disp,
+                key=name,
+            )
         self.query_one("#pmcp-status", Static).update(
             f"[dim]{tbl.row_count} servers shown. Space toggles editable rows. Writes to {self._target_dir / '.mcp.json'}.[/dim]"
         )
@@ -154,25 +175,33 @@ class ProjectMcpScreen(Screen):
             status_label.update(f"[red]Not found: {name}[/red]")
             return
         if info["is_plugin"]:
-            status_label.update("[yellow]Plugin servers are managed via /plugin — not from here.[/yellow]")
+            status_label.update(
+                "[yellow]Plugin servers are managed via /plugin — not from here.[/yellow]"
+            )
             return
         scopes = info["scopes"]
         proj_entries = self._read_project_mcp()
         if name in proj_entries:
             del proj_entries[name]
             self._write_project_mcp(proj_entries)
-            status_label.update(f"[green]✓ removed[/green] {name} from {self._target_dir / '.mcp.json'}")
+            status_label.update(
+                f"[green]✓ removed[/green] {name} from {self._target_dir / '.mcp.json'}"
+            )
         else:
             tmpl = (info.get("definitions") or {}).get("template")
             if not tmpl and "project" not in scopes and "template" not in scopes:
-                status_label.update(f"[red]No template for {name} — cannot register at project scope.[/red]")
+                status_label.update(
+                    f"[red]No template for {name} — cannot register at project scope.[/red]"
+                )
                 return
             if not tmpl:
                 tmpl = (info.get("definitions") or {}).get("project")
             entry = self._template_to_entry(tmpl)
             proj_entries[name] = entry
             self._write_project_mcp(proj_entries)
-            status_label.update(f"[green]✓ added[/green] {name} (project scope) → {self._target_dir / '.mcp.json'}")
+            status_label.update(
+                f"[green]✓ added[/green] {name} (project scope) → {self._target_dir / '.mcp.json'}"
+            )
         if self._on_change:
             self._on_change(len(self._read_project_mcp()))
         self._refresh()
@@ -197,8 +226,12 @@ class ProjectMcpScreen(Screen):
         json.loads(text)
         final = self._target_dir / ".mcp.json"
         with tempfile.NamedTemporaryFile(
-            "w", encoding="utf-8", dir=str(self._target_dir),
-            prefix=".mcp.", suffix=".tmp", delete=False
+            "w",
+            encoding="utf-8",
+            dir=str(self._target_dir),
+            prefix=".mcp.",
+            suffix=".tmp",
+            delete=False,
         ) as f:
             f.write(text)
             tmp_path = f.name

@@ -67,7 +67,7 @@ def _claude_mcp_list() -> list[dict]:
     return results
 
 
-def enumerate_mcp_servers() -> dict[str, dict]:
+def enumerate_mcp_servers(project_dir: Path | None = None) -> dict[str, dict]:
     """Aggregate every known MCP server across scopes into one view.
 
     Returns: { name: { 'scopes': [str], 'active': bool, 'command_line': str,
@@ -108,7 +108,7 @@ def enumerate_mcp_servers() -> dict[str, dict]:
                 {"path": proj_path, "def": cfg}
             )
 
-    cwd_mcp = Path.cwd() / ".mcp.json"
+    cwd_mcp = (project_dir or Path.cwd()) / ".mcp.json"
     if cwd_mcp.exists():
         try:
             d = json.loads(cwd_mcp.read_text(encoding="utf-8"))

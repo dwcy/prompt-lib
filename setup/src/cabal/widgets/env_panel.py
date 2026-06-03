@@ -110,14 +110,28 @@ class EnvPanel(Widget):
         with Vertical():
             yield UpdatePanel()
             with Vertical(id="env-info"):
-                yield Horizontal(classes="env-panel-row", id="env-row-system")     # OS, Pkg, git, github
-                yield Horizontal(classes="env-panel-row", id="env-row-runtimes")   # Python, Node, .NET
-                yield Horizontal(classes="env-panel-row", id="env-row-pkg-mgrs")   # npm, pnpm, bun
-                yield Horizontal(classes="env-panel-row", id="env-row-infra")      # containers, k8s, IaC, clouds
-                yield Horizontal(classes="env-panel-row", id="env-row-clis")       # AI CLIs
-                yield Horizontal(classes="env-panel-row", id="env-row-local-ai")   # Local AI runtimes (Ollama)
-                yield Horizontal(classes="env-panel-row", id="env-row-databases")  # Database CLIs
-                yield Horizontal(classes="env-panel-row", id="env-row-editors")    # AI-augmented editors
+                yield Horizontal(
+                    classes="env-panel-row", id="env-row-system"
+                )  # OS, Pkg, git, github
+                yield Horizontal(
+                    classes="env-panel-row", id="env-row-runtimes"
+                )  # Python, Node, .NET
+                yield Horizontal(
+                    classes="env-panel-row", id="env-row-pkg-mgrs"
+                )  # npm, pnpm, bun
+                yield Horizontal(
+                    classes="env-panel-row", id="env-row-infra"
+                )  # containers, k8s, IaC, clouds
+                yield Horizontal(classes="env-panel-row", id="env-row-clis")  # AI CLIs
+                yield Horizontal(
+                    classes="env-panel-row", id="env-row-local-ai"
+                )  # Local AI runtimes (Ollama)
+                yield Horizontal(
+                    classes="env-panel-row", id="env-row-databases"
+                )  # Database CLIs
+                yield Horizontal(
+                    classes="env-panel-row", id="env-row-editors"
+                )  # AI-augmented editors
                 with Horizontal(id="env-tools-row"):
                     yield Static("", classes="env-spacer")
                     yield Button("⌬  Tools", id="btn-op-tools", variant="warning")
@@ -157,22 +171,41 @@ class EnvPanel(Widget):
         local_ai = self.query_one("#env-row-local-ai", Horizontal)
         databases = self.query_one("#env-row-databases", Horizontal)
         editors = self.query_one("#env-row-editors", Horizontal)
-        for row in (system, runtimes, pkg_mgrs, infra, clis, local_ai, databases, editors):
+        for row in (
+            system,
+            runtimes,
+            pkg_mgrs,
+            infra,
+            clis,
+            local_ai,
+            databases,
+            editors,
+        ):
             for w in list(row.children):
                 w.remove()
 
         # Row 1 — system & VCS (always show OS / Python; rest only if installed)
-        system.mount(Static(
-            f"{self._lbl('OS')} {env['os']} {env['release']}", classes="env-cell",
-        ))
+        system.mount(
+            Static(
+                f"{self._lbl('OS')} {env['os']} {env['release']}",
+                classes="env-cell",
+            )
+        )
         if env["pkg_manager"]:
-            system.mount(Static(
-                f"{self._lbl('Pkg')} {env['pkg_manager']}", classes="env-cell",
-            ))
+            system.mount(
+                Static(
+                    f"{self._lbl('Pkg')} {env['pkg_manager']}",
+                    classes="env-cell",
+                )
+            )
         if env["git"]:
             raw = env.get("git_version") or ""
             parts = raw.split()
-            ver = parts[2] if len(parts) >= 3 and parts[0].lower() == "git" else (raw or "installed")
+            ver = (
+                parts[2]
+                if len(parts) >= 3 and parts[0].lower() == "git"
+                else (raw or "installed")
+            )
             system.mount(Static(f"{self._lbl('git')} {ver}", classes="env-cell"))
         if env["gh"]:
             login = env.get("gh_login")
@@ -188,36 +221,45 @@ class EnvPanel(Widget):
             system.mount(Static(cell, classes="env-cell"))
 
         # Row 2 — runtimes (Python is always present in this app)
-        runtimes.mount(Static(f"{self._lbl('Python')} {env['python']}", classes="env-cell"))
+        runtimes.mount(
+            Static(f"{self._lbl('Python')} {env['python']}", classes="env-cell")
+        )
         self._mount_installed(runtimes, "Node", env["node"])
         sdks = env.get("dotnet_sdks") or []
         if sdks:
-            runtimes.mount(Static(
-                f"{self._lbl('.NET')} {', '.join(sdks)}", classes="env-cell",
-            ))
+            runtimes.mount(
+                Static(
+                    f"{self._lbl('.NET')} {', '.join(sdks)}",
+                    classes="env-cell",
+                )
+            )
 
         # Row 3 — JS/TS package managers (only installed ones show)
-        self._mount_installed(pkg_mgrs, "npm",  env["npm"])
+        self._mount_installed(pkg_mgrs, "npm", env["npm"])
         self._mount_installed(pkg_mgrs, "pnpm", env["pnpm"])
-        self._mount_installed(pkg_mgrs, "bun",  env["bun"])
+        self._mount_installed(pkg_mgrs, "bun", env["bun"])
 
         # Row 3 — containers, orchestration, IaC, cloud CLIs (only installed)
-        self._mount_installed(infra, "Docker",    _short_docker_version(env["docker"]))
-        self._mount_installed(infra, "Podman",    _short_podman_version(env["podman"]))
-        self._mount_installed(infra, "k8s",       env["kubectl"])
-        self._mount_installed(infra, "Terraform", _short_terraform_version(env["terraform"]))
+        self._mount_installed(infra, "Docker", _short_docker_version(env["docker"]))
+        self._mount_installed(infra, "Podman", _short_podman_version(env["podman"]))
+        self._mount_installed(infra, "k8s", env["kubectl"])
+        self._mount_installed(
+            infra, "Terraform", _short_terraform_version(env["terraform"])
+        )
         self._mount_installed(infra, "Azure CLI", _short_az_version(env["az"]))
-        self._mount_installed(infra, "Google Cloud", _short_gcloud_version(env["gcloud"]))
-        self._mount_installed(infra, "AWS CLI",   _short_aws_version(env["aws"]))
+        self._mount_installed(
+            infra, "Google Cloud", _short_gcloud_version(env["gcloud"])
+        )
+        self._mount_installed(infra, "AWS CLI", _short_aws_version(env["aws"]))
 
         # Row 4 — AI coding CLIs (only installed; no version source → use checkmark)
         for label, key in (
-            ("Claude CLI",  "claude"),
-            ("Gemini CLI",  "gemini"),
-            ("Codex CLI",   "codex"),
-            ("OpenCode",    "opencode"),
-            ("Grok",        "grok"),
-            ("Copilot",     "copilot"),
+            ("Claude CLI", "claude"),
+            ("Gemini CLI", "gemini"),
+            ("Codex CLI", "codex"),
+            ("OpenCode", "opencode"),
+            ("Grok", "grok"),
+            ("Copilot", "copilot"),
         ):
             self._mount_present(clis, label, env[key])
 
@@ -237,20 +279,20 @@ class EnvPanel(Widget):
 
         # Row 6 — Database CLIs (only installed)
         for label, key in (
-            ("MSSQL",    "sqlcmd"),
+            ("MSSQL", "sqlcmd"),
             ("Postgres", "psql"),
             ("Supabase", "supabase"),
-            ("Neon",     "neonctl"),
+            ("Neon", "neonctl"),
         ):
             self._mount_present(databases, label, env[key])
 
         # Row 7 — AI-augmented editors / IDEs (only installed)
         for label, key in (
-            ("Cursor",        "cursor"),
-            ("Windsurf",      "windsurf"),
-            ("Antigravity",   "antigravity"),
-            ("VS Code",       "vscode"),
-            ("Rider",         "rider"),
+            ("Cursor", "cursor"),
+            ("Windsurf", "windsurf"),
+            ("Antigravity", "antigravity"),
+            ("VS Code", "vscode"),
+            ("Rider", "rider"),
             ("Visual Studio", "visualstudio"),
         ):
             self._mount_present(editors, label, env[key])
@@ -259,13 +301,30 @@ class EnvPanel(Widget):
         for row in (runtimes, pkg_mgrs, infra, clis, local_ai, databases, editors):
             row.display = bool(row.children)
 
-        exists = "[bright_green](exists)[/]" if env["target_exists"] else "[bright_yellow](will be created)[/]"
+        self._update_paths()
+
+    def _update_paths(self) -> None:
+        exists = (
+            "[bright_green](exists)[/]"
+            if TARGET.exists()
+            else "[bright_yellow](will be created)[/]"
+        )
         self.query_one("#env-paths", Static).update(
             f"{self._lbl('Source')} [cyan]{GLOBAL_DIR}[/]\n"
-            f"{self._lbl('Target')} [cyan]{TARGET}[/] {exists}"
+            f"{self._lbl('Target')} [cyan]{TARGET}[/] {exists}\n"
+            f"{self._lbl('Project')} [cyan]{self.app.selected_project or '(none)'}[/]"
         )
 
-    def _mount_installed(self, parent: Horizontal, label: str, value: str | None) -> None:
+    def refresh_project(self) -> None:
+        """Re-render the paths block after the active project changes."""
+        try:
+            self._update_paths()
+        except Exception:
+            pass
+
+    def _mount_installed(
+        self, parent: Horizontal, label: str, value: str | None
+    ) -> None:
         """Mount a `label: <version>` cell only when the tool reports a version."""
         if value:
             parent.mount(Static(f"{self._lbl(label)} {value}", classes="env-cell"))
@@ -273,16 +332,19 @@ class EnvPanel(Widget):
     def _mount_present(self, parent: Horizontal, label: str, present: bool) -> None:
         """Mount a `label: ✓` cell only when the tool is installed."""
         if present:
-            parent.mount(Static(
-                f"{self._lbl(label)} [bright_green]✓[/]", classes="env-cell",
-            ))
+            parent.mount(
+                Static(
+                    f"{self._lbl(label)} [bright_green]✓[/]",
+                    classes="env-cell",
+                )
+            )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         bid = event.button.id or ""
         if not bid.startswith("env-install-"):
             return
         event.stop()
-        key = bid[len("env-install-"):]
+        key = bid[len("env-install-") :]
         installer = next((fn for k, _l, fn in ENV_INSTALLERS if k == key), None)
         if installer is None:
             return
@@ -296,10 +358,13 @@ class EnvPanel(Widget):
         )
         self.run_worker(
             lambda: self._do_install(key, installer, btn),
-            thread=True, exclusive=False,
+            thread=True,
+            exclusive=False,
         )
 
-    def _do_install(self, key: str, installer: Callable[[], tuple[bool, str]], button: Button) -> None:
+    def _do_install(
+        self, key: str, installer: Callable[[], tuple[bool, str]], button: Button
+    ) -> None:
         try:
             ok, msg = installer()
         except Exception as e:
@@ -317,4 +382,5 @@ class EnvPanel(Widget):
             button.disabled = False
             button.label = "Install"
             self.run_worker(self._refresh_env, thread=True, exclusive=True)
+
         self.app.call_from_thread(_done)

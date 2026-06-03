@@ -57,9 +57,10 @@ class GitConfigScreen(Screen):
     def __init__(self) -> None:
         super().__init__()
         self._scope: Scope = "global"
-        self._repo_root: Path | None = self._detect_repo(Path.cwd())
+        self._repo_root: Path | None = None
 
     def compose(self) -> ComposeResult:
+        self._repo_root = self._detect_repo(self.app.project_path())
         yield AppHeader()
         with VerticalScroll():
             with Vertical(classes="git-card", id="git-user-card"):
