@@ -16,6 +16,7 @@ from textual.app import App
 from textual.binding import Binding
 
 from cabal.app_widgets import AppCommandsProvider, AppHeader  # noqa: F401  (re-export)
+from cabal.views.claude_info import ClaudeInfoScreen  # noqa: F401
 from cabal.views.doctor import DoctorScreen  # noqa: F401
 from cabal.views.env import EnvScreen  # noqa: F401
 from cabal.views.folder_browser import FolderBrowserScreen  # noqa: F401

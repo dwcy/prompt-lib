@@ -15,8 +15,9 @@ from pathlib import Path
 
 from rich.text import Text
 from textual.app import ComposeResult
+from textual.containers import Horizontal
 from textual.widget import Widget
-from textual.widgets import Static
+from textual.widgets import Button, Static
 
 
 @dataclass
@@ -63,7 +64,9 @@ class ClaudeStatsPanel(Widget):
         background: $boost;
         border: round $primary;
     }
-    ClaudeStatsPanel #cs-title { content-align: left middle; height: 1; }
+    ClaudeStatsPanel #cs-titlebar { height: 3; align-vertical: middle; }
+    ClaudeStatsPanel #cs-title { content-align: left middle; height: auto; width: 1fr; }
+    ClaudeStatsPanel #cs-info { min-width: 18; height: 3; margin: 0; }
     ClaudeStatsPanel #cs-body { height: auto; padding: 0 0 0 0; }
     """
 
@@ -72,13 +75,23 @@ class ClaudeStatsPanel(Widget):
         self._status: ClaudeAccountStatus | None = None
 
     def compose(self) -> ComposeResult:
-        yield Static(
-            "[bold bright_magenta]✦ Claude account[/bold bright_magenta]", id="cs-title"
-        )
+        with Horizontal(id="cs-titlebar"):
+            yield Static(
+                "[bold bright_magenta]✦ Claude account[/bold bright_magenta]",
+                id="cs-title",
+            )
+            yield Button("ⓘ  Claude info", id="cs-info", variant="primary")
         yield Static("[dim]Loading…[/dim]", id="cs-body")
 
     def on_mount(self) -> None:
         self.refresh_stats()
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "cs-info":
+            event.stop()
+            from cabal.views.claude_info import ClaudeInfoScreen
+
+            self.app.push_screen(ClaudeInfoScreen())
 
     def refresh_stats(self) -> None:
         st = read_claude_account_state()
