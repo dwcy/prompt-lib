@@ -64,19 +64,6 @@ def git(args, cwd):
         return None
 
 
-def fmt_duration(ms):
-    if ms is None:
-        return None
-    s = ms // 1000
-    if s < 60:
-        return f"{s}s"
-    m = s // 60
-    if m < 60:
-        return f"{m}m"
-    h = m // 60
-    return f"{h}h{m % 60:02d}m"
-
-
 # === segment builders ===
 
 
@@ -106,6 +93,10 @@ def _maybe_refresh_update_cache():
         pass
 
 
+def _parse_ver(v):
+    return tuple(int(p) for p in re.findall(r"\d+", v or "")[:3])
+
+
 def seg_update(data):
     _maybe_refresh_update_cache()
     current = data.get("version")
@@ -119,17 +110,20 @@ def seg_update(data):
     latest = state.get("latest")
     if not latest or latest == current:
         return None
+    # Only surface major/minor bumps (2.1.x → 2.2.0); ignore patch-only churn.
+    if _parse_ver(current)[:2] == _parse_ver(latest)[:2]:
+        return None
     return rgb(f"⬆ {latest}", 255, 180, 80)
 
 
 def seg_ctx_or_warn(data):
+    used = data.get("context_window", {}).get("used_percentage")
+    if used is not None:
+        pct = round(used)
+        return rgb(f"◐ {pct}%", *ctx_color(pct))
     if data.get("exceeds_200k_tokens"):
         return rgb("⚠ 200k+", 255, 80, 80)
-    used = data.get("context_window", {}).get("used_percentage")
-    if used is None:
-        return rgb("◐ --", 100, 100, 120)
-    pct = round(used)
-    return rgb(f"◐ {pct}%", *ctx_color(pct))
+    return rgb("◐ --", 100, 100, 120)
 
 
 def seg_cost(data):
@@ -142,18 +136,7 @@ def seg_cost(data):
         )
     if usd is None:
         return None
-    dur_ms = data.get("total_duration_ms")
-    if dur_ms is None:
-        dur_ms = (
-            data.get("cost", {}).get("total_duration_ms")
-            if isinstance(data.get("cost"), dict)
-            else None
-        )
-    dur_str = fmt_duration(dur_ms)
-    body = f"💰 ${usd:.2f}"
-    if dur_str:
-        body += f" · {dur_str}"
-    return rgb(body, *cost_color(usd))
+    return rgb(f"${usd:.2f}", *cost_color(usd))
 
 
 def seg_diff(data):
@@ -267,7 +250,8 @@ def seg_uncommitted(cwd):
     lines = [l for l in out.splitlines() if l.strip()]
     if not lines:
         return None
-    return rgb(f"±{len(lines)}f", 255, 200, 80)
+    n = len(lines)
+    return rgb(f"±{n} {'file' if n == 1 else 'files'}", 255, 200, 80)
 
 
 def seg_stash(cwd):
