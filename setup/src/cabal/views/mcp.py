@@ -19,11 +19,30 @@ from rich.markup import escape as escape_markup
 from rich.text import Text
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Center, Container, Horizontal, ScrollableContainer, Vertical, VerticalScroll
+from textual.containers import (
+    Center,
+    Container,
+    Horizontal,
+    ScrollableContainer,
+    Vertical,
+    VerticalScroll,
+)
 from textual.screen import ModalScreen, Screen
 from textual.widgets import (
-    Button, Checkbox, DataTable, Footer, Header, Input, Label,
-    MarkdownViewer, OptionList, RadioButton, RadioSet, Rule, Select, Static,
+    Button,
+    Checkbox,
+    DataTable,
+    Footer,
+    Header,
+    Input,
+    Label,
+    MarkdownViewer,
+    OptionList,
+    RadioButton,
+    RadioSet,
+    Rule,
+    Select,
+    Static,
 )
 from textual.widgets.option_list import Option
 from textual.widget import Widget
@@ -46,6 +65,7 @@ from cabal.installers.gh import gh_device_init, gh_device_poll, gh_fetch_token
 from cabal.mcp_ops import (
     claude_mcp_add_from_template,
     claude_mcp_remove,
+    claude_plugin_set_enabled,
     enumerate_mcp_servers,
 )
 from cabal.tools import (
@@ -64,6 +84,7 @@ from cabal.updates import check_for_updates, do_git_pull
 from cabal.widgets.env_panel import EnvPanel
 from cabal.widgets.update_panel import UpdatePanel
 
+
 class McpScreen(Screen):
     """Unified MCP view across all scopes (plugin/user/local/project/template).
 
@@ -81,13 +102,15 @@ class McpScreen(Screen):
         yield AppHeader()
         with VerticalScroll():
             yield Static(
-                "[bold bright_magenta]✦ MCP servers ✦[/bold bright_magenta]\n"
-                "[dim]Live status from `claude mcp list`. Toggle = `claude mcp add` (from template) or `claude mcp remove`.[/dim]\n"
+                "[bold bright_magenta]✦ Global MCP servers ✦[/bold bright_magenta]\n"
+                "[dim]Global (user-scope) + Claude plugin servers, incl. ones not added here. Toggle = `claude mcp add -s user` (from template) or `claude mcp remove`.[/dim]\n"
                 "[dim]Scopes: plugin (marketplace) · user (~/.claude.json, all projects) · local (this project only) · "
                 "project (.mcp.json) · template (defined here, not registered).[/dim]",
                 classes="panel",
             )
-            yield DataTable(id="mcp-table", show_cursor=True, cursor_type="row", zebra_stripes=True)
+            yield DataTable(
+                id="mcp-table", show_cursor=True, cursor_type="row", zebra_stripes=True
+            )
             with Horizontal():
                 yield Button("Toggle (Space)", id="mcp-toggle", variant="primary")
                 yield Button("Refresh (Ctrl+R)", id="mcp-refresh")
@@ -116,7 +139,9 @@ class McpScreen(Screen):
         self.app.call_from_thread(self._apply_servers, aggregated)
 
     def _on_load_error(self, msg: str) -> None:
-        self.query_one("#mcp-status", Static).update(f"[red]Error enumerating: {msg}[/red]")
+        self.query_one("#mcp-status", Static).update(
+            f"[red]Error enumerating: {msg}[/red]"
+        )
         self.loading = False
 
     def _apply_servers(self, aggregated: dict[str, dict]) -> None:
@@ -126,7 +151,14 @@ class McpScreen(Screen):
             info = aggregated[name]
             scopes_disp = _render_scopes(info["scopes"])
             if info["is_plugin"]:
-                status_disp = "[green]✓ plugin[/green]" if info["active"] else "[red]✗ plugin[/red]"
+                if info.get("plugin_enabled"):
+                    status_disp = (
+                        "[green]✓ enabled[/green]"
+                        if info["active"]
+                        else "[yellow]✓ enabled (not connected)[/yellow]"
+                    )
+                else:
+                    status_disp = "[dim]○ disabled[/dim]"
             elif info["active"]:
                 status_disp = "[green]✓ connected[/green]"
             elif info["scopes"] == ["template"]:
@@ -142,7 +174,7 @@ class McpScreen(Screen):
             cmd_disp = (info["command_line"] or "—")[:80]
             tbl.add_row(name, scopes_disp, status_disp, env_disp, cmd_disp, key=name)
         self.query_one("#mcp-status", Static).update(
-            f"[dim]{tbl.row_count} servers shown. Space toggles. Plugin servers managed via /plugin.[/dim]"
+            f"[dim]{tbl.row_count} servers shown. Space toggles — templates add/remove, plugins enable/disable.[/dim]"
         )
         self.loading = False
 
@@ -166,7 +198,21 @@ class McpScreen(Screen):
             status_label.update(f"[red]Not found: {name}[/red]")
             return
         if info["is_plugin"]:
-            status_label.update("[yellow]Plugin servers are managed via /plugin in Claude Code, not here.[/yellow]")
+            pid = info.get("plugin_id")
+            if not pid:
+                status_label.update(
+                    "[yellow]Plugin id unknown — manage via /plugin in Claude Code.[/yellow]"
+                )
+                return
+            enable = not bool(info.get("plugin_enabled"))
+            ok, msg = claude_plugin_set_enabled(
+                pid, enable, scope=info.get("plugin_scope")
+            )
+            verb = "enabled" if enable else "disabled"
+            icon = "✓" if ok else "✗"
+            colour = "green" if ok else "red"
+            status_label.update(f"[{colour}]{icon} {verb} {pid}: {msg}[/]")
+            self._refresh()
             return
         active_scopes = [s for s in info["scopes"] if s in ("user", "local")]
         if active_scopes:
@@ -178,7 +224,9 @@ class McpScreen(Screen):
         else:
             tmpl = info["definitions"].get("template")
             if not tmpl:
-                status_label.update(f"[red]No template for {name} — add manually via `claude mcp add`[/red]")
+                status_label.update(
+                    f"[red]No template for {name} — add manually via `claude mcp add`[/red]"
+                )
                 return
             ok, msg = claude_mcp_add_from_template(name, tmpl)
             status_label.update(
@@ -197,10 +245,10 @@ class McpScreen(Screen):
 
 
 _SCOPE_COLOURS = {
-    "plugin":   "magenta",
-    "user":     "cyan",
-    "local":    "blue",
-    "project":  "yellow",
+    "plugin": "magenta",
+    "user": "cyan",
+    "local": "blue",
+    "project": "yellow",
     "template": "dim",
 }
 
@@ -213,5 +261,3 @@ def _render_scopes(scopes: list[str]) -> str:
         c = _SCOPE_COLOURS.get(s, "white")
         out.append(f"[{c}]{s}[/{c}]")
     return " ".join(out)
-
-

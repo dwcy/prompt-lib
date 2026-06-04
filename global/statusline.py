@@ -54,27 +54,18 @@ def git(args, cwd):
     try:
         r = subprocess.run(
             ["git", *args],
-            capture_output=True, text=True, timeout=1, cwd=cwd,
+            capture_output=True,
+            text=True,
+            timeout=1,
+            cwd=cwd,
         )
         return r.stdout.strip() if r.returncode == 0 else None
     except Exception:
         return None
 
 
-def fmt_duration(ms):
-    if ms is None:
-        return None
-    s = ms // 1000
-    if s < 60:
-        return f"{s}s"
-    m = s // 60
-    if m < 60:
-        return f"{m}m"
-    h = m // 60
-    return f"{h}h{m % 60:02d}m"
-
-
 # === segment builders ===
+
 
 def seg_model(data):
     name = data.get("model", {}).get("display_name") or "Claude"
@@ -83,7 +74,10 @@ def seg_model(data):
 
 def _maybe_refresh_update_cache():
     try:
-        if UPDATE_FILE.exists() and (time.time() - UPDATE_FILE.stat().st_mtime) < UPDATE_TTL:
+        if (
+            UPDATE_FILE.exists()
+            and (time.time() - UPDATE_FILE.stat().st_mtime) < UPDATE_TTL
+        ):
             return
         if not UPDATE_CHECKER.exists():
             return
@@ -99,6 +93,10 @@ def _maybe_refresh_update_cache():
         pass
 
 
+def _parse_ver(v):
+    return tuple(int(p) for p in re.findall(r"\d+", v or "")[:3])
+
+
 def seg_update(data):
     _maybe_refresh_update_cache()
     current = data.get("version")
@@ -112,33 +110,33 @@ def seg_update(data):
     latest = state.get("latest")
     if not latest or latest == current:
         return None
+    # Only surface major/minor bumps (2.1.x → 2.2.0); ignore patch-only churn.
+    if _parse_ver(current)[:2] == _parse_ver(latest)[:2]:
+        return None
     return rgb(f"⬆ {latest}", 255, 180, 80)
 
 
 def seg_ctx_or_warn(data):
+    used = data.get("context_window", {}).get("used_percentage")
+    if used is not None:
+        pct = round(used)
+        return rgb(f"◐ {pct}%", *ctx_color(pct))
     if data.get("exceeds_200k_tokens"):
         return rgb("⚠ 200k+", 255, 80, 80)
-    used = data.get("context_window", {}).get("used_percentage")
-    if used is None:
-        return rgb("◐ --", 100, 100, 120)
-    pct = round(used)
-    return rgb(f"◐ {pct}%", *ctx_color(pct))
+    return rgb("◐ --", 100, 100, 120)
 
 
 def seg_cost(data):
     usd = data.get("total_cost_usd")
     if usd is None:
-        usd = data.get("cost", {}).get("total_cost_usd") if isinstance(data.get("cost"), dict) else None
+        usd = (
+            data.get("cost", {}).get("total_cost_usd")
+            if isinstance(data.get("cost"), dict)
+            else None
+        )
     if usd is None:
         return None
-    dur_ms = data.get("total_duration_ms")
-    if dur_ms is None:
-        dur_ms = data.get("cost", {}).get("total_duration_ms") if isinstance(data.get("cost"), dict) else None
-    dur_str = fmt_duration(dur_ms)
-    body = f"💰 ${usd:.2f}"
-    if dur_str:
-        body += f" · {dur_str}"
-    return rgb(body, *cost_color(usd))
+    return rgb(f"${usd:.2f}", *cost_color(usd))
 
 
 def seg_diff(data):
@@ -157,7 +155,11 @@ def seg_diff(data):
 
 
 def seg_output_style(data):
-    name = data.get("output_style", {}).get("name") if isinstance(data.get("output_style"), dict) else None
+    name = (
+        data.get("output_style", {}).get("name")
+        if isinstance(data.get("output_style"), dict)
+        else None
+    )
     if not name or name.lower() in ("default", ""):
         return None
     return rgb(f"📝 {name}", 140, 220, 220)
@@ -248,7 +250,8 @@ def seg_uncommitted(cwd):
     lines = [l for l in out.splitlines() if l.strip()]
     if not lines:
         return None
-    return rgb(f"±{len(lines)}f", 255, 200, 80)
+    n = len(lines)
+    return rgb(f"±{n} {'file' if n == 1 else 'files'}", 255, 200, 80)
 
 
 def seg_stash(cwd):
@@ -267,7 +270,13 @@ def seg_docker(cwd):
     p = Path(cwd)
     present = any(
         (p / f).exists()
-        for f in ("Dockerfile", "docker-compose.yml", "docker-compose.yaml", "compose.yml", "compose.yaml")
+        for f in (
+            "Dockerfile",
+            "docker-compose.yml",
+            "docker-compose.yaml",
+            "compose.yml",
+            "compose.yaml",
+        )
     )
     return rgb("🐳 docker", 41, 182, 246) if present else rgb("🐳 N/A", 100, 100, 120)
 
@@ -360,14 +369,16 @@ def _playwright_tests(cwd):
 
 def seg_tests(cwd):
     if not cwd:
-        return rgb("✓ N/A", 100, 100, 120)
-    return (
+        return rgb("🧪 N/A", 100, 100, 120)
+    result = (
         _dotnet_tests(cwd)
         or _pytest_tests(cwd)
         or _jest_tests(cwd)
         or _playwright_tests(cwd)
-        or rgb("✓ N/A", 100, 100, 120)
     )
+    if result is None:
+        return rgb("🧪 N/A", 100, 100, 120)
+    return rgb("🧪 ", 180, 180, 200) + result
 
 
 _SPEC_BRANCH_RE = re.compile(r"^(\d{3,}-[a-z0-9][a-z0-9-]*)")
@@ -398,7 +409,9 @@ def seg_speckit(cwd, branch):
                     continue
                 sm = _STATUS_RE.search(line)
                 if sm:
-                    phases.append((current_phase, sm.group(1), int(sm.group(2)), int(sm.group(3))))
+                    phases.append(
+                        (current_phase, sm.group(1), int(sm.group(2)), int(sm.group(3)))
+                    )
                     current_phase = None
     except Exception:
         return None
@@ -427,37 +440,71 @@ def seg_activity(session_id):
     return f"{rgb(f'🤖 {agents}', 180, 255, 180)} · {rgb(f'🛠 {tools}', 200, 200, 200)}"
 
 
+# === layout (key → builder + which segments render, in what order) ===
+
+SEGMENTS_META = Path(__file__).resolve().parent / "statusline-segments.json"
+LAYOUT_CONFIG = Path.home() / ".claude" / "statusline-config.json"
+
+# key → builder(ctx) -> segment string or None. ctx carries the parsed stdin
+# payload plus the resolved cwd / session_id / branch the git segments need.
+BUILDERS = {
+    "model": lambda c: seg_model(c["data"]),
+    "update": lambda c: seg_update(c["data"]),
+    "context": lambda c: seg_ctx_or_warn(c["data"]),
+    "cost": lambda c: seg_cost(c["data"]),
+    "diff": lambda c: seg_diff(c["data"]),
+    "output_style": lambda c: seg_output_style(c["data"]),
+    "ratelimit": lambda c: seg_ratelimit(c["data"]),
+    "cwd": lambda c: seg_cwd(c["data"]),
+    "branch": lambda c: seg_branch(c["cwd"])[0],
+    "ahead_behind": lambda c: seg_ahead_behind(c["cwd"]),
+    "uncommitted": lambda c: seg_uncommitted(c["cwd"]),
+    "stash": lambda c: seg_stash(c["cwd"]),
+    "docker": lambda c: seg_docker(c["cwd"]),
+    "tests": lambda c: seg_tests(c["cwd"]),
+    "speckit": lambda c: seg_speckit(c["cwd"], c["branch"]),
+    "activity": lambda c: seg_activity(c["session_id"]),
+}
+
+
+def _load_layout():
+    """Ordered [{key, enabled, row}] from user config, else bundled defaults, else built-in."""
+    for path in (LAYOUT_CONFIG, SEGMENTS_META):
+        try:
+            if path.exists():
+                segs = json.loads(path.read_text(encoding="utf-8")).get("segments")
+                if isinstance(segs, list) and segs:
+                    return segs
+        except Exception:
+            continue
+    # Built-in fallback: every known segment, declared order, row 1.
+    return [{"key": k, "enabled": True, "row": 1} for k in BUILDERS]
+
+
 # === main ===
 
 data = json.load(sys.stdin)
 cwd_str = data.get("workspace", {}).get("current_dir") or data.get("cwd")
 session_id = data.get("session_id")
+branch = git(["branch", "--show-current"], cwd_str)
+
+ctx = {"data": data, "cwd": cwd_str, "session_id": session_id, "branch": branch}
 
 SEP = rgb("  │  ", 70, 70, 90)
 
-row1 = [
-    seg_model(data),
-    seg_update(data),
-    seg_ctx_or_warn(data),
-    seg_cost(data),
-    seg_diff(data),
-    seg_output_style(data),
-    seg_ratelimit(data),
-    seg_cwd(data),
-]
+rows = {1: [], 2: []}
+for seg in _load_layout():
+    if not isinstance(seg, dict) or not seg.get("enabled", True):
+        continue
+    fn = BUILDERS.get(seg.get("key"))
+    if fn is None:
+        continue
+    try:
+        rendered = fn(ctx)
+    except Exception:
+        rendered = None
+    if rendered:
+        rows[2 if seg.get("row") == 2 else 1].append(rendered)
 
-branch_part, branch = seg_branch(cwd_str)
-
-row2 = [
-    branch_part,
-    seg_ahead_behind(cwd_str),
-    seg_uncommitted(cwd_str),
-    seg_stash(cwd_str),
-    seg_docker(cwd_str),
-    seg_tests(cwd_str),
-    seg_speckit(cwd_str, branch),
-    seg_activity(session_id),
-]
-
-print(SEP.join(p for p in row1 if p))
-print(SEP.join(p for p in row2 if p))
+print(SEP.join(rows[1]))
+print(SEP.join(rows[2]))

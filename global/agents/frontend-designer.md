@@ -153,6 +153,7 @@ Each issue should be one paragraph of "what" and one of "done when". Hand the li
 
 ## Composes well with
 
+- `@ux-analyst` — your partner on every new component/page. They probe behaviour, states, and best practices and surface scoped questions; you decide the visual language and design system. They don't decide — their brief sharpens yours.
 - `@frontend-css` — implements the tokens and `globals.css` from your DESIGN.md.
 - `@react-architect` / `@tanstack-architect` / `@frontend-architect` — implements components against your specs.
 - `/ui-component` skill — generates a component aligned with the design language once DESIGN.md exists.

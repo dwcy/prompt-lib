@@ -38,6 +38,7 @@ Agent(subagent_type, isolation="worktree")    Agent × N
 | `tanstack-architect` | TanStack Router / Query / Form / Table / Virtual | Yes |
 | `frontend-css` | CSS modules, design tokens, globals.css | Yes |
 | `frontend-designer` | UI/UX design, design system, DESIGN.md | Yes |
+| `ux-analyst` | Behaviour/best-practice questioning + a11y gate for new UI (advisory, non-deciding) | Yes (UX briefs) |
 | `python-architect` | FastAPI, Django, SQLAlchemy, async patterns | Yes |
 | `python-tester` | pytest, pytest-asyncio, fixtures, integration tests | Yes |
 | `unity-architect` | MonoBehaviour, ScriptableObject, scene architecture | Yes |
@@ -48,6 +49,12 @@ Agent(subagent_type, isolation="worktree")    Agent × N
 | `code-plan-verifier` | Verify implementation matches plan and conventions | No (read-only) |
 | `init-project` | New project scaffolding, CLAUDE.md creation | Yes |
 | `load-project` | Load existing project context at session start | No |
+| `requirements-analyst` | Elicit + document requirements, user stories, acceptance criteria | Yes (REQUIREMENTS.md / spec) |
+| `data-analyst` | Profile + analyse datasets, compute metrics, findings reports | Yes (analysis scripts + reports) |
+| `api-designer` | REST / GraphQL contract design, OpenAPI / SDL | Yes (openapi.yaml / schema.graphql) |
+| `db-architect` | Schema design, indexing, migrations, data modelling | Yes (DDL / migrations) |
+| `website-content-analyst` | Fetch + distil web pages from URLs into cited findings | Yes (research reports) |
+| `git-repo-analyst` | Two-stage repo analysis: feature map → code/idea extraction | Yes (analysis reports; clones to scratch) |
 
 > `load-project` is NOT routed via `/orchestrate` — it runs at session start only.
 

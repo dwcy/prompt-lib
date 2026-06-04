@@ -1,3 +1,4 @@
+# > 400 LoC justified: required inline Textual CSS for grouped install buttons + multi-stage flow (group probe -> outdated check -> install worker -> per-row refresh) tightly coupled to ToolsScreen widget state.
 # -*- coding: utf-8 -*-
 """ToolsScreen — extracted from setup/src/cabal/wizard.py for feature 005."""
 
@@ -19,11 +20,30 @@ from rich.markup import escape as escape_markup
 from rich.text import Text
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Center, Container, Horizontal, ScrollableContainer, Vertical, VerticalScroll
+from textual.containers import (
+    Center,
+    Container,
+    Horizontal,
+    ScrollableContainer,
+    Vertical,
+    VerticalScroll,
+)
 from textual.screen import ModalScreen, Screen
 from textual.widgets import (
-    Button, Checkbox, DataTable, Footer, Header, Input, Label,
-    MarkdownViewer, OptionList, RadioButton, RadioSet, Rule, Select, Static,
+    Button,
+    Checkbox,
+    DataTable,
+    Footer,
+    Header,
+    Input,
+    Label,
+    MarkdownViewer,
+    OptionList,
+    RadioButton,
+    RadioSet,
+    Rule,
+    Select,
+    Static,
 )
 from textual.widgets.option_list import Option
 from textual.widget import Widget
@@ -63,6 +83,7 @@ from cabal.tools import (
 from cabal.updates import check_for_updates, do_git_pull
 from cabal.widgets.env_panel import EnvPanel
 from cabal.widgets.update_panel import UpdatePanel
+
 
 class ToolsScreen(Screen):
     """Install missing dependencies, grouped by category. Each group is its own panel."""
@@ -126,9 +147,11 @@ class ToolsScreen(Screen):
     @staticmethod
     def _sorted_keys(keys: list[str]) -> list[str]:
         """Order keys alphabetically by display label (case-insensitive)."""
+
         def _label(k: str) -> str:
             meta = _installer_for(k)
             return (meta[0] if meta else k).lower()
+
         return sorted(keys, key=_label)
 
     def compose(self) -> ComposeResult:
@@ -151,8 +174,14 @@ class ToolsScreen(Screen):
                         label, _fn = meta
                         with Horizontal(classes="tool-row"):
                             yield Static(f"[white]{label}[/]", classes="tool-name")
-                            yield Static("", classes="tool-state", id=f"tool-state-{key}")
-                            yield Button("Install", id=f"tool-install-{key}", classes="tool-install")
+                            yield Static(
+                                "", classes="tool-state", id=f"tool-state-{key}"
+                            )
+                            yield Button(
+                                "Install",
+                                id=f"tool-install-{key}",
+                                classes="tool-install",
+                            )
             yield Static("", id="tools-status", classes="panel")
         yield Footer()
 
@@ -171,6 +200,62 @@ class ToolsScreen(Screen):
         # immediately when ready (via call_from_thread). The UI updates after each
         # group, so panels clear one-by-one in declared order rather than all at once.
         self.run_worker(self._load_groups, thread=True, exclusive=True)
+
+    def _refresh_one(self, key: str) -> None:
+        """Re-probe a single tool row + re-run the outdated check.
+
+        Used after a per-tool install/update so the rest of the view doesn't
+        flash loading state and the #tools-status install result stays visible.
+        """
+        self.run_worker(
+            lambda: self._reload_one_worker(key),
+            thread=True,
+            exclusive=False,
+        )
+
+    def _reload_one_worker(self, key: str) -> None:
+        try:
+            env_subset: dict = {key: _probe_key(key)}
+            if key == "dotnet":
+                env_subset["dotnet_sdks"] = _dotnet_sdks()
+        except Exception:
+            return
+        self.app.call_from_thread(self._apply_one_row, key, env_subset)
+        try:
+            outdated = _outdated_packages()
+            for k in VERSION_FLOORS:
+                env_val = _dotnet_sdks() if k == "dotnet" else _probe_key(k)
+                if _below_floor(k, env_val):
+                    outdated.add(k)
+        except Exception:
+            outdated = set()
+        self.app.call_from_thread(self._apply_outdated, outdated)
+
+    def _apply_one_row(self, key: str, env_subset: dict) -> None:
+        installed, detail = self._tool_state(key, env_subset)
+        try:
+            state_w = self.query_one(f"#tool-state-{key}", Static)
+            btn = self.query_one(f"#tool-install-{key}", Button)
+        except Exception:
+            return
+        if installed:
+            self._installed_keys.add(key)
+            self._installed_details[key] = detail
+            suffix = f" [dim]{detail}[/dim]" if detail else ""
+            state_w.update(
+                f"[bright_green]✓ installed[/bright_green]{suffix}  "
+                f"[dim](checking for updates…)[/dim]"
+            )
+            btn.display = False
+            btn.remove_class("-update")
+        else:
+            self._installed_keys.discard(key)
+            self._installed_details.pop(key, None)
+            state_w.update("[red]✗ not installed[/red]")
+            btn.display = True
+            btn.disabled = False
+            btn.label = "Install"
+            btn.remove_class("-update")
 
     def _load_groups(self) -> None:
         for group_name, keys in ENV_TOOL_GROUPS:
@@ -260,7 +345,9 @@ class ToolsScreen(Screen):
             detail = self._installed_details.get(key, "")
             suffix = f" [dim]{detail}[/dim]" if detail else ""
             if key in outdated:
-                state_w.update(f"[bright_yellow]⬇ update available[/bright_yellow]{suffix}")
+                state_w.update(
+                    f"[bright_yellow]⬇ update available[/bright_yellow]{suffix}"
+                )
                 btn.display = True
                 btn.disabled = False
                 btn.label = "Update"
@@ -296,15 +383,18 @@ class ToolsScreen(Screen):
         )
         self.run_worker(
             lambda: self._do_install(key, label, installer, btn),
-            thread=True, exclusive=False,
+            thread=True,
+            exclusive=False,
         )
 
     def _start_spinner(self, button: Button) -> None:
         button.disabled = True
         state = {"frame": 0}
+
         def tick() -> None:
             state["frame"] = (state["frame"] + 1) % len(self._SPINNER_FRAMES)
             button.label = self._SPINNER_FRAMES[state["frame"]]
+
         button.label = self._SPINNER_FRAMES[0]
         state["timer"] = self.set_interval(0.08, tick)
         if not hasattr(self, "_spinners"):
@@ -339,7 +429,35 @@ class ToolsScreen(Screen):
             )
             button.disabled = False
             button.label = "Install"
-            self._refresh()
+            last_line = lines[-1].strip() if lines else ""
+            if ok:
+                self.notify(
+                    f"{label} updated",
+                    title="Tools",
+                    severity="information",
+                    timeout=8,
+                )
+                # Re-probe just this row so the rest of the view stays put.
+                self._refresh_one(key)
+            else:
+                summary = last_line or "see status panel for details"
+                self.notify(
+                    summary,
+                    title=f"{label} failed",
+                    severity="error",
+                    timeout=15,
+                )
+                # Tag the row itself so the user can see which tool failed even
+                # after the toast dismisses. State will only clear on Ctrl+R.
+                try:
+                    state_w = self.query_one(f"#tool-state-{key}", Static)
+                    detail = self._installed_details.get(key, "")
+                    suffix = f" [dim]{detail}[/dim]" if detail else ""
+                    state_w.update(
+                        f"[bright_yellow]⬇ update available[/bright_yellow]{suffix} "
+                        f"[bold red]· last attempt failed[/bold red]"
+                    )
+                except Exception:
+                    pass
+
         self.app.call_from_thread(_done)
-
-

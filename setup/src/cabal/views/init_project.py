@@ -7,6 +7,7 @@ import re
 import shutil
 import subprocess
 from pathlib import Path
+from typing import Callable
 
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -14,7 +15,15 @@ from textual.containers import Horizontal, VerticalScroll
 from textual.coordinate import Coordinate
 from textual.screen import Screen
 from textual.widgets import (
-    Button, DataTable, Footer, Input, Label, OptionList, RadioButton, RadioSet, Static,
+    Button,
+    DataTable,
+    Footer,
+    Input,
+    Label,
+    OptionList,
+    RadioButton,
+    RadioSet,
+    Static,
 )
 from textual.widgets.option_list import Option
 
@@ -23,16 +32,31 @@ from cabal.app_widgets import AppHeader
 from cabal.claude_cli import ClaudeRunResult, spawn_claude
 from cabal.gh_templates import GitHubTemplateRef, download_tarball, list_user_templates
 from cabal.init_project_service import (
-    ApplyReport, InjectableFile, LocalTemplateRef,
-    apply_plan, count_project_mcp_entries, ensure_mcp_gitignored,
-    enumerate_github_template_files, enumerate_local_template_files,
+    ApplyReport,
+    InjectableFile,
+    LocalTemplateRef,
+    apply_plan,
+    count_project_mcp_entries,
+    ensure_mcp_gitignored,
+    enumerate_github_template_files,
+    enumerate_local_template_files,
+    enumerate_run_launcher_files,
 )
 from cabal.views.init_project_prompt import build_init_prompt, write_init_prompt
 
 
 _NAME_RE = re.compile(r"^[A-Za-z0-9._\-]{1,64}$")
-_WIN_RESERVED = {"CON", "PRN", "AUX", "NUL"} | {f"COM{i}" for i in range(1, 10)} | {f"LPT{i}" for i in range(1, 10)}
-_SCAFFOLD_RELPATHS = [".claude/skills", ".claude/hooks", ".claude/agents", ".claude/settings.local.json"]
+_WIN_RESERVED = (
+    {"CON", "PRN", "AUX", "NUL"}
+    | {f"COM{i}" for i in range(1, 10)}
+    | {f"LPT{i}" for i in range(1, 10)}
+)
+_SCAFFOLD_RELPATHS = [
+    ".claude/skills",
+    ".claude/hooks",
+    ".claude/agents",
+    ".claude/settings.local.json",
+]
 
 
 def _target_is_empty_or_only_mcp_json(target: Path) -> bool:
@@ -54,8 +78,9 @@ class InitProjectScreen(Screen):
         Binding("ctrl+a", "apply", "Apply"),
     ]
 
-    def __init__(self) -> None:
+    def __init__(self, on_created: Callable[[Path], None] | None = None) -> None:
         super().__init__()
+        self._on_created = on_created
         self._gh_templates: list[GitHubTemplateRef] = []
         self._local_templates: list[LocalTemplateRef] = []
         self._injectables: list[InjectableFile] = []
@@ -65,6 +90,7 @@ class InitProjectScreen(Screen):
         self._apply_in_progress: bool = False
         self._claude_proc: subprocess.Popen | None = None
         self._cancel_requested: bool = False
+        self._last_target: Path | None = None
 
     def compose(self) -> ComposeResult:
         yield AppHeader()
@@ -85,17 +111,23 @@ class InitProjectScreen(Screen):
             with Horizontal():
                 yield Label("Template source:")
                 with RadioSet(id="init-source"):
-                    yield RadioButton("GitHub template repo", value=True, id="init-source-github")
+                    yield RadioButton(
+                        "GitHub template repo", value=True, id="init-source-github"
+                    )
                     yield RadioButton("Local template", id="init-source-local")
             yield OptionList(id="init-template-list")
             yield Static("", id="init-template-status", classes="help-text")
             yield Static("", id="init-mcp-summary", classes="help-text")
             with Horizontal():
                 yield Button("[E] Edit Project MCP…", id="init-edit-mcp", disabled=True)
-            yield DataTable(id="init-files", show_cursor=True, cursor_type="row", zebra_stripes=True)
+            yield DataTable(
+                id="init-files", show_cursor=True, cursor_type="row", zebra_stripes=True
+            )
             yield Static("", id="init-summary", classes="help-text")
             with Horizontal():
-                yield Button("[A] Apply", id="init-apply", variant="success", disabled=True)
+                yield Button(
+                    "[A] Apply", id="init-apply", variant="success", disabled=True
+                )
                 yield Button("Cancel", id="init-cancel", variant="default")
                 yield Button("Back (Esc)", id="init-back")
             yield Static("", id="init-status", classes="panel")
@@ -107,7 +139,8 @@ class InitProjectScreen(Screen):
         tpl_dir = GLOBAL_DIR / "project-templates"
         tpls = sorted(tpl_dir.glob("*.md")) if tpl_dir.exists() else []
         self._local_templates = [
-            LocalTemplateRef(stem=p.stem, path=p, gitignore_preset_name=p.stem) for p in tpls
+            LocalTemplateRef(stem=p.stem, path=p, gitignore_preset_name=p.stem)
+            for p in tpls
         ]
         self.query_one("#init-template-status", Static).update(
             "[yellow]⏳ Fetching GitHub template repos…[/]"
@@ -153,7 +186,9 @@ class InitProjectScreen(Screen):
         lst = self.query_one("#init-template-list", OptionList)
         lst.clear_options()
         for ref in self._local_templates:
-            lst.add_option(Option(f"{ref.stem}  [dim](local)[/dim]", id=f"local::{ref.stem}"))
+            lst.add_option(
+                Option(f"{ref.stem}  [dim](local)[/dim]", id=f"local::{ref.stem}")
+            )
         self.query_one("#init-template-status", Static).update(
             f"[dim]{len(self._local_templates)} local templates available[/dim]"
         )
@@ -162,7 +197,9 @@ class InitProjectScreen(Screen):
         oid = event.option.id or ""
         if oid.startswith("gh::"):
             slug = oid[4:]
-            ref = next((r for r in self._gh_templates if f"{r.owner}/{r.name}" == slug), None)
+            ref = next(
+                (r for r in self._gh_templates if f"{r.owner}/{r.name}" == slug), None
+            )
             if ref is not None:
                 self._start_gh_download(ref)
         elif oid.startswith("local::"):
@@ -173,7 +210,9 @@ class InitProjectScreen(Screen):
 
     def _start_gh_download(self, ref: GitHubTemplateRef) -> None:
         self.query_one("#init-files", DataTable).clear()
-        self.query_one("#init-summary", Static).update("[yellow]⏳ Downloading template tarball…[/yellow]")
+        self.query_one("#init-summary", Static).update(
+            "[yellow]⏳ Downloading template tarball…[/yellow]"
+        )
 
         def _run() -> None:
             try:
@@ -185,12 +224,16 @@ class InitProjectScreen(Screen):
 
         self.run_worker(_run, thread=True, exclusive=True)
 
-    def _on_download_done(self, ref: GitHubTemplateRef, extract_dir: Path, files: list[InjectableFile]) -> None:
+    def _on_download_done(
+        self, ref: GitHubTemplateRef, extract_dir: Path, files: list[InjectableFile]
+    ) -> None:
         if self._gh_extract_dir and self._gh_extract_dir.exists():
             shutil.rmtree(self._gh_extract_dir, ignore_errors=True)
         self._gh_extract_dir = extract_dir
-        self._injectables = files
-        self._template_attribution = f"GitHub: {ref.owner}/{ref.name}@{ref.default_branch}"
+        self._injectables = self._with_run_launcher(files)
+        self._template_attribution = (
+            f"GitHub: {ref.owner}/{ref.name}@{ref.default_branch}"
+        )
         self._render_files_table()
         total_bytes = sum(f.size_bytes for f in files)
         self.query_one("#init-summary", Static).update(
@@ -199,14 +242,18 @@ class InitProjectScreen(Screen):
         self._refresh_apply_state()
 
     def _on_download_error(self, msg: str) -> None:
-        self.query_one("#init-summary", Static).update(f"[red]✗ template fetch failed: {msg}[/red]")
+        self.query_one("#init-summary", Static).update(
+            f"[red]✗ template fetch failed: {msg}[/red]"
+        )
 
     def _stage_local(self, ref: LocalTemplateRef) -> None:
         if self._gh_extract_dir and self._gh_extract_dir.exists():
             shutil.rmtree(self._gh_extract_dir, ignore_errors=True)
             self._gh_extract_dir = None
-        files = enumerate_local_template_files(ref, scaffold_dir_relpaths=_SCAFFOLD_RELPATHS)
-        self._injectables = files
+        files = enumerate_local_template_files(
+            ref, scaffold_dir_relpaths=_SCAFFOLD_RELPATHS
+        )
+        self._injectables = self._with_run_launcher(files)
         self._template_attribution = f"local: {ref.stem}"
         self._render_files_table()
         total_bytes = sum(f.size_bytes for f in files)
@@ -215,12 +262,26 @@ class InitProjectScreen(Screen):
         )
         self._refresh_apply_state()
 
+    def _with_run_launcher(self, files: list[InjectableFile]) -> list[InjectableFile]:
+        """Append the cross-platform run launcher, skipping any file the template already provides."""
+        existing = {str(f.dest_relpath) for f in files}
+        launcher = [
+            f
+            for f in enumerate_run_launcher_files(GLOBAL_DIR / "project-templates")
+            if str(f.dest_relpath) not in existing
+        ]
+        return files + launcher
+
     def _render_files_table(self) -> None:
         tbl = self.query_one("#init-files", DataTable)
         tbl.clear()
         for f in self._injectables:
             mark = "✓" if f.selected else " "
-            size = f"{f.size_bytes} B" if f.size_bytes < 1024 else f"{f.size_bytes / 1024:.1f} KB"
+            size = (
+                f"{f.size_bytes} B"
+                if f.size_bytes < 1024
+                else f"{f.size_bytes / 1024:.1f} KB"
+            )
             tbl.add_row(mark, str(f.dest_relpath), size, f.origin)
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
@@ -293,6 +354,7 @@ class InitProjectScreen(Screen):
             parent = Path(self.query_one("#init-parent", Input).value).expanduser()
             name = self.query_one("#init-name", Input).value.strip()
             target = parent / name
+            self._last_target = target
 
             report = apply_plan(target, self._injectables)
 
@@ -301,14 +363,35 @@ class InitProjectScreen(Screen):
             report.gitignore_already_tracked = tracked
             report.mcp_entries = count_project_mcp_entries(target)
 
-            files_written = [str(inj.dest_relpath) for inj in self._injectables if inj.selected]
+            files_written = [
+                str(inj.dest_relpath) for inj in self._injectables if inj.selected
+            ]
             agents_dir = target / ".claude" / "agents"
             skills_dir = target / ".claude" / "skills"
             cmds_dir = target / ".claude" / "commands"
-            agents = sorted(p.stem for p in agents_dir.glob("*.md")) if agents_dir.is_dir() else []
-            skills = sorted(p.stem for p in skills_dir.glob("*.md")) if skills_dir.is_dir() else []
-            commands = sorted(p.stem for p in cmds_dir.glob("*.md")) if cmds_dir.is_dir() else []
-            prompt = build_init_prompt(target, self._template_attribution, files_written, agents, skills, commands)
+            agents = (
+                sorted(p.stem for p in agents_dir.glob("*.md"))
+                if agents_dir.is_dir()
+                else []
+            )
+            skills = (
+                sorted(p.stem for p in skills_dir.glob("*.md"))
+                if skills_dir.is_dir()
+                else []
+            )
+            commands = (
+                sorted(p.stem for p in cmds_dir.glob("*.md"))
+                if cmds_dir.is_dir()
+                else []
+            )
+            prompt = build_init_prompt(
+                target,
+                self._template_attribution,
+                files_written,
+                agents,
+                skills,
+                commands,
+            )
             write_init_prompt(target, prompt)
 
             if not shutil.which("claude"):
@@ -319,7 +402,9 @@ class InitProjectScreen(Screen):
             try:
                 proc = spawn_claude(args=["-p", prompt], cwd=target)
             except FileNotFoundError:
-                report.claude_run = ClaudeRunResult(returncode=127, stdout="", stderr="claude CLI not found in PATH")
+                report.claude_run = ClaudeRunResult(
+                    returncode=127, stdout="", stderr="claude CLI not found in PATH"
+                )
                 self.app.call_from_thread(self._on_apply_done, report, None)
                 return
 
@@ -336,7 +421,12 @@ class InitProjectScreen(Screen):
             finally:
                 self._claude_proc = None
             err = proc.stderr.read() if proc.stderr else ""
-            run = ClaudeRunResult(returncode=rc, stdout="\n".join(out_lines), stderr=err, cancelled=self._cancel_requested)
+            run = ClaudeRunResult(
+                returncode=rc,
+                stdout="\n".join(out_lines),
+                stderr=err,
+                cancelled=self._cancel_requested,
+            )
             self._cancel_requested = False
             report.claude_run = run
             self.app.call_from_thread(self._on_apply_done, report, None)
@@ -355,17 +445,25 @@ class InitProjectScreen(Screen):
         self._apply_in_progress = False
         self._refresh_apply_state()
         if error or report is None:
-            self.query_one("#init-status", Static).update(f"[red]✗ Apply failed: {error or 'unknown error'}[/red]")
+            self.query_one("#init-status", Static).update(
+                f"[red]✗ Apply failed: {error or 'unknown error'}[/red]"
+            )
             return
-        msgs = [f"[green]✓[/green] Files written: {report.files_written} ({report.bytes_written / 1024:.1f} KB)"]
+        msgs = [
+            f"[green]✓[/green] Files written: {report.files_written} ({report.bytes_written / 1024:.1f} KB)"
+        ]
         if report.gitignore_added:
             msgs.append("[green]✓[/green] `.mcp.json` added to `.gitignore`")
         if report.gitignore_already_tracked:
-            msgs.append("[yellow].mcp.json was already tracked by git in this repo — run `git rm --cached .mcp.json` to stop tracking it.[/yellow]")
+            msgs.append(
+                "[yellow].mcp.json was already tracked by git in this repo — run `git rm --cached .mcp.json` to stop tracking it.[/yellow]"
+            )
         if report.mcp_entries:
             msgs.append(f"[green]✓[/green] Project MCP entries: {report.mcp_entries}")
         if report.claude_run is None:
-            msgs.append("[yellow]claude CLI not installed — skipping architecture step. Install from Tools screen.[/yellow]")
+            msgs.append(
+                "[yellow]claude CLI not installed — skipping architecture step. Install from Tools screen.[/yellow]"
+            )
         else:
             rc = report.claude_run.returncode
             if report.claude_run.cancelled:
@@ -373,11 +471,19 @@ class InitProjectScreen(Screen):
             elif rc == 0:
                 msgs.append("[green]✓ claude finished[/green]")
             else:
-                msgs.append(f"[yellow]claude exited {rc} — review .claude/ manually[/yellow]")
+                msgs.append(
+                    f"[yellow]claude exited {rc} — review .claude/ manually[/yellow]"
+                )
         self.query_one("#init-status", Static).update("\n".join(msgs))
+
+        if self._last_target is not None:
+            self.app.selected_project = self._last_target
+            if self._on_created is not None:
+                self._on_created(self._last_target)
 
     def _open_browser(self) -> None:
         from cabal.views.folder_browser import FolderBrowserScreen
+
         raw = self.query_one("#init-parent", Input).value
         start = Path(raw).expanduser()
         if not start.is_dir():
@@ -406,7 +512,9 @@ class InitProjectScreen(Screen):
                 f"[dim]Project MCP entries staged: {count}[/dim]"
             )
 
-        self.app.push_screen(ProjectMcpScreen(target_dir=target, on_change=_on_mcp_change))
+        self.app.push_screen(
+            ProjectMcpScreen(target_dir=target, on_change=_on_mcp_change)
+        )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         bid = event.button.id or ""
@@ -425,7 +533,9 @@ class InitProjectScreen(Screen):
                     self._claude_proc.terminate()
                 except Exception:
                     pass
-                self.query_one("#init-status", Static).update("[yellow]cancelled[/yellow]")
+                self.query_one("#init-status", Static).update(
+                    "[yellow]cancelled[/yellow]"
+                )
             else:
                 self.app.pop_screen()
 

@@ -10,10 +10,13 @@ analyzer follows the graph and bundles them (per research.md R6).
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from textual.app import App
 from textual.binding import Binding
 
 from cabal.app_widgets import AppCommandsProvider, AppHeader  # noqa: F401  (re-export)
+from cabal.views.claude_info import ClaudeInfoScreen  # noqa: F401
 from cabal.views.doctor import DoctorScreen  # noqa: F401
 from cabal.views.env import EnvScreen  # noqa: F401
 from cabal.views.folder_browser import FolderBrowserScreen  # noqa: F401
@@ -21,21 +24,29 @@ from cabal.views.gh_device import GhDeviceFlowScreen  # noqa: F401
 from cabal.views.git_config import GitConfigScreen  # noqa: F401
 from cabal.views.github_repos import GitHubReposScreen  # noqa: F401
 from cabal.views.global_env import GlobalEnvScreen  # noqa: F401
-from cabal.views.home import HomeScreen
+from cabal.views.home import HomeScreen  # noqa: F401
 from cabal.views.init_project import InitProjectScreen  # noqa: F401
 from cabal.views.init_project_prompt import build_init_prompt, write_init_prompt  # noqa: F401
 from cabal.views.local import LocalScreen  # noqa: F401
 from cabal.views.mcp import McpScreen  # noqa: F401
 from cabal.views.operations import OperationsScreen  # noqa: F401
+from cabal.views.project_gate import ProjectGateScreen
 from cabal.views.project_mcp import ProjectMcpScreen  # noqa: F401
 from cabal.views.readme import ReadmeScreen  # noqa: F401
 from cabal.views.restore import RestoreScreen  # noqa: F401
+from cabal.views.statusline import StatuslineScreen  # noqa: F401
 from cabal.views.tools import ToolsScreen  # noqa: F401
 from cabal.views.update import UpdateScreen  # noqa: F401
 
 
 class CabalApp(App):
     """CABAL — Agent Orchestration Setup."""
+
+    selected_project: Path | None = None
+
+    def project_path(self) -> Path:
+        """The active project folder; falls back to cwd if somehow unset."""
+        return self.selected_project or Path.cwd()
 
     CSS = """
     Screen { background: $background; }
@@ -194,7 +205,6 @@ class CabalApp(App):
 
     BINDINGS = [
         Binding("ctrl+q", "quit", "Quit", show=True),
-        Binding("ctrl+c", "quit", "Quit", show=False, priority=True),
         Binding("q", "quit", "Quit", show=False),
         Binding("left", "focus_previous", show=False),
         Binding("right", "focus_next", show=False),
@@ -205,7 +215,7 @@ class CabalApp(App):
     def on_mount(self) -> None:
         self.title = "CABAL"
         self.sub_title = "Agent Orchestration Setup"
-        self.push_screen(HomeScreen())
+        self.push_screen(ProjectGateScreen())
 
 
 def main() -> None:

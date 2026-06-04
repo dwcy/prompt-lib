@@ -77,6 +77,58 @@ Each one owns a stack. They give opinionated guidance, scaffold structure, and w
 - Ends every pass with the work split into **UX issues** (flows, states, IA, a11y, copy) and **UI issues** (tokens, type, spacing, components, motion).
 - Hard rules: never writes CSS or component code (hands off to `@frontend-css` / `@react-architect` / `@tanstack-architect` / `@frontend-architect`); never `#000`; mobile-first means base CSS is mobile and queries are `min-width`; touch targets ≥ 44×44 px; every animation has a `prefers-reduced-motion` fallback.
 
+### Design & data specialists
+
+#### `@ux-analyst`
+- The behaviour + best-practice **quality gate** on every new UI component or content page. Pairs with `@frontend-designer` (look/design system) and the UI developer (`@react-architect` / `@tanstack-architect` / `@frontend-architect` / `@frontend-css`).
+- Tools: `Read, Write, Edit, Glob, Grep` — writes UX briefs, never code.
+- Asks **scoped** questions about the thing being added — states, validation timing, feedback/latency, edge data, keyboard/focus, reversibility (components); goal, hierarchy, entry/exit, page states, responsive behaviour, content (pages). Never a generic UX questionnaire.
+- Suggests proven interaction patterns with trade-offs (pagination vs infinite scroll, confirm vs undo, wizard vs long form) and runs a consistency/a11y checklist (all states covered, keyboard operable, WCAG AA floor, reduced-motion, empty/loading/error designed, matches siblings).
+- **Hard rule: it is not the decider.** It surfaces questions, options, and risks; the **architect or the user** decides. It stays out of the design system and the code. Output is a `UX-NOTES.md` brief that hands visual decisions to `@frontend-designer` and implementation to the UI developer.
+
+#### `@requirements-analyst`
+- Turns vague or conflicting asks into testable, prioritised requirements **before** anyone designs or codes.
+- Tools: `Read, Write, Edit, Glob, Grep`.
+- Runs an Elicitation Loop (goal/metric, actors, scope boundary, constraints, data/states, edge cases, NFRs), then writes/extends `REQUIREMENTS.md` (or the active `specs/**/spec.md`): numbered FRs with Given/When/Then acceptance criteria, MoSCoW priority, explicit assumptions, and open questions.
+- Hard rules: every FR has an acceptance criterion; no solution language in requirements; mark every assumption; verifiable-or-cut.
+- Hands off to `@db-architect`, `@api-designer`, and the language architects.
+
+#### `@api-designer`
+- Designs the client/server contract — REST / GraphQL / RPC — and produces a valid OpenAPI 3.1 or GraphQL SDL file plus an `API-DESIGN.md` rationale.
+- Tools: `Read, Write, Edit, Glob, Grep`.
+- Owns resource modelling, status codes, a single error envelope, pagination/filtering/sorting consistency, versioning policy, idempotency, and auth scopes.
+- Hard rules: contract is the source of truth (must parse); consistency over cleverness; never `200` on failure; no verbs in REST paths; design for additive evolution. No business logic — hands off to the language architects.
+
+#### `@db-architect`
+- Schema design, key/type selection, normalisation vs deliberate denormalisation, indexing, migrations, transactions, and query performance across Postgres / SQL Server / MySQL / SQLite and document/KV stores.
+- Tools: `Read, Write, Edit, Glob, Bash`.
+- Produces DDL / ORM migrations in the project's format plus `DB-DESIGN.md` (entities, integrity rules, access-pattern→index map, lock-aware migration plan, trade-offs).
+- Hard rules: constraints live in the schema; `decimal` not float for money; timezone-aware timestamps only; every FK indexed; justify each index/denormalisation; flag lock-taking migrations with the online-safe alternative.
+
+#### `@data-analyst`
+- Answers questions *from data* — profiles, cleans, computes metrics, finds patterns/anomalies in CSV/JSON/Parquet/SQL results/logs, and reports findings with the query behind each claim.
+- Tools: `Read, Write, Edit, Glob, Bash`.
+- Prefers DuckDB for ad-hoc SQL over files, polars/pandas for awkward transforms; keeps scratch scripts in `analysis/`.
+- Hard rules: measure never guess; report n + caveats; cleaning is visible (record impact stated); correlation ≠ causation; no spurious precision.
+
+### Analysis & research specialists
+
+These take **links you provide** and read the real source — never a guess about what it "probably" says.
+
+#### `@website-content-analyst`
+- You hand it URLs (docs, articles, product pages, changelogs); it `WebFetch`es each, extracts the load-bearing facts/quotes/links, assesses relevance + credibility, and writes a cited findings report.
+- Tools: `Read, Write, WebFetch, WebSearch` — read-only on the web.
+- Hard rules: only report what it fetched (every source marked ✓/partial/✗); attribute every claim to a URL; quote precisely; separate fact from assessment; flag recency and contradictions.
+- For code repositories, use `@git-repo-analyst` instead.
+
+#### `@git-repo-analyst`
+- You hand it a GitHub/GitLab repo URL (or local clone); it mines it in **two explicit stages**.
+- Tools: `Read, Write, WebFetch, WebSearch, Bash, Glob, Grep`.
+- **Stage 1 — Map**: purpose, health signals (stars/last release/maintenance/license), architecture at a glance, and a *ranked list of useful features* with paths — then asks which threads to deep-dive.
+- **Stage 2 — Deep dive**: reads the real implementation of the chosen threads and extracts concrete code examples (`path:line` cited), the reusable pattern/idea, adaptation notes, and gotchas.
+- Acquisition is cheapest-sufficient: raw-file `WebFetch` + `gh api` metadata for a light touch, shallow `git clone --depth 1` to scratch for a deep dive.
+- Hard rules: two stages in order; cite real code (no from-memory snippets); read-only on the target; respect + state the license before suggesting reuse; flag staleness/security smells.
+
 ### Testing specialists
 
 #### `@dotnet-tester`

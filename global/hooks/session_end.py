@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """SessionEnd hook — print a random ironic farewell when the session terminates.
 
-Emits JSON with `systemMessage` so Claude Code displays it in the UI.
+SessionEnd fires after the session has ended, so a `systemMessage` on stdout is
+never surfaced. The only output Claude Code shows for SessionEnd is stderr, and
+only when the hook exits with code 2 — so the farewell goes to stderr + exit 2.
 Never fails the session: any error exits 0.
 """
-import json
+
 import random
 import sys
 
@@ -19,11 +21,14 @@ FAREWELLS = [
 
 
 def main() -> None:
-    print(json.dumps({"systemMessage": random.choice(FAREWELLS)}))
+    print(random.choice(FAREWELLS), file=sys.stderr)
+    sys.exit(2)
 
 
 if __name__ == "__main__":
     try:
         main()
+    except SystemExit:
+        raise
     except Exception:
         sys.exit(0)

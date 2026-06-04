@@ -7,9 +7,11 @@ Consumed by `cabal.views.init_project` (the InitProjectScreen Apply step).
 from __future__ import annotations
 
 import json
+import os
 import re
 import shutil
 import subprocess
+import sys
 import tarfile
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
@@ -18,6 +20,8 @@ from cabal.claude_cli import ClaudeRunResult
 
 
 _WINDOWS_DRIVE_RE = re.compile(r"^[A-Za-z]:")
+
+RUN_LAUNCHER_FILES = ("run", "run.cmd", "run.py")
 
 
 @dataclass
@@ -72,7 +76,11 @@ def _validate_safe(tar: tarfile.TarFile) -> None:
         name = member.name
         normalized = name.replace("\\", "/")
 
-        if normalized.startswith("/") or name.startswith("\\") or _WINDOWS_DRIVE_RE.match(name):
+        if (
+            normalized.startswith("/")
+            or name.startswith("\\")
+            or _WINDOWS_DRIVE_RE.match(name)
+        ):
             raise UnsafeArchiveError(f"unsafe path in archive: {name}")
         if any(part == ".." for part in PurePosixPath(normalized).parts):
             raise UnsafeArchiveError(f"unsafe path in archive: {name}")
@@ -96,14 +104,41 @@ def enumerate_local_template_files(
         )
     ]
     for rel in scaffold_dir_relpaths or []:
-        rows.append(InjectableFile(
-            source_path=Path(""),
-            dest_relpath=PurePosixPath(rel),
-            size_bytes=0,
-            selected=True,
-            status="NEW",
-            origin="scaffold",
-        ))
+        rows.append(
+            InjectableFile(
+                source_path=Path(""),
+                dest_relpath=PurePosixPath(rel),
+                size_bytes=0,
+                selected=True,
+                status="NEW",
+                origin="scaffold",
+            )
+        )
+    return rows
+
+
+def enumerate_run_launcher_files(templates_root: Path) -> list[InjectableFile]:
+    """Return InjectableFiles for the cross-platform `run` launcher (`run`, `run.cmd`, `run.py`).
+
+    Sourced from `<templates_root>/run/`. `run.py` self-generates `run.config.json`
+    (with a random dev port per app) on first launch, so no config is staged here.
+    """
+    src_dir = templates_root / "run"
+    rows: list[InjectableFile] = []
+    for fname in RUN_LAUNCHER_FILES:
+        src = src_dir / fname
+        if not src.is_file():
+            continue
+        rows.append(
+            InjectableFile(
+                source_path=src,
+                dest_relpath=PurePosixPath(fname),
+                size_bytes=src.stat().st_size,
+                selected=True,
+                status="NEW",
+                origin="run-launcher",
+            )
+        )
     return rows
 
 
@@ -120,12 +155,14 @@ def enumerate_github_template_files(extract_dir: Path) -> list[InjectableFile]:
         rel_posix = PurePosixPath(*rel.parts)
         if any(part == ".git" for part in rel_posix.parts):
             continue
-        rows.append(InjectableFile(
-            source_path=p,
-            dest_relpath=rel_posix,
-            size_bytes=p.stat().st_size,
-            origin="github",
-        ))
+        rows.append(
+            InjectableFile(
+                source_path=p,
+                dest_relpath=rel_posix,
+                size_bytes=p.stat().st_size,
+                origin="github",
+            )
+        )
     rows.sort(key=lambda r: str(r.dest_relpath))
     return rows
 
@@ -157,6 +194,13 @@ def apply_plan(
             continue
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(inj.source_path, dest)
+        if (
+            inj.origin == "run-launcher"
+            and dest.name == "run"
+            and not sys.platform.startswith("win")
+        ):
+            mode = os.stat(dest).st_mode
+            os.chmod(dest, mode | 0o111)
         bytes_written += inj.size_bytes
         files_written += 1
     return ApplyReport(
@@ -196,7 +240,10 @@ def ensure_mcp_gitignored(target_dir: Path) -> tuple[bool, bool]:
     if shutil.which("git"):
         r = subprocess.run(
             ["git", "ls-files", "--error-unmatch", ".mcp.json"],
-            cwd=str(target_dir), capture_output=True, text=True, check=False,
+            cwd=str(target_dir),
+            capture_output=True,
+            text=True,
+            check=False,
         )
         if r.returncode == 0:
             already_tracked = True

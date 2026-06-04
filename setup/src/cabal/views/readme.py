@@ -19,16 +19,43 @@ from rich.markup import escape as escape_markup
 from rich.text import Text
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Center, Container, Horizontal, ScrollableContainer, Vertical, VerticalScroll
+from textual.containers import (
+    Center,
+    Container,
+    Horizontal,
+    ScrollableContainer,
+    Vertical,
+    VerticalScroll,
+)
 from textual.screen import ModalScreen, Screen
 from textual.widgets import (
-    Button, Checkbox, DataTable, Footer, Header, Input, Label,
-    MarkdownViewer, OptionList, RadioButton, RadioSet, Rule, Select, Static,
+    Button,
+    Checkbox,
+    DataTable,
+    Footer,
+    Header,
+    Input,
+    Label,
+    MarkdownViewer,
+    OptionList,
+    RadioButton,
+    RadioSet,
+    Rule,
+    Select,
+    Static,
 )
 from textual.widgets.option_list import Option
 from textual.widget import Widget
 
-from cabal._paths import GLOBAL_DIR, TARGET, REPO_DIR, ENV_DIR, ENV_FILE, RESOURCE_ROOT
+from cabal._paths import (
+    GLOBAL_DIR,
+    TARGET,
+    REPO_DIR,
+    ENV_DIR,
+    ENV_FILE,
+    RESOURCE_ROOT,
+    SCRIPT_DIR,
+)
 from cabal.app_widgets import AppHeader
 from cabal.banner import HexBanner, render_banner
 from cabal.components import COMPONENTS, Component, ENV_DESCRIPTIONS, FileStatus
@@ -64,20 +91,29 @@ from cabal.updates import check_for_updates, do_git_pull
 from cabal.widgets.env_panel import EnvPanel
 from cabal.widgets.update_panel import UpdatePanel
 
+
 class ReadmeScreen(Screen):
     """Render the project README in a scrollable Markdown viewer."""
 
-    BINDINGS = [Binding("escape", "app.pop_screen", "Back"), Binding("q", "app.pop_screen", "Back")]
+    BINDINGS = [
+        Binding("escape", "app.pop_screen", "Back"),
+        Binding("q", "app.pop_screen", "Back"),
+    ]
 
     def compose(self) -> ComposeResult:
         yield AppHeader()
-        candidates = [GLOBAL_DIR / "README.md", RESOURCE_ROOT / "README.md", SCRIPT_DIR / "README.md"]
+        candidates = [
+            GLOBAL_DIR / "README.md",
+            RESOURCE_ROOT / "README.md",
+            SCRIPT_DIR / "README.md",
+        ]
         if REPO_DIR is not None:
             candidates.insert(0, REPO_DIR / "README.md")
         readme = next((p for p in candidates if p.exists()), None)
         if readme:
-            yield MarkdownViewer(readme.read_text(encoding="utf-8"), show_table_of_contents=True)
+            yield MarkdownViewer(
+                readme.read_text(encoding="utf-8"), show_table_of_contents=True
+            )
         else:
             yield Static("[yellow]No README.md found.[/yellow]")
         yield Footer()
-

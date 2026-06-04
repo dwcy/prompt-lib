@@ -19,11 +19,29 @@ from rich.markup import escape as escape_markup
 from rich.text import Text
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Center, Container, Horizontal, ScrollableContainer, Vertical, VerticalScroll
+from textual.containers import (
+    Center,
+    Container,
+    Horizontal,
+    ScrollableContainer,
+    Vertical,
+    VerticalScroll,
+)
 from textual.screen import ModalScreen, Screen
 from textual.widgets import (
-    Button, Checkbox, DataTable, Footer, Header, Input, Label,
-    MarkdownViewer, OptionList, RadioButton, RadioSet, Rule, Select, Static,
+    Button,
+    Checkbox,
+    DataTable,
+    Footer,
+    Header,
+    Label,
+    MarkdownViewer,
+    OptionList,
+    RadioButton,
+    RadioSet,
+    Rule,
+    Select,
+    Static,
 )
 from textual.widgets.option_list import Option
 from textual.widget import Widget
@@ -65,6 +83,7 @@ from cabal.widgets.claude_stats_panel import ClaudeStatsPanel
 from cabal.widgets.env_panel import EnvPanel
 from cabal.widgets.update_panel import UpdatePanel
 
+
 class HomeScreen(Screen):
     """Landing screen — banner + horizontal nav."""
 
@@ -77,6 +96,7 @@ class HomeScreen(Screen):
         Binding("i", "init_project", "Init"),
         Binding("o", "open_project", "Open"),
         Binding("c", "go_configure", "Configure"),
+        Binding("t", "go_statusline", "Statusline"),
         Binding("ctrl+s", "refresh_claude_stats", "Refresh stats"),
         Binding("q", "app.quit", "Quit"),
     ]
@@ -86,27 +106,47 @@ class HomeScreen(Screen):
         with VerticalScroll(id="home-scroll"):
             yield HexBanner(id="banner", classes="centered")
             yield EnvPanel(id="env-summary")
-            yield ClaudeStatsPanel(id="claude-stats")
             with Vertical(classes="home-section"):
-                yield Static("[bold]Project[/bold]", classes="home-section-title")
-                with Horizontal(classes="ops-row"):
-                    yield Button("[I] Init new project", id="btn-op-init", variant="primary")
-                    yield Button("[O] Open existing project", id="btn-op-open-project", variant="primary")
-            with Vertical(classes="home-section"):
-                yield Static("[bold]Global Claude Settings[/bold]", classes="home-section-title")
+                yield Static(
+                    "[bold]Claude Settings[/bold]", classes="home-section-title"
+                )
                 yield Static(
                     "[dim]Deploy and tune the files in ~/.claude — agents, hooks, skills, MCP servers, settings.[/dim]",
                     classes="home-section-desc",
                 )
                 with Horizontal(classes="ops-row"):
-                    yield Button("[C] Configure", id="btn-op-update", variant="default")
-            with Vertical(classes="home-section"):
-                yield Static("[bold]Local Claude Settings[/bold]", classes="home-section-title")
+                    yield Button(
+                        "[C] Global Claude file Config",
+                        id="btn-op-update",
+                        variant="default",
+                    )
+                    yield Button("[M] Global MCPs", id="btn-op-mcp", variant="default")
+                    yield Button(
+                        "[T] Statusline", id="btn-op-statusline", variant="default"
+                    )
+                yield ClaudeStatsPanel(id="claude-stats")
+                yield Static(
+                    "[bold]Local Claude Settings[/bold]", classes="home-section-title"
+                )
                 with Horizontal(classes="ops-row"):
                     yield Button("[D] Doctor", id="btn-op-doctor", variant="default")
-                    yield Button("[L] Local", id="btn-op-local", variant="default")
-            with Horizontal(classes="ops-row"):
-                yield Button("[M] MCP", id="btn-op-mcp", variant="default")
+                    yield Button(
+                        "[N] Local MCP", id="btn-op-local-mcp", variant="default"
+                    )
+                    yield Button(
+                        "[L] Local Config", id="btn-op-local", variant="default"
+                    )
+            with Vertical(classes="home-section"):
+                yield Static("[bold]Project[/bold]", classes="home-section-title")
+                with Horizontal(classes="ops-row"):
+                    yield Button(
+                        "[I] Init new project", id="btn-op-init", variant="primary"
+                    )
+                    yield Button(
+                        "[O] Open existing project",
+                        id="btn-op-open-project",
+                        variant="primary",
+                    )
         with Horizontal(id="home-bottom"):
             yield Button("[R] README", id="btn-readme", variant="primary")
             yield Button("[E] Env vars", id="btn-env", variant="primary")
@@ -126,6 +166,7 @@ class HomeScreen(Screen):
         from cabal.views.git_config import GitConfigScreen
         from cabal.views.github_repos import GitHubReposScreen
         from cabal.views.global_env import GlobalEnvScreen
+
         if name == "readme":
             self.app.push_screen(ReadmeScreen())
         elif name == "env":
@@ -139,15 +180,23 @@ class HomeScreen(Screen):
 
     def action_init_project(self) -> None:
         from cabal.views.init_project import InitProjectScreen
-        self.app.push_screen(InitProjectScreen())
+
+        self.app.push_screen(InitProjectScreen(on_created=self._project_changed))
 
     def action_open_project(self) -> None:
         from cabal.views.folder_browser import FolderBrowserScreen
+
         self.app.push_screen(FolderBrowserScreen(Path.cwd()), self._after_folder_picked)
 
     def action_go_configure(self) -> None:
         from cabal.views.update import UpdateScreen
+
         self.app.push_screen(UpdateScreen())
+
+    def action_go_statusline(self) -> None:
+        from cabal.views.statusline import StatuslineScreen
+
+        self.app.push_screen(StatuslineScreen())
 
     def action_refresh_claude_stats(self) -> None:
         try:
@@ -158,30 +207,38 @@ class HomeScreen(Screen):
     def _after_folder_picked(self, path: Path | None) -> None:
         if path is None:
             return
-        from cabal.views.local import LocalScreen
-        screen = LocalScreen()
-        self.app.push_screen(screen)
-        def _seed() -> None:
-            try:
-                screen.query_one("#loc-path", Input).value = str(path)
-                screen._refresh()
-            except Exception:
-                pass
-        self.app.call_after_refresh(_seed)
+        self._project_changed(path)
+
+    def _project_changed(self, path: Path) -> None:
+        self.app.selected_project = path
+        self._refresh_env_panel()
+
+    def _refresh_env_panel(self) -> None:
+        try:
+            self.query_one("#env-summary", EnvPanel).refresh_project()
+        except Exception:
+            pass
+
+    def on_screen_resume(self) -> None:
+        self._refresh_env_panel()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         from cabal.views.update import UpdateScreen
         from cabal.views.mcp import McpScreen
+        from cabal.views.project_mcp import ProjectMcpScreen
         from cabal.views.doctor import DoctorScreen
         from cabal.views.local import LocalScreen
         from cabal.views.tools import ToolsScreen
+        from cabal.views.statusline import StatuslineScreen
+
         bid = event.button.id or ""
         op_screens = {
-            "btn-op-update":  UpdateScreen,
-            "btn-op-mcp":     McpScreen,
-            "btn-op-doctor":  DoctorScreen,
-            "btn-op-local":   LocalScreen,
-            "btn-op-tools":   ToolsScreen,
+            "btn-op-update": UpdateScreen,
+            "btn-op-mcp": McpScreen,
+            "btn-op-doctor": DoctorScreen,
+            "btn-op-local": LocalScreen,
+            "btn-op-tools": ToolsScreen,
+            "btn-op-statusline": StatuslineScreen,
         }
         if bid == "btn-readme":
             self.action_go("readme")
@@ -199,7 +256,7 @@ class HomeScreen(Screen):
             self.action_init_project()
         elif bid == "btn-op-open-project":
             self.action_open_project()
+        elif bid == "btn-op-local-mcp":
+            self.app.push_screen(ProjectMcpScreen(target_dir=self.app.project_path()))
         elif bid in op_screens:
             self.app.push_screen(op_screens[bid]())
-
-
