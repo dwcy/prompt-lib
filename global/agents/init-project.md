@@ -1,6 +1,6 @@
 ---
 name: init-project
-description: Initializes a new project by detecting the stack, asking architecture questions, writing CLAUDE.md, and spawning the correct specialist subagents for the detected language and project type.
+description: Initializes a new project by detecting the stack, asking architecture questions, writing CLAUDE.md, scaffolding a cross-platform `run` launcher (run / run.cmd / run.py with a random dev port), and spawning the correct specialist subagents for the detected language and project type.
 tools: Read, Write, Bash, Glob, Task
 ---
 
@@ -47,7 +47,35 @@ Ask the questions from the template's `## Questions` section. Collect all answer
 
 Fill in the template's `## CLAUDE.md Template` section with the user's answers and write it to `CLAUDE.md` in the current directory.
 
-## Step 5 — Announce available specialist subagents
+## Step 5 — Scaffold the cross-platform `run` launcher (always)
+
+Every new project gets a `run` launcher in its root. Copy these three files verbatim from `C:\Users\Dawid\.claude\project-templates\run\` into the project root:
+
+- `run` — POSIX shim (`chmod +x run` after copying on macOS/Linux).
+- `run.cmd` — Windows shim.
+- `run.py` — the actual launcher (Python 3 stdlib only). Do not edit it; it is identical across projects.
+
+Then, because you already know the exact stack and apps from the answers above, write a precise `run.config.json` next to them so the first launch is deterministic. Schema:
+
+```json
+{
+  "default": "all",
+  "apps": [
+    { "name": "web", "type": "web", "dir": "apps/web", "cmd": ["pnpm", "run", "dev"], "portEnv": "PORT", "port": 3xxx },
+    { "name": "api", "type": "backend", "dir": "apps/api", "cmd": ["uvicorn", "app.main:app", "--reload", "--port", "{port}"], "portEnv": null, "port": 8xxx }
+  ]
+}
+```
+
+Rules for the config:
+- One entry per runnable app. Single web app / console / backend → one entry; monorepo → one per workspace. Set `default` to the app name for a single app, or `"all"` for a monorepo.
+- **Pick a random dev port in the conventional band for each app type** — `web`/`frontend` → 3001–3999, `backend`/`api` → 8001–8999, `console`/`worker` → `0` (no port). Do not use the bare conventional default (3000 / 8000); randomise within the band so two local projects don't collide.
+- Inject the port either via `portEnv` (e.g. `PORT` for Node) **or** a `{port}` token inside `cmd` (e.g. `--port {port}`, `--urls http://localhost:{port}`) — whichever the framework expects. Set `portEnv: null` when using the token.
+- Use the project's real package manager (`pnpm`/`bun` for frontend — never `npm`/`yarn`) and real entry points.
+
+Tell the user how to run it: `./run` (default), `./run <app>`, `./run all`, `./run -p <port>`, `./run --list`.
+
+## Step 6 — Announce available specialist subagents
 
 After writing CLAUDE.md, tell the user which specialist subagents are now available for this project type and what each one does:
 

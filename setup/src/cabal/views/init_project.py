@@ -40,6 +40,7 @@ from cabal.init_project_service import (
     ensure_mcp_gitignored,
     enumerate_github_template_files,
     enumerate_local_template_files,
+    enumerate_run_launcher_files,
 )
 from cabal.views.init_project_prompt import build_init_prompt, write_init_prompt
 
@@ -229,7 +230,7 @@ class InitProjectScreen(Screen):
         if self._gh_extract_dir and self._gh_extract_dir.exists():
             shutil.rmtree(self._gh_extract_dir, ignore_errors=True)
         self._gh_extract_dir = extract_dir
-        self._injectables = files
+        self._injectables = self._with_run_launcher(files)
         self._template_attribution = (
             f"GitHub: {ref.owner}/{ref.name}@{ref.default_branch}"
         )
@@ -252,7 +253,7 @@ class InitProjectScreen(Screen):
         files = enumerate_local_template_files(
             ref, scaffold_dir_relpaths=_SCAFFOLD_RELPATHS
         )
-        self._injectables = files
+        self._injectables = self._with_run_launcher(files)
         self._template_attribution = f"local: {ref.stem}"
         self._render_files_table()
         total_bytes = sum(f.size_bytes for f in files)
@@ -260,6 +261,16 @@ class InitProjectScreen(Screen):
             f"[green]✓[/green] {len(files)} files staged ({total_bytes / 1024:.1f} KB)"
         )
         self._refresh_apply_state()
+
+    def _with_run_launcher(self, files: list[InjectableFile]) -> list[InjectableFile]:
+        """Append the cross-platform run launcher, skipping any file the template already provides."""
+        existing = {str(f.dest_relpath) for f in files}
+        launcher = [
+            f
+            for f in enumerate_run_launcher_files(GLOBAL_DIR / "project-templates")
+            if str(f.dest_relpath) not in existing
+        ]
+        return files + launcher
 
     def _render_files_table(self) -> None:
         tbl = self.query_one("#init-files", DataTable)
