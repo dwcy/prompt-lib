@@ -16,12 +16,19 @@ Read the task description and identify two things:
 - React / Vue / Next.js / Nuxt / Angular / Vite / Zustand / TanStack
 - CSS / design tokens / `globals.css`
 - UI design / UX / wireframe / design system / typography
+- new UI component / content page / interaction behaviour / UX best practice / a11y review
 - Unity / MonoBehaviour / ScriptableObject / scene
 - Raspberry Pi / Arduino / GPIO / I2C / sensor
 - GitHub settings / branch protection / secret scanning
 - `.gitignore` / staged files / pre-commit
 - API keys / secrets / credentials / tokens
 - New project / init / scaffold
+- requirements / user stories / acceptance criteria / scope
+- dataset / CSV / data analysis / metrics / SQL query results
+- API contract / endpoints / OpenAPI / GraphQL schema / REST
+- database schema / migration / indexing / data model
+- URL / web page / article / docs page / changelog (research a link)
+- repo URL / GitHub repository (analyse / mine for features or code)
 
 **Phase signals** — what kind of work is it?
 - `architect` / design / structure / review / DI / domain
@@ -30,6 +37,7 @@ Read the task description and identify two things:
 - `verify` / check / "does the code match"
 - `audit` / scan
 - `design` / UX / wireframe / mockup
+- `analyse` / research / extract / profile / explore
 - `configure` / set up
 
 ---
@@ -56,6 +64,13 @@ Match domain + phase against this routing table. Apply the **highest-priority ma
 | 14 | API keys / secrets / credentials / tokens / passwords | scan / audit / pre-commit | `secret-auditor` |
 | 15 | new project / CLAUDE.md missing / init / scaffold | setup / initialise | `init-project` |
 | 16 | verify / plan conformance / "does the code match" / architecture review | verify / check / audit | `code-plan-verifier` |
+| 17 | requirements / user stories / acceptance criteria / scope / vague request | analyse / scope / elicit | `requirements-analyst` |
+| 18 | dataset / CSV / Parquet / SQL results / metrics / logs | analyse / profile / explore | `data-analyst` |
+| 19 | API contract / endpoints / OpenAPI / GraphQL schema / REST surface | design / structure | `api-designer` |
+| 20 | database schema / migration / indexing / normalisation / data model | architect / design / review | `db-architect` |
+| 21 | URL / web page / article / docs page / changelog (a link to read) | analyse / research / extract | `website-content-analyst` |
+| 22 | repo URL / GitHub repository / clone (mine for features or code) | analyse / research / extract | `git-repo-analyst` |
+| 23 | new UI component / content page / interaction behaviour / a11y / UX best practice | analyse / review / question | `ux-analyst` |
 
 **If no row matches:** say "No specialist matched — handling in main session" and continue without delegation.
 
@@ -74,6 +89,7 @@ Tell the user which agent(s) you selected and why before dispatching.
 
 **Sequential** — when agents form a pipeline (output of one feeds the next):
 - Common pipelines: `frontend-designer` → `react-architect` → `code-plan-verifier`
+- **New UI component / content page = a trio**: dispatch `ux-analyst` (behaviour, states, best-practice questions) alongside `frontend-designer` (look + design system), then hand both to the UI developer (`react-architect` / `tanstack-architect` / `frontend-architect` / `frontend-css`). `ux-analyst` does not decide — its brief informs the designer's and architect's decisions.
 - Pass each agent's result as context to the next agent's prompt
 - Still use `isolation: "worktree"` for each writing agent
 
