@@ -72,6 +72,24 @@ def seg_model(data):
     return rgb(f"✦ {name}", 139, 196, 255)
 
 
+def seg_thinking(data):
+    """Show the configured thinking/effort mode from settings.json. Hidden if unknown."""
+    try:
+        cfg = json.loads(
+            (Path.home() / ".claude" / "settings.json").read_text(encoding="utf-8")
+        )
+    except (FileNotFoundError, json.JSONDecodeError, OSError):
+        return None
+    if cfg.get("fastMode"):
+        return rgb("⚡ fast", 255, 180, 80)
+    if cfg.get("alwaysThinkingEnabled") is False:
+        return rgb("🧠 off", 100, 100, 120)
+    effort = cfg.get("effortLevel")
+    if effort:
+        return rgb(f"🧠 {effort}", 180, 220, 255)
+    return None
+
+
 def _maybe_refresh_update_cache():
     try:
         if (
@@ -449,6 +467,7 @@ LAYOUT_CONFIG = Path.home() / ".claude" / "statusline-config.json"
 # payload plus the resolved cwd / session_id / branch the git segments need.
 BUILDERS = {
     "model": lambda c: seg_model(c["data"]),
+    "thinking": lambda c: seg_thinking(c["data"]),
     "update": lambda c: seg_update(c["data"]),
     "context": lambda c: seg_ctx_or_warn(c["data"]),
     "cost": lambda c: seg_cost(c["data"]),

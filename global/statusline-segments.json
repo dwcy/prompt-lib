@@ -2,6 +2,7 @@
   "$schema_version": 1,
   "segments": [
     { "key": "model", "label": "Model", "row": 1, "enabled": true, "description": "Active Claude model display name (e.g. Opus 4.8)." },
+    { "key": "thinking", "label": "Thinking / effort", "row": 1, "enabled": true, "description": "Configured thinking mode: ⚡ fast, 🧠 <effort>, or 🧠 off. Hidden when unset." },
     { "key": "update", "label": "Update available", "row": 1, "enabled": true, "description": "Shows ⬆ <version> when a newer Claude Code release is published. Hidden when up to date." },
     { "key": "context", "label": "Context usage", "row": 1, "enabled": true, "description": "Percent of the context window used, colour-coded; shows ⚠ when over 200k tokens." },
     { "key": "cost", "label": "Cost & duration", "row": 1, "enabled": true, "description": "Session cost in USD plus elapsed wall-clock time." },
