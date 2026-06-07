@@ -3,6 +3,7 @@
   "theme": "dark",
   "model": "opus",
   "defaultMode": "plan",
+  "verbose": true,
   "feedbackSurveyRate": 0,
   "statusLine": {
     "type": "command",

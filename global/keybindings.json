@@ -1,1 +1,13 @@
-{}
+{
+  "$schema": "https://www.schemastore.org/claude-code-keybindings.json",
+  "$docs": "https://code.claude.com/docs/en/keybindings",
+  "bindings": [
+    {
+      "context": "ModelPicker",
+      "bindings": {
+        "ctrl+left": "modelPicker:decreaseEffort",
+        "ctrl+right": "modelPicker:increaseEffort"
+      }
+    }
+  ]
+}
