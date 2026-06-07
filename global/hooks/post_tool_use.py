@@ -6,14 +6,25 @@ The statusline reads this file to render the activity counters segment.
 Resets counters when the session_id changes. Never fails the session: any
 error exits 0 silently.
 """
+
 import json
 import sys
 from pathlib import Path
+
+try:
+    from _gate import should_skip
+except ImportError:
+
+    def should_skip(_name: str) -> bool:
+        return False
+
 
 STATE_FILE = Path.home() / ".claude" / ".session_state.json"
 
 
 def main() -> None:
+    if should_skip("post_tool_use"):
+        return
     try:
         data = json.load(sys.stdin)
     except (json.JSONDecodeError, ValueError):

@@ -3,6 +3,7 @@
   "theme": "dark",
   "model": "opus",
   "defaultMode": "plan",
+  "verbose": true,
   "feedbackSurveyRate": 0,
   "statusLine": {
     "type": "command",
@@ -171,6 +172,10 @@
           {
             "type": "command",
             "command": "python \"$USERPROFILE/.claude/hooks/pretool_task_isolation.py\""
+          },
+          {
+            "type": "command",
+            "command": "python \"$USERPROFILE/.claude/hooks/subagent_start.py\""
           }
         ]
       }
@@ -218,6 +223,16 @@
           {
             "type": "command",
             "command": "python \"$USERPROFILE/.claude/hooks/stop_session.py\""
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$USERPROFILE/.claude/hooks/subagent_stop.py\""
           }
         ]
       }

@@ -1,0 +1,68 @@
+#!/usr/bin/env python3
+"""PreToolUse(Task) hook — record the subagent being dispatched.
+
+Writes ~/.claude/.subagent_state.json (name + model + start time) so the
+statusline can show a "subagent running" chip, and prints a one-line chat
+notice. Cleared by subagent_stop.py on SubagentStop.
+
+We hook PreToolUse(Task) rather than SubagentStart because the model is only
+present here (tool_input.model); the SubagentStart payload has no model field.
+The start marker (started_at) is also the anchor a future token-report step
+would use to attribute the subagent's transcript slice. Never blocks: any
+error or non-Task call exits 0 (allow).
+"""
+
+import json
+import sys
+import time
+from pathlib import Path
+
+try:
+    from _gate import should_skip
+except ImportError:
+
+    def should_skip(_name: str) -> bool:
+        return False
+
+
+STATE_FILE = Path.home() / ".claude" / ".subagent_state.json"
+
+
+def main() -> None:
+    if should_skip("subagent_start"):
+        sys.exit(0)
+    try:
+        data = json.load(sys.stdin)
+    except (json.JSONDecodeError, ValueError):
+        sys.exit(0)
+
+    if data.get("tool_name") != "Task":
+        sys.exit(0)
+
+    tool_input = data.get("tool_input") or {}
+    name = tool_input.get("subagent_type") or "subagent"
+    model = tool_input.get("model")
+
+    state = {
+        "running": True,
+        "name": name,
+        "model": model,
+        "started_at": time.time(),
+        "session_id": data.get("session_id"),
+    }
+    try:
+        STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
+        STATE_FILE.write_text(json.dumps(state), encoding="utf-8")
+    except OSError:
+        pass
+
+    suffix = f" · {model}" if model else ""
+    print(json.dumps({"systemMessage": f"▶ subagent running: {name}{suffix}"}))
+    sys.exit(0)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception:
+        sys.exit(0)

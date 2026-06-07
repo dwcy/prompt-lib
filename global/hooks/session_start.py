@@ -10,12 +10,20 @@ holds the per-branch lock at <git-common-dir>/claude-session-locks/<branch>.json
 auto-create a sibling worktree on a new branch and instruct the user to switch.
 See docs/parallel-isolation.md.
 """
+
 import json
 import os
 import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+
+try:
+    from _gate import should_skip
+except ImportError:
+
+    def should_skip(_name: str) -> bool:
+        return False
 
 
 def emit(message: str) -> None:
@@ -33,7 +41,10 @@ def _pid_alive(pid: int) -> bool:
         try:
             out = subprocess.run(
                 ["tasklist", "/FI", f"PID eq {pid}", "/NH"],
-                capture_output=True, text=True, check=False, timeout=5,
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=5,
             )
             return str(pid) in out.stdout
         except Exception:
@@ -52,14 +63,26 @@ def _pid_alive(pid: int) -> bool:
 def _resolve_git_path(raw: str, cwd: Path) -> Path:
     p = Path(raw)
     if not p.is_absolute():
-        p = (cwd / p)
+        p = cwd / p
     return p.resolve()
 
 
-def _next_session_slot(repo: str, branch_slug: str, main_checkout: Path) -> tuple[str, Path]:
+def _next_session_slot(
+    repo: str, branch_slug: str, main_checkout: Path
+) -> tuple[str, Path]:
     branches_out = subprocess.run(
-        ["git", "-C", str(main_checkout), "branch", "--list", "--format=%(refname:short)"],
-        capture_output=True, text=True, check=False, timeout=10,
+        [
+            "git",
+            "-C",
+            str(main_checkout),
+            "branch",
+            "--list",
+            "--format=%(refname:short)",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=10,
     ).stdout
     existing_branches = {b.strip() for b in branches_out.splitlines() if b.strip()}
     parent = main_checkout.parent
@@ -92,9 +115,21 @@ def _check_worktree_collision(cwd: Path) -> tuple[bool, str | None]:
     """
     try:
         result = subprocess.run(
-            ["git", "-C", str(cwd), "rev-parse",
-             "--git-dir", "--git-common-dir", "--abbrev-ref", "HEAD", "--show-toplevel"],
-            capture_output=True, text=True, check=False, timeout=10,
+            [
+                "git",
+                "-C",
+                str(cwd),
+                "rev-parse",
+                "--git-dir",
+                "--git-common-dir",
+                "--abbrev-ref",
+                "HEAD",
+                "--show-toplevel",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=10,
         )
     except (OSError, subprocess.TimeoutExpired):
         return True, None
@@ -158,8 +193,20 @@ def _check_worktree_collision(cwd: Path) -> tuple[bool, str | None]:
         new_branch, target_dir = _next_session_slot(repo, branch_slug, main_checkout)
         target_rel = f"../{target_dir.name}"
         subprocess.run(
-            ["git", "-C", str(main_checkout), "worktree", "add", target_rel, "-b", new_branch],
-            capture_output=True, text=True, check=True, timeout=30,
+            [
+                "git",
+                "-C",
+                str(main_checkout),
+                "worktree",
+                "add",
+                target_rel,
+                "-b",
+                new_branch,
+            ],
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=30,
         )
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError) as exc:
         err = getattr(exc, "stderr", None) or str(exc)
@@ -189,6 +236,8 @@ def _check_worktree_collision(cwd: Path) -> tuple[bool, str | None]:
 
 
 def main() -> None:
+    if should_skip("session_start"):
+        return
     cwd = Path.cwd()
 
     try:
@@ -214,10 +263,16 @@ def main() -> None:
 
     hints: list[str] = []
 
-    if list(cwd.glob("*.sln")) or any(cwd.glob(f"{'*/' * d}*.csproj") for d in range(4)):
+    if list(cwd.glob("*.sln")) or any(
+        cwd.glob(f"{'*/' * d}*.csproj") for d in range(4)
+    ):
         hints.append(".NET")
 
-    if (cwd / "requirements.txt").exists() or (cwd / "pyproject.toml").exists() or (cwd / "Pipfile").exists():
+    if (
+        (cwd / "requirements.txt").exists()
+        or (cwd / "pyproject.toml").exists()
+        or (cwd / "Pipfile").exists()
+    ):
         hints.append("Python")
 
     pkg = cwd / "package.json"

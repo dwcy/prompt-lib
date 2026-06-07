@@ -5,10 +5,18 @@ Reads <git-common-dir>/claude-session-locks/<branch>.json and deletes it if
 the lock's `cwd` matches the current working directory. Never fails the
 session: any error exits 0.
 """
+
 import json
 import subprocess
 import sys
 from pathlib import Path
+
+try:
+    from _gate import should_skip
+except ImportError:
+
+    def should_skip(_name: str) -> bool:
+        return False
 
 
 def _resolve_git_path(raw: str, cwd: Path) -> Path:
@@ -19,13 +27,25 @@ def _resolve_git_path(raw: str, cwd: Path) -> Path:
 
 
 def main() -> None:
+    if should_skip("session_end_release_lock"):
+        return
     cwd = Path.cwd()
 
     try:
         result = subprocess.run(
-            ["git", "-C", str(cwd), "rev-parse",
-             "--git-common-dir", "--abbrev-ref", "HEAD"],
-            capture_output=True, text=True, check=False, timeout=5,
+            [
+                "git",
+                "-C",
+                str(cwd),
+                "rev-parse",
+                "--git-common-dir",
+                "--abbrev-ref",
+                "HEAD",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=5,
         )
     except (OSError, subprocess.TimeoutExpired):
         return

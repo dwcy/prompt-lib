@@ -10,22 +10,52 @@ Silent skip when the tool is not installed, no project config is found above
 the file, the path is inside a build/vendor directory, or the file is missing
 or too large. Never blocks: exits 0 on every path.
 """
+
 import json
 import shutil
 import subprocess
 import sys
 from pathlib import Path
 
+try:
+    from _gate import should_skip
+except ImportError:
+
+    def should_skip(_name: str) -> bool:
+        return False
+
+
 MAX_BYTES = 2 * 1024 * 1024
 WALK_LIMIT = 12
 TIMEOUT_SEC = 15
 
 SKIP_DIRS = {
-    "node_modules", ".git", "venv", ".venv", "__pycache__",
-    "bin", "obj", "dist", "build", ".next", ".nuxt", "target",
+    "node_modules",
+    ".git",
+    "venv",
+    ".venv",
+    "__pycache__",
+    "bin",
+    "obj",
+    "dist",
+    "build",
+    ".next",
+    ".nuxt",
+    "target",
 }
 
-BIOME_EXTS = {".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs", ".json", ".jsonc"}
+BIOME_EXTS = {
+    ".ts",
+    ".tsx",
+    ".mts",
+    ".cts",
+    ".js",
+    ".jsx",
+    ".mjs",
+    ".cjs",
+    ".json",
+    ".jsonc",
+}
 
 
 def _find_upwards(start: Path, names: tuple[str, ...]) -> Path | None:
@@ -57,8 +87,11 @@ def _find_upwards_glob(start: Path, patterns: tuple[str, ...]) -> Path | None:
 def _run(cmd: list[str], cwd: Path) -> None:
     try:
         subprocess.run(
-            cmd, cwd=str(cwd), capture_output=True,
-            timeout=TIMEOUT_SEC, check=False,
+            cmd,
+            cwd=str(cwd),
+            capture_output=True,
+            timeout=TIMEOUT_SEC,
+            check=False,
         )
     except (subprocess.TimeoutExpired, OSError):
         pass
@@ -90,15 +123,22 @@ def _format_csharp(path: Path) -> None:
         return
     _run(
         [
-            "dotnet", "format", str(project),
-            "--include", str(path),
-            "--no-restore", "--verbosity", "quiet",
+            "dotnet",
+            "format",
+            str(project),
+            "--include",
+            str(path),
+            "--no-restore",
+            "--verbosity",
+            "quiet",
         ],
         cwd=project.parent,
     )
 
 
 def main() -> None:
+    if should_skip("format_on_write"):
+        return
     try:
         data = json.load(sys.stdin)
     except (json.JSONDecodeError, ValueError):

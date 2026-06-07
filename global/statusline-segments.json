@@ -2,6 +2,7 @@
   "$schema_version": 1,
   "segments": [
     { "key": "model", "label": "Model", "row": 1, "enabled": true, "description": "Active Claude model display name (e.g. Opus 4.8)." },
+    { "key": "thinking", "label": "Thinking / effort", "row": 1, "enabled": true, "description": "Configured thinking mode: ⚡ fast, 🧠 <effort>, or 🧠 off. Hidden when unset." },
     { "key": "update", "label": "Update available", "row": 1, "enabled": true, "description": "Shows ⬆ <version> when a newer Claude Code release is published. Hidden when up to date." },
     { "key": "context", "label": "Context usage", "row": 1, "enabled": true, "description": "Percent of the context window used, colour-coded; shows ⚠ when over 200k tokens." },
     { "key": "cost", "label": "Cost & duration", "row": 1, "enabled": true, "description": "Session cost in USD plus elapsed wall-clock time." },
@@ -16,6 +17,7 @@
     { "key": "docker", "label": "Docker", "row": 2, "enabled": true, "description": "Whether a Dockerfile / compose file is present in the project." },
     { "key": "tests", "label": "Tests", "row": 2, "enabled": true, "description": "Latest test results parsed from dotnet / pytest / jest / playwright output." },
     { "key": "speckit", "label": "Spec Kit", "row": 2, "enabled": true, "description": "Active spec-kit phase progress when on a NNN-* feature branch." },
+    { "key": "subagent", "label": "Running subagent", "row": 2, "enabled": true, "description": "Shows 🤖 <name> (<model>) while a subagent is running. Cleared on completion." },
     { "key": "activity", "label": "Activity", "row": 2, "enabled": true, "description": "Agent and tool-call counters for the current session." }
   ]
 }

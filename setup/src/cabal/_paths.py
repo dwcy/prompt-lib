@@ -41,7 +41,9 @@ def _detect_repo_dir() -> Path | None:
                 return parent
         return None
     repo_candidate = Path(__file__).resolve().parents[3]
-    if (repo_candidate / ".git").is_dir():
+    # `.git` is a directory in the primary checkout, a file in a linked worktree
+    # (`gitdir: …`). Accept both so the updater works from worktrees too.
+    if (repo_candidate / ".git").exists():
         return repo_candidate
     return None
 

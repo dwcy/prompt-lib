@@ -54,7 +54,7 @@ class UpdatePanel(Widget):
         self.query_one("#update-branch").display = False
         cached = widget_cache.load_entry(_CACHE_KEY)
         if isinstance(cached, dict):
-            self._apply(cached)
+            self._apply(cached, from_cache=True)
         self.run_worker(self._check, thread=True, exclusive=True)
 
     def _check(self) -> None:
@@ -62,17 +62,26 @@ class UpdatePanel(Widget):
         widget_cache.save_entry(_CACHE_KEY, result)
         self.app.call_from_thread(self._apply, result)
 
-    def _apply(self, result: dict) -> None:
+    def _apply(self, result: dict, from_cache: bool = False) -> None:
         msg = self.query_one("#update-msg", Static)
         btn = self.query_one("#btn-pull", Button)
-        if result["status"] == "up_to_date":
+        status = result["status"]
+        # Never paint a stale "behind"/branch from cache — the cached entry may
+        # reflect a different branch the checkout has since left. Show a neutral
+        # placeholder and let the live check confirm.
+        if from_cache and status != "up_to_date":
+            msg.update("[dim]Checking for updates…[/dim]")
+            return
+        btn.display = False
+        self.query_one("#update-branch").display = False
+        if status == "up_to_date":
             date = result.get("date", "")
             date_suffix = f"  [dim]{date}[/dim]" if date else ""
             msg.update(
                 f"[green bold]✓ Latest version[/green bold]  "
                 f"[dim]{result['hash']}[/dim]{date_suffix}"
             )
-        elif result["status"] == "behind":
+        elif status == "behind":
             count = result.get("behind_count")
             subject = result.get("subject", "")
             count_str = f" ({count})" if count else ""
@@ -86,9 +95,13 @@ class UpdatePanel(Widget):
             branch = result.get("branch")
             if branch:
                 branch_row = self.query_one("#update-branch", Static)
-                branch_row.update(f"[dim]↳ pulls into active branch: [/dim][bold]{branch}[/bold]")
+                branch_row.update(
+                    f"[dim]↳ pulls into active branch: [/dim][bold]{branch}[/bold]"
+                )
                 branch_row.display = True
-        elif result["status"] == "no_git":
+        elif status == "no_upstream":
+            msg.update("[dim]branch has no upstream — updates not tracked[/dim]")
+        elif status == "no_git":
             msg.update("[dim]git not found — cannot check for updates[/dim]")
         else:
             msg.update("[dim]⚠ Could not reach remote[/dim]")
@@ -103,11 +116,15 @@ class UpdatePanel(Widget):
 
     def _pull(self) -> None:
         ok, output = do_git_pull()
+
         def _done() -> None:
             msg = self.query_one("#update-msg", Static)
             if ok:
-                msg.update("[green]✓ Pulled — restart the wizard to apply changes[/green]")
+                msg.update(
+                    "[green]✓ Pulled — restart the wizard to apply changes[/green]"
+                )
             else:
                 msg.update(f"[red]✗ Pull failed:[/red] [dim]{output[:120]}[/dim]")
                 self.query_one("#btn-pull").display = True
+
         self.app.call_from_thread(_done)

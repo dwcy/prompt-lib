@@ -8,10 +8,20 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+try:
+    from _gate import should_skip
+except ImportError:
+
+    def should_skip(_name: str) -> bool:
+        return False
+
+
 AUDIT_FILE = Path.home() / ".claude" / "write_audit.jsonl"
 
 
 def main():
+    if should_skip("write_audit"):
+        sys.exit(0)
     try:
         data = json.load(sys.stdin)
     except (json.JSONDecodeError, ValueError):
