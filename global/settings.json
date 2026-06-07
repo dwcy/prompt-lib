@@ -172,6 +172,10 @@
           {
             "type": "command",
             "command": "python \"$USERPROFILE/.claude/hooks/pretool_task_isolation.py\""
+          },
+          {
+            "type": "command",
+            "command": "python \"$USERPROFILE/.claude/hooks/subagent_start.py\""
           }
         ]
       }
@@ -219,6 +223,16 @@
           {
             "type": "command",
             "command": "python \"$USERPROFILE/.claude/hooks/stop_session.py\""
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$USERPROFILE/.claude/hooks/subagent_stop.py\""
           }
         ]
       }

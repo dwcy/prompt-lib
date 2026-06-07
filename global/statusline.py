@@ -9,6 +9,8 @@ from pathlib import Path
 sys.stdout.reconfigure(encoding="utf-8")
 
 STATE_FILE = Path.home() / ".claude" / ".session_state.json"
+SUBAGENT_FILE = Path.home() / ".claude" / ".subagent_state.json"
+SUBAGENT_TTL = 1800  # ignore a "running" state older than 30 min (stale/never-stopped)
 UPDATE_FILE = Path.home() / ".claude" / ".update_state.json"
 UPDATE_TTL = 6 * 3600
 UPDATE_CHECKER = Path.home() / ".claude" / "hooks" / "check_claude_update.py"
@@ -441,6 +443,28 @@ def seg_speckit(cwd, branch):
     return rgb("🎯 ✓ all", 100, 220, 120)
 
 
+def seg_subagent(data):
+    """Show the currently-running subagent (name + model) from .subagent_state.json."""
+    if not SUBAGENT_FILE.exists():
+        return None
+    try:
+        st = json.loads(SUBAGENT_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    if not st.get("running"):
+        return None
+    started = st.get("started_at") or 0
+    if started and (time.time() - started) > SUBAGENT_TTL:
+        return None
+    sid = data.get("session_id")
+    if sid and st.get("session_id") and st.get("session_id") != sid:
+        return None
+    name = st.get("name") or "subagent"
+    model = st.get("model")
+    label = f"🤖 {name}" + (f" ({model})" if model else "")
+    return rgb(label, 180, 255, 180)
+
+
 def seg_activity(session_id):
     if not STATE_FILE.exists():
         return None
@@ -482,6 +506,7 @@ BUILDERS = {
     "docker": lambda c: seg_docker(c["cwd"]),
     "tests": lambda c: seg_tests(c["cwd"]),
     "speckit": lambda c: seg_speckit(c["cwd"], c["branch"]),
+    "subagent": lambda c: seg_subagent(c["data"]),
     "activity": lambda c: seg_activity(c["session_id"]),
 }
 

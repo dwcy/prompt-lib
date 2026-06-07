@@ -29,16 +29,21 @@ ALL_HOOKS = [
     "session_end_release_lock",
     "session_start",
     "stop_session",
+    "subagent_start",
+    "subagent_stop",
     "write_audit",
 ]
 
 # Hooks that read a tool payload from stdin and must exit 0 on garbage input.
+# (subagent_stop is excluded: on garbage stdin it would touch the real
+# ~/.claude state file; its tolerance is covered via the gate tests instead.)
 STDIN_DRIVEN_HOOKS = [
     "command_guard",
     "file_write_guard",
     "format_on_write",
     "post_tool_use",
     "pretool_task_isolation",
+    "subagent_start",
     "write_audit",
 ]
 
