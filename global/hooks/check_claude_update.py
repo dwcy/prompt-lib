@@ -3,10 +3,19 @@
 release and writes it to ~/.claude/.update_state.json. Rate-limited to one
 network call per 6 hours. Fire-and-forget; never fails the caller.
 """
+
 import json
 import time
 import urllib.request
 from pathlib import Path
+
+try:
+    from _gate import should_skip
+except ImportError:
+
+    def should_skip(_name: str) -> bool:
+        return False
+
 
 STATE_FILE = Path.home() / ".claude" / ".update_state.json"
 TTL_SECONDS = 6 * 3600
@@ -14,6 +23,8 @@ NPM_URL = "https://registry.npmjs.org/@anthropic-ai/claude-code/latest"
 
 
 def main() -> None:
+    if should_skip("check_claude_update"):
+        return
     now = int(time.time())
     if STATE_FILE.exists():
         try:

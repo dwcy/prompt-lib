@@ -11,6 +11,14 @@ import json
 import sys
 import os
 
+try:
+    from _gate import should_skip
+except ImportError:
+
+    def should_skip(_name: str) -> bool:
+        return False
+
+
 # Only the security scripts themselves are protected — everything else in .claude/ is freely editable.
 _HOOKS_DIR = os.path.join(os.path.expanduser("~"), ".claude", "hooks")
 PROTECTED = {
@@ -20,6 +28,8 @@ PROTECTED = {
 
 
 def main():
+    if should_skip("file_write_guard"):
+        sys.exit(0)
     try:
         data = json.load(sys.stdin)
     except (json.JSONDecodeError, ValueError):
@@ -33,15 +43,19 @@ def main():
         sys.exit(0)
 
     if os.path.normpath(file_path) in PROTECTED:
-        print(json.dumps({
-            "decision": "block",
-            "reason": (
-                f"[Write Guard] Blocked write to protected security file: {file_path}\n\n"
-                "This file is a PreToolUse security hook. Overwriting it could disable "
-                "prompt-injection protection. If this edit is intentional, confirm with "
-                "the user before proceeding."
+        print(
+            json.dumps(
+                {
+                    "decision": "block",
+                    "reason": (
+                        f"[Write Guard] Blocked write to protected security file: {file_path}\n\n"
+                        "This file is a PreToolUse security hook. Overwriting it could disable "
+                        "prompt-injection protection. If this edit is intentional, confirm with "
+                        "the user before proceeding."
+                    ),
+                }
             )
-        }))
+        )
         sys.exit(2)
 
     sys.exit(0)

@@ -10,6 +10,13 @@ Never fails the session: any error exits 0.
 import random
 import sys
 
+try:
+    from _gate import should_skip
+except ImportError:
+
+    def should_skip(_name: str) -> bool:
+        return False
+
 
 FAREWELLS = [
     "Finally, thanks!",
@@ -21,6 +28,8 @@ FAREWELLS = [
 
 
 def main() -> None:
+    if should_skip("session_end"):
+        return
     print(random.choice(FAREWELLS), file=sys.stderr)
     sys.exit(2)
 

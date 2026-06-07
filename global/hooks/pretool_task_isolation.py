@@ -10,8 +10,16 @@ Enforces the rule documented in docs/parallel-isolation.md:
 
 Exit 0 → allow. Exit 2 → block (JSON reason on stdout).
 """
+
 import json
 import sys
+
+try:
+    from _gate import should_skip
+except ImportError:
+
+    def should_skip(_name: str) -> bool:
+        return False
 
 
 READ_ONLY_SUBAGENTS = {
@@ -28,6 +36,8 @@ READ_ONLY_SUBAGENTS = {
 
 
 def main() -> None:
+    if should_skip("pretool_task_isolation"):
+        sys.exit(0)
     try:
         data = json.load(sys.stdin)
     except (json.JSONDecodeError, ValueError):
@@ -48,19 +58,23 @@ def main() -> None:
     if isolation == "worktree":
         sys.exit(0)
 
-    print(json.dumps({
-        "decision": "block",
-        "reason": (
-            "[Parallel Isolation] Concurrent background writing subagent "
-            f"(`{subagent_type}`) dispatched without `isolation: \"worktree\"`.\n\n"
-            "Without isolation, two writers on the same working tree silently "
-            "overwrite each other's edits. Either:\n"
-            "  - add `isolation: \"worktree\"` to this Agent/Task call, or\n"
-            "  - change the dispatch to sequential (no `run_in_background: true`).\n\n"
-            "See docs/parallel-isolation.md for the rule and the read-only "
-            "agent allowlist."
-        ),
-    }))
+    print(
+        json.dumps(
+            {
+                "decision": "block",
+                "reason": (
+                    "[Parallel Isolation] Concurrent background writing subagent "
+                    f'(`{subagent_type}`) dispatched without `isolation: "worktree"`.\n\n'
+                    "Without isolation, two writers on the same working tree silently "
+                    "overwrite each other's edits. Either:\n"
+                    '  - add `isolation: "worktree"` to this Agent/Task call, or\n'
+                    "  - change the dispatch to sequential (no `run_in_background: true`).\n\n"
+                    "See docs/parallel-isolation.md for the rule and the read-only "
+                    "agent allowlist."
+                ),
+            }
+        )
+    )
     sys.exit(2)
 
 
