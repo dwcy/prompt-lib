@@ -139,6 +139,7 @@ class UpdateScreen(Screen):
         tbl.cursor_type = "row"
         tbl.add_columns("Use", "Component", "Affected")
         self._refresh_preview()
+        tbl.focus()
 
     def action_view_file(self) -> None:
         """Open the file under the cursor in a read-only modal (markdown rendered)."""
