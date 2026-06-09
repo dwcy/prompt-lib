@@ -111,17 +111,17 @@ class HomeScreen(Screen):
                         id="btn-op-update",
                         variant="default",
                     )
-                    yield Button("Global MCPs", id="btn-op-mcp", variant="default")
                     yield Button(
                         "Statusline", id="btn-op-statusline", variant="default"
                     )
+                with Horizontal(classes="ops-row"):
+                    yield Button("MCP Connectors", id="btn-op-mcp", variant="default")
                 yield ClaudeStatsPanel(id="claude-stats")
                 yield Static(
                     "[bold]Local Claude Settings[/bold]", classes="home-section-title"
                 )
                 with Horizontal(classes="ops-row"):
                     yield Button("Doctor", id="btn-op-doctor", variant="default")
-                    yield Button("Local MCP", id="btn-op-local-mcp", variant="default")
                     yield Button("Local Config", id="btn-op-local", variant="default")
         with Horizontal(id="home-bottom"):
             yield Button("Env vars", id="btn-env", variant="primary")
@@ -179,7 +179,6 @@ class HomeScreen(Screen):
     def on_button_pressed(self, event: Button.Pressed) -> None:
         from cabal.views.update import UpdateScreen
         from cabal.views.mcp import McpScreen
-        from cabal.views.project_mcp import ProjectMcpScreen
         from cabal.views.doctor import DoctorScreen
         from cabal.views.local import LocalScreen
         from cabal.views.tools import ToolsScreen
@@ -204,7 +203,5 @@ class HomeScreen(Screen):
             self.action_go("allenv")
         elif bid == "btn-quit":
             self.app.exit()
-        elif bid == "btn-op-local-mcp":
-            self.app.push_screen(ProjectMcpScreen(target_dir=self.app.project_path()))
         elif bid in op_screens:
             self.app.push_screen(op_screens[bid]())
