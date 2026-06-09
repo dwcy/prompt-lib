@@ -10,6 +10,7 @@ analyzer follows the graph and bundles them (per research.md R6).
 
 from __future__ import annotations
 
+import signal
 from pathlib import Path
 
 from textual.app import App
@@ -258,7 +259,25 @@ class CabalApp(App):
         self.push_screen(ProjectGateScreen())
 
 
+def _suppress_sigint() -> None:
+    """Stop Ctrl+C from terminating the wizard, on every view.
+
+    Textual already routes the ctrl+c *key* to native copy / a "press ctrl+q"
+    hint — it never quits. The real killer is OS-level: on Windows a Ctrl+C
+    pressed while a worker subprocess (winget / git / npm / env-detect) shares
+    the console sends CTRL_C_EVENT to the whole process group, taking the parent
+    down with it. Ignoring SIGINT keeps the app alive; Ctrl+C stays free for
+    copy, and quit remains ctrl+q / q.
+    """
+    try:
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
+    except (ValueError, OSError):
+        # Not the main thread, or a platform without SIGINT — non-fatal.
+        pass
+
+
 def main() -> None:
+    _suppress_sigint()
     CabalApp().run()
 
 
