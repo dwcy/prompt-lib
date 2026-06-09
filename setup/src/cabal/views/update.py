@@ -100,6 +100,7 @@ class UpdateScreen(Screen):
     CSS = """
     UpdateScreen #upd-actions { height: auto; }
     UpdateScreen .upd-spacer { width: 1fr; }
+    UpdateScreen #preview { max-height: 60; }
     """
 
     def compose(self) -> ComposeResult:
@@ -113,12 +114,11 @@ class UpdateScreen(Screen):
             )
             with Horizontal(id="upd-actions"):
                 yield Button("Apply (Ctrl+A)", id="upd-apply", variant="success")
-                yield Button("View (v)", id="upd-view")
+                yield Button("View (v)", id="upd-view", variant="primary")
                 yield Static("", classes="upd-spacer")
                 yield Button("Load Backup", id="upd-restore", variant="warning")
             yield Static("", id="update-summary")
             yield DataTable(id="preview")
-            yield Static("", id="upd-status", classes="panel")
         yield Footer(show_command_palette=False)
 
     def on_mount(self) -> None:
@@ -308,9 +308,7 @@ class UpdateScreen(Screen):
         selected = [(c, self._selected_statuses(c)) for c in COMPONENTS]
         selected = [(c, sts) for c, sts in selected if sts]
         if not selected:
-            self.query_one("#upd-status", Static).update(
-                "[yellow]Nothing selected.[/yellow]"
-            )
+            self.notify("Nothing selected.", severity="warning", timeout=4)
             return
         msgs = []
         if self._use.get("settings"):
@@ -325,9 +323,9 @@ class UpdateScreen(Screen):
                 f"  [green]✓[/green] {c.label}: {copied} copied, {skipped} unchanged"
             )
         msgs.append(
-            "\n[bold green]✓ Apply complete.[/bold green]  [bold]→ Restart Claude Code.[/bold]"
+            "[bold green]✓ Apply complete.[/bold green]  [bold]→ Restart Claude Code.[/bold]"
         )
-        self.query_one("#upd-status", Static).update("\n".join(msgs))
+        self.notify("\n".join(msgs), title="Apply", timeout=8)
         self._refresh_preview()
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
