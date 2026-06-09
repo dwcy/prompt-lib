@@ -29,7 +29,7 @@ def _read_segments(path: Path) -> list[dict[str, Any]]:
 
 
 def segment_meta() -> dict[str, dict[str, Any]]:
-    """key → {label, description, row} from the canonical metadata file."""
+    """key → {label, group, description, row} from the canonical metadata file."""
     out: dict[str, dict[str, Any]] = {}
     for s in _read_segments(SEGMENTS_META_PATH):
         key = s.get("key")
@@ -37,6 +37,7 @@ def segment_meta() -> dict[str, dict[str, Any]]:
             continue
         out[key] = {
             "label": s.get("label", key),
+            "group": s.get("group", ""),
             "description": s.get("description", ""),
             "row": int(s.get("row", 1)),
         }
@@ -59,6 +60,7 @@ def load_layout() -> list[dict[str, Any]]:
         return {
             "key": key,
             "label": m.get("label", key),
+            "group": m.get("group", ""),
             "description": m.get("description", ""),
             "enabled": enabled,
             "row": row,
