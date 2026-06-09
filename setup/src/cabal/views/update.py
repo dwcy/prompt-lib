@@ -109,7 +109,8 @@ class UpdateScreen(Screen):
             yield Static(
                 "[bold bright_magenta]Global Claude Settings[/bold bright_magenta]\n"
                 f"[dim]Deploy {GLOBAL_DIR} → {TARGET}.[/dim]\n"
-                "[dim]Enter (or click) toggles Use · [b]v[/b] views the highlighted file · Apply (Ctrl+A).[/dim]",
+                "[dim]Enter (or click) toggles Use · [b]v[/b] views the highlighted file · Apply (Ctrl+A).[/dim]\n"
+                "[dim][red]Red[/red] rows are in ~/.claude but not from this repo — view-only, never deployed.[/dim]",
                 classes="panel",
             )
             with Horizontal(id="upd-actions"):
@@ -159,6 +160,13 @@ class UpdateScreen(Screen):
 
     def _resolve_row_path(self, key: str) -> tuple[Path | None, str]:
         """Map a DataTable row key to its source file path, or (None, hint)."""
+        if key.startswith("extra::"):
+            _, ckey, rel = key.split("::", 2)
+            c = next((c for c in COMPONENTS if c.key == ckey), None)
+            if c is None:
+                return None, "Unknown row"
+            p = c.dst_path / rel
+            return (p, rel) if p.is_file() else (None, f"File not found: {rel}")
         if "::" in key:
             parent_key, rel = key.split("::", 1)
             c = next((c for c in COMPONENTS if c.key == parent_key), None)
@@ -286,6 +294,14 @@ class UpdateScreen(Screen):
                     self._child_detail(state),
                     key=k,
                 )
+            for ex in sorted(find_extras(c), key=lambda p: p.as_posix()):
+                rel = ex.as_posix()
+                tbl.add_row(
+                    self._box("✗", "red"),
+                    f"[red]  └ {rel}[/red]",
+                    "[red]not from this repo[/red]",
+                    key=f"extra::{c.key}::{rel}",
+                )
         self.query_one("#update-summary", Static).update(
             f"[bold]Selected: {used} files[/bold]   "
             f"[green]NEW {totals['new']}[/green]   "
@@ -330,6 +346,8 @@ class UpdateScreen(Screen):
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
         key = event.row_key.value
+        if key.startswith("extra::"):
+            return
         if "::" in key:
             self._use[key] = not self._use.get(key, False)
         else:
