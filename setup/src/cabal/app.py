@@ -15,6 +15,7 @@ from pathlib import Path
 from textual.app import App
 from textual.binding import Binding
 
+from cabal.clipboard import read_clipboard
 from cabal.app_widgets import AppCommandsProvider, AppHeader  # noqa: F401  (re-export)
 from cabal.views.claude_info import ClaudeInfoScreen  # noqa: F401
 from cabal.views.doctor import DoctorScreen  # noqa: F401
@@ -47,6 +48,16 @@ class CabalApp(App):
     def project_path(self) -> Path:
         """The active project folder; falls back to cwd if somehow unset."""
         return self.selected_project or Path.cwd()
+
+    @property
+    def clipboard(self) -> str:
+        """OS clipboard text, so ctrl+v pastes anything copied OS-wide.
+
+        Textual's own `clipboard` only returns text copied inside the app; without
+        this override `Input`/`TextArea` paste can't see an external copy. Falls back
+        to the internal buffer when the OS clipboard is empty or unreadable.
+        """
+        return read_clipboard() or self._clipboard
 
     CSS = """
     Screen { background: $background; }
