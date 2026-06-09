@@ -147,7 +147,7 @@ class ClaudeInfoScreen(Screen):
             md = build_claude_info_markdown()
         except Exception as e:
             yield Static(f"[red]Could not build Claude info: {e}[/red]")
-            yield Footer()
+            yield Footer(show_command_palette=False)
             return
         yield MarkdownViewer(md, show_table_of_contents=True)
-        yield Footer()
+        yield Footer(show_command_palette=False)

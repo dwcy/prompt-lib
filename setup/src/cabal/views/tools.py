@@ -183,7 +183,7 @@ class ToolsScreen(Screen):
                                 classes="tool-install",
                             )
             yield Static("", id="tools-status", classes="panel")
-        yield Footer()
+        yield Footer(show_command_palette=False)
 
     def on_mount(self) -> None:
         self._refresh()
@@ -431,6 +431,8 @@ class ToolsScreen(Screen):
             button.label = "Install"
             last_line = lines[-1].strip() if lines else ""
             if ok:
+                # Flag the home "Current setup" panel to re-scan on resume.
+                self.app.env_needs_refresh = True
                 self.notify(
                     f"{label} updated",
                     title="Tools",

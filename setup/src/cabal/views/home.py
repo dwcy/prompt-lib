@@ -125,7 +125,6 @@ class HomeScreen(Screen):
                     yield Button("Local Config", id="btn-op-local", variant="default")
         with Horizontal(id="home-bottom"):
             yield Button("Env vars", id="btn-env", variant="primary")
-            yield Button("Git config", id="btn-git", variant="primary")
             yield Button("GitHub", id="btn-github", variant="primary")
             yield Button("All env", id="btn-allenv", variant="primary")
             yield Static("", classes="home-spacer")
@@ -170,6 +169,12 @@ class HomeScreen(Screen):
 
     def on_screen_resume(self) -> None:
         self._refresh_env_panel()
+        if getattr(self.app, "env_needs_refresh", False):
+            self.app.env_needs_refresh = False
+            try:
+                self.query_one("#env-summary", EnvPanel).refresh_env()
+            except Exception:
+                pass
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         from cabal.views.update import UpdateScreen

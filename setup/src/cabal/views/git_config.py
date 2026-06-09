@@ -118,7 +118,7 @@ class GitConfigScreen(Screen):
                     yield Button("Save policy", id="pol-save", variant="primary")
                     yield Button("Reload policy", id="pol-reload", variant="default")
                 yield Static("", id="pol-status", classes="git-status")
-        yield Footer()
+        yield Footer(show_command_palette=False)
 
     def on_mount(self) -> None:
         if not self._repo_root:

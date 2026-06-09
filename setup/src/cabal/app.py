@@ -44,6 +44,9 @@ class CabalApp(App):
     """CABAL — Agent Orchestration Setup."""
 
     selected_project: Path | None = None
+    # Set by ToolsScreen after a successful install/update so HomeScreen re-scans
+    # the "Current setup" panel on resume instead of showing stale tool state.
+    env_needs_refresh: bool = False
 
     def project_path(self) -> Path:
         """The active project folder; falls back to cwd if somehow unset."""
@@ -109,6 +112,13 @@ class CabalApp(App):
         align-vertical: middle;
         padding: 0 1;
         margin: 1 2;
+    }
+    /* UpdatePanel's row must sit flush with the Current setup panel's left
+       edge; the broad Horizontal rule above would otherwise indent it. This
+       id override outranks it (app CSS, id > type). */
+    #update-row {
+        margin: 0;
+        padding: 0;
     }
 
     #home-bottom {

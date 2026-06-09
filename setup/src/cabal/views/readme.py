@@ -116,4 +116,4 @@ class ReadmeScreen(Screen):
             )
         else:
             yield Static("[yellow]No README.md found.[/yellow]")
-        yield Footer()
+        yield Footer(show_command_palette=False)
