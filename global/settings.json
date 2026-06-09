@@ -154,6 +154,10 @@
           {
             "type": "command",
             "command": "python \"$USERPROFILE/.claude/hooks/file_write_guard.py\""
+          },
+          {
+            "type": "command",
+            "command": "python \"$USERPROFILE/.claude/hooks/pretool_branch_guard.py\""
           }
         ]
       },
@@ -163,6 +167,10 @@
           {
             "type": "command",
             "command": "python \"$USERPROFILE/.claude/hooks/file_write_guard.py\""
+          },
+          {
+            "type": "command",
+            "command": "python \"$USERPROFILE/.claude/hooks/pretool_branch_guard.py\""
           }
         ]
       },
