@@ -100,6 +100,7 @@ When a task clearly belongs to a specialist domain, invoke `/orchestrate` proact
 - The task involves Raspberry Pi or Arduino hardware
 - The task involves GitHub repo settings configuration
 - The user says "write tests", "architect this", "design the UX", or "verify the implementation"
+- The user asks to start, initialise, scaffold, or set up a **new project** (empty dir / no CLAUDE.md) — routes to `@init-project`
 - The task is full-stack (two or more domains) — dispatch parallel agents
 
 **Do not invoke `/orchestrate` for:**
