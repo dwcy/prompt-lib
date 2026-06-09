@@ -104,7 +104,17 @@ class HomeScreen(Screen):
     def compose(self) -> ComposeResult:
         yield AppHeader(show_clock=True)
         with VerticalScroll(id="home-scroll"):
-            yield HexBanner(id="banner", classes="centered")
+            yield HexBanner(id="banner", classes="centered", show_subtitle=False)
+            with Horizontal(id="banner-row"):
+                yield Static(
+                    "[italic bright_cyan]« Agent Orchestration Setup »[/]",
+                    id="subtitle",
+                )
+                yield Static("", classes="home-spacer")
+                yield Static(
+                    "[@click=screen.readme]📖 README[/]",
+                    id="readme-link",
+                )
             yield EnvPanel(id="env-summary")
             with Vertical(classes="home-section"):
                 yield Static(
@@ -148,7 +158,6 @@ class HomeScreen(Screen):
                         variant="primary",
                     )
         with Horizontal(id="home-bottom"):
-            yield Button("[R] README", id="btn-readme", variant="primary")
             yield Button("[E] Env vars", id="btn-env", variant="primary")
             yield Button("[G] Git config", id="btn-git", variant="primary")
             yield Button("[H] GitHub", id="btn-github", variant="primary")
@@ -158,7 +167,10 @@ class HomeScreen(Screen):
         yield Footer()
 
     def on_mount(self) -> None:
-        self.query_one("#btn-readme", Button).focus()
+        self.query_one("#btn-env", Button).focus()
+
+    def action_readme(self) -> None:
+        self.action_go("readme")
 
     def action_go(self, name: str) -> None:
         from cabal.views.readme import ReadmeScreen
@@ -240,9 +252,7 @@ class HomeScreen(Screen):
             "btn-op-tools": ToolsScreen,
             "btn-op-statusline": StatuslineScreen,
         }
-        if bid == "btn-readme":
-            self.action_go("readme")
-        elif bid == "btn-env":
+        if bid == "btn-env":
             self.action_go("env")
         elif bid == "btn-git":
             self.action_go("git")
