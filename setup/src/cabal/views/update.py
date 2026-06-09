@@ -113,8 +113,9 @@ class UpdateScreen(Screen):
             )
             with Horizontal(id="upd-actions"):
                 yield Button("Apply (Ctrl+A)", id="upd-apply", variant="success")
+                yield Button("View (v)", id="upd-view")
                 yield Static("", classes="upd-spacer")
-                yield Button("Restore", id="upd-restore", variant="warning")
+                yield Button("Load Backup", id="upd-restore", variant="warning")
             yield Static("", id="update-summary")
             yield DataTable(id="preview")
             yield Static("", id="upd-status", classes="panel")
@@ -350,5 +351,7 @@ class UpdateScreen(Screen):
         bid = event.button.id or ""
         if bid == "upd-apply":
             self.action_apply()
+        elif bid == "upd-view":
+            self.action_view_file()
         elif bid == "upd-restore":
             self.app.push_screen(RestoreScreen())
