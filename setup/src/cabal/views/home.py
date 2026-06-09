@@ -89,16 +89,9 @@ class HomeScreen(Screen):
 
     BINDINGS = [
         Binding("r", "go('readme')", "README"),
-        Binding("e", "go('env')", "Env"),
         Binding("g", "go('git')", "Git"),
-        Binding("h", "go('github')", "GitHub"),
-        Binding("v", "go('allenv')", "All env"),
         Binding("i", "init_project", "Init"),
-        Binding("o", "open_project", "Open"),
-        Binding("c", "go_configure", "Configure"),
-        Binding("t", "go_statusline", "Statusline"),
         Binding("ctrl+s", "refresh_claude_stats", "Refresh stats"),
-        Binding("q", "app.quit", "Quit"),
     ]
 
     def compose(self) -> ComposeResult:
@@ -164,7 +157,7 @@ class HomeScreen(Screen):
             yield Button("[V] All env", id="btn-allenv", variant="primary")
             yield Static("", classes="home-spacer")
             yield Button("[Q] Quit", id="btn-quit", variant="error")
-        yield Footer()
+        yield Footer(show_command_palette=False)
 
     def on_mount(self) -> None:
         self.query_one("#btn-env", Button).focus()
@@ -199,16 +192,6 @@ class HomeScreen(Screen):
         from cabal.views.folder_browser import FolderBrowserScreen
 
         self.app.push_screen(FolderBrowserScreen(Path.cwd()), self._after_folder_picked)
-
-    def action_go_configure(self) -> None:
-        from cabal.views.update import UpdateScreen
-
-        self.app.push_screen(UpdateScreen())
-
-    def action_go_statusline(self) -> None:
-        from cabal.views.statusline import StatuslineScreen
-
-        self.app.push_screen(StatuslineScreen())
 
     def action_refresh_claude_stats(self) -> None:
         try:
