@@ -73,7 +73,7 @@ class ProjectMcpScreen(Screen):
                 yield Button("Refresh (Ctrl+R)", id="pmcp-refresh")
                 yield Button("Back (Esc)", id="pmcp-back")
             yield Static("", id="pmcp-status", classes="panel")
-        yield Footer()
+        yield Footer(show_command_palette=False)
 
     def on_mount(self) -> None:
         tbl = self.query_one("#pmcp-table", DataTable)

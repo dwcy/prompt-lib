@@ -96,7 +96,7 @@ class GlobalEnvScreen(Screen):
             yield DataTable(id="gv-list")
             with Horizontal(id="gv-actions"):
                 yield Button("Back", id="gv-back", variant="default")
-        yield Footer()
+        yield Footer(show_command_palette=False)
 
     def on_mount(self) -> None:
         tbl = self.query_one("#gv-list", DataTable)

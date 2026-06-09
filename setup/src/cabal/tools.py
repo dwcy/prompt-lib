@@ -67,6 +67,7 @@ from cabal.installers.runtimes import (
     pnpm_install,
     python_install,
 )
+from cabal.installers.skills import skills_install, skills_status
 from cabal.installers.specify import specify_install, specify_status
 from cabal.installers.vcs import git_install
 
@@ -195,15 +196,16 @@ def _npm_latest_version(package: str, timeout: float = 5.0) -> str | None:
 
 
 CLAUDE_CLI_PACKAGE = "@anthropic-ai/claude-code"
+SKILLS_PACKAGE = "skills"
 
 
-def _claude_cli_outdated() -> bool:
-    """True if local `claude --version` is older than the latest @anthropic-ai/claude-code on npm."""
-    if not shutil.which("claude"):
+def _npm_cli_outdated(command: str, package: str) -> bool:
+    """True if local `<command> --version` is older than `package`'s latest on npm."""
+    if not shutil.which(command):
         return False
     try:
         r = subprocess.run(
-            ["claude", "--version"],
+            [command, "--version"],
             capture_output=True,
             text=True,
             timeout=10,
@@ -214,8 +216,13 @@ def _claude_cli_outdated() -> bool:
     if r.returncode != 0:
         return False
     local = _parse_semver((r.stdout or r.stderr).strip())
-    latest = _parse_semver(_npm_latest_version(CLAUDE_CLI_PACKAGE) or "")
+    latest = _parse_semver(_npm_latest_version(package) or "")
     return local is not None and latest is not None and local < latest
+
+
+def _claude_cli_outdated() -> bool:
+    """True if local `claude --version` is older than the latest @anthropic-ai/claude-code on npm."""
+    return _npm_cli_outdated("claude", CLAUDE_CLI_PACKAGE)
 
 
 def _below_floor(key: str, env_value: object) -> bool:
@@ -267,6 +274,8 @@ def _outdated_packages() -> set[str]:
             result.update(key for key, wid in WINGET_IDS.items() if wid in text)
     if _claude_cli_outdated():
         result.add("claude")
+    if _npm_cli_outdated("skills", SKILLS_PACKAGE):
+        result.add("skills")
     return result
 
 
@@ -292,6 +301,7 @@ ENV_INSTALLERS: list[tuple[str, str, Callable[[], tuple[bool, str]]]] = [
     ("codex", "Codex CLI", codex_install),
     ("opencode", "OpenCode", opencode_install),
     ("grok", "Grok", grok_install),
+    ("skills", "Vercel Skills CLI", skills_install),
     ("cursor", "Cursor", cursor_install),
     ("windsurf", "Windsurf", windsurf_install),
     ("copilot", "Copilot", copilot_install),
@@ -316,7 +326,7 @@ ENV_TOOL_GROUPS: list[tuple[str, list[str]]] = [
         ["docker", "podman", "kubectl", "oc", "terraform", "az", "gcloud", "aws"],
     ),
     ("Databases", ["sqlcmd", "psql", "supabase", "neonctl"]),
-    ("AI CLIs", ["claude", "gemini", "codex", "opencode", "grok", "copilot"]),
+    ("AI CLIs", ["claude", "gemini", "codex", "opencode", "grok", "copilot", "skills"]),
     ("Local AI", ["ollama"]),
     ("AI Editors", ["cursor", "windsurf", "antigravity", "vscode"]),
 ]
@@ -378,6 +388,19 @@ TOOLS: list[Tool] = [
         repo_url="https://github.com/github/spec-kit",
         install=specify_install,
         status=specify_status,
+    ),
+    Tool(
+        key="skills",
+        name="Skills CLI (vercel-labs/skills)",
+        description=(
+            "Vercel's open agent skills tool. Installs and manages reusable agent "
+            "skills across 40+ AI agents including Claude Code. Installed globally "
+            "via npm; use `skills add <owner>/<skill>` to pull skills into a project."
+        ),
+        homepage="https://www.skills.sh",
+        repo_url="https://github.com/vercel-labs/skills",
+        install=skills_install,
+        status=skills_status,
     ),
     Tool(
         key="claude-devtools",

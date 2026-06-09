@@ -20,19 +20,22 @@ class UpdatePanel(Widget):
     DEFAULT_CSS = """
     UpdatePanel {
         height: auto;
-        margin: 0 2 0 2;
+        margin: 0 2 0 0;
     }
     #update-row {
-        height: 3;
+        height: auto;
         align-vertical: middle;
+        /* margin/padding are pinned to 0 in app.py too: the app's global
+           `Horizontal` rule outranks this DEFAULT_CSS by source, so the
+           left-alignment override has to live at app level to win. */
         padding: 0;
         margin: 0;
     }
     #update-msg {
         width: 1fr;
-        padding: 0 1;
+        padding: 0 1 0 0;
         content-align: left middle;
-        height: 3;
+        height: auto;
     }
     #btn-pull { margin: 0; }
     #update-branch {
