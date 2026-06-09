@@ -10,6 +10,13 @@ Personal preferences and conventions that apply to every project and session.
 - If something I ask is ambiguous, state your assumption and proceed — don't ask for clarification on minor things.
 - Bullet points over paragraphs for lists of things.
 
+## Searching the codebase
+
+- **Use the `Grep` tool for content search and `Glob` for file lookup — never `grep`/`ls`/`find` via Bash.** They're cheaper, permission-integrated, and don't dump noise into context.
+- **One search per question.** No `echo`-header + chained-`grep` shell strings — when an early `grep` exits non-zero the `&&` chain silently swallows the rest. Multiple independent questions → parallel `Grep`/`Glob` calls in one message.
+- **Fan-out investigations → dispatch the `Explore` agent** (e.g. "how is the app launched + where's signal handling + what binds X"). It reads the files and returns only the conclusion, so file dumps never enter the main context.
+- Bash is still correct for *running* things (git, tests, `python -c` smoke checks) — just not for searching source.
+
 ## Code style (universal)
 
 - No comments that explain WHAT the code does — only WHY if non-obvious.
