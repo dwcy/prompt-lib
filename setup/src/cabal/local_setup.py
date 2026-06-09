@@ -9,6 +9,7 @@ in the screen because it needs the Textual app's `suspend()`.
 
 from __future__ import annotations
 
+import filecmp
 import shutil
 import subprocess
 from pathlib import Path
@@ -18,6 +19,84 @@ from cabal._paths import GLOBAL_DIR
 from cabal.views.folder_browser import GITIGNORE_BY_TEMPLATE
 
 SETTINGS_LOCAL_STUB = '{\n  "permissions": {\n    "allow": []\n  }\n}\n'
+
+
+def project_status(project: Path) -> list[tuple[str, bool]]:
+    """Present/absent flags for the key local-setup artifacts (independent of selections)."""
+    claude = project / ".claude"
+    return [
+        ("CLAUDE.md", (project / "CLAUDE.md").exists()),
+        (".gitignore", (project / ".gitignore").exists()),
+        ("Spec Kit", (project / ".specify").exists()),
+        (".claude/", claude.exists()),
+        ("skills/", (claude / "skills").exists()),
+        ("hooks/", (claude / "hooks").exists()),
+        ("settings.local", (claude / "settings.local.json").exists()),
+    ]
+
+
+def format_project_status(project: Path) -> str:
+    """Render project_status as a single line of ✓/✗ markup chips."""
+    chips = [
+        f"{'[green]✓[/green]' if present else '[red]✗[/red]'} {label}"
+        for label, present in project_status(project)
+    ]
+    return "[bold]Project state:[/bold]  " + "   ".join(chips)
+
+
+def _skill_state(src: Path, dst: Path) -> str:
+    if not dst.exists():
+        return "NEW"
+    try:
+        return "UNCHANGED" if filecmp.cmp(src, dst, shallow=False) else "CHANGED"
+    except OSError:
+        return "CHANGED"
+
+
+def _skill_children(project: Path) -> list[dict[str, Any]]:
+    """Drift tree of global/skills/*.md vs the project's .claude/skills (item 3+4)."""
+    src_dir = GLOBAL_DIR / "skills"
+    dst_dir = project / ".claude" / "skills"
+    if not src_dir.exists():
+        return [
+            {
+                "key": "skills::missing",
+                "label": "global/skills/ in repo",
+                "state": "[red]MISSING[/red]",
+                "op": None,
+            }
+        ]
+    markup = {
+        "NEW": "[green]NEW — will add[/green]",
+        "CHANGED": "[yellow]CHANGED — will update[/yellow]",
+        "UNCHANGED": "[dim]installed (up to date)[/dim]",
+    }
+    children: list[dict[str, Any]] = []
+    global_names: set[str] = set()
+    for src in sorted(src_dir.glob("*.md")):
+        global_names.add(src.name)
+        dst = dst_dir / src.name
+        state = _skill_state(src, dst)
+        children.append(
+            {
+                "key": f"skills::{src.name}",
+                "label": src.stem,
+                "state": markup[state],
+                "op": ("copy", src, dst) if state != "UNCHANGED" else None,
+            }
+        )
+    if dst_dir.exists():
+        for inst in sorted(dst_dir.glob("*.md")):
+            if inst.name not in global_names:
+                children.append(
+                    {
+                        "key": f"skills-local::{inst.name}",
+                        "label": inst.stem,
+                        "state": "[blue]local-only (kept)[/blue]",
+                        "op": None,
+                    }
+                )
+    return children
 
 
 def _state(exists: bool, *, append: bool = False) -> str:
@@ -190,6 +269,15 @@ def build_plan(
             ]
         groups.append({"action": "speckit", "label": "Spec Kit", "children": kids})
 
+    if sel.get("skills"):
+        groups.append(
+            {
+                "action": "skills",
+                "label": "Skills (global/skills → .claude/skills)",
+                "children": _skill_children(project),
+            }
+        )
+
     return groups
 
 
@@ -235,6 +323,17 @@ def apply_group(action: str, chosen: list[dict[str, Any]], project: Path) -> lis
         target.write_text(header + ignore_text, encoding="utf-8")
         return [
             f"[green]✓ Wrote .gitignore ({stem} preset)[/green]\n  Verify: cat .gitignore → stack-specific ignore rules present."
+        ]
+
+    if action == "skills":
+        dst_dir = project / ".claude" / "skills"
+        dst_dir.mkdir(parents=True, exist_ok=True)
+        for ch in chosen:
+            _, src, dst = ch["op"]
+            shutil.copy2(src, dst)
+        return [
+            f"[green]✓ Synced {len(chosen)} skill(s) → .claude/skills[/green]\n"
+            "  Verify: ls .claude/skills/ → selected skills present."
         ]
 
     if action == "git":

@@ -62,7 +62,7 @@ from cabal.env_detect import detect_env, find_env_vars
 from cabal.env_summary import render_env_summary
 from cabal.git_config import apply_git_line_endings, recommended_autocrlf
 from cabal.installers.gh import gh_device_init, gh_device_poll, gh_fetch_token
-from cabal.local_setup import apply_group, build_plan
+from cabal.local_setup import apply_group, build_plan, format_project_status
 from cabal.mcp_ops import (
     claude_mcp_add_from_template,
     claude_mcp_remove,
@@ -179,6 +179,13 @@ class LocalScreen(Screen):
                 "Test: ls .specify/ → templates, scripts, memory all present. Open Claude Code → /speckit-specify should be listed.",
                 classes="help-text",
             )
+            yield Checkbox(
+                "Sync skills: global/skills → .claude/skills "
+                "(preview shows NEW / CHANGED / installed per skill)",
+                value=False,
+                id="loc-skills",
+            )
+            yield Static("", id="loc-proj-status", classes="panel")
             yield Static("")
             yield DataTable(id="loc-preview")
             yield Static("")
@@ -233,6 +240,7 @@ class LocalScreen(Screen):
             "gitignore": self.query_one("#loc-gitignore", Checkbox).value,
             "git": self.query_one("#loc-git", Checkbox).value,
             "speckit": self.query_one("#loc-speckit", Checkbox).value,
+            "skills": self.query_one("#loc-skills", Checkbox).value,
         }
 
     def _template_path(self) -> Path | None:
@@ -273,14 +281,18 @@ class LocalScreen(Screen):
         tbl.clear()
         self._child_keys = {}
         project = self._project()
+        status = self.query_one("#loc-proj-status", Static)
 
         if not project.exists() or not project.is_dir():
+            status.update("[red]Path not a directory[/red]")
             tbl.add_row(
                 self._box("✗", "red"),
                 "[red]Path not a directory[/red]",
                 f"[red]{project}[/red]",
             )
             return
+
+        status.update(format_project_status(project))
 
         for g in self._plan(project):
             action = g["action"]
