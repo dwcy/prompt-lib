@@ -12,7 +12,6 @@ import shutil
 import subprocess
 import sys
 from datetime import datetime
-from pathlib import Path
 from typing import Callable
 
 from rich.markup import escape as escape_markup
@@ -88,6 +87,7 @@ class HomeScreen(Screen):
     """Landing screen — banner + horizontal nav."""
 
     BINDINGS = [
+        Binding("escape", "app.pop_screen", "Back"),
         Binding("ctrl+s", "refresh_claude_stats", "Refresh stats"),
     ]
 
@@ -123,17 +123,6 @@ class HomeScreen(Screen):
                     yield Button("Doctor", id="btn-op-doctor", variant="default")
                     yield Button("Local MCP", id="btn-op-local-mcp", variant="default")
                     yield Button("Local Config", id="btn-op-local", variant="default")
-            with Vertical(classes="home-section"):
-                yield Static("[bold]Project[/bold]", classes="home-section-title")
-                with Horizontal(classes="ops-row"):
-                    yield Button(
-                        "Init new project", id="btn-op-init", variant="primary"
-                    )
-                    yield Button(
-                        "Open existing project",
-                        id="btn-op-open-project",
-                        variant="primary",
-                    )
         with Horizontal(id="home-bottom"):
             yield Button("Env vars", id="btn-env", variant="primary")
             yield Button("Git config", id="btn-git", variant="primary")
@@ -167,30 +156,11 @@ class HomeScreen(Screen):
         elif name == "allenv":
             self.app.push_screen(GlobalEnvScreen())
 
-    def action_init_project(self) -> None:
-        from cabal.views.init_project import InitProjectScreen
-
-        self.app.push_screen(InitProjectScreen(on_created=self._project_changed))
-
-    def action_open_project(self) -> None:
-        from cabal.views.folder_browser import FolderBrowserScreen
-
-        self.app.push_screen(FolderBrowserScreen(Path.cwd()), self._after_folder_picked)
-
     def action_refresh_claude_stats(self) -> None:
         try:
             self.query_one("#claude-stats", ClaudeStatsPanel).refresh_stats()
         except Exception:
             pass
-
-    def _after_folder_picked(self, path: Path | None) -> None:
-        if path is None:
-            return
-        self._project_changed(path)
-
-    def _project_changed(self, path: Path) -> None:
-        self.app.selected_project = path
-        self._refresh_env_panel()
 
     def _refresh_env_panel(self) -> None:
         try:
@@ -229,10 +199,6 @@ class HomeScreen(Screen):
             self.action_go("allenv")
         elif bid == "btn-quit":
             self.app.exit()
-        elif bid == "btn-op-init":
-            self.action_init_project()
-        elif bid == "btn-op-open-project":
-            self.action_open_project()
         elif bid == "btn-op-local-mcp":
             self.app.push_screen(ProjectMcpScreen(target_dir=self.app.project_path()))
         elif bid in op_screens:

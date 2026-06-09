@@ -8,6 +8,7 @@ from textual.widgets import Footer
 
 from cabal.app import CabalApp
 from cabal.views.home import HomeScreen
+from cabal.views.project_gate import ProjectGateScreen
 
 
 async def _home(app):
@@ -54,7 +55,19 @@ async def test_command_palette_hidden_from_footer():
 
 
 @pytest.mark.asyncio
-async def test_removed_binding_keys_are_absent():
+async def test_escape_returns_to_start_view():
+    app = CabalApp()
+
+    async with app.run_test() as pilot:
+        await _home(app)
+        await pilot.pause()
+        await pilot.press("escape")
+        await pilot.pause()
+
+        assert isinstance(app.screen, ProjectGateScreen)
+
+
+def test_home_bindings_are_escape_and_refresh_only():
     keys = {b.key for b in HomeScreen.BINDINGS}
 
-    assert keys == {"ctrl+s"}
+    assert keys == {"escape", "ctrl+s"}
