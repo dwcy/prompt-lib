@@ -27,6 +27,7 @@ from textual.containers import (
     Vertical,
     VerticalScroll,
 )
+from textual.coordinate import Coordinate
 from textual.screen import ModalScreen, Screen
 from textual.widgets import (
     Button,
@@ -82,6 +83,7 @@ from cabal.tools import (
 from cabal.updates import check_for_updates, do_git_pull
 from cabal.views.restore import RestoreScreen
 from cabal.widgets.env_panel import EnvPanel
+from cabal.widgets.file_viewer import FileViewerModal
 from cabal.widgets.update_panel import UpdatePanel
 
 
@@ -92,6 +94,7 @@ class UpdateScreen(Screen):
         Binding("escape", "app.pop_screen", "Back"),
         Binding("ctrl+a", "apply", "Apply"),
         Binding("ctrl+r", "refresh", "Refresh"),
+        Binding("v", "view_file", "View"),
     ]
 
     CSS = """
@@ -105,7 +108,7 @@ class UpdateScreen(Screen):
             yield Static(
                 "[bold bright_magenta]Global Claude Settings[/bold bright_magenta]\n"
                 f"[dim]Deploy {GLOBAL_DIR} → {TARGET}.[/dim]\n"
-                "[dim]Select a row and press Enter (or click) to toggle Use, then Apply (Ctrl+A).[/dim]",
+                "[dim]Enter (or click) toggles Use · [b]v[/b] views the highlighted file · Apply (Ctrl+A).[/dim]",
                 classes="panel",
             )
             with Horizontal(id="upd-actions"):
@@ -136,6 +139,41 @@ class UpdateScreen(Screen):
         tbl.cursor_type = "row"
         tbl.add_columns("Use", "Component", "Affected")
         self._refresh_preview()
+
+    def action_view_file(self) -> None:
+        """Open the file under the cursor in a read-only modal (markdown rendered)."""
+        tbl = self.query_one("#preview", DataTable)
+        if tbl.row_count == 0:
+            return
+        try:
+            key = tbl.coordinate_to_cell_key(tbl.cursor_coordinate).row_key.value
+        except Exception:
+            return
+        path, label = self._resolve_row_path(key or "")
+        if path is None:
+            self.notify(label, title="View", severity="information", timeout=4)
+            return
+        self.app.push_screen(FileViewerModal(path, label))
+
+    def _resolve_row_path(self, key: str) -> tuple[Path | None, str]:
+        """Map a DataTable row key to its source file path, or (None, hint)."""
+        if "::" in key:
+            parent_key, rel = key.split("::", 1)
+            c = next((c for c in COMPONENTS if c.key == parent_key), None)
+            if c is None:
+                return None, "Unknown row"
+            p = c.src_path / rel
+            return (p, rel) if p.is_file() else (None, f"File not found: {rel}")
+        c = next((c for c in COMPONENTS if c.key == key), None)
+        if c is None:
+            return None, "Unknown row"
+        if c.type == "file":
+            return (
+                (c.src_path, c.label)
+                if c.src_path.is_file()
+                else (None, f"Not found: {c.label}")
+            )
+        return None, f"{c.label} is a group — expand it and press v on a file row"
 
     @staticmethod
     def _child_use_key(c: Component, rel: object) -> str:
