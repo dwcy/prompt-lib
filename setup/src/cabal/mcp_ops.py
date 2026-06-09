@@ -164,6 +164,13 @@ def enumerate_mcp_servers(project_dir: Path | None = None) -> dict[str, dict]:
                 [tmpl.get("command", "")] + list(tmpl.get("args") or [])
             )
 
+    # claude.ai / remote connectors live server-side: they surface via `claude mcp
+    # list` but in no local config, so they end up scope-less. Label them 'connector'
+    # instead of leaving the scope blank.
+    for info in aggregated.values():
+        if not info["scopes"] and info["active"]:
+            info["scopes"].append("connector")
+
     return aggregated
 
 

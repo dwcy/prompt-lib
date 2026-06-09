@@ -12,22 +12,21 @@ from textual.screen import Screen
 from textual.widgets import Button, Footer, Static
 
 from cabal.app_widgets import AppHeader
-from cabal.banner import HexBanner
+from cabal.banner import HexBanner, subtitle_bar
 
 
 class ProjectGateScreen(Screen):
     """First screen shown on launch. A project path must be chosen before Home opens."""
 
     BINDINGS = [
-        Binding("i", "init_project", "Init"),
-        Binding("o", "open_project", "Open"),
         Binding("ctrl+q", "app.quit", "Quit"),
     ]
 
     def compose(self) -> ComposeResult:
         yield AppHeader()
         with VerticalScroll(id="gate-scroll"):
-            yield HexBanner(id="banner", classes="centered")
+            yield HexBanner(id="banner", classes="centered", show_subtitle=False)
+            yield subtitle_bar()
             yield Static(
                 "[bold bright_magenta]Select a project[/bold bright_magenta]\n"
                 "[dim]CABAL operates on one project at a time. Init a new project or open "
@@ -35,14 +34,17 @@ class ProjectGateScreen(Screen):
                 classes="panel",
             )
             with Horizontal(classes="ops-row"):
-                yield Button("[I] Init new project", id="gate-init", variant="primary")
-                yield Button(
-                    "[O] Open existing project", id="gate-open", variant="primary"
-                )
-        yield Footer()
+                yield Button("Init new project", id="gate-init", variant="primary")
+                yield Button("Open existing project", id="gate-open", variant="primary")
+        yield Footer(show_command_palette=False)
 
     def on_mount(self) -> None:
         self.query_one("#gate-init", Button).focus()
+
+    def action_readme(self) -> None:
+        from cabal.views.readme import ReadmeScreen
+
+        self.app.push_screen(ReadmeScreen())
 
     def action_init_project(self) -> None:
         from cabal.views.init_project import InitProjectScreen

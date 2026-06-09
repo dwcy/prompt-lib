@@ -77,6 +77,25 @@ class CabalApp(App):
         content-align: center middle;
     }
 
+    #banner-row {
+        height: auto;
+        margin: 0 2;
+        padding: 0;
+        align-vertical: middle;
+    }
+    #subtitle {
+        width: auto;
+        color: cyan;
+        text-style: italic;
+    }
+    #readme-link {
+        width: auto;
+        link-color: dodgerblue;
+        link-style: underline;
+        link-color-hover: $text;
+        link-background-hover: dodgerblue;
+    }
+
     #env-summary, #update-summary, #doctor-summary, #mcp-target {
         padding: 1 2;
         margin: 0 2;
