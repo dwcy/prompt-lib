@@ -116,7 +116,7 @@ class McpScreen(Screen):
                 yield Button("Refresh (Ctrl+R)", id="mcp-refresh")
                 yield Button("Back (Esc)", id="mcp-back")
             yield Static("", id="mcp-status", classes="panel")
-        yield Footer()
+        yield Footer(show_command_palette=False)
 
     def on_mount(self) -> None:
         tbl = self.query_one("#mcp-table", DataTable)

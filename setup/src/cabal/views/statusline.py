@@ -65,7 +65,7 @@ class StatuslineScreen(Screen):
             yield DataTable(id="sl-table")
             yield Static("", id="sl-desc")
             yield Static("", id="sl-status", classes="panel")
-        yield Footer()
+        yield Footer(show_command_palette=False)
 
     def on_mount(self) -> None:
         self._layout = load_layout()

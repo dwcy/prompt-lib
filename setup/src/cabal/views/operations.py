@@ -93,7 +93,7 @@ class OperationsScreen(Screen):
                 yield Button("[L] Local", id="op-local", variant="primary")
                 yield Button("[T] Tools", id="op-tools", variant="primary")
                 yield Button("Back (Esc)", id="op-back")
-        yield Footer()
+        yield Footer(show_command_palette=False)
 
     def on_mount(self) -> None:
         self.query_one("#op-update", Button).focus()

@@ -115,7 +115,7 @@ class UpdateScreen(Screen):
             yield Static("", id="update-summary")
             yield DataTable(id="preview")
             yield Static("", id="upd-status", classes="panel")
-        yield Footer()
+        yield Footer(show_command_palette=False)
 
     def on_mount(self) -> None:
         self._use: dict[str, bool] = {}

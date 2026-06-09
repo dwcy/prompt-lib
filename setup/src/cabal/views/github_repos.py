@@ -99,7 +99,7 @@ class GitHubReposScreen(Screen):
             with Horizontal(id="gh-repos-actions"):
                 yield Button("Refresh", id="gh-repos-refresh", variant="default")
                 yield Button("Back", id="gh-repos-back", variant="default")
-        yield Footer()
+        yield Footer(show_command_palette=False)
 
     def on_mount(self) -> None:
         tbl = self.query_one("#gh-repos-list", DataTable)

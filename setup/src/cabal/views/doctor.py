@@ -82,7 +82,7 @@ class DoctorScreen(Screen):
             )
             yield Static("", id="doctor-summary")
             yield DataTable(id="drift", show_cursor=False)
-        yield Footer()
+        yield Footer(show_command_palette=False)
 
     def on_mount(self) -> None:
         tbl = self.query_one("#drift", DataTable)

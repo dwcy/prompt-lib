@@ -131,7 +131,7 @@ class InitProjectScreen(Screen):
                 yield Button("Cancel", id="init-cancel", variant="default")
                 yield Button("Back (Esc)", id="init-back")
             yield Static("", id="init-status", classes="panel")
-        yield Footer()
+        yield Footer(show_command_palette=False)
 
     def on_mount(self) -> None:
         tbl = self.query_one("#init-files", DataTable)

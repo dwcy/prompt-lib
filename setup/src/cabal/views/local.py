@@ -194,7 +194,7 @@ class LocalScreen(Screen):
                 yield Button("Apply (Ctrl+A)", id="loc-apply", variant="success")
                 yield Button("Back (Esc)", id="loc-back")
             yield Static("", id="loc-status", classes="panel")
-        yield Footer()
+        yield Footer(show_command_palette=False)
 
     def on_mount(self) -> None:
         self._use: dict[str, bool] = {}
