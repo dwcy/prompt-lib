@@ -19,8 +19,6 @@ class ProjectGateScreen(Screen):
     """First screen shown on launch. A project path must be chosen before Home opens."""
 
     BINDINGS = [
-        Binding("i", "init_project", "Init"),
-        Binding("o", "open_project", "Open"),
         Binding("ctrl+q", "app.quit", "Quit"),
     ]
 
@@ -36,11 +34,9 @@ class ProjectGateScreen(Screen):
                 classes="panel",
             )
             with Horizontal(classes="ops-row"):
-                yield Button("[I] Init new project", id="gate-init", variant="primary")
-                yield Button(
-                    "[O] Open existing project", id="gate-open", variant="primary"
-                )
-        yield Footer()
+                yield Button("Init new project", id="gate-init", variant="primary")
+                yield Button("Open existing project", id="gate-open", variant="primary")
+        yield Footer(show_command_palette=False)
 
     def on_mount(self) -> None:
         self.query_one("#gate-init", Button).focus()
