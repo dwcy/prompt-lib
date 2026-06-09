@@ -134,7 +134,7 @@ class UpdateScreen(Screen):
             self._child_keys[c.key] = keys
         tbl = self.query_one("#preview", DataTable)
         tbl.cursor_type = "row"
-        tbl.add_columns("Use", "Component", "New", "Changed", "Unchanged", "Affected")
+        tbl.add_columns("Use", "Component", "Affected")
         self._refresh_preview()
 
     @staticmethod
@@ -170,12 +170,14 @@ class UpdateScreen(Screen):
         return self._box("✓") if self._use.get(use_key) else self._box(" ")
 
     @staticmethod
-    def _counts(state: str) -> tuple[str, str, str]:
-        return (
-            "1" if state == "NEW" else "·",
-            "1" if state == "CHANGED" else "·",
-            "1" if state == "UNCHANGED" else "·",
-        )
+    def _yellow(text: str, changed: bool) -> str:
+        return f"[yellow]{text}[/yellow]" if changed else text
+
+    @staticmethod
+    def _child_detail(state: str) -> str:
+        if state == "UNCHANGED":
+            return "[dim]up to date[/dim]"
+        return f"[yellow]{state.lower()}[/yellow]"
 
     def _refresh_preview(self) -> None:
         tbl = self.query_one("#preview", DataTable)
@@ -187,9 +189,6 @@ class UpdateScreen(Screen):
                 tbl.add_row(
                     self._parent_cell(c),
                     c.label,
-                    "·",
-                    "·",
-                    "·",
                     "[red](missing in repo)[/red]",
                     key=c.key,
                 )
@@ -197,38 +196,37 @@ class UpdateScreen(Screen):
             statuses = diff_component(c)
             if c.type == "file":
                 state = statuses[0].state if statuses else "UNCHANGED"
-                n, ch, un = self._counts(state)
+                changed = state != "UNCHANGED"
                 if self._use.get(c.key):
                     totals["new"] += state == "NEW"
                     totals["changed"] += state == "CHANGED"
                     totals["unchanged"] += state == "UNCHANGED"
                     used += 1
-                detail = (
-                    "[dim]up to date[/dim]"
-                    if state == "UNCHANGED"
-                    else f"[yellow]{state.lower()}[/yellow]"
-                )
                 tbl.add_row(
-                    self._leaf_cell(c.key), c.label, n, ch, un, detail, key=c.key
+                    self._leaf_cell(c.key),
+                    self._yellow(c.label, changed),
+                    self._child_detail(state),
+                    key=c.key,
                 )
                 continue
             by_rel = {Path(s.rel).as_posix(): s for s in statuses}
-            all_new = sum(1 for s in statuses if s.state == "NEW")
-            all_chg = sum(1 for s in statuses if s.state == "CHANGED")
-            all_unc = sum(1 for s in statuses if s.state == "UNCHANGED")
+            all_chg = sum(1 for s in statuses if s.state != "UNCHANGED")
             affected = [s.rel for s in statuses if s.state != "UNCHANGED"]
             names = ", ".join(str(p) for p in affected[:3])
             if len(affected) > 3:
                 names += f", … +{len(affected) - 3}"
-            if not names:
-                names = "[dim]up to date[/dim]"
+            parent_changed = all_chg > 0
+            names = (
+                self._yellow(names, parent_changed)
+                if names
+                else "[dim]up to date[/dim]"
+            )
             child_keys = self._child_keys.get(c.key, [])
             tbl.add_row(
                 self._parent_cell(c),
-                f"[bold]{c.label}[/bold] ({len(child_keys)})",
-                str(all_new) if all_new else "·",
-                str(all_chg) if all_chg else "·",
-                str(all_unc) if all_unc else "·",
+                self._yellow(
+                    f"[bold]{c.label}[/bold] ({len(child_keys)})", parent_changed
+                ),
                 names,
                 key=c.key,
             )
@@ -236,13 +234,18 @@ class UpdateScreen(Screen):
                 relp = k.split("::", 1)[1]
                 st = by_rel.get(relp)
                 state = st.state if st else "UNCHANGED"
-                n, ch, un = self._counts(state)
+                changed = state != "UNCHANGED"
                 if self._use.get(k):
                     totals["new"] += state == "NEW"
                     totals["changed"] += state == "CHANGED"
                     totals["unchanged"] += state == "UNCHANGED"
                     used += 1
-                tbl.add_row(self._leaf_cell(k), f"  └ {relp}", n, ch, un, "", key=k)
+                tbl.add_row(
+                    self._leaf_cell(k),
+                    self._yellow(f"  └ {relp}", changed),
+                    self._child_detail(state),
+                    key=k,
+                )
         self.query_one("#update-summary", Static).update(
             f"[bold]Selected: {used} files[/bold]   "
             f"[green]NEW {totals['new']}[/green]   "
