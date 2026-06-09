@@ -20,6 +20,7 @@ Personal preferences and conventions that apply to every project and session.
 
 ## When making changes
 
+- **Branch before starting work.** Before the *first* edit of any task, check the branch. If it's `main`/`master` (or any `refuse_on_branches` entry), create a feature branch first — `git -C <repo> checkout -b <type>/<slug>`, named after the task. Branching is a pre-work step, not part of committing; uncommitted changes follow the checkout, so it's safe to branch late, but branch-first is the habit. Enforced at edit time by `global/hooks/pretool_branch_guard.py` (bypass: `PROMPTLIB_DISABLED_HOOKS=pretool_branch_guard`).
 - Only change what is needed to satisfy the request — no refactoring adjacent code.
 - If you spot a bug nearby, mention it but don't fix it unless I ask.
 - Always read a file before editing it.
@@ -53,32 +54,9 @@ When committing — whether I asked via `/git` or just "commit this" — use the
 - Show the proposed message and wait for confirmation before committing — **except** at plan-completion checkpoints (see *Auto-commit at plan completion* below).
 - Never push unless I explicitly ask.
 
-### Tags
+### Tags, policy editing & recovery
 
-`git tag` is gated by policy and **off by default**. Edit `~/.claude/git-policy.json`:
-
-```json
-"tags": { "agent_may_tag": false, "auto_push": false }
-```
-
-- `agent_may_tag: false` (default) — the wrapper's `tag` subcommand refuses. Don't fall back to raw `git tag`; ask me first.
-- `agent_may_tag: true` — wrapper creates annotated tags only: `python ~/.claude/scripts/git-identity.py tag v1.0.0 -m "release notes"`.
-- `auto_push: false` (default) — tags stay local until I push them myself. Never `git push --tags` automatically.
-
-### Editing the policy
-
-Two equivalent ways to change values:
-
-- Edit `~/.claude/git-policy.json` in your editor.
-- `python ~/.claude/scripts/git-identity.py policy set --agent-email "you@example.com"` (or `--agent-name`, `--agent-may-tag true|false`, `--auto-push true|false`).
-- `python ~/.claude/scripts/git-identity.py policy add-type wip` / `policy remove-type docs` to change the allowed-type list.
-- `python ~/.claude/scripts/git-identity.py policy show` to see current values + source file.
-
-If `~/.claude/git-policy.json` doesn't exist yet, the wrapper falls back to `~/.claude/git/git-policy.default.json` (seeded by the apply script) and then to its built-in defaults.
-
-### Recovery
-
-If a commit crashes mid-flight and `.git/config --local` is stuck on agent identity, run `/git-restore-identity` (or `python ~/.claude/scripts/git-identity.py restore`) in the affected repo.
+Tags are gated (off by default), the policy file has CLI editors, and a crashed commit can be repaired with `/git-restore-identity` (or `python ~/.claude/scripts/git-identity.py restore`). Full mechanics: [`docs/git-policy.md`](docs/git-policy.md). Don't fall back to raw `git tag` — ask first.
 
 ### Auto-commit at plan completion
 
