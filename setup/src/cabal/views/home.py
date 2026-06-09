@@ -107,44 +107,40 @@ class HomeScreen(Screen):
                 )
                 with Horizontal(classes="ops-row"):
                     yield Button(
-                        "[C] Global Claude file Config",
+                        "Global Claude file Config",
                         id="btn-op-update",
                         variant="default",
                     )
-                    yield Button("[M] Global MCPs", id="btn-op-mcp", variant="default")
+                    yield Button("Global MCPs", id="btn-op-mcp", variant="default")
                     yield Button(
-                        "[T] Statusline", id="btn-op-statusline", variant="default"
+                        "Statusline", id="btn-op-statusline", variant="default"
                     )
                 yield ClaudeStatsPanel(id="claude-stats")
                 yield Static(
                     "[bold]Local Claude Settings[/bold]", classes="home-section-title"
                 )
                 with Horizontal(classes="ops-row"):
-                    yield Button("[D] Doctor", id="btn-op-doctor", variant="default")
-                    yield Button(
-                        "[N] Local MCP", id="btn-op-local-mcp", variant="default"
-                    )
-                    yield Button(
-                        "[L] Local Config", id="btn-op-local", variant="default"
-                    )
+                    yield Button("Doctor", id="btn-op-doctor", variant="default")
+                    yield Button("Local MCP", id="btn-op-local-mcp", variant="default")
+                    yield Button("Local Config", id="btn-op-local", variant="default")
             with Vertical(classes="home-section"):
                 yield Static("[bold]Project[/bold]", classes="home-section-title")
                 with Horizontal(classes="ops-row"):
                     yield Button(
-                        "[I] Init new project", id="btn-op-init", variant="primary"
+                        "Init new project", id="btn-op-init", variant="primary"
                     )
                     yield Button(
-                        "[O] Open existing project",
+                        "Open existing project",
                         id="btn-op-open-project",
                         variant="primary",
                     )
         with Horizontal(id="home-bottom"):
-            yield Button("[E] Env vars", id="btn-env", variant="primary")
-            yield Button("[G] Git config", id="btn-git", variant="primary")
-            yield Button("[H] GitHub", id="btn-github", variant="primary")
-            yield Button("[V] All env", id="btn-allenv", variant="primary")
+            yield Button("Env vars", id="btn-env", variant="primary")
+            yield Button("Git config", id="btn-git", variant="primary")
+            yield Button("GitHub", id="btn-github", variant="primary")
+            yield Button("All env", id="btn-allenv", variant="primary")
             yield Static("", classes="home-spacer")
-            yield Button("[Q] Quit", id="btn-quit", variant="error")
+            yield Button("Quit", id="btn-quit", variant="error")
         yield Footer(show_command_palette=False)
 
     def on_mount(self) -> None:
