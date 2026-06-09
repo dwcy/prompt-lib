@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from rich.text import Text
+from textual.containers import Horizontal
 from textual.widgets import Static
 
 GRID_HEIGHT = 10  # tall enough to wrap the 6-line logo with 2 hex rows above/below
@@ -99,3 +100,17 @@ class HexBanner(Static):
 
     def _refresh(self) -> None:
         self.update(render_banner(self.size.width or None, subtitle=self.show_subtitle))
+
+
+def subtitle_bar() -> Horizontal:
+    """Subtitle line with a README link pushed to the right.
+
+    Shared by the home and start (project-gate) views. Screens that yield this
+    must define `action_readme` (the link fires `screen.readme`).
+    """
+    return Horizontal(
+        Static("« Agent Orchestration Setup »", id="subtitle"),
+        Static("", classes="home-spacer"),
+        Static("[@click=screen.readme]README[/]", id="readme-link"),
+        id="banner-row",
+    )

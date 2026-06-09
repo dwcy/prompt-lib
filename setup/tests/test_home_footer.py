@@ -8,7 +8,6 @@ from textual.widgets import Footer
 
 from cabal.app import CabalApp
 from cabal.views.home import HomeScreen
-from cabal.views.readme import ReadmeScreen
 
 
 async def _home(app):
@@ -31,16 +30,16 @@ async def test_removed_shortcut_does_not_navigate():
 
 
 @pytest.mark.asyncio
-async def test_kept_readme_shortcut_still_opens_readme():
+async def test_readme_is_link_only_no_shortcut():
     app = CabalApp()
 
     async with app.run_test() as pilot:
-        await _home(app)
+        screen = await _home(app)
         await pilot.pause()
         await pilot.press("r")
         await pilot.pause()
 
-        assert isinstance(app.screen, ReadmeScreen)
+        assert app.screen is screen
 
 
 @pytest.mark.asyncio
@@ -58,4 +57,4 @@ async def test_command_palette_hidden_from_footer():
 async def test_removed_binding_keys_are_absent():
     keys = {b.key for b in HomeScreen.BINDINGS}
 
-    assert keys == {"r", "g", "i", "ctrl+s"}
+    assert keys == {"ctrl+s"}

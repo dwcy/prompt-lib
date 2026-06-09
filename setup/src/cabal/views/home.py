@@ -48,7 +48,7 @@ from textual.widget import Widget
 
 from cabal._paths import GLOBAL_DIR, TARGET, REPO_DIR, ENV_DIR, ENV_FILE, RESOURCE_ROOT
 from cabal.app_widgets import AppHeader
-from cabal.banner import HexBanner, render_banner
+from cabal.banner import HexBanner, render_banner, subtitle_bar
 from cabal.components import COMPONENTS, Component, ENV_DESCRIPTIONS, FileStatus
 from cabal.diff_apply import (
     apply_statuses,
@@ -88,9 +88,6 @@ class HomeScreen(Screen):
     """Landing screen — banner + horizontal nav."""
 
     BINDINGS = [
-        Binding("r", "go('readme')", "README"),
-        Binding("g", "go('git')", "Git"),
-        Binding("i", "init_project", "Init"),
         Binding("ctrl+s", "refresh_claude_stats", "Refresh stats"),
     ]
 
@@ -98,16 +95,7 @@ class HomeScreen(Screen):
         yield AppHeader(show_clock=True)
         with VerticalScroll(id="home-scroll"):
             yield HexBanner(id="banner", classes="centered", show_subtitle=False)
-            with Horizontal(id="banner-row"):
-                yield Static(
-                    "[italic bright_cyan]« Agent Orchestration Setup »[/]",
-                    id="subtitle",
-                )
-                yield Static("", classes="home-spacer")
-                yield Static(
-                    "[@click=screen.readme]📖 README[/]",
-                    id="readme-link",
-                )
+            yield subtitle_bar()
             yield EnvPanel(id="env-summary")
             with Vertical(classes="home-section"):
                 yield Static(

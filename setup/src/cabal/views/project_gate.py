@@ -12,7 +12,7 @@ from textual.screen import Screen
 from textual.widgets import Button, Footer, Static
 
 from cabal.app_widgets import AppHeader
-from cabal.banner import HexBanner
+from cabal.banner import HexBanner, subtitle_bar
 
 
 class ProjectGateScreen(Screen):
@@ -27,7 +27,8 @@ class ProjectGateScreen(Screen):
     def compose(self) -> ComposeResult:
         yield AppHeader()
         with VerticalScroll(id="gate-scroll"):
-            yield HexBanner(id="banner", classes="centered")
+            yield HexBanner(id="banner", classes="centered", show_subtitle=False)
+            yield subtitle_bar()
             yield Static(
                 "[bold bright_magenta]Select a project[/bold bright_magenta]\n"
                 "[dim]CABAL operates on one project at a time. Init a new project or open "
@@ -43,6 +44,11 @@ class ProjectGateScreen(Screen):
 
     def on_mount(self) -> None:
         self.query_one("#gate-init", Button).focus()
+
+    def action_readme(self) -> None:
+        from cabal.views.readme import ReadmeScreen
+
+        self.app.push_screen(ReadmeScreen())
 
     def action_init_project(self) -> None:
         from cabal.views.init_project import InitProjectScreen

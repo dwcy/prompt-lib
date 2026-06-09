@@ -38,3 +38,19 @@ async def test_readme_action_opens_readme_screen():
         await pilot.pause()
 
         assert isinstance(app.screen, ReadmeScreen)
+
+
+@pytest.mark.asyncio
+async def test_start_view_has_readme_link_that_opens_readme():
+    app = CabalApp()
+
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        gate = app.screen
+
+        assert gate.query_one("#readme-link", Static) is not None
+
+        gate.action_readme()
+        await pilot.pause()
+
+        assert isinstance(app.screen, ReadmeScreen)
