@@ -105,7 +105,7 @@ class McpScreen(Screen):
                 "[bold bright_magenta]✦ Global MCP servers ✦[/bold bright_magenta]\n"
                 "[dim]Global (user-scope) + Claude plugin servers, incl. ones not added here. Toggle = `claude mcp add -s user` (from template) or `claude mcp remove`.[/dim]\n"
                 "[dim]Scopes: plugin (marketplace) · user (~/.claude.json, all projects) · local (this project only) · "
-                "project (.mcp.json) · template (defined here, not registered).[/dim]",
+                "project (.mcp.json) · template (defined here, not registered) · connector (claude.ai / remote, server-side).[/dim]",
                 classes="panel",
             )
             yield DataTable(
@@ -250,6 +250,7 @@ _SCOPE_COLOURS = {
     "local": "blue",
     "project": "yellow",
     "template": "dim",
+    "connector": "green",
 }
 
 
