@@ -3,13 +3,12 @@
 
 Markdown renders via `MarkdownViewer`; everything else shows in a read-only,
 syntax-highlighted `TextArea`. When a `compare_path` is supplied and its content
-differs from the repo file, the modal opens on a coloured unified diff and `d`
+differs from the repo file, the modal opens on a coloured word-level diff and `d`
 toggles between the diff and the full source. Used by the Global Claude Settings table.
 """
 
 from __future__ import annotations
 
-import difflib
 from pathlib import Path
 
 from rich.text import Text
@@ -19,6 +18,8 @@ from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.screen import ModalScreen
 from textual.widget import Widget
 from textual.widgets import Button, MarkdownViewer, Static, TextArea
+
+from cabal.diff_text import render_word_diff
 
 _LANG_BY_SUFFIX = {
     ".py": "python",
@@ -147,29 +148,7 @@ class FileViewerModal(ModalScreen):
             if self._new_text is not None
             else self._read_text(self._path)[0]
         )
-        out = Text()
-        diff = difflib.unified_diff(
-            old.splitlines(),
-            new.splitlines(),
-            fromfile=f"deployed (~/.claude): {self._title}",
-            tofile=f"repo (global/): {self._title}",
-            lineterm="",
-        )
-        for line in diff:
-            if line.startswith(("+++", "---")):
-                style = "bold"
-            elif line.startswith("@@"):
-                style = "cyan"
-            elif line.startswith("+"):
-                style = "green"
-            elif line.startswith("-"):
-                style = "red"
-            else:
-                style = "dim"
-            out.append(line + "\n", style=style)
-        if not out.plain:
-            out.append("(no textual difference)", style="dim")
-        return out
+        return render_word_diff(old, new)
 
     @staticmethod
     def _read_text(path: Path) -> tuple[str, str | None]:
