@@ -77,7 +77,6 @@ hiddenimports = [
     "cabal.widgets.env_panel",
     "cabal.widgets.update_panel",
     "cabal.views",
-    "cabal.views.doctor",
     "cabal.views.env",
     "cabal.views.folder_browser",
     "cabal.views.gh_device",

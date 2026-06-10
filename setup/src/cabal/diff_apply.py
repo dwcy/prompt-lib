@@ -9,7 +9,7 @@ from datetime import datetime
 from pathlib import Path
 
 from cabal._paths import TARGET
-from cabal.components import Component, FileStatus
+from cabal.components import COMPONENTS, Component, FileStatus
 from cabal.settings_helpers import _effective_settings_text, _is_settings_json
 
 
@@ -20,8 +20,12 @@ def diff_component(comp: Component) -> list[FileStatus]:
         if not dst_file.exists():
             out.append(FileStatus(rel, src_file, dst_file, "NEW"))
         elif _is_settings_json(src_file):
-            same = dst_file.read_text(encoding="utf-8") == _effective_settings_text(src_file)
-            out.append(FileStatus(rel, src_file, dst_file, "UNCHANGED" if same else "CHANGED"))
+            same = dst_file.read_text(encoding="utf-8") == _effective_settings_text(
+                src_file
+            )
+            out.append(
+                FileStatus(rel, src_file, dst_file, "UNCHANGED" if same else "CHANGED")
+            )
         elif filecmp.cmp(src_file, dst_file, shallow=False):
             out.append(FileStatus(rel, src_file, dst_file, "UNCHANGED"))
         else:
@@ -33,8 +37,26 @@ def find_extras(comp: Component) -> list[Path]:
     if comp.type == "file" or not comp.dst_path.exists():
         return []
     src_rels = {rel for _, rel in comp.list_files()}
-    iterator = comp.dst_path.rglob("*") if comp.recursive else comp.dst_path.glob(comp.glob)
-    return [f.relative_to(comp.dst_path) for f in iterator if f.is_file() and f.relative_to(comp.dst_path) not in src_rels]
+    iterator = (
+        comp.dst_path.rglob("*") if comp.recursive else comp.dst_path.glob(comp.glob)
+    )
+    return [
+        f.relative_to(comp.dst_path)
+        for f in iterator
+        if f.is_file() and f.relative_to(comp.dst_path) not in src_rels
+    ]
+
+
+def has_deploy_drift() -> bool:
+    """True if any component differs between the repo and ~/.claude/ (NEW, CHANGED, or target-only)."""
+    for comp in COMPONENTS:
+        if not comp.src_path.exists():
+            continue
+        if any(st.state in ("NEW", "CHANGED") for st in diff_component(comp)):
+            return True
+        if find_extras(comp):
+            return True
+    return False
 
 
 def apply_statuses(statuses: list[FileStatus]) -> tuple[int, int]:
@@ -64,6 +86,8 @@ def backup_settings() -> Path | None:
 
 
 def prune_backups(keep: int = 10) -> None:
-    baks = sorted(TARGET.glob("settings.json.bak*"), key=lambda p: p.stat().st_mtime, reverse=True)
+    baks = sorted(
+        TARGET.glob("settings.json.bak*"), key=lambda p: p.stat().st_mtime, reverse=True
+    )
     for old in baks[keep:]:
         old.unlink(missing_ok=True)
