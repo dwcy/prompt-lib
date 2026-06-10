@@ -124,7 +124,7 @@ class McpScreen(Screen):
         self._refresh()
 
     def _refresh(self) -> None:
-        self.loading = True
+        self.query_one("#mcp-table", DataTable).loading = True
         self.query_one("#mcp-status", Static).update(
             "[dim italic]Listing MCP servers — `claude mcp list` can take up to 60s…[/]"
         )
@@ -142,7 +142,7 @@ class McpScreen(Screen):
         self.query_one("#mcp-status", Static).update(
             f"[red]Error enumerating: {msg}[/red]"
         )
-        self.loading = False
+        self.query_one("#mcp-table", DataTable).loading = False
 
     def _apply_servers(self, aggregated: dict[str, dict]) -> None:
         tbl = self.query_one("#mcp-table", DataTable)
@@ -176,7 +176,7 @@ class McpScreen(Screen):
         self.query_one("#mcp-status", Static).update(
             f"[dim]{tbl.row_count} servers shown. Space toggles — templates add/remove, plugins enable/disable.[/dim]"
         )
-        self.loading = False
+        tbl.loading = False
 
     def action_refresh(self) -> None:
         self._refresh()
