@@ -34,8 +34,6 @@ from textual.widgets import (
     DataTable,
     Footer,
     Header,
-    Input,
-    Label,
     MarkdownViewer,
     OptionList,
     RadioButton,
@@ -83,6 +81,7 @@ from cabal.tools import (
 from cabal.updates import check_for_updates, do_git_pull
 from cabal.views.folder_browser import GITIGNORE_BY_TEMPLATE
 from cabal.widgets.env_panel import EnvPanel
+from cabal.widgets.file_viewer import FileViewerModal
 from cabal.widgets.update_panel import UpdatePanel
 
 
@@ -92,6 +91,7 @@ class LocalScreen(Screen):
     BINDINGS = [
         Binding("escape", "app.pop_screen", "Back"),
         Binding("ctrl+a", "apply", "Apply"),
+        Binding("v", "view_file", "View"),
     ]
 
     def __init__(self) -> None:
@@ -108,13 +108,14 @@ class LocalScreen(Screen):
         with VerticalScroll():
             yield Static(
                 "[bold bright_magenta]✦ Local project setup ✦[/bold bright_magenta]\n"
-                "[dim]Pick a project folder and the actions to take.[/dim]",
+                "[dim]Choose the actions to take for this project.[/dim]\n"
+                "[dim]Enter (or click) toggles Use · [b]v[/b] views the highlighted file (diff for changed files) · Apply (Ctrl+A).[/dim]",
                 classes="panel",
             )
-            with Horizontal():
-                yield Label("Project path: ")
-                yield Button("Browse…", id="loc-browse")
-                yield Input(value=str(self.app.project_path()), id="loc-path")
+            yield Static(
+                f"[bold]Project path:[/bold]  {escape_markup(str(self.app.project_path()))}",
+                classes="panel",
+            )
             yield Checkbox(
                 "Create .claude/ scaffolding (skills/, hooks/, settings.local.json)",
                 value=True,
@@ -191,6 +192,7 @@ class LocalScreen(Screen):
             yield Static("")
             with Horizontal():
                 yield Button("Refresh preview", id="loc-refresh")
+                yield Button("View (v)", id="loc-view", variant="primary")
                 yield Button("Apply (Ctrl+A)", id="loc-apply", variant="success")
                 yield Button("Back (Esc)", id="loc-back")
             yield Static("", id="loc-status", classes="panel")
@@ -231,7 +233,7 @@ class LocalScreen(Screen):
         return self._box("✓") if self._use.get(use_key) else self._box(" ")
 
     def _project(self) -> Path:
-        return Path(self.query_one("#loc-path", Input).value).expanduser()
+        return self.app.project_path()
 
     def _selected(self) -> dict:
         return {
@@ -254,21 +256,6 @@ class LocalScreen(Screen):
             return None
         return Path(sel.value)
 
-    def _open_browser(self) -> None:
-        from cabal.views.folder_browser import FolderBrowserScreen
-
-        raw = self.query_one("#loc-path", Input).value
-        start = Path(raw).expanduser()
-        if not start.is_dir():
-            start = self.app.project_path()
-
-        def _cb(path: Path | None) -> None:
-            if path is not None:
-                self.query_one("#loc-path", Input).value = str(path)
-                self._refresh()
-
-        self.app.push_screen(FolderBrowserScreen(start), _cb)
-
     def _plan(self, project: Path) -> list[dict]:
         sel = self._selected()
         tpl = self._template_path() if sel["template"] else None
@@ -280,6 +267,7 @@ class LocalScreen(Screen):
         tbl = self.query_one("#loc-preview", DataTable)
         tbl.clear()
         self._child_keys = {}
+        self._row_op: dict[str, dict] = {}
         project = self._project()
         status = self.query_one("#loc-proj-status", Static)
 
@@ -313,7 +301,44 @@ class LocalScreen(Screen):
                 else:
                     box = self._box(" ", "dim")
                     row_key = f"noop::{action}::{i}"
+                self._row_op[row_key] = ch
                 tbl.add_row(box, f"  └ {ch['label']}", ch["state"], key=row_key)
+
+    def action_view_file(self) -> None:
+        """View the highlighted row — a deployed→repo diff for file copies, else a notice."""
+        tbl = self.query_one("#loc-preview", DataTable)
+        if tbl.row_count == 0:
+            return
+        try:
+            key = tbl.coordinate_to_cell_key(tbl.cursor_coordinate).row_key.value
+        except Exception:
+            return
+        if (key or "").startswith("action::"):
+            self.notify(
+                "Expand the group and press v on a file row.",
+                title="View",
+                severity="information",
+                timeout=4,
+            )
+            return
+        ch = self._row_op.get(key or "")
+        op = ch["op"] if ch else None
+        if op and op[0] == "copy":
+            _, src, dst = op
+            self.app.push_screen(
+                FileViewerModal(
+                    src,
+                    str(ch["label"]),
+                    compare_path=dst if dst.is_file() else None,
+                )
+            )
+            return
+        self.notify(
+            "No file diff — generated text or an operation (gitignore / Spec Kit / scaffold).",
+            title="View",
+            severity="information",
+            timeout=4,
+        )
 
     def action_apply(self) -> None:
         project = self._project()
@@ -379,9 +404,6 @@ class LocalScreen(Screen):
         self._refresh()
         self.query_one("#loc-preview", DataTable).move_cursor(row=event.cursor_row)
 
-    def on_input_changed(self, event: Input.Changed) -> None:
-        self._refresh()
-
     def on_checkbox_changed(self, event: Checkbox.Changed) -> None:
         self._refresh()
 
@@ -392,8 +414,8 @@ class LocalScreen(Screen):
         bid = event.button.id or ""
         if bid == "loc-back":
             self.app.pop_screen()
-        elif bid == "loc-browse":
-            self._open_browser()
+        elif bid == "loc-view":
+            self.action_view_file()
         elif bid == "loc-refresh":
             self._refresh()
         elif bid == "loc-apply":

@@ -90,6 +90,50 @@ def test_apply_skills_copies_selected_into_project(tmp_path, monkeypatch):
     ) == "alpha"
 
 
+def _children(project, sel, tpl=None, picked=None, action=None):
+    groups = local_setup.build_plan(project, sel, tpl, picked)
+    grp = next(g for g in groups if g["action"] == action)
+    return {c["label"]: c for c in grp["children"]}
+
+
+def test_template_row_new_is_selectable(tmp_path):
+    tpl = tmp_path / "python.md"
+    _write(tpl, "template body")
+
+    children = _children(
+        tmp_path / "proj", {"template": True}, tpl, tpl, action="template"
+    )
+    row = next(iter(children.values()))
+
+    assert row["op"] is not None
+    assert "NEW" in row["state"]
+
+
+def test_template_row_unchanged_is_informational(tmp_path):
+    tpl = tmp_path / "python.md"
+    _write(tpl, "identical body")
+    _write(tmp_path / "proj" / "CLAUDE.md", "identical body")
+
+    children = _children(
+        tmp_path / "proj", {"template": True}, tpl, tpl, action="template"
+    )
+    row = next(iter(children.values()))
+
+    assert row["op"] is None
+    assert "installed" in row["state"]
+
+
+def test_git_template_changed_is_selectable_and_marked(tmp_path, monkeypatch):
+    _write(tmp_path / "global" / "git" / ".editorconfig", "v2")
+    monkeypatch.setattr(local_setup, "GLOBAL_DIR", tmp_path / "global")
+    _write(tmp_path / "proj" / ".editorconfig", "v1")
+
+    children = _children(tmp_path / "proj", {"git": True}, action="git")
+
+    assert children[".editorconfig"]["op"] is not None
+    assert "CHANGED" in children[".editorconfig"]["state"]
+
+
 @pytest.mark.asyncio
 async def test_local_screen_mounts_with_status_and_skills_toggle():
     app = CabalApp()
