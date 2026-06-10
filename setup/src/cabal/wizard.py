@@ -131,7 +131,12 @@ from cabal.installers.runtimes import (
     dotnet_install,
 )
 from cabal.installers.containers import docker_install, podman_install, kubectl_install
-from cabal.installers.cloud import terraform_install, az_install, gcloud_install, aws_install
+from cabal.installers.cloud import (
+    terraform_install,
+    az_install,
+    gcloud_install,
+    aws_install,
+)
 from cabal.installers.vcs import git_install
 from cabal.installers.ai_clis import (
     gemini_install,
@@ -171,7 +176,8 @@ from cabal.views.operations import OperationsScreen
 from cabal.views.update import UpdateScreen
 from cabal.views.doctor import DoctorScreen
 from cabal.views.restore import RestoreScreen
-from cabal.views.mcp import McpScreen, _render_scopes
+from cabal.views.mcp import McpScreen
+from cabal.mcp_view_logic import render_scopes as _render_scopes
 from cabal.views.gh_device import GhDeviceFlowScreen
 from cabal.views.folder_browser import FolderBrowserScreen
 from cabal.views.local import LocalScreen
@@ -180,17 +186,47 @@ from cabal.app import CabalApp, main, run
 
 
 __all__ = [
-    "IS_FROZEN", "IS_INSTALLED", "SCRIPT_DIR", "RESOURCE_ROOT", "REPO_DIR",
-    "GLOBAL_DIR", "ENV_DIR", "ENV_FILE", "MCP_TEMPLATES_FILE", "TARGET",
-    "GRID_HEIGHT", "LOGO_LINES", "LOGO_MAX_WIDTH", "LOGO_GUTTER",
-    "LOGO_GRADIENT", "MASCOT_GRADIENT", "render_banner", "HexBanner",
-    "render_env_summary", "translate_for_os",
-    "Component", "COMPONENTS", "ENV_DESCRIPTIONS", "FileStatus",
-    "detect_env", "find_env_vars",
-    "diff_component", "find_extras", "apply_statuses",
-    "backup_settings", "prune_backups",
-    "recommended_autocrlf", "apply_git_line_endings",
-    "check_for_updates", "do_git_pull",
-    "enumerate_mcp_servers", "claude_mcp_add_from_template", "claude_mcp_remove",
-    "Tool", "TOOLS", "CabalApp", "main", "run",
+    "IS_FROZEN",
+    "IS_INSTALLED",
+    "SCRIPT_DIR",
+    "RESOURCE_ROOT",
+    "REPO_DIR",
+    "GLOBAL_DIR",
+    "ENV_DIR",
+    "ENV_FILE",
+    "MCP_TEMPLATES_FILE",
+    "TARGET",
+    "GRID_HEIGHT",
+    "LOGO_LINES",
+    "LOGO_MAX_WIDTH",
+    "LOGO_GUTTER",
+    "LOGO_GRADIENT",
+    "MASCOT_GRADIENT",
+    "render_banner",
+    "HexBanner",
+    "render_env_summary",
+    "translate_for_os",
+    "Component",
+    "COMPONENTS",
+    "ENV_DESCRIPTIONS",
+    "FileStatus",
+    "detect_env",
+    "find_env_vars",
+    "diff_component",
+    "find_extras",
+    "apply_statuses",
+    "backup_settings",
+    "prune_backups",
+    "recommended_autocrlf",
+    "apply_git_line_endings",
+    "check_for_updates",
+    "do_git_pull",
+    "enumerate_mcp_servers",
+    "claude_mcp_add_from_template",
+    "claude_mcp_remove",
+    "Tool",
+    "TOOLS",
+    "CabalApp",
+    "main",
+    "run",
 ]
