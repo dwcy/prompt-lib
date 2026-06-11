@@ -169,6 +169,18 @@ These never modify code. They report findings; you decide what to fix.
 - **Tools**: `Read, Grep, Glob, Bash` — read-only.
 - **Why**: scans staged files for API keys, OAuth/JWT tokens, private keys, connection strings with embedded passwords, high-entropy strings near credential keywords. Returns per-finding evidence (file, line, type, severity, redacted snippet). Calling skill / human decides per finding.
 
+#### `@owasp-security-reviewer`
+- **When**: before releases, after auth/API changes, or when reviewing security-sensitive code.
+- **Tools**: `Read, Grep, Glob, Bash` — read-only by default; patches only on explicit request.
+- **Why**: defensive OWASP Top 10 / ASVS-style review of the whole codebase — access control, auth/session flows, CSRF, injection, XSS, crypto, misconfiguration, vulnerable dependencies, logging gaps, API exposure. Produces a severity-classified remediation report with file-level evidence; never generates exploits.
+
+### Maintenance
+
+#### `@code-cleaner`
+- **When**: during refactoring, before releases, or when a repository has accumulated clutter.
+- **Tools**: `Read, Grep, Glob, Bash, Edit` — a **writing** agent; needs worktree isolation when run alongside other writers.
+- **Why**: evidence-based removal of dead code, dead CSS, unused assets, stale files, and unused dependencies. Classifies every candidate (safe to remove / manual review / keep), deletes in small verified batches, and stops + reverts if build/tests break. Uncertain cases are reported, never deleted.
+
 ## Pattern: composing agents
 
 The `@init-project` → `@architect` → `@tester` → `@code-plan-verifier` chain is the canonical multi-agent flow:
@@ -186,7 +198,7 @@ You don't have to invoke them by hand at every step — once the right `descript
 
 ### Parallel isolation when composing writers
 
-When two or more **writing** agents are spawned to run concurrently (e.g., `@dotnet-architect` + `@react-architect` for a full-stack feature, or two architects on independent modules), each MUST be dispatched with `isolation: "worktree"` so they don't clobber each other's edits on the shared working tree. Read-only auditors (`@code-plan-verifier`, `@gitignore-auditor`, `@secret-auditor`) are exempt — they can run alongside writers without isolation.
+When two or more **writing** agents are spawned to run concurrently (e.g., `@dotnet-architect` + `@react-architect` for a full-stack feature, or two architects on independent modules), each MUST be dispatched with `isolation: "worktree"` so they don't clobber each other's edits on the shared working tree. Read-only auditors (`@code-plan-verifier`, `@gitignore-auditor`, `@secret-auditor`, `@owasp-security-reviewer`) are exempt — they can run alongside writers without isolation.
 
 See [`parallel-isolation.md`](parallel-isolation.md) for the dispatch contract, the `Parallel: yes` task convention, and the concrete failure mode this prevents.
 

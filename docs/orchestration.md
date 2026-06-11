@@ -46,6 +46,8 @@ Agent(subagent_type, isolation="worktree")    Agent × N
 | `github-config-manager` | Branch protection, secret scanning, Dependabot | No (runs `gh api`) |
 | `gitignore-auditor` | Pre-commit .gitignore audit | No (read-only) |
 | `secret-auditor` | Pre-commit secret / credential scan | No (read-only) |
+| `owasp-security-reviewer` | OWASP Top 10 security review of code, APIs, auth flows | No (read-only) |
+| `code-cleaner` | Dead code / dead CSS / unused asset & dependency removal | Yes (edits + deletions) |
 | `code-plan-verifier` | Verify implementation matches plan and conventions | No (read-only) |
 | `init-project` | New project scaffolding, CLAUDE.md creation | Yes |
 | `load-project` | Load existing project context at session start | No |
@@ -75,7 +77,7 @@ When multiple writing agents run concurrently, each gets its own git worktree vi
 3. Returns the worktree path + branch when changes are made
 4. The main session merges each branch back sequentially and reports conflicts
 
-Read-only agents (`gitignore-auditor`, `secret-auditor`, `code-plan-verifier`) are exempt — they can run in parallel without isolation.
+Read-only agents (`gitignore-auditor`, `secret-auditor`, `code-plan-verifier`, `owasp-security-reviewer`) are exempt — they can run in parallel without isolation.
 
 See [`docs/parallel-isolation.md`](parallel-isolation.md) for the full isolation rules.
 
