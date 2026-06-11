@@ -72,6 +72,7 @@ hiddenimports = [
     "cabal.installers.specify",
     "cabal.installers.uv",
     "cabal.installers.vcs",
+    "cabal.installers.vercel_plugin",
     "cabal.widgets",
     "cabal.widgets.claude_stats_panel",
     "cabal.widgets.disable_scope_modal",
