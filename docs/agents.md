@@ -174,6 +174,13 @@ These never modify code. They report findings; you decide what to fix.
 - **Tools**: `Read, Grep, Glob, Bash` — read-only by default; patches only on explicit request.
 - **Why**: defensive OWASP Top 10 / ASVS-style review of the whole codebase — access control, auth/session flows, CSRF, injection, XSS, crypto, misconfiguration, vulnerable dependencies, logging gaps, API exposure. Produces a severity-classified remediation report with file-level evidence; never generates exploits.
 
+### Maintenance
+
+#### `@code-cleaner`
+- **When**: during refactoring, before releases, or when a repository has accumulated clutter.
+- **Tools**: `Read, Grep, Glob, Bash, Edit` — a **writing** agent; needs worktree isolation when run alongside other writers.
+- **Why**: evidence-based removal of dead code, dead CSS, unused assets, stale files, and unused dependencies. Classifies every candidate (safe to remove / manual review / keep), deletes in small verified batches, and stops + reverts if build/tests break. Uncertain cases are reported, never deleted.
+
 ## Pattern: composing agents
 
 The `@init-project` → `@architect` → `@tester` → `@code-plan-verifier` chain is the canonical multi-agent flow:

@@ -47,6 +47,7 @@ Agent(subagent_type, isolation="worktree")    Agent × N
 | `gitignore-auditor` | Pre-commit .gitignore audit | No (read-only) |
 | `secret-auditor` | Pre-commit secret / credential scan | No (read-only) |
 | `owasp-security-reviewer` | OWASP Top 10 security review of code, APIs, auth flows | No (read-only) |
+| `code-cleaner` | Dead code / dead CSS / unused asset & dependency removal | Yes (edits + deletions) |
 | `code-plan-verifier` | Verify implementation matches plan and conventions | No (read-only) |
 | `init-project` | New project scaffolding, CLAUDE.md creation | Yes |
 | `load-project` | Load existing project context at session start | No |
