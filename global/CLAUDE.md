@@ -16,6 +16,7 @@ Personal preferences and conventions that apply to every project and session.
 - **One search per question.** No `echo`-header + chained-`grep` shell strings — when an early `grep` exits non-zero the `&&` chain silently swallows the rest. Multiple independent questions → parallel `Grep`/`Glob` calls in one message.
 - **Fan-out investigations → dispatch the `Explore` agent** (e.g. "how is the app launched + where's signal handling + what binds X"). It reads the files and returns only the conclusion, so file dumps never enter the main context.
 - Bash is still correct for *running* things (git, tests, `python -c` smoke checks) — just not for searching source.
+- **Never read generated, dependency, or build-output dirs** — `__pycache__`, `.pytest_cache`, `.mypy_cache`, `.ruff_cache`, `node_modules`, `.venv`/`venv`, `dist`/`build`, `.next`/`.nuxt`, `bin`/`obj`, `publish`/`out`, `target`, `.git`, vendored/`packages`, and the like. They're noise — committed source is the source of truth, not the artifact. Scope `Grep`/`Glob` to source paths and let the tools' default ignores do the rest. Reading into one is a **last resort, only when a bug demands inspecting the actual generated output** (e.g. a build emits wrong code) — and say why when you do.
 
 ## Code style (universal)
 
