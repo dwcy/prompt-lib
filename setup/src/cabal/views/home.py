@@ -94,6 +94,7 @@ class HomeScreen(Screen):
         Binding("h", "go('github')", "GitHub"),
         Binding("v", "go('allenv')", "All env"),
         Binding("i", "init_project", "Init"),
+        Binding("k", "clone_repo", "Clone"),
         Binding("o", "open_project", "Open"),
         Binding("c", "go_configure", "Configure"),
         Binding("t", "go_statusline", "Statusline"),
@@ -143,6 +144,11 @@ class HomeScreen(Screen):
                         "[I] Init new project", id="btn-op-init", variant="primary"
                     )
                     yield Button(
+                        "[K] Clone repo",
+                        id="btn-op-clone",
+                        variant="primary",
+                    )
+                    yield Button(
                         "[O] Open existing project",
                         id="btn-op-open-project",
                         variant="primary",
@@ -182,6 +188,11 @@ class HomeScreen(Screen):
         from cabal.views.init_project import InitProjectScreen
 
         self.app.push_screen(InitProjectScreen(on_created=self._project_changed))
+
+    def action_clone_repo(self) -> None:
+        from cabal.views.github_repos import GitHubReposScreen
+
+        self.app.push_screen(GitHubReposScreen())
 
     def action_open_project(self) -> None:
         from cabal.views.folder_browser import FolderBrowserScreen
@@ -254,6 +265,8 @@ class HomeScreen(Screen):
             self.app.exit()
         elif bid == "btn-op-init":
             self.action_init_project()
+        elif bid == "btn-op-clone":
+            self.action_clone_repo()
         elif bid == "btn-op-open-project":
             self.action_open_project()
         elif bid == "btn-op-local-mcp":

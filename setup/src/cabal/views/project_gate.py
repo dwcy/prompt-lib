@@ -20,6 +20,7 @@ class ProjectGateScreen(Screen):
 
     BINDINGS = [
         Binding("i", "init_project", "Init"),
+        Binding("k", "clone_repo", "Clone"),
         Binding("o", "open_project", "Open"),
         Binding("ctrl+q", "app.quit", "Quit"),
     ]
@@ -36,6 +37,7 @@ class ProjectGateScreen(Screen):
             )
             with Horizontal(classes="ops-row"):
                 yield Button("[I] Init new project", id="gate-init", variant="primary")
+                yield Button("[K] Clone repo", id="gate-clone", variant="primary")
                 yield Button(
                     "[O] Open existing project", id="gate-open", variant="primary"
                 )
@@ -51,6 +53,11 @@ class ProjectGateScreen(Screen):
             InitProjectScreen(on_created=lambda _p: self._enter_home())
         )
 
+    def action_clone_repo(self) -> None:
+        from cabal.views.github_repos import GitHubReposScreen
+
+        self.app.push_screen(GitHubReposScreen(on_clone_done=self._after_clone))
+
     def action_open_project(self) -> None:
         from cabal.views.folder_browser import FolderBrowserScreen
 
@@ -59,6 +66,10 @@ class ProjectGateScreen(Screen):
     def _after_folder_picked(self, path: Path | None) -> None:
         if path is None:
             return
+        self.app.selected_project = path
+        self._enter_home()
+
+    def _after_clone(self, path: Path) -> None:
         self.app.selected_project = path
         self._enter_home()
 
@@ -71,5 +82,7 @@ class ProjectGateScreen(Screen):
         bid = event.button.id or ""
         if bid == "gate-init":
             self.action_init_project()
+        elif bid == "gate-clone":
+            self.action_clone_repo()
         elif bid == "gate-open":
             self.action_open_project()
