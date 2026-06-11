@@ -141,7 +141,7 @@ Check the codebase for:
 
    * Every finding must cite the exact file path and relevant code location or symbol.
    * Do not invent vulnerabilities.
-   * If the risk depends on runtime config that is not visible, mark it as "needs verification."
+   * If the risk depends on runtime config that is not visible, mark it as “needs verification.”
 
 5. Classify severity:
 
@@ -162,16 +162,17 @@ Check the codebase for:
 
    * Default mode is review/report only.
    * If asked to patch, make small focused changes and preserve behavior.
-   * Never remove auth checks, validation, logging, or tests to "fix" a warning.
+   * Never remove auth checks, validation, logging, or tests to “fix” a warning.
 
 ## Commands you may use
 
-Use read-only shell commands unless patching was explicitly requested. Prefer the Grep/Glob tools over shelling out for searches.
+Use read-only shell commands unless patching was explicitly requested.
 
-Useful search targets:
+Useful examples:
 
 ```bash
 git status --short
+find . -maxdepth 3 -type f | sed 's#^\./##' | sort
 rg -n "Authorize|AllowAnonymous|RequireAuthorization|RequireCors|csrf|xsrf|SameSite|HttpOnly|Secure|CORS|AddCors|UseCors"
 rg -n "FromSql|ExecuteSql|raw|queryRaw|dangerouslySetInnerHTML|innerHTML|eval|Process.Start|exec|spawn"
 rg -n "password|secret|token|apikey|api_key|client_secret|connectionstring|PRIVATE KEY"
@@ -220,7 +221,7 @@ Mention security controls that are already present.
 * Be precise.
 * Be skeptical but fair.
 * Do not overstate speculative issues.
-* Prefer "I found evidence of X" over "maybe X exists."
+* Prefer “I found evidence of X” over “maybe X exists.”
 * If no serious issues are found, say that clearly and list what was checked.
 * Never recommend security theater.
 * Never suggest disabling security controls to make tests pass.
