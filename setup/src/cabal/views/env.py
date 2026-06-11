@@ -19,11 +19,30 @@ from rich.markup import escape as escape_markup
 from rich.text import Text
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Center, Container, Horizontal, ScrollableContainer, Vertical, VerticalScroll
+from textual.containers import (
+    Center,
+    Container,
+    Horizontal,
+    ScrollableContainer,
+    Vertical,
+    VerticalScroll,
+)
 from textual.screen import ModalScreen, Screen
 from textual.widgets import (
-    Button, Checkbox, DataTable, Footer, Header, Input, Label,
-    MarkdownViewer, OptionList, RadioButton, RadioSet, Rule, Select, Static,
+    Button,
+    Checkbox,
+    DataTable,
+    Footer,
+    Header,
+    Input,
+    Label,
+    MarkdownViewer,
+    OptionList,
+    RadioButton,
+    RadioSet,
+    Rule,
+    Select,
+    Static,
 )
 from textual.widgets.option_list import Option
 from textual.widget import Widget
@@ -79,7 +98,11 @@ class EnvScreen(Screen):
 
     def __init__(self) -> None:
         super().__init__()
-        keys = list(json.loads(ENV_FILE.read_text(encoding="utf-8")).keys()) if ENV_FILE.exists() else []
+        keys = (
+            list(json.loads(ENV_FILE.read_text(encoding="utf-8")).keys())
+            if ENV_FILE.exists()
+            else []
+        )
         self.data: dict[str, str] = {k: os.environ.get(k, "") for k in keys}
 
     def compose(self) -> ComposeResult:
@@ -100,13 +123,29 @@ class EnvScreen(Screen):
                     yield Static(f"[bold cyan]{key}[/bold cyan]", classes="env-name")
                     yield Static(icon, classes="env-icon")
                     if is_path:
-                        yield Button("Browse…", id=f"browse-{key}", classes="env-browse")
+                        yield Button(
+                            "Browse…", id=f"browse-{key}", classes="env-browse"
+                        )
                     if key in _GH_TOKEN_KEYS:
-                        yield Button("Fetch via gh", id=f"gh-fetch-{key}", classes="env-browse")
-                        b = Button("Login with GitHub", id=f"gh-login-{key}", classes="env-browse")
+                        yield Button(
+                            "Fetch via gh", id=f"gh-fetch-{key}", classes="env-browse"
+                        )
+                        yield Button(
+                            "Accounts", id=f"gh-accounts-{key}", classes="env-browse"
+                        )
+                        b = Button(
+                            "Login with GitHub",
+                            id=f"gh-login-{key}",
+                            classes="env-browse",
+                        )
                         b.display = False
                         yield b
-                    yield Input(value=str(val), id=f"in-{key}", placeholder="(empty)", classes="env-value")
+                    yield Input(
+                        value=str(val),
+                        id=f"in-{key}",
+                        placeholder="(empty)",
+                        classes="env-value",
+                    )
                 desc = ENV_DESCRIPTIONS.get(key)
                 if desc:
                     yield Static(desc, classes="help-text")
@@ -124,7 +163,8 @@ class EnvScreen(Screen):
             if key in self.data:
                 self.run_worker(
                     lambda k=key: self._check_gh_auth(k),
-                    thread=True, exclusive=False,
+                    thread=True,
+                    exclusive=False,
                 )
 
     def _check_gh_auth(self, key: str) -> None:
@@ -134,12 +174,20 @@ class EnvScreen(Screen):
         else:
             # Use `gh auth token` as the source of truth — `gh auth status` can return
             # non-zero even when a valid token exists (scope/keychain quirks on Windows).
-            token_r = subprocess.run(["gh", "auth", "token"], capture_output=True, text=True)
+            token_r = subprocess.run(
+                ["gh", "auth", "token"], capture_output=True, text=True
+            )
             if token_r.returncode == 0 and token_r.stdout.strip():
                 logged_in = True
                 # Also pull account info from auth status for display (best-effort)
-                status_r = subprocess.run(["gh", "auth", "status"], capture_output=True, text=True)
-                info = (status_r.stdout or status_r.stderr or "").strip().splitlines()[0] if (status_r.stdout or status_r.stderr).strip() else ""
+                status_r = subprocess.run(
+                    ["gh", "auth", "status"], capture_output=True, text=True
+                )
+                info = (
+                    (status_r.stdout or status_r.stderr or "").strip().splitlines()[0]
+                    if (status_r.stdout or status_r.stderr).strip()
+                    else ""
+                )
                 label = f"[green]✓ gh: logged in[/green] [dim]{info}[/dim]"
             else:
                 label = "[yellow]⚠ gh: not logged in — click Login with GitHub to authenticate[/yellow]"
@@ -161,7 +209,9 @@ class EnvScreen(Screen):
             return
         self.query_one(f"#in-{key}", Input).value = token
         try:
-            self.query_one(f"#gh-status-{key}", Static).update("[green]✓ gh: logged in (via wizard)[/green]")
+            self.query_one(f"#gh-status-{key}", Static).update(
+                "[green]✓ gh: logged in (via wizard)[/green]"
+            )
             self.query_one(f"#gh-login-{key}", Button).display = False
         except Exception:
             pass
@@ -192,8 +242,23 @@ class EnvScreen(Screen):
 
         self.run_worker(_do, thread=True, exclusive=False)
 
+    def _open_gh_accounts(self, key: str) -> None:
+        from cabal.views.gh_accounts_modal import GhAccountsModal
+
+        def _done(changed: bool | None) -> None:
+            if not changed:
+                return
+            self.run_worker(
+                lambda k=key: self._check_gh_auth(k), thread=True, exclusive=False
+            )
+            for panel in self.app.query(EnvPanel):
+                panel.refresh_env()
+
+        self.app.push_screen(GhAccountsModal(), _done)
+
     def _open_browser(self, key: str) -> None:
         from cabal.views.folder_browser import FolderBrowserScreen
+
         raw = self.query_one(f"#in-{key}", Input).value
         start = Path(raw).expanduser() if raw else Path.home()
         if not start.is_dir():
@@ -214,7 +279,9 @@ class EnvScreen(Screen):
             for k, v in non_empty.items():
                 r = subprocess.run(["setx", k, v], capture_output=True, text=True)
                 ok = r.returncode == 0
-                msgs.append(f"  {'[green]✓[/green]' if ok else '[red]✗[/red]'} setx {k}")
+                msgs.append(
+                    f"  {'[green]✓[/green]' if ok else '[red]✗[/red]'} setx {k}"
+                )
         else:
             export_lines = [f"export {k}={repr(v)}" for k, v in non_empty.items()]
             for profile in ["~/.bashrc", "~/.zshrc", "~/.profile"]:
@@ -226,7 +293,9 @@ class EnvScreen(Screen):
             ok, msg = apply_git_line_endings(gle)
             msgs.append(f"  {'[green]✓[/green]' if ok else '[red]✗[/red]'} {msg}")
 
-        msgs.append("\n[bold]→ Restart your terminal for changes to take effect.[/bold]")
+        msgs.append(
+            "\n[bold]→ Restart your terminal for changes to take effect.[/bold]"
+        )
         self.query_one("#env-status", Static).update("\n".join(msgs))
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -239,12 +308,17 @@ class EnvScreen(Screen):
             self._open_browser(bid.removeprefix("browse-"))
         elif bid.startswith("gh-fetch-"):
             self._fetch_gh_token(bid.removeprefix("gh-fetch-"))
+        elif bid.startswith("gh-accounts-"):
+            self._open_gh_accounts(bid.removeprefix("gh-accounts-"))
         elif bid.startswith("gh-login-"):
             key = bid.removeprefix("gh-login-")
-            self.query_one("#env-status", Static).update("[dim]Starting GitHub device flow…[/dim]")
+            self.query_one("#env-status", Static).update(
+                "[dim]Starting GitHub device flow…[/dim]"
+            )
 
             def _start(k=key) -> None:
                 from cabal.views.gh_device import GhDeviceFlowScreen
+
                 device = gh_device_init(["repo", "read:org"])
 
                 def _push() -> None:
@@ -261,5 +335,3 @@ class EnvScreen(Screen):
                 self.app.call_from_thread(_push)
 
             self.run_worker(_start, thread=True, exclusive=False)
-
-
