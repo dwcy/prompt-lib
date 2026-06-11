@@ -70,6 +70,7 @@ from cabal.installers.runtimes import (
 from cabal.installers.skills import skills_install, skills_status
 from cabal.installers.specify import specify_install, specify_status
 from cabal.installers.vcs import git_install
+from cabal.installers.vercel_plugin import vercel_plugin_install, vercel_plugin_status
 
 # Maps env keys → winget package IDs (mirrors the install fns above). Used to spot
 # upgrade availability via `winget upgrade`. macOS/Linux outdated-checks are best-effort
@@ -141,6 +142,8 @@ def _probe_key(key: str) -> object:
         )
     if key == "vscode":
         return shutil.which("code") is not None
+    if key == "vercel-plugin":
+        return vercel_plugin_status() == "installed"
     return shutil.which(key) is not None
 
 
@@ -302,6 +305,7 @@ ENV_INSTALLERS: list[tuple[str, str, Callable[[], tuple[bool, str]]]] = [
     ("opencode", "OpenCode", opencode_install),
     ("grok", "Grok", grok_install),
     ("skills", "Vercel Skills CLI", skills_install),
+    ("vercel-plugin", "Vercel Plugin", vercel_plugin_install),
     ("cursor", "Cursor", cursor_install),
     ("windsurf", "Windsurf", windsurf_install),
     ("copilot", "Copilot", copilot_install),
@@ -326,7 +330,19 @@ ENV_TOOL_GROUPS: list[tuple[str, list[str]]] = [
         ["docker", "podman", "kubectl", "oc", "terraform", "az", "gcloud", "aws"],
     ),
     ("Databases", ["sqlcmd", "psql", "supabase", "neonctl"]),
-    ("AI CLIs", ["claude", "gemini", "codex", "opencode", "grok", "copilot", "skills"]),
+    (
+        "AI CLIs",
+        [
+            "claude",
+            "gemini",
+            "codex",
+            "opencode",
+            "grok",
+            "copilot",
+            "skills",
+            "vercel-plugin",
+        ],
+    ),
     ("Local AI", ["ollama"]),
     ("AI Editors", ["cursor", "windsurf", "antigravity", "vscode"]),
 ]
@@ -401,6 +417,19 @@ TOOLS: list[Tool] = [
         repo_url="https://github.com/vercel-labs/skills",
         install=skills_install,
         status=skills_status,
+    ),
+    Tool(
+        key="vercel-plugin",
+        name="Vercel Claude Plugin (vercel/vercel-plugin)",
+        description=(
+            "Vercel's official Claude Code plugin — skills for every major Vercel "
+            "product, specialized agents, and Vercel conventions. Registers the "
+            "vercel marketplace and installs vercel-plugin via `claude plugin`."
+        ),
+        homepage="https://vercel.com",
+        repo_url="https://github.com/vercel/vercel-plugin",
+        install=vercel_plugin_install,
+        status=vercel_plugin_status,
     ),
     Tool(
         key="claude-devtools",
