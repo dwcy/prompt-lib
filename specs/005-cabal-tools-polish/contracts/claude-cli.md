@@ -49,7 +49,7 @@ claude -p "/status"
 
 ```
 Claude Code v1.2.3
-Account: pawzor@gmail.com (Max 20x)
+Account: user@example.com (Max 20x)
 Active model: claude-opus-4-7
 5-hour message usage: 42% (211 / 500)
 Weekly cap: 18% (1,807 / 10,000)
