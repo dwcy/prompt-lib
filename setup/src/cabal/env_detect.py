@@ -63,7 +63,11 @@ def _git_user_name() -> str | None:
         return None
     try:
         r = subprocess.run(
-            [git, "config", "user.name"], capture_output=True, text=True, timeout=3, check=False
+            [git, "config", "user.name"],
+            capture_output=True,
+            text=True,
+            timeout=3,
+            check=False,
         )
     except (OSError, subprocess.SubprocessError):
         return None
@@ -79,7 +83,10 @@ def _kubectl_version() -> str | None:
     try:
         r = subprocess.run(
             [cmd, "version", "--client", "--output=json"],
-            capture_output=True, text=True, timeout=5, check=False,
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
         )
     except (OSError, subprocess.SubprocessError):
         return None
@@ -100,7 +107,10 @@ def _dotnet_sdks() -> list[str]:
     try:
         r = subprocess.run(
             [dotnet, "--list-sdks"],
-            capture_output=True, text=True, timeout=5, check=False,
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
         )
     except (OSError, subprocess.SubprocessError):
         return []
@@ -126,13 +136,18 @@ def _has_visual_studio() -> bool:
         return True
     if platform.system() != "Windows":
         return False
-    vswhere = Path("C:/Program Files (x86)/Microsoft Visual Studio/Installer/vswhere.exe")
+    vswhere = Path(
+        "C:/Program Files (x86)/Microsoft Visual Studio/Installer/vswhere.exe"
+    )
     if not vswhere.exists():
         return False
     try:
         r = subprocess.run(
             [str(vswhere), "-products", "*", "-property", "installationPath"],
-            capture_output=True, text=True, timeout=5, check=False,
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
         )
     except (OSError, subprocess.SubprocessError):
         return False
@@ -147,7 +162,10 @@ def _ollama_models() -> list[str]:
     try:
         r = subprocess.run(
             [ollama, "list"],
-            capture_output=True, text=True, timeout=5, check=False,
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
         )
     except (OSError, subprocess.SubprocessError):
         return []
@@ -172,7 +190,10 @@ def _gh_login() -> str | None:
     try:
         r = subprocess.run(
             [gh, "api", "user", "--jq", ".login"],
-            capture_output=True, text=True, timeout=5, check=False,
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
         )
     except (OSError, subprocess.SubprocessError):
         return None
@@ -213,9 +234,11 @@ def detect_env() -> dict:
         "codex": shutil.which("codex") is not None,
         "opencode": shutil.which("opencode") is not None,
         "grok": shutil.which("grok") is not None,
+        "skills": shutil.which("skills") is not None,
         "cursor": shutil.which("cursor") is not None,
         "windsurf": shutil.which("windsurf") is not None,
-        "copilot": shutil.which("copilot") is not None or shutil.which("gh-copilot") is not None,
+        "copilot": shutil.which("copilot") is not None
+        or shutil.which("gh-copilot") is not None,
         "antigravity": shutil.which("antigravity") is not None,
         "vscode": shutil.which("code") is not None,
         "rider": _has_rider(),
@@ -233,4 +256,11 @@ def detect_env() -> dict:
 def find_env_vars(path: Path) -> list[str]:
     if not path.exists():
         return []
-    return sorted(set(re.findall(r"\$\{([A-Z_][A-Z0-9_]*)\}", path.read_text(encoding="utf-8", errors="ignore"))))
+    return sorted(
+        set(
+            re.findall(
+                r"\$\{([A-Z_][A-Z0-9_]*)\}",
+                path.read_text(encoding="utf-8", errors="ignore"),
+            )
+        )
+    )

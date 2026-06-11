@@ -27,6 +27,7 @@ from textual.containers import (
     Vertical,
     VerticalScroll,
 )
+from textual.coordinate import Coordinate
 from textual.screen import ModalScreen, Screen
 from textual.widgets import (
     Button,
@@ -79,9 +80,11 @@ from cabal.tools import (
     _outdated_packages,
     _probe_key,
 )
+from cabal.settings_helpers import _effective_settings_text, _is_settings_json
 from cabal.updates import check_for_updates, do_git_pull
 from cabal.views.restore import RestoreScreen
 from cabal.widgets.env_panel import EnvPanel
+from cabal.widgets.file_viewer import FileViewerModal
 from cabal.widgets.update_panel import UpdatePanel
 
 
@@ -92,11 +95,13 @@ class UpdateScreen(Screen):
         Binding("escape", "app.pop_screen", "Back"),
         Binding("ctrl+a", "apply", "Apply"),
         Binding("ctrl+r", "refresh", "Refresh"),
+        Binding("v", "view_file", "View"),
     ]
 
     CSS = """
     UpdateScreen #upd-actions { height: auto; }
     UpdateScreen .upd-spacer { width: 1fr; }
+    UpdateScreen #preview { max-height: 60; }
     """
 
     def compose(self) -> ComposeResult:
@@ -105,17 +110,18 @@ class UpdateScreen(Screen):
             yield Static(
                 "[bold bright_magenta]Global Claude Settings[/bold bright_magenta]\n"
                 f"[dim]Deploy {GLOBAL_DIR} → {TARGET}.[/dim]\n"
-                "[dim]Select a row and press Enter (or click) to toggle Use, then Apply (Ctrl+A).[/dim]",
+                "[dim]Enter (or click) toggles Use · [b]v[/b] views the highlighted file (diff for changed files) · Apply (Ctrl+A).[/dim]\n"
+                "[dim][red]Red[/red] rows are in ~/.claude but not from this repo — view-only, never deployed.[/dim]",
                 classes="panel",
             )
             with Horizontal(id="upd-actions"):
                 yield Button("Apply (Ctrl+A)", id="upd-apply", variant="success")
+                yield Button("View (v)", id="upd-view", variant="primary")
                 yield Static("", classes="upd-spacer")
-                yield Button("Restore", id="upd-restore", variant="warning")
+                yield Button("Load Backup", id="upd-restore", variant="warning")
             yield Static("", id="update-summary")
             yield DataTable(id="preview")
-            yield Static("", id="upd-status", classes="panel")
-        yield Footer()
+        yield Footer(show_command_palette=False)
 
     def on_mount(self) -> None:
         self._use: dict[str, bool] = {}
@@ -134,8 +140,67 @@ class UpdateScreen(Screen):
             self._child_keys[c.key] = keys
         tbl = self.query_one("#preview", DataTable)
         tbl.cursor_type = "row"
-        tbl.add_columns("Use", "Component", "New", "Changed", "Unchanged", "Affected")
+        tbl.add_columns("Use", "Component", "Affected")
         self._refresh_preview()
+        tbl.focus()
+
+    def action_view_file(self) -> None:
+        """View the highlighted file — a deployed→repo diff for changed files, else the source."""
+        tbl = self.query_one("#preview", DataTable)
+        if tbl.row_count == 0:
+            return
+        try:
+            key = tbl.coordinate_to_cell_key(tbl.cursor_coordinate).row_key.value
+        except Exception:
+            return
+        src, dst, label = self._resolve_row_view(key or "")
+        if src is None and dst is None:
+            self.notify(label, title="View", severity="information", timeout=4)
+            return
+        if src is None:
+            # Target-only row (in ~/.claude, not from this repo) — view the deployed copy.
+            self.app.push_screen(FileViewerModal(dst, label))
+            return
+        new_text = _effective_settings_text(src) if _is_settings_json(src) else None
+        compare = dst if (dst is not None and dst.is_file()) else None
+        self.app.push_screen(
+            FileViewerModal(src, label, compare_path=compare, new_text=new_text)
+        )
+
+    def _resolve_row_view(self, key: str) -> tuple[Path | None, Path | None, str]:
+        """Map a DataTable row key to (repo_src, deployed_dst, label).
+
+        repo_src is None for target-only rows; deployed_dst is None when the file
+        is not yet deployed. When both are None the label carries a hint to show.
+        """
+        if key.startswith("extra::"):
+            _, ckey, rel = key.split("::", 2)
+            c = next((c for c in COMPONENTS if c.key == ckey), None)
+            if c is None:
+                return None, None, "Unknown row"
+            p = c.dst_path / rel
+            return (
+                (None, p, rel)
+                if p.is_file()
+                else (None, None, f"File not found: {rel}")
+            )
+        if "::" in key:
+            parent_key, rel = key.split("::", 1)
+            c = next((c for c in COMPONENTS if c.key == parent_key), None)
+            if c is None:
+                return None, None, "Unknown row"
+            src = c.src_path / rel
+            if not src.is_file():
+                return None, None, f"File not found: {rel}"
+            return src, c.dst_path / rel, rel
+        c = next((c for c in COMPONENTS if c.key == key), None)
+        if c is None:
+            return None, None, "Unknown row"
+        if c.type == "file":
+            if not c.src_path.is_file():
+                return None, None, f"Not found: {c.label}"
+            return c.src_path, c.dst_path, c.label
+        return None, None, f"{c.label} is a group — expand it and press v on a file row"
 
     @staticmethod
     def _child_use_key(c: Component, rel: object) -> str:
@@ -170,12 +235,14 @@ class UpdateScreen(Screen):
         return self._box("✓") if self._use.get(use_key) else self._box(" ")
 
     @staticmethod
-    def _counts(state: str) -> tuple[str, str, str]:
-        return (
-            "1" if state == "NEW" else "·",
-            "1" if state == "CHANGED" else "·",
-            "1" if state == "UNCHANGED" else "·",
-        )
+    def _yellow(text: str, changed: bool) -> str:
+        return f"[yellow]{text}[/yellow]" if changed else text
+
+    @staticmethod
+    def _child_detail(state: str) -> str:
+        if state == "UNCHANGED":
+            return "[dim]up to date[/dim]"
+        return f"[yellow]{state.lower()}[/yellow]"
 
     def _refresh_preview(self) -> None:
         tbl = self.query_one("#preview", DataTable)
@@ -187,9 +254,6 @@ class UpdateScreen(Screen):
                 tbl.add_row(
                     self._parent_cell(c),
                     c.label,
-                    "·",
-                    "·",
-                    "·",
                     "[red](missing in repo)[/red]",
                     key=c.key,
                 )
@@ -197,38 +261,37 @@ class UpdateScreen(Screen):
             statuses = diff_component(c)
             if c.type == "file":
                 state = statuses[0].state if statuses else "UNCHANGED"
-                n, ch, un = self._counts(state)
+                changed = state != "UNCHANGED"
                 if self._use.get(c.key):
                     totals["new"] += state == "NEW"
                     totals["changed"] += state == "CHANGED"
                     totals["unchanged"] += state == "UNCHANGED"
                     used += 1
-                detail = (
-                    "[dim]up to date[/dim]"
-                    if state == "UNCHANGED"
-                    else f"[yellow]{state.lower()}[/yellow]"
-                )
                 tbl.add_row(
-                    self._leaf_cell(c.key), c.label, n, ch, un, detail, key=c.key
+                    self._leaf_cell(c.key),
+                    self._yellow(c.label, changed),
+                    self._child_detail(state),
+                    key=c.key,
                 )
                 continue
             by_rel = {Path(s.rel).as_posix(): s for s in statuses}
-            all_new = sum(1 for s in statuses if s.state == "NEW")
-            all_chg = sum(1 for s in statuses if s.state == "CHANGED")
-            all_unc = sum(1 for s in statuses if s.state == "UNCHANGED")
+            all_chg = sum(1 for s in statuses if s.state != "UNCHANGED")
             affected = [s.rel for s in statuses if s.state != "UNCHANGED"]
             names = ", ".join(str(p) for p in affected[:3])
             if len(affected) > 3:
                 names += f", … +{len(affected) - 3}"
-            if not names:
-                names = "[dim]up to date[/dim]"
+            parent_changed = all_chg > 0
+            names = (
+                self._yellow(names, parent_changed)
+                if names
+                else "[dim]up to date[/dim]"
+            )
             child_keys = self._child_keys.get(c.key, [])
             tbl.add_row(
                 self._parent_cell(c),
-                f"[bold]{c.label}[/bold] ({len(child_keys)})",
-                str(all_new) if all_new else "·",
-                str(all_chg) if all_chg else "·",
-                str(all_unc) if all_unc else "·",
+                self._yellow(
+                    f"[bold]{c.label}[/bold] ({len(child_keys)})", parent_changed
+                ),
                 names,
                 key=c.key,
             )
@@ -236,13 +299,26 @@ class UpdateScreen(Screen):
                 relp = k.split("::", 1)[1]
                 st = by_rel.get(relp)
                 state = st.state if st else "UNCHANGED"
-                n, ch, un = self._counts(state)
+                changed = state != "UNCHANGED"
                 if self._use.get(k):
                     totals["new"] += state == "NEW"
                     totals["changed"] += state == "CHANGED"
                     totals["unchanged"] += state == "UNCHANGED"
                     used += 1
-                tbl.add_row(self._leaf_cell(k), f"  └ {relp}", n, ch, un, "", key=k)
+                tbl.add_row(
+                    self._leaf_cell(k),
+                    self._yellow(f"  └ {relp}", changed),
+                    self._child_detail(state),
+                    key=k,
+                )
+            for ex in sorted(find_extras(c), key=lambda p: p.as_posix()):
+                rel = ex.as_posix()
+                tbl.add_row(
+                    self._box("✗", "red"),
+                    f"[red]  └ {rel}[/red]",
+                    "[red]not from this repo[/red]",
+                    key=f"extra::{c.key}::{rel}",
+                )
         self.query_one("#update-summary", Static).update(
             f"[bold]Selected: {used} files[/bold]   "
             f"[green]NEW {totals['new']}[/green]   "
@@ -265,9 +341,7 @@ class UpdateScreen(Screen):
         selected = [(c, self._selected_statuses(c)) for c in COMPONENTS]
         selected = [(c, sts) for c, sts in selected if sts]
         if not selected:
-            self.query_one("#upd-status", Static).update(
-                "[yellow]Nothing selected.[/yellow]"
-            )
+            self.notify("Nothing selected.", severity="warning", timeout=4)
             return
         msgs = []
         if self._use.get("settings"):
@@ -282,13 +356,15 @@ class UpdateScreen(Screen):
                 f"  [green]✓[/green] {c.label}: {copied} copied, {skipped} unchanged"
             )
         msgs.append(
-            "\n[bold green]✓ Apply complete.[/bold green]  [bold]→ Restart Claude Code.[/bold]"
+            "[bold green]✓ Apply complete.[/bold green]  [bold]→ Restart Claude Code.[/bold]"
         )
-        self.query_one("#upd-status", Static).update("\n".join(msgs))
+        self.notify("\n".join(msgs), title="Apply", timeout=8)
         self._refresh_preview()
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
         key = event.row_key.value
+        if key.startswith("extra::"):
+            return
         if "::" in key:
             self._use[key] = not self._use.get(key, False)
         else:
@@ -308,5 +384,7 @@ class UpdateScreen(Screen):
         bid = event.button.id or ""
         if bid == "upd-apply":
             self.action_apply()
+        elif bid == "upd-view":
+            self.action_view_file()
         elif bid == "upd-restore":
             self.app.push_screen(RestoreScreen())

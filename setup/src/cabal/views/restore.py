@@ -91,7 +91,7 @@ class RestoreScreen(Screen):
                     yield Button("Restore selected", id="rst-apply", variant="warning")
                     yield Button("Back (Esc)", id="rst-back")
             yield Static("", id="rst-status", classes="panel")
-        yield Footer()
+        yield Footer(show_command_palette=False)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         bid = event.button.id or ""

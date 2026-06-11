@@ -19,11 +19,30 @@ from rich.markup import escape as escape_markup
 from rich.text import Text
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Center, Container, Horizontal, ScrollableContainer, Vertical, VerticalScroll
+from textual.containers import (
+    Center,
+    Container,
+    Horizontal,
+    ScrollableContainer,
+    Vertical,
+    VerticalScroll,
+)
 from textual.screen import ModalScreen, Screen
 from textual.widgets import (
-    Button, Checkbox, DataTable, Footer, Header, Input, Label,
-    MarkdownViewer, OptionList, RadioButton, RadioSet, Rule, Select, Static,
+    Button,
+    Checkbox,
+    DataTable,
+    Footer,
+    Header,
+    Input,
+    Label,
+    MarkdownViewer,
+    OptionList,
+    RadioButton,
+    RadioSet,
+    Rule,
+    Select,
+    Static,
 )
 from textual.widgets.option_list import Option
 from textual.widget import Widget
@@ -64,13 +83,13 @@ from cabal.updates import check_for_updates, do_git_pull
 from cabal.widgets.env_panel import EnvPanel
 from cabal.widgets.update_panel import UpdatePanel
 
+
 class OperationsScreen(Screen):
     """Sub-menu for the heavier flows."""
 
     BINDINGS = [
         Binding("u", "go('update')", "Update"),
         Binding("m", "go('mcp')", "MCP"),
-        Binding("d", "go('doctor')", "Doctor"),
         Binding("r", "go('restore')", "Restore"),
         Binding("l", "go('local')", "Local"),
         Binding("t", "go('tools')", "Tools"),
@@ -88,12 +107,11 @@ class OperationsScreen(Screen):
             with Horizontal(id="ops-nav"):
                 yield Button("[U] Update", id="op-update", variant="primary")
                 yield Button("[M] MCP", id="op-mcp", variant="primary")
-                yield Button("[D] Doctor", id="op-doctor", variant="primary")
                 yield Button("[R] Restore", id="op-restore", variant="primary")
                 yield Button("[L] Local", id="op-local", variant="primary")
                 yield Button("[T] Tools", id="op-tools", variant="primary")
                 yield Button("Back (Esc)", id="op-back")
-        yield Footer()
+        yield Footer(show_command_palette=False)
 
     def on_mount(self) -> None:
         self.query_one("#op-update", Button).focus()
@@ -101,14 +119,13 @@ class OperationsScreen(Screen):
     def action_go(self, name: str) -> None:
         from cabal.views.update import UpdateScreen
         from cabal.views.mcp import McpScreen
-        from cabal.views.doctor import DoctorScreen
         from cabal.views.restore import RestoreScreen
         from cabal.views.local import LocalScreen
         from cabal.views.tools import ToolsScreen
+
         target = {
             "update": UpdateScreen,
             "mcp": McpScreen,
-            "doctor": DoctorScreen,
             "restore": RestoreScreen,
             "local": LocalScreen,
             "tools": ToolsScreen,
@@ -122,5 +139,3 @@ class OperationsScreen(Screen):
             self.app.pop_screen()
         else:
             self.action_go(bid)
-
-

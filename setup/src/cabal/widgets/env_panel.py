@@ -93,16 +93,17 @@ class EnvPanel(Widget):
     EnvPanel #env-paths {
         height: auto;
         width: 1fr;
-        margin: 1 2 0 2;
-        padding: 0 1;
+        margin: 1 2 0 0;
+        padding: 0 1 0 0;
         content-align: left middle;
     }
+    EnvPanel #btn-git { margin: 0 2 0 0; }
     EnvPanel #btn-op-tools { margin: 0; }
     EnvPanel #env-status {
         height: auto;
         max-height: 12;
         margin: 1 0 0 0;
-        padding: 0 2;
+        padding: 0 2 0 0;
     }
     """
 
@@ -134,6 +135,7 @@ class EnvPanel(Widget):
                 )  # AI-augmented editors
                 with Horizontal(id="env-tools-row"):
                     yield Static("", classes="env-spacer")
+                    yield Button("Git config", id="btn-git", variant="primary")
                     yield Button("⌬  Tools", id="btn-op-tools", variant="warning")
             yield Static("", id="env-paths")
             yield Static("", id="env-status")
@@ -143,7 +145,15 @@ class EnvPanel(Widget):
         cached = widget_cache.load_entry(_CACHE_KEY)
         if isinstance(cached, dict):
             self._apply_env(cached)
-        self.query_one("#env-status", Static).update("[dim italic]refreshing…[/]")
+        self.refresh_env()
+
+    def refresh_env(self) -> None:
+        """Re-scan the host env in a worker (spinner shown, stale-while-revalidate).
+
+        Called on mount and after a tool install/update so the panel reflects the
+        new state without an app restart.
+        """
+        self._start_refresh_status()
         self.run_worker(self._refresh_env, thread=True, exclusive=True)
 
     def _refresh_env(self) -> None:
@@ -152,9 +162,32 @@ class EnvPanel(Widget):
 
         def _apply() -> None:
             self._apply_env(fresh)
+            self._stop_refresh_status()
             self.query_one("#env-status", Static).update("")
 
         self.app.call_from_thread(_apply)
+
+    _SPINNER_FRAMES = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+
+    def _start_refresh_status(self) -> None:
+        """Show an animated spinner ahead of the 'refreshing…' label while detecting env."""
+        status = self.query_one("#env-status", Static)
+        state: dict = {"frame": 0}
+
+        def tick() -> None:
+            frame = self._SPINNER_FRAMES[state["frame"]]
+            state["frame"] = (state["frame"] + 1) % len(self._SPINNER_FRAMES)
+            status.update(f"[cyan]{frame}[/] [dim italic]refreshing…[/]")
+
+        tick()
+        state["timer"] = self.set_interval(0.08, tick)
+        self._refresh_spinner = state
+
+    def _stop_refresh_status(self) -> None:
+        state = getattr(self, "_refresh_spinner", None)
+        if state and "timer" in state:
+            state["timer"].stop()
+        self._refresh_spinner = None
 
     _LABEL = "bold #5FAFFF"  # light blue for every Label:
 
@@ -260,8 +293,9 @@ class EnvPanel(Widget):
             ("OpenCode", "opencode"),
             ("Grok", "grok"),
             ("Copilot", "copilot"),
+            ("Vercel Skills CLI", "skills"),
         ):
-            self._mount_present(clis, label, env[key])
+            self._mount_present(clis, label, env.get(key, False))
 
         # Row 5 — Local AI runtimes (Ollama gets its own section)
         if env["ollama"]:
@@ -311,8 +345,8 @@ class EnvPanel(Widget):
         )
         self.query_one("#env-paths", Static).update(
             f"{self._lbl('Source')} [cyan]{GLOBAL_DIR}[/]\n"
-            f"{self._lbl('Target')} [cyan]{TARGET}[/] {exists}\n"
-            f"{self._lbl('Project')} [cyan]{self.app.selected_project or '(none)'}[/]"
+            f"{self._lbl('Claude')} [cyan]{TARGET}[/] {exists}\n"
+            f"{self._lbl('Selected Project')} [cyan]{self.app.selected_project or '(none)'}[/]"
         )
 
     def refresh_project(self) -> None:

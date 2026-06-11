@@ -106,7 +106,7 @@ class GitHubReposScreen(Screen):
                 yield Button("Login with GitHub", id="gh-repos-login", variant="primary")
                 yield Button("Refresh", id="gh-repos-refresh", variant="default")
                 yield Button("Back", id="gh-repos-back", variant="default")
-        yield Footer()
+        yield Footer(show_command_palette=False)
 
     def on_mount(self) -> None:
         self._repos: list[dict] = []

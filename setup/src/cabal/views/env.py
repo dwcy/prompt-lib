@@ -117,7 +117,7 @@ class EnvScreen(Screen):
                 yield Button("Apply (Ctrl+A)", id="env-apply", variant="success")
                 yield Button("Back (Esc)", id="env-back")
             yield Static("", id="env-status")
-        yield Footer()
+        yield Footer(show_command_palette=False)
 
     def on_mount(self) -> None:
         for key in _GH_TOKEN_KEYS:

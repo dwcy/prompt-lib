@@ -34,6 +34,44 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _has_existing_code(cwd: Path) -> bool:
+    """True if the directory already looks like a codebase (manifests or source files).
+
+    Distinguishes an existing project that merely lacks a CLAUDE.md from a fresh,
+    empty directory where @init-project should scaffold from scratch.
+    """
+    manifests = (
+        "package.json",
+        "pyproject.toml",
+        "requirements.txt",
+        "Pipfile",
+        "go.mod",
+        "Cargo.toml",
+        "pom.xml",
+        "build.gradle",
+        "Gemfile",
+        "composer.json",
+    )
+    if any((cwd / m).exists() for m in manifests):
+        return True
+    if list(cwd.glob("*.sln")) or any(
+        list(cwd.glob(f"{'*/' * d}*.csproj")) for d in range(4)
+    ):
+        return True
+    sources = (
+        "*.py",
+        "*.ts",
+        "*.tsx",
+        "*.js",
+        "*.jsx",
+        "*.cs",
+        "*.go",
+        "*.rs",
+        "*.java",
+    )
+    return any(list(cwd.glob(p)) or list(cwd.glob(f"*/{p}")) for p in sources)
+
+
 def _pid_alive(pid: int) -> bool:
     if not isinstance(pid, int) or pid <= 0:
         return False
@@ -251,14 +289,25 @@ def main() -> None:
         return
 
     if not (cwd / "CLAUDE.md").exists():
-        emit(
-            f"No CLAUDE.md was found in this project directory ({cwd}). Before doing "
-            "anything else, ask the user whether they want to describe the project now "
-            "so a CLAUDE.md can be created, or be reminded next session. If they "
-            "describe it, create a CLAUDE.md at the project root with: a project name "
-            "heading, what the project does, the tech stack, key directories, and any "
-            "important workflows. If they decline, proceed normally without creating it."
-        )
+        if _has_existing_code(cwd):
+            emit(
+                f"No CLAUDE.md was found in this project directory ({cwd}). Before doing "
+                "anything else, ask the user whether they want to describe the project now "
+                "so a CLAUDE.md can be created, or be reminded next session. If they "
+                "describe it, create a CLAUDE.md at the project root with: a project name "
+                "heading, what the project does, the tech stack, key directories, and any "
+                "important workflows. If they decline, proceed normally without creating it."
+            )
+        else:
+            emit(
+                f"This directory ({cwd}) has no CLAUDE.md and no recognizable source files "
+                "— it looks like a new or empty project. If the user wants to start a "
+                "project here, proactively invoke the @init-project agent (it detects the "
+                "stack, asks the architecture questions, writes CLAUDE.md, scaffolds a "
+                "cross-platform `run` launcher, and spawns the matching specialist "
+                "subagents) rather than hand-creating files. If they only want a bare "
+                "CLAUDE.md, create one after they describe the project."
+            )
         return
 
     hints: list[str] = []

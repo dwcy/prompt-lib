@@ -10,6 +10,14 @@ Personal preferences and conventions that apply to every project and session.
 - If something I ask is ambiguous, state your assumption and proceed — don't ask for clarification on minor things.
 - Bullet points over paragraphs for lists of things.
 
+## Searching the codebase
+
+- **Use the `Grep` tool for content search and `Glob` for file lookup — never `grep`/`ls`/`find` via Bash.** They're cheaper, permission-integrated, and don't dump noise into context.
+- **One search per question.** No `echo`-header + chained-`grep` shell strings — when an early `grep` exits non-zero the `&&` chain silently swallows the rest. Multiple independent questions → parallel `Grep`/`Glob` calls in one message.
+- **Fan-out investigations → dispatch the `Explore` agent** (e.g. "how is the app launched + where's signal handling + what binds X"). It reads the files and returns only the conclusion, so file dumps never enter the main context.
+- Bash is still correct for *running* things (git, tests, `python -c` smoke checks) — just not for searching source.
+- **Never read generated, dependency, or build-output dirs** — `__pycache__`, `.pytest_cache`, `.mypy_cache`, `.ruff_cache`, `node_modules`, `.venv`/`venv`, `dist`/`build`, `.next`/`.nuxt`, `bin`/`obj`, `publish`/`out`, `target`, `.git`, vendored/`packages`, and the like. They're noise — committed source is the source of truth, not the artifact. Scope `Grep`/`Glob` to source paths and let the tools' default ignores do the rest. Reading into one is a **last resort, only when a bug demands inspecting the actual generated output** (e.g. a build emits wrong code) — and say why when you do.
+
 ## Code style (universal)
 
 - No comments that explain WHAT the code does — only WHY if non-obvious.
@@ -20,6 +28,7 @@ Personal preferences and conventions that apply to every project and session.
 
 ## When making changes
 
+- **Branch before starting work.** Before the *first* edit of any task, check the branch. If it's `main`/`master` (or any `refuse_on_branches` entry), create a feature branch first — `git -C <repo> checkout -b <type>/<slug>`, named after the task. Branching is a pre-work step, not part of committing; uncommitted changes follow the checkout, so it's safe to branch late, but branch-first is the habit. Enforced at edit time by `global/hooks/pretool_branch_guard.py` (bypass: `PROMPTLIB_DISABLED_HOOKS=pretool_branch_guard`).
 - Only change what is needed to satisfy the request — no refactoring adjacent code.
 - If you spot a bug nearby, mention it but don't fix it unless I ask.
 - Always read a file before editing it.
@@ -53,32 +62,9 @@ When committing — whether I asked via `/git` or just "commit this" — use the
 - Show the proposed message and wait for confirmation before committing — **except** at plan-completion checkpoints (see *Auto-commit at plan completion* below).
 - Never push unless I explicitly ask.
 
-### Tags
+### Tags, policy editing & recovery
 
-`git tag` is gated by policy and **off by default**. Edit `~/.claude/git-policy.json`:
-
-```json
-"tags": { "agent_may_tag": false, "auto_push": false }
-```
-
-- `agent_may_tag: false` (default) — the wrapper's `tag` subcommand refuses. Don't fall back to raw `git tag`; ask me first.
-- `agent_may_tag: true` — wrapper creates annotated tags only: `python ~/.claude/scripts/git-identity.py tag v1.0.0 -m "release notes"`.
-- `auto_push: false` (default) — tags stay local until I push them myself. Never `git push --tags` automatically.
-
-### Editing the policy
-
-Two equivalent ways to change values:
-
-- Edit `~/.claude/git-policy.json` in your editor.
-- `python ~/.claude/scripts/git-identity.py policy set --agent-email "you@example.com"` (or `--agent-name`, `--agent-may-tag true|false`, `--auto-push true|false`).
-- `python ~/.claude/scripts/git-identity.py policy add-type wip` / `policy remove-type docs` to change the allowed-type list.
-- `python ~/.claude/scripts/git-identity.py policy show` to see current values + source file.
-
-If `~/.claude/git-policy.json` doesn't exist yet, the wrapper falls back to `~/.claude/git/git-policy.default.json` (seeded by the apply script) and then to its built-in defaults.
-
-### Recovery
-
-If a commit crashes mid-flight and `.git/config --local` is stuck on agent identity, run `/git-restore-identity` (or `python ~/.claude/scripts/git-identity.py restore`) in the affected repo.
+Tags are gated (off by default), the policy file has CLI editors, and a crashed commit can be repaired with `/git-restore-identity` (or `python ~/.claude/scripts/git-identity.py restore`). Full mechanics: [`docs/git-policy.md`](docs/git-policy.md). Don't fall back to raw `git tag` — ask first.
 
 ### Auto-commit at plan completion
 
@@ -122,6 +108,7 @@ When a task clearly belongs to a specialist domain, invoke `/orchestrate` proact
 - The task involves Raspberry Pi or Arduino hardware
 - The task involves GitHub repo settings configuration
 - The user says "write tests", "architect this", "design the UX", or "verify the implementation"
+- The user asks to start, initialise, scaffold, or set up a **new project** (empty dir / no CLAUDE.md) — routes to `@init-project`
 - The task is full-stack (two or more domains) — dispatch parallel agents
 
 **Do not invoke `/orchestrate` for:**

@@ -3,10 +3,7 @@
 
 from __future__ import annotations
 
-import json
 import os
-import platform
-import tempfile
 from pathlib import Path
 from typing import Callable
 
@@ -17,10 +14,12 @@ from textual.screen import Screen
 from textual.widgets import Button, DataTable, Footer, Static
 
 from cabal.app_widgets import AppHeader
-from cabal.init_project_service import ensure_mcp_gitignored
-from cabal.mcp_ops import enumerate_mcp_servers
-
-_WINDOWS_CMD_WRAPPED = frozenset({"pnpm", "npx", "bunx"})
+from cabal.mcp_ops import (
+    add_template_to_project_mcp,
+    enumerate_mcp_servers,
+    read_project_mcp,
+    remove_from_project_mcp,
+)
 
 _SCOPE_COLOURS = {
     "plugin": "magenta",
@@ -73,7 +72,7 @@ class ProjectMcpScreen(Screen):
                 yield Button("Refresh (Ctrl+R)", id="pmcp-refresh")
                 yield Button("Back (Esc)", id="pmcp-back")
             yield Static("", id="pmcp-status", classes="panel")
-        yield Footer()
+        yield Footer(show_command_palette=False)
 
     def on_mount(self) -> None:
         tbl = self.query_one("#pmcp-table", DataTable)
@@ -90,7 +89,7 @@ class ProjectMcpScreen(Screen):
     def _load(self) -> None:
         try:
             agg = enumerate_mcp_servers(project_dir=self._target_dir)
-            proj_entries = self._read_project_mcp()
+            proj_entries = read_project_mcp(self._target_dir)
         except Exception as e:
             self.app.call_from_thread(self._on_load_error, str(e))
             return
@@ -101,16 +100,6 @@ class ProjectMcpScreen(Screen):
             f"[red]Error enumerating: {msg}[/red]"
         )
         self.loading = False
-
-    def _read_project_mcp(self) -> dict:
-        p = self._target_dir / ".mcp.json"
-        if not p.exists():
-            return {}
-        try:
-            d = json.loads(p.read_text(encoding="utf-8"))
-            return d.get("mcpServers", {}) or {}
-        except Exception:
-            return {}
 
     def _apply_servers(self, aggregated: dict[str, dict], proj_entries: dict) -> None:
         tbl = self.query_one("#pmcp-table", DataTable)
@@ -180,63 +169,19 @@ class ProjectMcpScreen(Screen):
                 "[yellow]Plugin servers are managed via /plugin — not from here.[/yellow]"
             )
             return
-        scopes = info["scopes"]
-        proj_entries = self._read_project_mcp()
-        if name in proj_entries:
-            del proj_entries[name]
-            self._write_project_mcp(proj_entries)
-            status_label.update(
-                f"[green]✓ removed[/green] {name} from {self._target_dir / '.mcp.json'}"
-            )
+        if name in read_project_mcp(self._target_dir):
+            ok, msg = remove_from_project_mcp(name, self._target_dir)
         else:
             tmpl = (info.get("definitions") or {}).get("template")
-            if not tmpl and "project" not in scopes and "template" not in scopes:
-                status_label.update(
-                    f"[red]No template for {name} — cannot register at project scope.[/red]"
-                )
-                return
             if not tmpl:
                 tmpl = (info.get("definitions") or {}).get("project")
-            entry = self._template_to_entry(tmpl)
-            proj_entries[name] = entry
-            self._write_project_mcp(proj_entries)
-            status_label.update(
-                f"[green]✓ added[/green] {name} (project scope) → {self._target_dir / '.mcp.json'}"
-            )
+            ok, msg = add_template_to_project_mcp(name, tmpl, self._target_dir)
+        status_label.update(
+            f"[{'green' if ok else 'red'}]{'✓ ' if ok else '✗ '}{msg}[/]"
+        )
         if self._on_change:
-            self._on_change(len(self._read_project_mcp()))
+            self._on_change(len(read_project_mcp(self._target_dir)))
         self._refresh()
-
-    def _template_to_entry(self, tmpl: dict) -> dict:
-        cmd = tmpl.get("command", "")
-        args = list(tmpl.get("args") or [])
-        if platform.system() == "Windows" and cmd in _WINDOWS_CMD_WRAPPED:
-            joined = " ".join([cmd] + args)
-            cmd, args = "cmd", ["/s", "/c", joined]
-        env: dict[str, str] = {
-            var: f"${{{var}}}" for var in tmpl.get("env_required") or []
-        }
-        return {"command": cmd, "args": args, "env": env}
-
-    def _write_project_mcp(self, entries: dict) -> None:
-        self._target_dir.mkdir(parents=True, exist_ok=True)
-        payload = {"mcpServers": entries}
-        text = json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
-        json.loads(text)
-        final = self._target_dir / ".mcp.json"
-        with tempfile.NamedTemporaryFile(
-            "w",
-            encoding="utf-8",
-            dir=str(self._target_dir),
-            prefix=".mcp.",
-            suffix=".tmp",
-            delete=False,
-        ) as f:
-            f.write(text)
-            tmp_path = f.name
-        os.replace(tmp_path, final)
-        json.loads(final.read_text(encoding="utf-8"))
-        ensure_mcp_gitignored(self._target_dir)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         bid = event.button.id or ""

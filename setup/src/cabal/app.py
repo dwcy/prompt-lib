@@ -10,15 +10,16 @@ analyzer follows the graph and bundles them (per research.md R6).
 
 from __future__ import annotations
 
+import signal
 from pathlib import Path
 
 from textual.app import App
 from textual.binding import Binding
 
+from cabal.clipboard import read_clipboard
 from cabal.app_widgets import AppCommandsProvider, AppHeader  # noqa: F401  (re-export)
 from cabal.views.claude_info import ClaudeInfoScreen  # noqa: F401
 from cabal.views.clone_repo import CloneRepoScreen  # noqa: F401
-from cabal.views.doctor import DoctorScreen  # noqa: F401
 from cabal.views.env import EnvScreen  # noqa: F401
 from cabal.views.folder_browser import FolderBrowserScreen  # noqa: F401
 from cabal.views.gh_device import GhDeviceFlowScreen  # noqa: F401
@@ -44,10 +45,23 @@ class CabalApp(App):
     """CABAL — Agent Orchestration Setup."""
 
     selected_project: Path | None = None
+    # Set by ToolsScreen after a successful install/update so HomeScreen re-scans
+    # the "Current setup" panel on resume instead of showing stale tool state.
+    env_needs_refresh: bool = False
 
     def project_path(self) -> Path:
         """The active project folder; falls back to cwd if somehow unset."""
         return self.selected_project or Path.cwd()
+
+    @property
+    def clipboard(self) -> str:
+        """OS clipboard text, so ctrl+v pastes anything copied OS-wide.
+
+        Textual's own `clipboard` only returns text copied inside the app; without
+        this override `Input`/`TextArea` paste can't see an external copy. Falls back
+        to the internal buffer when the OS clipboard is empty or unreadable.
+        """
+        return read_clipboard() or self._clipboard
 
     CSS = """
     Screen { background: $background; }
@@ -67,7 +81,26 @@ class CabalApp(App):
         content-align: center middle;
     }
 
-    #env-summary, #update-summary, #doctor-summary, #mcp-target {
+    #banner-row {
+        height: auto;
+        margin: 0 2;
+        padding: 0;
+        align-vertical: middle;
+    }
+    #subtitle {
+        width: auto;
+        color: cyan;
+        text-style: italic;
+    }
+    #readme-link {
+        width: auto;
+        link-color: dodgerblue;
+        link-style: underline;
+        link-color-hover: $text;
+        link-background-hover: dodgerblue;
+    }
+
+    #env-summary, #update-summary, #mcp-target {
         padding: 1 2;
         margin: 0 2;
         background: $boost;
@@ -80,6 +113,13 @@ class CabalApp(App):
         align-vertical: middle;
         padding: 0 1;
         margin: 1 2;
+    }
+    /* UpdatePanel's row must sit flush with the Current setup panel's left
+       edge; the broad Horizontal rule above would otherwise indent it. This
+       id override outranks it (app CSS, id > type). */
+    #update-row {
+        margin: 0;
+        padding: 0;
     }
 
     #home-bottom {
@@ -219,7 +259,25 @@ class CabalApp(App):
         self.push_screen(ProjectGateScreen())
 
 
+def _suppress_sigint() -> None:
+    """Stop Ctrl+C from terminating the wizard, on every view.
+
+    Textual already routes the ctrl+c *key* to native copy / a "press ctrl+q"
+    hint — it never quits. The real killer is OS-level: on Windows a Ctrl+C
+    pressed while a worker subprocess (winget / git / npm / env-detect) shares
+    the console sends CTRL_C_EVENT to the whole process group, taking the parent
+    down with it. Ignoring SIGINT keeps the app alive; Ctrl+C stays free for
+    copy, and quit remains ctrl+q / q.
+    """
+    try:
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
+    except (ValueError, OSError):
+        # Not the main thread, or a platform without SIGINT — non-fatal.
+        pass
+
+
 def main() -> None:
+    _suppress_sigint()
     CabalApp().run()
 
 

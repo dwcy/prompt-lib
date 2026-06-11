@@ -11,6 +11,7 @@ import json
 import os
 import platform
 import subprocess
+import tempfile
 from pathlib import Path
 
 from cabal._paths import MCP_TEMPLATES_FILE
@@ -164,6 +165,13 @@ def enumerate_mcp_servers(project_dir: Path | None = None) -> dict[str, dict]:
                 [tmpl.get("command", "")] + list(tmpl.get("args") or [])
             )
 
+    # claude.ai / remote connectors live server-side: they surface via `claude mcp
+    # list` but in no local config, so they end up scope-less. Label them 'connector'
+    # instead of leaving the scope blank.
+    for info in aggregated.values():
+        if not info["scopes"] and info["active"]:
+            info["scopes"].append("connector")
+
     return aggregated
 
 
@@ -200,6 +208,79 @@ def claude_mcp_remove(name: str, scope: str) -> tuple[bool, str]:
     if rc == 0:
         return True, (out or "Removed").strip().splitlines()[0]
     return False, (err or out or "unknown error").strip()
+
+
+def read_project_mcp(project_dir: Path) -> dict:
+    """Return the mcpServers map from <project_dir>/.mcp.json, or {} if absent/invalid."""
+    p = project_dir / ".mcp.json"
+    if not p.exists():
+        return {}
+    try:
+        d = json.loads(p.read_text(encoding="utf-8"))
+        return d.get("mcpServers", {}) or {}
+    except Exception:
+        return {}
+
+
+def _template_to_project_entry(template: dict) -> dict:
+    """Turn an mcp-templates.json entry into a .mcp.json server entry (Windows-wrapped)."""
+    cmd = template.get("command", "")
+    args = list(template.get("args") or [])
+    if platform.system() == "Windows" and cmd in _WINDOWS_CMD_WRAPPED:
+        joined = " ".join([cmd] + args)
+        cmd, args = "cmd", ["/s", "/c", joined]
+    env = {var: f"${{{var}}}" for var in template.get("env_required") or []}
+    return {"command": cmd, "args": args, "env": env}
+
+
+def _write_project_mcp(project_dir: Path, entries: dict) -> None:
+    from cabal.init_project_service import ensure_mcp_gitignored
+
+    project_dir.mkdir(parents=True, exist_ok=True)
+    text = json.dumps({"mcpServers": entries}, indent=2, ensure_ascii=False) + "\n"
+    json.loads(text)
+    final = project_dir / ".mcp.json"
+    with tempfile.NamedTemporaryFile(
+        "w",
+        encoding="utf-8",
+        dir=str(project_dir),
+        prefix=".mcp.",
+        suffix=".tmp",
+        delete=False,
+    ) as f:
+        f.write(text)
+        tmp_path = f.name
+    os.replace(tmp_path, final)
+    json.loads(final.read_text(encoding="utf-8"))
+    ensure_mcp_gitignored(project_dir)
+
+
+def add_template_to_project_mcp(
+    name: str, template: dict, project_dir: Path
+) -> tuple[bool, str]:
+    """Register a server at project scope by writing its template into <project>/.mcp.json."""
+    if not template:
+        return False, f"No template for {name} — cannot register at project scope."
+    entries = read_project_mcp(project_dir)
+    entries[name] = _template_to_project_entry(template)
+    try:
+        _write_project_mcp(project_dir, entries)
+    except Exception as e:
+        return False, str(e)
+    return True, f"added {name} (project) → {project_dir / '.mcp.json'}"
+
+
+def remove_from_project_mcp(name: str, project_dir: Path) -> tuple[bool, str]:
+    """Remove a server from <project>/.mcp.json. No-op error if it isn't there."""
+    entries = read_project_mcp(project_dir)
+    if name not in entries:
+        return False, f"{name} not in {project_dir / '.mcp.json'}"
+    del entries[name]
+    try:
+        _write_project_mcp(project_dir, entries)
+    except Exception as e:
+        return False, str(e)
+    return True, f"removed {name} from {project_dir / '.mcp.json'}"
 
 
 def claude_plugin_list(available: bool = False) -> list[dict]:
