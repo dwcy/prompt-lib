@@ -33,50 +33,31 @@ Min version: any recent `claude` CLI that supports `-p` / `--print` for non-inte
 - `FileNotFoundError` (`claude` not on PATH): skip this step entirely. Status `[yellow]claude CLI not installed — skipping architecture step. Install from Tools screen.[/yellow]` (FR-15).
 - User cancel: `proc.terminate()`, wait 3 s, then `proc.kill()`. Status `[yellow]cancelled[/yellow]`.
 
-## C2 — Fetch account status for the home-screen panel
+## C2 — Account state for the home-screen panel (no subprocess)
 
-**Command**:
+> **Superseded plan**: this contract originally specified shelling out to
+> `claude -p "/status"` and regex-parsing the output for email, plan tier,
+> active model, and usage percentages. That approach was **rejected during
+> implementation**: `claude -p "/status"` sends the literal text as a *prompt*
+> and returns model output, not the interactive status panel — there is no
+> headless way to obtain plan tier or usage. See the module docstring of
+> `cabal/widgets/claude_stats_panel.py`.
 
-```bash
-claude -p "/status"
-```
-
-**Working directory**: `Path.cwd()` (any — the slash-command is account-scoped, not project-scoped).
-**Stdin**: `DEVNULL`. **Stdout**: free-form text matching the current `/status` template.
-**Timeout**: 15 s. Exit code 124 → "stats unavailable — try again".
-
-**Output shape** (observed, version-dependent — parse defensively per R18):
-
-```
-Claude Code v1.2.3
-Account: user@example.com (Max 20x)
-Active model: claude-opus-4-7
-5-hour message usage: 42% (211 / 500)
-Weekly cap: 18% (1,807 / 10,000)
-Session: signed in
-```
-
-**Our parsing** (regex per line, all optional — if a line doesn't match, we leave the field as `None`):
-
-| Field | Regex |
-|---|---|
-| `email` | `^Account:\s+(?P<email>\S+@\S+)` |
-| `account_type` | `\((?P<plan>Pro\|Max 5x\|Max 20x\|Team\|Enterprise\|API)\)` |
-| `active_model` | `^Active model:\s+(?P<model>\S+)` |
-| `five_hour_used_pct` | `^5-hour message usage:\s+(?P<pct>\d+)%` |
-| `weekly_cap_used_pct` | `^Weekly cap:\s+(?P<pct>\d+)%` |
-
-**Fallback** (R18): if every regex fails, store the entire stdout in `ClaudeAccountStatus.raw_status_output` and render it verbatim in the panel with a `[dim]could not parse — raw /status below[/dim]` hint.
-
-**No-claude fallback**: read `~/.claude.json`:
+**Implemented contract**: read `~/.claude.json` directly — instant, free, reliable.
 
 ```python
-data = json.loads((Path.home() / ".claude.json").read_text())
-email = (data.get("oauthAccount") or {}).get("emailAddress")
-token_present = bool((data.get("oauthAccount") or {}).get("organizationUuid"))
+data = json.loads((Path.home() / ".claude.json").read_text(encoding="utf-8"))
+oauth = (data or {}).get("oauthAccount") or {}
+email = oauth.get("emailAddress")                      # → ClaudeAccountStatus.email
+token_present = bool(oauth.get("organizationUuid"))    # → ClaudeAccountStatus.token_present
 ```
 
-`account_type` is unrecoverable from the JSON file alone — leave it `"unknown"`.
+**Our handling** (`read_claude_account_state()` — never raises):
+
+- File missing: `error = "~/.claude.json not found — run \`claude /login\`"`.
+- Unparseable JSON: `error = "~/.claude.json could not be parsed"`.
+- Plan tier, 5-hour usage, weekly cap, and active model are **not available
+  headlessly** — the panel does not attempt to show them.
 
 ## C3 — Detect `claude` presence
 
@@ -90,7 +71,8 @@ No subprocess. If it returns `None`, set `ClaudeAccountStatus.error = "claude CL
   - `~/.claude.json["oauthAccount"]["accessToken"]` (if present)
   - any field whose key contains `token`, `secret`, `key`, `password` (case-insensitive)
 - The panel may render presence: `✓ token present` / `✗ no token`.
-- The full `/status` output may be rendered verbatim IF parsing fails — operator is implicitly trusting `claude` not to print their secrets, which is a reasonable assumption because the official `/status` command is designed for the user to see.
+- Spec documents (this tree included) must not embed real account details —
+  use placeholder values (`user@example.com`) in any example output.
 
 ## Out of scope
 

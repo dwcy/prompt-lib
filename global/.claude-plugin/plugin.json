@@ -3,10 +3,10 @@
   "name": "prompt-lib",
   "description": "Personal Claude Code library — skills, agents, hooks, MCP servers, and output styles.",
   "author": {
-    "name": "Dawid",
+    "name": "{{GIT_USER_NAME}}",
     "email": "{{LOGGED_IN_EMAIL}}"
   },
-  "homepage": "https://github.com/dwcy/prompt-lib",
-  "repository": "https://github.com/dwcy/prompt-lib",
+  "homepage": "{{REPO_URL}}",
+  "repository": "{{REPO_URL}}",
   "keywords": ["skills", "agents", "hooks", "mcp", "claude-code"]
 }

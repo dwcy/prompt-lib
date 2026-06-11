@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-marketplace.json",
   "name": "prompt-lib",
   "owner": {
-    "name": "Dawid",
+    "name": "{{GIT_USER_NAME}}",
     "email": "{{LOGGED_IN_EMAIL}}"
   },
   "description": "Personal Claude Code library — skills, agents, hooks, MCP servers, and output styles.",
@@ -12,11 +12,11 @@
       "source": "./global",
       "description": "Skills, agents, hooks, MCP servers, and output styles for Claude Code.",
       "author": {
-        "name": "Dawid",
+        "name": "{{GIT_USER_NAME}}",
         "email": "{{LOGGED_IN_EMAIL}}"
       },
-      "homepage": "https://github.com/dwcy/prompt-lib",
-      "repository": "https://github.com/dwcy/prompt-lib",
+      "homepage": "{{REPO_URL}}",
+      "repository": "{{REPO_URL}}",
       "keywords": ["skills", "agents", "hooks", "mcp", "claude-code"],
       "category": "productivity"
     }

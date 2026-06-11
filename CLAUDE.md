@@ -56,10 +56,11 @@ Enable repo git hooks (currently: Textual base-class shadow check):
 git config core.hooksPath .githooks
 ```
 
-Enable the email-injection filter (plugin manifests are committed with a
-`{{LOGGED_IN_EMAIL}}` placeholder; the filter swaps in the logged-in account
-email from `~/.claude.json` on checkout and strips it again on commit, so the
-real address never lands in git):
+Enable the identity-injection filter (plugin manifests are committed with
+`{{LOGGED_IN_EMAIL}}` / `{{GIT_USER_NAME}}` / `{{REPO_URL}}` placeholders; the
+filter swaps in the logged-in account email, your git name, and the origin
+remote URL on checkout and strips them again on commit, so no personal
+identity lands in git):
 
 ```bash
 git config filter.inject-email.smudge "python setup/tools/email-filter.py smudge"
