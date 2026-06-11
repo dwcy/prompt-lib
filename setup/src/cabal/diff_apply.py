@@ -48,13 +48,15 @@ def find_extras(comp: Component) -> list[Path]:
 
 
 def has_deploy_drift() -> bool:
-    """True if any component differs between the repo and ~/.claude/ (NEW, CHANGED, or target-only)."""
+    """True if the repo has files not yet deployed to ~/.claude/ (NEW or CHANGED).
+
+    Target-only extras are ignored — files in ~/.claude/ that don't come from
+    this repo (user's own agents, backups, plugins) are not pending updates.
+    """
     for comp in COMPONENTS:
         if not comp.src_path.exists():
             continue
         if any(st.state in ("NEW", "CHANGED") for st in diff_component(comp)):
-            return True
-        if find_extras(comp):
             return True
     return False
 
