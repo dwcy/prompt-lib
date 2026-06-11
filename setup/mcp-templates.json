@@ -15,13 +15,6 @@
       "env_required": [],
       "default_enabled": true
     },
-    "github": {
-      "transport": "stdio",
-      "command": "pnpm",
-      "args": ["dlx", "@modelcontextprotocol/server-github@latest"],
-      "env_required": ["GITHUB_PERSONAL_ACCESS_TOKEN"],
-      "default_enabled": true
-    },
     "supabase": {
       "transport": "stdio",
       "command": "pnpm",

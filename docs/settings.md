@@ -43,7 +43,6 @@ Every entry is a long-lived stdio subprocess started at session boot.
 | Server | Command | Env vars | What it gives Claude |
 |---|---|---|---|
 | `context7` | `pnpm dlx @context7/mcp-server@latest` | — | Live, version-current library docs (use for "is this API still valid in vN") |
-| `github` | `pnpm dlx @modelcontextprotocol/server-github@latest` | `GITHUB_PERSONAL_ACCESS_TOKEN` | Repos, issues, PRs, code search, releases |
 | `figma` | `pnpm dlx @figma/mcp-server@latest` | `FIGMA_ACCESS_TOKEN` | Files, components, design tokens |
 | `playwright` | `pnpm dlx @playwright/mcp@latest` | — | Browser automation — open, click, fill, screenshot |
 | `azure-devops` | `pnpm dlx @tiberriver256/mcp-server-azure-devops@latest` | `AZURE_DEVOPS_ORG_URL`, `AZURE_DEVOPS_TOKEN` | Work items, repos, pipelines, PRs |

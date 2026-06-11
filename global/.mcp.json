@@ -5,14 +5,6 @@
       "command": "pnpm",
       "args": ["dlx", "@context7/mcp-server@latest"]
     },
-    "github": {
-      "type": "stdio",
-      "command": "pnpm",
-      "args": ["dlx", "@modelcontextprotocol/server-github@latest"],
-      "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
-      }
-    },
     "figma": {
       "type": "stdio",
       "command": "pnpm",

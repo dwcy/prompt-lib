@@ -1,6 +1,6 @@
 ﻿# setup/env/
 
-Initializes machine-level environment variables that MCP servers in `global/settings.json` depend on (e.g. `GITHUB_PERSONAL_ACCESS_TOKEN`, `FIGMA_ACCESS_TOKEN`, `AZURE_DEVOPS_TOKEN`).
+Initializes machine-level environment variables that MCP servers in `global/settings.json` depend on (e.g. `FIGMA_ACCESS_TOKEN`, `AZURE_DEVOPS_TOKEN`, `SUPABASE_ACCESS_TOKEN`).
 
 ## Files
 
