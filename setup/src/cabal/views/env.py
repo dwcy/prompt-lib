@@ -98,12 +98,14 @@ class EnvScreen(Screen):
 
     def __init__(self) -> None:
         super().__init__()
-        keys = (
-            list(json.loads(ENV_FILE.read_text(encoding="utf-8")).keys())
+        defaults: dict[str, str] = (
+            json.loads(ENV_FILE.read_text(encoding="utf-8"))
             if ENV_FILE.exists()
-            else []
+            else {}
         )
-        self.data: dict[str, str] = {k: os.environ.get(k, "") for k in keys}
+        self.data: dict[str, str] = {
+            k: os.environ.get(k) or v for k, v in defaults.items()
+        }
 
     def compose(self) -> ComposeResult:
         yield AppHeader()
@@ -153,6 +155,7 @@ class EnvScreen(Screen):
             with Horizontal(id="env-actions"):
                 yield Button("Apply (Ctrl+A)", id="env-apply", variant="success")
                 yield Button("Back (Esc)", id="env-back")
+                yield Button("System env", id="env-allenv", variant="primary")
             yield Static("", id="env-status")
         yield Footer(show_command_palette=False)
 
@@ -300,6 +303,10 @@ class EnvScreen(Screen):
             self.action_apply()
         elif bid == "env-back":
             self.app.pop_screen()
+        elif bid == "env-allenv":
+            from cabal.views.global_env import GlobalEnvScreen
+
+            self.app.push_screen(GlobalEnvScreen())
         elif bid.startswith("browse-"):
             self._open_browser(bid.removeprefix("browse-"))
         elif bid.startswith("gh-fetch-"):
