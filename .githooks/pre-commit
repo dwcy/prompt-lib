@@ -1,10 +1,16 @@
 #!/usr/bin/env python3
-"""Pre-commit: refuse commits that shadow Textual base-class internals.
+"""Pre-commit: Textual base-class shadow check + logged-in email leak check.
 
-Flags methods on classes inheriting from `textual.*` whose name collides with a
-base-class member (excluding dunders). See global/rules/python.md "Textual widgets".
+Shadow check: flags methods on classes inheriting from `textual.*` whose name
+collides with a base-class member (excluding dunders). See
+global/rules/python.md "Textual widgets". Per-method bypass: append
+`# noqa: textual-shadow` to the `def` line.
 
-Per-method bypass: append `# noqa: textual-shadow` to the `def` line.
+Email leak check: refuses the commit if the logged-in account email
+(~/.claude.json oauthAccount.emailAddress) appears anywhere in the index.
+Files covered by the inject-email filter are cleaned to the
+{{LOGGED_IN_EMAIL}} placeholder automatically; this guard catches every
+other path the address could take into git.
 
 Enable once per clone:
     git config core.hooksPath .githooks
@@ -14,6 +20,7 @@ from __future__ import annotations
 
 import ast
 import importlib
+import importlib.util
 import subprocess
 import sys
 from pathlib import Path
@@ -95,25 +102,61 @@ def check_file(path: Path) -> list[str]:
     return errors
 
 
+def logged_in_email() -> str | None:
+    filter_path = Path(__file__).resolve().parent.parent / "setup" / "tools" / "email-filter.py"
+    try:
+        spec = importlib.util.spec_from_file_location("email_filter", filter_path)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod.logged_in_email()
+    except Exception:
+        return None
+
+
+def email_leak_hits() -> list[str]:
+    email = logged_in_email()
+    if not email:
+        return []
+    res = subprocess.run(
+        ["git", "grep", "--cached", "-nF", email],
+        capture_output=True, text=True,
+    )
+    return res.stdout.splitlines() if res.returncode == 0 else []
+
+
 def main() -> int:
+    rc = 0
     errors: list[str] = []
     for path in staged_python_files():
         if not path.exists():
             continue
         errors.extend(check_file(path))
-    if not errors:
-        return 0
-    print("Textual shadow check failed:\n", file=sys.stderr)
-    for e in errors:
-        print(f"  {e}", file=sys.stderr)
-    print(
-        "\nSingle-underscore is convention-only in Python — overrides of Textual\n"
-        "base methods compile silently and crash at layout time.\n"
-        "See global/rules/python.md \"Textual widgets\".\n"
-        "Bypass for a legitimate one-off: append `# noqa: textual-shadow` to the def line.",
-        file=sys.stderr,
-    )
-    return 1
+    if errors:
+        print("Textual shadow check failed:\n", file=sys.stderr)
+        for e in errors:
+            print(f"  {e}", file=sys.stderr)
+        print(
+            "\nSingle-underscore is convention-only in Python — overrides of Textual\n"
+            "base methods compile silently and crash at layout time.\n"
+            "See global/rules/python.md \"Textual widgets\".\n"
+            "Bypass for a legitimate one-off: append `# noqa: textual-shadow` to the def line.",
+            file=sys.stderr,
+        )
+        rc = 1
+
+    leaks = email_leak_hits()
+    if leaks:
+        print("Email leak check failed — logged-in account email is in the index:\n", file=sys.stderr)
+        for hit in leaks:
+            print(f"  {hit}", file=sys.stderr)
+        print(
+            "\nThe logged-in email must never be committed. Replace it with the\n"
+            "{{LOGGED_IN_EMAIL}} placeholder (see .gitattributes inject-email filter)\n"
+            "or a neutral example address, then re-stage.",
+            file=sys.stderr,
+        )
+        rc = 1
+    return rc
 
 
 if __name__ == "__main__":
