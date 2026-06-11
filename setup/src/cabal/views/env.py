@@ -133,13 +133,11 @@ class EnvScreen(Screen):
                         yield Button(
                             "Accounts", id=f"gh-accounts-{key}", classes="env-browse"
                         )
-                        b = Button(
+                        yield Button(
                             "Login with GitHub",
                             id=f"gh-login-{key}",
                             classes="env-browse",
                         )
-                        b.display = False
-                        yield b
                     yield Input(
                         value=str(val),
                         id=f"in-{key}",
@@ -195,7 +193,6 @@ class EnvScreen(Screen):
         def _apply() -> None:
             try:
                 self.query_one(f"#gh-status-{key}", Static).update(label)
-                self.query_one(f"#gh-login-{key}", Button).display = not logged_in
             except Exception:
                 pass
 
@@ -212,7 +209,6 @@ class EnvScreen(Screen):
             self.query_one(f"#gh-status-{key}", Static).update(
                 "[green]✓ gh: logged in (via wizard)[/green]"
             )
-            self.query_one(f"#gh-login-{key}", Button).display = False
         except Exception:
             pass
         status_widget.update("[green]✓ Logged in — Apply (Ctrl+A) to persist[/green]")
