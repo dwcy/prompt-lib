@@ -174,7 +174,6 @@ from cabal.views.readme import ReadmeScreen
 from cabal.views.env import EnvScreen
 from cabal.views.operations import OperationsScreen
 from cabal.views.update import UpdateScreen
-from cabal.views.doctor import DoctorScreen
 from cabal.views.restore import RestoreScreen
 from cabal.views.mcp import McpScreen
 from cabal.mcp_view_logic import render_scopes as _render_scopes

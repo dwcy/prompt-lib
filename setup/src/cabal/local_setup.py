@@ -20,6 +20,12 @@ from cabal.views.folder_browser import GITIGNORE_BY_TEMPLATE
 
 SETTINGS_LOCAL_STUB = '{\n  "permissions": {\n    "allow": []\n  }\n}\n'
 
+DRIFT_MARKUP = {
+    "NEW": "[green]NEW — will add[/green]",
+    "CHANGED": "[yellow]CHANGED — will update[/yellow]",
+    "UNCHANGED": "[dim]installed (up to date)[/dim]",
+}
+
 
 def project_status(project: Path) -> list[tuple[str, bool]]:
     """Present/absent flags for the key local-setup artifacts (independent of selections)."""
@@ -66,11 +72,6 @@ def _skill_children(project: Path) -> list[dict[str, Any]]:
                 "op": None,
             }
         ]
-    markup = {
-        "NEW": "[green]NEW — will add[/green]",
-        "CHANGED": "[yellow]CHANGED — will update[/yellow]",
-        "UNCHANGED": "[dim]installed (up to date)[/dim]",
-    }
     children: list[dict[str, Any]] = []
     global_names: set[str] = set()
     for src in sorted(src_dir.glob("*.md")):
@@ -81,7 +82,7 @@ def _skill_children(project: Path) -> list[dict[str, Any]]:
             {
                 "key": f"skills::{src.name}",
                 "label": src.stem,
-                "state": markup[state],
+                "state": DRIFT_MARKUP[state],
                 "op": ("copy", src, dst) if state != "UNCHANGED" else None,
             }
         )
@@ -146,12 +147,13 @@ def build_plan(
     if sel.get("template"):
         if tpl:
             target = project / "CLAUDE.md"
+            state = _skill_state(tpl, target)
             kids = [
                 {
                     "key": "template::CLAUDE.md",
                     "label": f"CLAUDE.md  (from {tpl.stem})",
-                    "state": _state(target.exists()),
-                    "op": ("copy", tpl, target),
+                    "state": DRIFT_MARKUP[state],
+                    "op": ("copy", tpl, target) if state != "UNCHANGED" else None,
                 }
             ]
         else:
@@ -217,24 +219,27 @@ def build_plan(
                 for f in sorted(hooks_src.iterdir()):
                     if f.is_file():
                         target = git_dir / "hooks" / f.name
-                        state = _state(git_dir.exists() and target.exists())
+                        state = _skill_state(f, target)
                         kids.append(
                             {
                                 "key": f"git::hooks/{f.name}",
                                 "label": f".git/hooks/{f.name}",
-                                "state": state,
-                                "op": ("copy", f, target),
+                                "state": DRIFT_MARKUP[state],
+                                "op": ("copy", f, target)
+                                if state != "UNCHANGED"
+                                else None,
                             }
                         )
             for f in sorted(git_src.iterdir()):
                 if f.is_file():
                     target = project / f.name
+                    state = _skill_state(f, target)
                     kids.append(
                         {
                             "key": f"git::{f.name}",
                             "label": f.name,
-                            "state": _state(target.exists()),
-                            "op": ("copy", f, target),
+                            "state": DRIFT_MARKUP[state],
+                            "op": ("copy", f, target) if state != "UNCHANGED" else None,
                         }
                     )
         label = "git repo-init" + (

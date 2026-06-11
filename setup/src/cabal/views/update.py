@@ -80,6 +80,7 @@ from cabal.tools import (
     _outdated_packages,
     _probe_key,
 )
+from cabal.settings_helpers import _effective_settings_text, _is_settings_json
 from cabal.updates import check_for_updates, do_git_pull
 from cabal.views.restore import RestoreScreen
 from cabal.widgets.env_panel import EnvPanel
@@ -109,7 +110,7 @@ class UpdateScreen(Screen):
             yield Static(
                 "[bold bright_magenta]Global Claude Settings[/bold bright_magenta]\n"
                 f"[dim]Deploy {GLOBAL_DIR} → {TARGET}.[/dim]\n"
-                "[dim]Enter (or click) toggles Use · [b]v[/b] views the highlighted file · Apply (Ctrl+A).[/dim]\n"
+                "[dim]Enter (or click) toggles Use · [b]v[/b] views the highlighted file (diff for changed files) · Apply (Ctrl+A).[/dim]\n"
                 "[dim][red]Red[/red] rows are in ~/.claude but not from this repo — view-only, never deployed.[/dim]",
                 classes="panel",
             )
@@ -144,7 +145,7 @@ class UpdateScreen(Screen):
         tbl.focus()
 
     def action_view_file(self) -> None:
-        """Open the file under the cursor in a read-only modal (markdown rendered)."""
+        """View the highlighted file — a deployed→repo diff for changed files, else the source."""
         tbl = self.query_one("#preview", DataTable)
         if tbl.row_count == 0:
             return
@@ -152,38 +153,54 @@ class UpdateScreen(Screen):
             key = tbl.coordinate_to_cell_key(tbl.cursor_coordinate).row_key.value
         except Exception:
             return
-        path, label = self._resolve_row_path(key or "")
-        if path is None:
+        src, dst, label = self._resolve_row_view(key or "")
+        if src is None and dst is None:
             self.notify(label, title="View", severity="information", timeout=4)
             return
-        self.app.push_screen(FileViewerModal(path, label))
+        if src is None:
+            # Target-only row (in ~/.claude, not from this repo) — view the deployed copy.
+            self.app.push_screen(FileViewerModal(dst, label))
+            return
+        new_text = _effective_settings_text(src) if _is_settings_json(src) else None
+        compare = dst if (dst is not None and dst.is_file()) else None
+        self.app.push_screen(
+            FileViewerModal(src, label, compare_path=compare, new_text=new_text)
+        )
 
-    def _resolve_row_path(self, key: str) -> tuple[Path | None, str]:
-        """Map a DataTable row key to its source file path, or (None, hint)."""
+    def _resolve_row_view(self, key: str) -> tuple[Path | None, Path | None, str]:
+        """Map a DataTable row key to (repo_src, deployed_dst, label).
+
+        repo_src is None for target-only rows; deployed_dst is None when the file
+        is not yet deployed. When both are None the label carries a hint to show.
+        """
         if key.startswith("extra::"):
             _, ckey, rel = key.split("::", 2)
             c = next((c for c in COMPONENTS if c.key == ckey), None)
             if c is None:
-                return None, "Unknown row"
+                return None, None, "Unknown row"
             p = c.dst_path / rel
-            return (p, rel) if p.is_file() else (None, f"File not found: {rel}")
+            return (
+                (None, p, rel)
+                if p.is_file()
+                else (None, None, f"File not found: {rel}")
+            )
         if "::" in key:
             parent_key, rel = key.split("::", 1)
             c = next((c for c in COMPONENTS if c.key == parent_key), None)
             if c is None:
-                return None, "Unknown row"
-            p = c.src_path / rel
-            return (p, rel) if p.is_file() else (None, f"File not found: {rel}")
+                return None, None, "Unknown row"
+            src = c.src_path / rel
+            if not src.is_file():
+                return None, None, f"File not found: {rel}"
+            return src, c.dst_path / rel, rel
         c = next((c for c in COMPONENTS if c.key == key), None)
         if c is None:
-            return None, "Unknown row"
+            return None, None, "Unknown row"
         if c.type == "file":
-            return (
-                (c.src_path, c.label)
-                if c.src_path.is_file()
-                else (None, f"Not found: {c.label}")
-            )
-        return None, f"{c.label} is a group — expand it and press v on a file row"
+            if not c.src_path.is_file():
+                return None, None, f"Not found: {c.label}"
+            return c.src_path, c.dst_path, c.label
+        return None, None, f"{c.label} is a group — expand it and press v on a file row"
 
     @staticmethod
     def _child_use_key(c: Component, rel: object) -> str:

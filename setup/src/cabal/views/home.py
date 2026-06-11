@@ -54,6 +54,7 @@ from cabal.diff_apply import (
     backup_settings,
     diff_component,
     find_extras,
+    has_deploy_drift,
     prune_backups,
 )
 from cabal.env_detect import detect_env, find_env_vars
@@ -121,7 +122,6 @@ class HomeScreen(Screen):
                     "[bold]Local Claude Settings[/bold]", classes="home-section-title"
                 )
                 with Horizontal(classes="ops-row"):
-                    yield Button("Doctor", id="btn-op-doctor", variant="default")
                     yield Button("Local Config", id="btn-op-local", variant="default")
         with Horizontal(id="home-bottom"):
             yield Button("Env vars", id="btn-env", variant="primary")
@@ -133,6 +133,7 @@ class HomeScreen(Screen):
 
     def on_mount(self) -> None:
         self.query_one("#btn-env", Button).focus()
+        self._apply_drift_markers()
 
     def action_readme(self) -> None:
         self.action_go("readme")
@@ -167,8 +168,34 @@ class HomeScreen(Screen):
         except Exception:
             pass
 
+    def _apply_drift_markers(self) -> None:
+        """Flag the deploy-target buttons yellow when repo and ~/.claude/ are out of sync."""
+        try:
+            drift = has_deploy_drift()
+        except Exception:
+            drift = False
+        for bid, base in (
+            ("btn-op-update", "Global Claude file Config"),
+            ("btn-op-local", "Local Config"),
+        ):
+            try:
+                btn = self.query_one(f"#{bid}", Button)
+            except Exception:
+                continue
+            label = Text(base)
+            if drift:
+                label.append("  ⚠ update available", style="yellow")
+                btn.tooltip = (
+                    "Repo has changes not yet deployed to ~/.claude — "
+                    "run Global Claude file Config to sync."
+                )
+            else:
+                btn.tooltip = None
+            btn.label = label
+
     def on_screen_resume(self) -> None:
         self._refresh_env_panel()
+        self._apply_drift_markers()
         if getattr(self.app, "env_needs_refresh", False):
             self.app.env_needs_refresh = False
             try:
@@ -179,7 +206,6 @@ class HomeScreen(Screen):
     def on_button_pressed(self, event: Button.Pressed) -> None:
         from cabal.views.update import UpdateScreen
         from cabal.views.mcp import McpScreen
-        from cabal.views.doctor import DoctorScreen
         from cabal.views.local import LocalScreen
         from cabal.views.tools import ToolsScreen
         from cabal.views.statusline import StatuslineScreen
@@ -188,7 +214,6 @@ class HomeScreen(Screen):
         op_screens = {
             "btn-op-update": UpdateScreen,
             "btn-op-mcp": McpScreen,
-            "btn-op-doctor": DoctorScreen,
             "btn-op-local": LocalScreen,
             "btn-op-tools": ToolsScreen,
             "btn-op-statusline": StatuslineScreen,

@@ -19,7 +19,6 @@ from textual.binding import Binding
 from cabal.clipboard import read_clipboard
 from cabal.app_widgets import AppCommandsProvider, AppHeader  # noqa: F401  (re-export)
 from cabal.views.claude_info import ClaudeInfoScreen  # noqa: F401
-from cabal.views.doctor import DoctorScreen  # noqa: F401
 from cabal.views.env import EnvScreen  # noqa: F401
 from cabal.views.folder_browser import FolderBrowserScreen  # noqa: F401
 from cabal.views.gh_device import GhDeviceFlowScreen  # noqa: F401
@@ -100,7 +99,7 @@ class CabalApp(App):
         link-background-hover: dodgerblue;
     }
 
-    #env-summary, #update-summary, #doctor-summary, #mcp-target {
+    #env-summary, #update-summary, #mcp-target {
         padding: 1 2;
         margin: 0 2;
         background: $boost;
