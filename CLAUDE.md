@@ -56,6 +56,18 @@ Enable repo git hooks (currently: Textual base-class shadow check):
 git config core.hooksPath .githooks
 ```
 
+Enable the identity-injection filter (plugin manifests are committed with
+`{{LOGGED_IN_EMAIL}}` / `{{GIT_USER_NAME}}` / `{{REPO_URL}}` placeholders; the
+filter swaps in the logged-in account email, your git name, and the origin
+remote URL on checkout and strips them again on commit, so no personal
+identity lands in git):
+
+```bash
+git config filter.inject-email.smudge "python setup/tools/email-filter.py smudge"
+git config filter.inject-email.clean  "python setup/tools/email-filter.py clean"
+git checkout -- .claude-plugin global/.claude-plugin
+```
+
 <!-- SPECKIT START -->
 Active spec-kit feature: **005-cabal-tools-polish** — Part A: Refactor `cabal/wizard.py` into maintainable modules. Part B (extended 2026-05-28): Add Init Project wizard view + Project MCP screen + Claude Stats panel.
 For technical context, structure, stack decisions, and constitution gate status, read [`specs/005-cabal-tools-polish/plan.md`](specs/005-cabal-tools-polish/plan.md). The full design tree is at `specs/005-cabal-tools-polish/` (spec, plan, research, data-model, contracts, quickstart).

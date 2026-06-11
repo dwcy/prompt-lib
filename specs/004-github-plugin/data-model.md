@@ -19,7 +19,7 @@ The "data" in this feature is declarative configuration, not runtime data. This 
 |---|---|---|---|
 | `name` | string (kebab-case) | yes | `"prompt-lib"` |
 | `owner.name` | string | yes | `"Dawid"` (or `pawzor`) |
-| `owner.email` | string | no | `"pawzor@gmail.com"` (optional) |
+| `owner.email` | string | no | `"user@example.com"` (optional) |
 | `description` | string | no | `"Personal Claude Code library — skills, agents, hooks, and MCP servers."` |
 | `plugins` | array | yes | one entry (see Entity 2 reference) |
 | `$schema` | string | no | `"https://json.schemastore.org/claude-code-plugin-marketplace.json"` (for editor autocomplete) |
@@ -84,7 +84,7 @@ None — pure declaration. Reads by Claude Code are idempotent.
 | `name` | string (kebab-case) | yes | `"prompt-lib"` |
 | `description` | string | no | `"Personal Claude Code library — skills, agents, hooks, and MCP servers."` |
 | `author.name` | string | no | `"Dawid"` |
-| `author.email` | string | no | `"pawzor@gmail.com"` |
+| `author.email` | string | no | `"user@example.com"` |
 | `version` | string | no | (omitted — git commit SHA used) |
 | `homepage` | string | no | `"https://github.com/<owner>/prompt-lib"` |
 | `repository` | string | no | `"https://github.com/<owner>/prompt-lib"` |

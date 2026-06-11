@@ -14,7 +14,7 @@
   "description": "Personal Claude Code library — skills, agents, hooks, and MCP servers.",
   "author": {
     "name": "Dawid",
-    "email": "pawzor@gmail.com"
+    "email": "user@example.com"
   },
   "homepage": "https://github.com/<owner>/prompt-lib",
   "repository": "https://github.com/<owner>/prompt-lib",
