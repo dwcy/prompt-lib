@@ -68,11 +68,15 @@ def _run_gh(args: list[str], stdin: str | None = None) -> tuple[int, str]:
     if not shutil.which("gh"):
         return -1, "gh CLI not found — install GitHub CLI first"
     try:
+        # gh emits UTF-8 (✓/X markers) — pin the encoding so Windows doesn't
+        # decode with cp1252 and crash on undefined bytes.
         r = subprocess.run(
             ["gh", *args],
             input=stdin,
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=_TIMEOUT,
         )
     except (OSError, subprocess.TimeoutExpired) as e:
