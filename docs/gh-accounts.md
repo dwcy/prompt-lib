@@ -1,11 +1,12 @@
 # GitHub accounts — switching behavior
 
-The cabal wizard's **Accounts** modal (Env screen → GitHub row) lists the gh CLI
-accounts for `github.com` and lets you switch the active one, add another
+The cabal wizard's **Accounts** modal (GitHub view → Accounts button) lists the
+gh CLI accounts for `github.com` and lets you switch the active one, add another
 account via the GitHub device flow, re-authenticate an account whose token went
 stale, or forget an account. Under the hood it drives `gh auth status`,
 `gh auth switch`, `gh auth login --with-token`, and `gh auth logout`
-(`setup/src/cabal/gh_accounts.py`).
+(`setup/src/cabal/gh_accounts.py`). Switching also refreshes the repo list,
+which follows the newly active account.
 
 ## Behaviors to know
 
@@ -15,8 +16,7 @@ stale, or forget an account. Under the hood it drives `gh auth status`,
   export `GH_TOKEN` in that shell instead.
 - **`GH_TOKEN` / `GITHUB_TOKEN` override the active account.** If either is
   exported, gh uses it and ignores `gh auth switch` entirely — switching will
-  look broken. The modal shows a warning banner when it detects one. Watch out
-  for the wizard's own `GITHUB_PERSONAL_ACCESS_TOKEN`-derived exports.
+  look broken. The modal shows a warning banner when it detects one.
 - **Commit identity does not change.** Switching accounts swaps the API/push
   token only. `user.name` / `user.email` (and the `git-identity` wrapper +
   `~/.claude/git-policy.json`) decide commit authorship, independently of gh.

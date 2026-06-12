@@ -100,10 +100,6 @@ COMPONENTS: list[Component] = [
 ]
 
 ENV_DESCRIPTIONS: dict[str, str] = {
-    "GITHUB_PERSONAL_ACCESS_TOKEN": (
-        "GitHub MCP server — gives Claude access to repos, issues, PRs, and code search. "
-        "Create at github.com/settings/tokens (repo + read:org scopes)."
-    ),
     "FIGMA_ACCESS_TOKEN": (
         "Figma MCP server — gives Claude read access to files, components, and design tokens. "
         "Create at figma.com/settings under Personal access tokens."

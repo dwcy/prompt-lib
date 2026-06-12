@@ -172,7 +172,6 @@ Edit `setup/setup.env.json` at the repo root:
 
 ```json
 {
-  "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_...",
   "FIGMA_ACCESS_TOKEN": "figd_...",
   "POSTGRES_CONNECTION_STRING": "postgresql://user:pass@host:5432/db",
   "AZURE_DEVOPS_ORG_URL": "https://dev.azure.com/your-org",
@@ -294,7 +293,6 @@ Servers in `settings.json` are available in every session. Currently configured:
 | Server | Purpose | Requires |
 |---|---|---|
 | `context7` | Up-to-date library and framework documentation | Node.js |
-| `github` | Read/write repos, issues, PRs, and code search | `GITHUB_PERSONAL_ACCESS_TOKEN` env var |
 | `figma` | Access Figma files, components, and design tokens | `FIGMA_ACCESS_TOKEN` env var |
 | `playwright` | Browser automation — E2E testing, scraping, screenshots | Node.js |
 | `azure-devops` | Work items, repos, pipelines, and PRs in Azure DevOps | `AZURE_DEVOPS_ORG_URL` + `AZURE_DEVOPS_TOKEN` env vars |

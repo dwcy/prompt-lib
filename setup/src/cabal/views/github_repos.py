@@ -19,11 +19,30 @@ from rich.markup import escape as escape_markup
 from rich.text import Text
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Center, Container, Horizontal, ScrollableContainer, Vertical, VerticalScroll
+from textual.containers import (
+    Center,
+    Container,
+    Horizontal,
+    ScrollableContainer,
+    Vertical,
+    VerticalScroll,
+)
 from textual.screen import ModalScreen, Screen
 from textual.widgets import (
-    Button, Checkbox, DataTable, Footer, Header, Input, Label,
-    MarkdownViewer, OptionList, RadioButton, RadioSet, Rule, Select, Static,
+    Button,
+    Checkbox,
+    DataTable,
+    Footer,
+    Header,
+    Input,
+    Label,
+    MarkdownViewer,
+    OptionList,
+    RadioButton,
+    RadioSet,
+    Rule,
+    Select,
+    Static,
 )
 from textual.widgets.option_list import Option
 from textual.widget import Widget
@@ -64,6 +83,7 @@ from cabal.updates import check_for_updates, do_git_pull
 from cabal.widgets.env_panel import EnvPanel
 from cabal.widgets.update_panel import UpdatePanel
 
+
 class GitHubReposScreen(Screen):
     """List repos owned by the gh-authenticated user via `gh repo list --json`."""
 
@@ -98,6 +118,7 @@ class GitHubReposScreen(Screen):
             yield DataTable(id="gh-repos-list")
             with Horizontal(id="gh-repos-actions"):
                 yield Button("Refresh", id="gh-repos-refresh", variant="default")
+                yield Button("Accounts", id="gh-repos-accounts", variant="primary")
                 yield Button("Back", id="gh-repos-back", variant="default")
         yield Footer(show_command_palette=False)
 
@@ -127,11 +148,18 @@ class GitHubReposScreen(Screen):
             raise RuntimeError("gh not found on PATH — install GitHub CLI first")
         r = subprocess.run(
             [
-                gh, "repo", "list",
-                "--limit", "200",
-                "--json", "name,description,visibility,updatedAt,url",
+                gh,
+                "repo",
+                "list",
+                "--limit",
+                "200",
+                "--json",
+                "name,description,visibility,updatedAt,url",
             ],
-            capture_output=True, text=True, timeout=30, check=False,
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
         )
         if r.returncode != 0:
             err = (r.stderr or "").strip()
@@ -153,8 +181,10 @@ class GitHubReposScreen(Screen):
             vis = (repo.get("visibility") or "").lower()
             # vis is one of "public" / "private" / "internal" — safe for markup.
             vis_styled = Text.from_markup(
-                f"[red]{vis}[/red]" if vis == "private"
-                else f"[yellow]{vis}[/yellow]" if vis == "internal"
+                f"[red]{vis}[/red]"
+                if vis == "private"
+                else f"[yellow]{vis}[/yellow]"
+                if vis == "internal"
                 else f"[green]{vis}[/green]"
             )
             desc = (repo.get("description") or "")[:80]
@@ -168,11 +198,20 @@ class GitHubReposScreen(Screen):
             f"[green]✓[/green] {len(repos)} repos loaded"
         )
 
+    def _open_accounts(self) -> None:
+        from cabal.views.gh_accounts_modal import GhAccountsModal
+
+        def _done(changed: bool | None) -> None:
+            if changed:
+                self.action_refresh()
+
+        self.app.push_screen(GhAccountsModal(), _done)
+
     def on_button_pressed(self, event: Button.Pressed) -> None:
         bid = event.button.id or ""
         if bid == "gh-repos-back":
             self.app.pop_screen()
         elif bid == "gh-repos-refresh":
             self.action_refresh()
-
-
+        elif bid == "gh-repos-accounts":
+            self._open_accounts()
