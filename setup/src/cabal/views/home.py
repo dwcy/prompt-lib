@@ -126,7 +126,6 @@ class HomeScreen(Screen):
         with Horizontal(id="home-bottom"):
             yield Button("Env vars", id="btn-env", variant="primary")
             yield Button("GitHub", id="btn-github", variant="primary")
-            yield Button("All env", id="btn-allenv", variant="primary")
             yield Static("", classes="home-spacer")
             yield Button("Quit", id="btn-quit", variant="error")
         yield Footer(show_command_palette=False)
@@ -143,7 +142,6 @@ class HomeScreen(Screen):
         from cabal.views.env import EnvScreen
         from cabal.views.git_config import GitConfigScreen
         from cabal.views.github_repos import GitHubReposScreen
-        from cabal.views.global_env import GlobalEnvScreen
 
         if name == "readme":
             self.app.push_screen(ReadmeScreen())
@@ -153,8 +151,6 @@ class HomeScreen(Screen):
             self.app.push_screen(GitConfigScreen())
         elif name == "github":
             self.app.push_screen(GitHubReposScreen())
-        elif name == "allenv":
-            self.app.push_screen(GlobalEnvScreen())
 
     def action_refresh_claude_stats(self) -> None:
         try:
@@ -224,8 +220,6 @@ class HomeScreen(Screen):
             self.action_go("git")
         elif bid == "btn-github":
             self.action_go("github")
-        elif bid == "btn-allenv":
-            self.action_go("allenv")
         elif bid == "btn-quit":
             self.app.exit()
         elif bid in op_screens:

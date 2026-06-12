@@ -98,12 +98,14 @@ class EnvScreen(Screen):
 
     def __init__(self) -> None:
         super().__init__()
-        keys = (
-            list(json.loads(ENV_FILE.read_text(encoding="utf-8")).keys())
+        defaults: dict[str, str] = (
+            json.loads(ENV_FILE.read_text(encoding="utf-8"))
             if ENV_FILE.exists()
-            else []
+            else {}
         )
-        self.data: dict[str, str] = {k: os.environ.get(k, "") for k in keys}
+        self.data: dict[str, str] = {
+            k: os.environ.get(k) or v for k, v in defaults.items()
+        }
 
     def compose(self) -> ComposeResult:
         yield AppHeader()
@@ -133,13 +135,11 @@ class EnvScreen(Screen):
                         yield Button(
                             "Accounts", id=f"gh-accounts-{key}", classes="env-browse"
                         )
-                        b = Button(
+                        yield Button(
                             "Login with GitHub",
                             id=f"gh-login-{key}",
                             classes="env-browse",
                         )
-                        b.display = False
-                        yield b
                     yield Input(
                         value=str(val),
                         id=f"in-{key}",
@@ -155,6 +155,7 @@ class EnvScreen(Screen):
             with Horizontal(id="env-actions"):
                 yield Button("Apply (Ctrl+A)", id="env-apply", variant="success")
                 yield Button("Back (Esc)", id="env-back")
+                yield Button("System env", id="env-allenv", variant="primary")
             yield Static("", id="env-status")
         yield Footer(show_command_palette=False)
 
@@ -195,7 +196,6 @@ class EnvScreen(Screen):
         def _apply() -> None:
             try:
                 self.query_one(f"#gh-status-{key}", Static).update(label)
-                self.query_one(f"#gh-login-{key}", Button).display = not logged_in
             except Exception:
                 pass
 
@@ -212,7 +212,6 @@ class EnvScreen(Screen):
             self.query_one(f"#gh-status-{key}", Static).update(
                 "[green]✓ gh: logged in (via wizard)[/green]"
             )
-            self.query_one(f"#gh-login-{key}", Button).display = False
         except Exception:
             pass
         status_widget.update("[green]✓ Logged in — Apply (Ctrl+A) to persist[/green]")
@@ -304,6 +303,10 @@ class EnvScreen(Screen):
             self.action_apply()
         elif bid == "env-back":
             self.app.pop_screen()
+        elif bid == "env-allenv":
+            from cabal.views.global_env import GlobalEnvScreen
+
+            self.app.push_screen(GlobalEnvScreen())
         elif bid.startswith("browse-"):
             self._open_browser(bid.removeprefix("browse-"))
         elif bid.startswith("gh-fetch-"):
