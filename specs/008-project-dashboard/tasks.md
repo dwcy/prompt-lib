@@ -27,29 +27,31 @@ tasks that touch different files and have no incomplete-task dependency.
 
 ## Phase 1: Setup (Shared Infrastructure)
 
-**Status**: ⬜ Pending (0/2 — T001–T002)
+**Status**: ✅ Complete (2/2 — T001–T002)
 **Purpose**: Project initialization for the dashboard module surface
 
-- [ ] T001 Create the models package `setup/src/cabal/models/` with `__init__.py` (so `from cabal.models import dashboard` resolves) — Owner: @python-architect
-- [ ] T002 [P] Confirm no new runtime dependency is required (stdlib `urllib.request` for GET-only API calls per research D8); verify `tests/unit`, `tests/integration`, `tests/contract` exist for the new modules — Owner: main
+- [X] T001 Create the models package `setup/src/cabal/models/` with `__init__.py` (so `from cabal.models import dashboard` resolves) — Owner: @python-architect
+- [X] T002 [P] Confirm no new runtime dependency is required (stdlib `urllib.request` for GET-only API calls per research D8); verify `tests/unit`, `tests/integration`, `tests/contract` exist for the new modules — Owner: main
 
 ---
 
 ## Phase 2: Foundational (Blocking Prerequisites)
 
-**Status**: ⬜ Pending (0/8 — T003–T010)
+**Status**: ✅ Complete (8/8 — T003–T010)
 **Purpose**: Data models, pure link parsing, and the DashboardPanel framework that every user story renders into
 
 **⚠️ CRITICAL**: No user-story section can render until the panel shell + models exist
 
-- [ ] T003 Implement data models in `setup/src/cabal/models/dashboard.py` — `AvailabilityState`, `GitRemote`, `GitSection`, `WorkflowRun`, `PullRequest`, `GitHubSection`, `ProjectMember`, `SupabaseSection`, `VercelSection`, `DashboardSnapshot` + `to_cacheable()` / `from_cached()`; no I/O, no Textual import, no token fields (contracts/dashboard_models.md) — Owner: @python-architect
-- [ ] T004 [P] Implement `setup/src/cabal/dashboard_links.py` — `find_supabase_ref`, `supabase_dashboard_url`, `supabase_schema_url`, `find_vercel_link`, `parse_github_remote` (HTTPS + SSH + non-GitHub → None); pure, no network (contracts/dashboard_services.md §dashboard_links) — Owner: @python-architect
-- [ ] T005 [P] Unit-test the models in `tests/unit/test_dashboard_models.py` — every `AvailabilityState`, `to_cacheable()` json round-trip with no token-named keys, `from_cached(None/{bogus})` → `None` (C-M1…C-M4) — Owner: @python-tester
-- [ ] T006 [P] Unit-test `dashboard_links` in `tests/unit/test_dashboard_links.py` — `parse_github_remote` over HTTPS/`.git`/SSH/non-GitHub, supabase/vercel link detection in temp dirs, URL derivation (C-L1, C-L2) — Owner: @python-tester
-- [ ] T007 Implement the `DashboardPanel` shell in `setup/src/cabal/widgets/dashboard_panel.py` — `compose()` (title bar + 4 labelled section `Static` bodies + Refresh button + `DEFAULT_CSS`), cache-first paint via `widget_cache.load_entry("dashboard:<hash(project_path)>")`, `selected_project is None` placeholder, `refresh_dashboard()` entry, per-section worker scaffolding (`run_worker(..., thread=True, exclusive=True)` + `call_from_thread`); helpers named by role (`_build_*`/`_apply_*`, never `_render*`/`_compose*`) per the Textual shadow rule (contracts/dashboard_panel.md, depends T003) — Owner: @python-architect
-- [ ] T008 Integrate the panel into `setup/src/cabal/views/home.py` — mount `DashboardPanel(id="dashboard")` in the home scroll, add `Binding("ctrl+d", "refresh_dashboard", ...)` + guarded `action_refresh_dashboard`, and `on_screen_resume` project-change re-scope (FR-002, FR-003, C-P4; depends T007) — Owner: @python-architect
-- [ ] T009 Extend the public-API contract test `tests/contract/test_wizard_public_api.py` — assert any name re-exported via `cabal.wizard` (panel/models) resolves to its defining module; if nothing is re-exported, assert the dashboard is reached via `HomeScreen` only (Constitution Gate 3, C-P-C1) — Owner: @python-tester
-- [ ] T010 Smoke integration test in `tests/integration/test_dashboard_panel.py` — panel mounts + renders with at least one `await pilot.pause()` and no `Visual.to_strips`/`_render_content` shadow crash; `selected_project = None` shows the placeholder and starts no workers (C-P-T4, C-P-T5) — Owner: @python-tester
+> **Design note (resolves analyze finding I1):** no `dashboard_service.py`/`build_snapshot` orchestrator — the panel dispatches one worker per section (`_fetch_<name>`), each calling its own collector. Stories add their `_fetch_*` method + collector. `refresh_dashboard` dynamically dispatches whatever `_fetch_*` methods exist.
+
+- [X] T003 Implement data models in `setup/src/cabal/models/dashboard.py` — `AvailabilityState`, `GitRemote`, `GitSection`, `WorkflowRun`, `PullRequest`, `GitHubSection`, `ProjectMember`, `SupabaseSection`, `VercelSection`, `DashboardSnapshot` + `to_cacheable()` / `from_cached()`; no I/O, no Textual import, no token fields (contracts/dashboard_models.md) — Owner: @python-architect
+- [X] T004 [P] Implement `setup/src/cabal/dashboard_links.py` — `find_supabase_ref`, `supabase_dashboard_url`, `supabase_schema_url`, `find_vercel_link`, `parse_github_remote` (HTTPS + SSH + non-GitHub → None); pure, no network (contracts/dashboard_services.md §dashboard_links) — Owner: @python-architect
+- [X] T005 [P] Unit-test the models in `tests/unit/test_dashboard_models.py` — every `AvailabilityState`, `to_cacheable()` json round-trip with no token-named keys, `from_cached(None/{bogus})` → `None` (C-M1…C-M4) — Owner: @python-tester
+- [X] T006 [P] Unit-test `dashboard_links` in `tests/unit/test_dashboard_links.py` — `parse_github_remote` over HTTPS/`.git`/SSH/non-GitHub, supabase/vercel link detection in temp dirs, URL derivation (C-L1, C-L2) — Owner: @python-tester
+- [X] T007 Implement the `DashboardPanel` shell in `setup/src/cabal/widgets/dashboard_panel.py` — `compose()` (title bar + 4 labelled section `Static` bodies + Refresh button + `DEFAULT_CSS`), cache-first paint via `widget_cache.load_entry("dashboard:<hash(project_path)>")`, `selected_project is None` placeholder, `refresh_dashboard()` entry, per-section worker scaffolding (`run_worker(..., thread=True, exclusive=True)` + `call_from_thread`); helpers named by role (`_build_*`/`_apply_*`, never `_render*`/`_compose*`) per the Textual shadow rule (contracts/dashboard_panel.md, depends T003) — Owner: @python-architect
+- [X] T008 Integrate the panel into `setup/src/cabal/views/home.py` — mount `DashboardPanel(id="dashboard")` in the home scroll, add `Binding("ctrl+d", "refresh_dashboard", ...)` + guarded `action_refresh_dashboard`, and `on_screen_resume` project-change re-scope (FR-002, FR-003, C-P4; depends T007) — Owner: @python-architect
+- [X] T009 Extend the public-API contract test `tests/contract/test_wizard_public_api.py` — assert any name re-exported via `cabal.wizard` (panel/models) resolves to its defining module; if nothing is re-exported, assert the dashboard is reached via `HomeScreen` only (Constitution Gate 3, C-P-C1) — Owner: @python-tester
+- [X] T010 Smoke integration test in `tests/integration/test_dashboard_panel.py` — panel mounts + renders with at least one `await pilot.pause()` and no `Visual.to_strips`/`_render_content` shadow crash; `selected_project = None` shows the placeholder and starts no workers (C-P-T4, C-P-T5) — Owner: @python-tester
 
 **Checkpoint**: Panel framework, models, and link parsing ready — user-story sections can be wired in.
 
@@ -57,15 +59,15 @@ tasks that touch different files and have no incomplete-task dependency.
 
 ## Phase 3: User Story 1 - Local git overview (Priority: P1) 🎯 MVP
 
-**Status**: ⬜ Pending (0/4 — T011–T014)
+**Status**: ✅ Complete (4/4 — T011–T014)
 **Goal**: The Git section shows current branch, local branches, and remotes for the selected project, degrading gracefully.
 
 **Independent Test**: Select a temp git repo → Git section lists current branch (highlighted), other branches, and remotes; select a non-git folder → "not a git repository" hint, no traceback.
 
-- [ ] T011 [P] [US1] Unit-test `collect_git` in `tests/unit/test_dashboard_git_service.py` — canned `git` output for normal, detached HEAD, not-a-repo (`NOT_LINKED`), and missing `git` (`NO_CLI`), via a monkeypatched subprocess runner (no live git) — Owner: @python-tester
-- [ ] T012 [P] [US1] Integration test (Pilot) in `tests/integration/test_dashboard_panel.py` — Git section renders branch/branches/remotes for a temp repo and the non-repo hint (stubbed `collect_git`) — Owner: @python-tester
-- [ ] T013 [US1] Implement `setup/src/cabal/dashboard_git_service.py::collect_git(project)` — `git -C` for current branch / `branch --format` / `remote -v`; detached HEAD → short SHA + `detached=True`; tag `GitRemote.is_github` via `parse_github_remote`; never raises (FR-010…FR-012, contracts §dashboard_git_service) — Owner: @python-architect
-- [ ] T014 [US1] Wire the git worker in `DashboardPanel` — `_fetch_git` → `call_from_thread(_apply_git, section)`; render `GitSection` (current branch highlighted, branch list, remotes) and its hints (depends T007, T013) — Owner: @python-architect
+- [X] T011 [P] [US1] Unit-test `collect_git` in `tests/unit/test_dashboard_git_service.py` — canned `git` output for normal, detached HEAD, not-a-repo (`NOT_LINKED`), and missing `git` (`NO_CLI`), via a monkeypatched subprocess runner (no live git) — Owner: @python-tester
+- [X] T012 [P] [US1] Integration test (Pilot) in `tests/integration/test_dashboard_panel.py` — Git section renders branch/branches/remotes for a temp repo and the non-repo hint (stubbed `collect_git`) — Owner: @python-tester
+- [X] T013 [US1] Implement `setup/src/cabal/dashboard_git_service.py::collect_git(project)` — `git -C` for current branch / `branch --format` / `remote -v`; detached HEAD → short SHA + `detached=True`; tag `GitRemote.is_github` via `parse_github_remote`; never raises (FR-010…FR-012, contracts §dashboard_git_service) — Owner: @python-architect
+- [X] T014 [US1] Wire the git worker in `DashboardPanel` — `_fetch_git` → `call_from_thread(_apply_git, section)`; render `GitSection` (current branch highlighted, branch list, remotes) and its hints (depends T007, T013) — Owner: @python-architect
 
 **Checkpoint**: Git section fully functional and independently testable — MVP.
 

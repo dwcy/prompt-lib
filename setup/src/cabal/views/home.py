@@ -80,6 +80,7 @@ from cabal.tools import (
 )
 from cabal.updates import check_for_updates, do_git_pull
 from cabal.widgets.claude_stats_panel import ClaudeStatsPanel
+from cabal.widgets.dashboard_panel import DashboardPanel
 from cabal.widgets.env_panel import EnvPanel
 from cabal.widgets.update_panel import UpdatePanel
 
@@ -90,6 +91,7 @@ class HomeScreen(Screen):
     BINDINGS = [
         Binding("escape", "app.pop_screen", "Back"),
         Binding("ctrl+s", "refresh_claude_stats", "Refresh stats"),
+        Binding("ctrl+d", "refresh_dashboard", "Refresh dashboard"),
     ]
 
     def compose(self) -> ComposeResult:
@@ -98,6 +100,7 @@ class HomeScreen(Screen):
             yield HexBanner(id="banner", classes="centered", show_subtitle=False)
             yield subtitle_bar()
             yield EnvPanel(id="env-summary")
+            yield DashboardPanel(id="dashboard")
             with Vertical(classes="home-section"):
                 yield Static(
                     "[bold]Claude Settings[/bold]", classes="home-section-title"
@@ -158,6 +161,12 @@ class HomeScreen(Screen):
         except Exception:
             pass
 
+    def action_refresh_dashboard(self) -> None:
+        try:
+            self.query_one("#dashboard", DashboardPanel).refresh_dashboard()
+        except Exception:
+            pass
+
     def _refresh_env_panel(self) -> None:
         try:
             self.query_one("#env-summary", EnvPanel).refresh_project()
@@ -191,6 +200,10 @@ class HomeScreen(Screen):
 
     def on_screen_resume(self) -> None:
         self._refresh_env_panel()
+        try:
+            self.query_one("#dashboard", DashboardPanel).refresh_dashboard()
+        except Exception:
+            pass
         self._apply_drift_markers()
         if getattr(self.app, "env_needs_refresh", False):
             self.app.env_needs_refresh = False
