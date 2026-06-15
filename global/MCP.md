@@ -27,20 +27,6 @@ Provides up-to-date documentation for any library or framework, resolved per-pro
 
 ---
 
-### github
-Full GitHub API access — read and write repos, issues, PRs, code search, releases, and more.
-
-**Setup:**
-1. Go to `github.com/settings/tokens` → Generate new token (classic)
-2. Scopes needed: `repo`, `read:org`, `read:user`
-3. Add to your shell profile:
-   ```bash
-   export GITHUB_PERSONAL_ACCESS_TOKEN=ghp_yourtoken
-   ```
-**Package:** `@modelcontextprotocol/server-github`
-
----
-
 ### figma
 Access Figma files, components, styles, and design tokens directly from Claude. Useful for translating designs into code.
 

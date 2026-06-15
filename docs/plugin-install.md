@@ -80,7 +80,6 @@ Each server with secrets requires the env var(s) below to be set in your shell. 
 
 | Server | Env var(s) |
 |---|---|
-| `github` | `GITHUB_PERSONAL_ACCESS_TOKEN` |
 | `figma` | `FIGMA_ACCESS_TOKEN` |
 | `azure-devops` | `AZURE_DEVOPS_ORG_URL`, `AZURE_DEVOPS_TOKEN` |
 | `supabase` | `SUPABASE_ACCESS_TOKEN` |

@@ -26,8 +26,33 @@ except ImportError:
         return False
 
 
-def emit(message: str) -> None:
-    print(json.dumps({"additionalContext": message}))
+def emit(message: str, title: str | None = None) -> None:
+    out: dict = {"additionalContext": message}
+    if title:
+        out["hookSpecificOutput"] = {
+            "hookEventName": "SessionStart",
+            "sessionTitle": title,
+        }
+    print(json.dumps(out))
+
+
+def _session_title(cwd: Path) -> str:
+    """Auto-name the session `<dir> · <branch>` so /resume and the terminal
+    title stay descriptive without a manual /rename."""
+    title = cwd.name
+    try:
+        branch = subprocess.run(
+            ["git", "-C", str(cwd), "rev-parse", "--abbrev-ref", "HEAD"],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=5,
+        ).stdout.strip()
+    except (OSError, subprocess.TimeoutExpired):
+        branch = ""
+    if branch and branch != "HEAD":
+        title = f"{title} · {branch}"
+    return title
 
 
 def _now_iso() -> str:
@@ -277,6 +302,7 @@ def main() -> None:
     if should_skip("session_start"):
         return
     cwd = Path.cwd()
+    title = _session_title(cwd)
 
     try:
         proceed, collision_msg = _check_worktree_collision(cwd)
@@ -285,7 +311,7 @@ def main() -> None:
 
     if not proceed:
         if collision_msg:
-            emit(collision_msg)
+            emit(collision_msg, title)
         return
 
     if not (cwd / "CLAUDE.md").exists():
@@ -296,7 +322,8 @@ def main() -> None:
                 "so a CLAUDE.md can be created, or be reminded next session. If they "
                 "describe it, create a CLAUDE.md at the project root with: a project name "
                 "heading, what the project does, the tech stack, key directories, and any "
-                "important workflows. If they decline, proceed normally without creating it."
+                "important workflows. If they decline, proceed normally without creating it.",
+                title,
             )
         else:
             emit(
@@ -306,7 +333,8 @@ def main() -> None:
                 "stack, asks the architecture questions, writes CLAUDE.md, scaffolds a "
                 "cross-platform `run` launcher, and spawns the matching specialist "
                 "subagents) rather than hand-creating files. If they only want a bare "
-                "CLAUDE.md, create one after they describe the project."
+                "CLAUDE.md, create one after they describe the project.",
+                title,
             )
         return
 
@@ -346,7 +374,8 @@ def main() -> None:
     emit(
         f"Existing project detected ({stack}) in {cwd}. A CLAUDE.md exists. "
         "Proactively invoke the @load-project agent to read the project context and "
-        "announce which specialist subagents are available for this session."
+        "announce which specialist subagents are available for this session.",
+        title,
     )
 
 

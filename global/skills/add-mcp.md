@@ -79,7 +79,7 @@ claude mcp add -s user context7 -- pnpm dlx @upstash/context7-mcp@latest
 4. Build the command:
    - Windows: `MSYS_NO_PATHCONV=1 claude mcp add -s user <name> [-e KEY=value]... -- cmd /s /c "pnpm dlx <package>"`
    - Linux/macOS: `claude mcp add -s user <name> [-e KEY=value]... -- pnpm dlx <package>`
-5. If env vars are needed but unset in the shell, STOP. Tell the user which env vars they need to set (e.g. `setx GITHUB_PERSONAL_ACCESS_TOKEN <value>` on Windows or `export ...` on Unix), then re-run.
+5. If env vars are needed but unset in the shell, STOP. Tell the user which env vars they need to set (e.g. `setx FIGMA_ACCESS_TOKEN <value>` on Windows or `export ...` on Unix), then re-run.
 6. Run `claude mcp list` to confirm the new server shows `✓ Connected`.
 7. Tell the user to restart Claude Code so MCP tools appear in the deferred tools list.
 
@@ -89,7 +89,6 @@ claude mcp add -s user context7 -- pnpm dlx @upstash/context7-mcp@latest
 |---|---|---|
 | context7 | `@upstash/context7-mcp@latest` | none |
 | playwright | `@playwright/mcp@latest` | none |
-| github | `@modelcontextprotocol/server-github@latest` | `GITHUB_PERSONAL_ACCESS_TOKEN` |
 | supabase | `@supabase/mcp-server-supabase@latest` | `SUPABASE_ACCESS_TOKEN` |
 | figma | `@figma/mcp-server@latest` | `FIGMA_ACCESS_TOKEN` |
 | azure-devops | `@tiberriver256/mcp-server-azure-devops@latest` | `AZURE_DEVOPS_ORG_URL`, `AZURE_DEVOPS_TOKEN` |

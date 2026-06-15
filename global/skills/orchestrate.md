@@ -29,6 +29,8 @@ Read the task description and identify two things:
 - database schema / migration / indexing / data model
 - URL / web page / article / docs page / changelog (research a link)
 - repo URL / GitHub repository (analyse / mine for features or code)
+- security review / OWASP / vulnerability / auth flow / CSRF / XSS / injection / pre-release hardening
+- dead code / unused CSS / unused assets / unused dependencies / repo cleanup / clutter
 
 **Phase signals** — what kind of work is it?
 - `architect` / design / structure / review / DI / domain
@@ -71,6 +73,8 @@ Match domain + phase against this routing table. Apply the **highest-priority ma
 | 21 | URL / web page / article / docs page / changelog (a link to read) | analyse / research / extract | `website-content-analyst` |
 | 22 | repo URL / GitHub repository / clone (mine for features or code) | analyse / research / extract | `git-repo-analyst` |
 | 23 | new UI component / content page / interaction behaviour / a11y / UX best practice | analyse / review / question | `ux-analyst` |
+| 24 | security review / OWASP / vulnerability / auth flow / session / CSRF / XSS / injection / hardening / pre-release security | review / audit / scan / check | `owasp-security-reviewer` |
+| 25 | dead code / unused CSS / unused assets / unused dependencies / stale files / repo cleanup / clutter | clean / remove / refactor / audit | `code-cleaner` |
 
 **If no row matches:** say "No specialist matched — handling in main session" and continue without delegation.
 
@@ -83,12 +87,13 @@ Tell the user which agent(s) you selected and why before dispatching.
 ## Step 3 — Determine dispatch mode
 
 **Parallel** — when two or more agents are selected for independent domains:
-- Requires `isolation: "worktree"` on every agent that writes files
-- Read-only agents (`gitignore-auditor`, `secret-auditor`, `code-plan-verifier`) are exempt — no isolation needed
+- Requires `isolation: "worktree"` on every agent that writes files (`code-cleaner` writes — always isolate it when parallel)
+- Read-only agents (`gitignore-auditor`, `secret-auditor`, `code-plan-verifier`, `owasp-security-reviewer`) are exempt — no isolation needed
 - Name worktree branches: `orchestrate/<agent-name>/<short-task-slug>`
 
 **Sequential** — when agents form a pipeline (output of one feeds the next):
 - Common pipelines: `frontend-designer` → `react-architect` → `code-plan-verifier`
+- **Pre-release pass**: `owasp-security-reviewer` runs after any architect/tester pipeline that touched auth flows, API surface, file upload, or external input handling — its report goes to the user, not silently into fixes (review-only by default)
 - **New UI component / content page = a trio**: dispatch `ux-analyst` (behaviour, states, best-practice questions) alongside `frontend-designer` (look + design system), then hand both to the UI developer (`react-architect` / `tanstack-architect` / `frontend-architect` / `frontend-css`). `ux-analyst` does not decide — its brief informs the designer's and architect's decisions.
 - Pass each agent's result as context to the next agent's prompt
 - Still use `isolation: "worktree"` for each writing agent

@@ -2,3 +2,10 @@
 # into new projects, and CRLF breaks `#!/usr/bin/env sh` on Linux/macOS.
 global/project-templates/run/run    text eol=lf
 global/project-templates/run/run.py text eol=lf
+
+# Plugin manifests are committed with {{LOGGED_IN_EMAIL}} / {{GIT_USER_NAME}}
+# / {{REPO_URL}} placeholders; the inject-email filter
+# (setup/tools/email-filter.py) swaps in the real values on checkout and
+# strips them again on commit.
+.claude-plugin/marketplace.json   filter=inject-email
+global/.claude-plugin/plugin.json filter=inject-email
