@@ -526,3 +526,79 @@ async def test_panel_renders_supabase_not_linked_hint(
         body = await _settle_section(pilot, app, "#dash-supabase")
 
         assert "no linked Supabase project" in body
+
+
+def _stub_vercel_section(monkeypatch, section) -> None:
+    from cabal import dashboard_vercel_service
+
+    monkeypatch.setattr(
+        dashboard_vercel_service, "collect_vercel", lambda _project: section
+    )
+
+
+@pytest.mark.asyncio
+async def test_panel_renders_vercel_baseline_enrich_hint(
+    isolated_cache, tmp_project_dir, monkeypatch
+):
+    from cabal.models.dashboard import AvailabilityState, VercelSection
+
+    section = VercelSection(
+        state=AvailabilityState.OK,
+        project_id="proj_1",
+        enrich_state=AvailabilityState.TOKEN_MISSING,
+        enrich_hint="set VERCEL_TOKEN for team/plan/region/members",
+    )
+    _stub_vercel_section(monkeypatch, section)
+    app = _DashboardHost(selected_project=tmp_project_dir)
+
+    async with app.run_test() as pilot:
+        body = await _settle_section(pilot, app, "#dash-vercel")
+
+        assert "set VERCEL_TOKEN" in body
+
+
+@pytest.mark.asyncio
+async def test_panel_renders_vercel_enriched_deployment(
+    isolated_cache, tmp_project_dir, monkeypatch
+):
+    from cabal.models.dashboard import (
+        AvailabilityState,
+        ProjectMember,
+        VercelSection,
+    )
+
+    section = VercelSection(
+        state=AvailabilityState.OK,
+        project_id="proj_1",
+        project_name="my-app",
+        latest_deployment_status="READY",
+        team_plan="pro",
+        members=[ProjectMember(name="octocat", role="OWNER")],
+        enrich_state=AvailabilityState.OK,
+    )
+    _stub_vercel_section(monkeypatch, section)
+    app = _DashboardHost(selected_project=tmp_project_dir)
+
+    async with app.run_test() as pilot:
+        body = await _settle_section(pilot, app, "#dash-vercel")
+
+        assert "my-app" in body
+
+
+@pytest.mark.asyncio
+async def test_panel_renders_vercel_not_linked_hint(
+    isolated_cache, tmp_project_dir, monkeypatch
+):
+    from cabal.models.dashboard import AvailabilityState, VercelSection
+
+    section = VercelSection(
+        state=AvailabilityState.NOT_LINKED,
+        hint="no linked Vercel project",
+    )
+    _stub_vercel_section(monkeypatch, section)
+    app = _DashboardHost(selected_project=tmp_project_dir)
+
+    async with app.run_test() as pilot:
+        body = await _settle_section(pilot, app, "#dash-vercel")
+
+        assert "no linked Vercel project" in body

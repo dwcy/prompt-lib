@@ -123,15 +123,15 @@ tasks that touch different files and have no incomplete-task dependency.
 
 ## Phase 7: User Story 4 - Vercel stats + links (Priority: P3)
 
-**Status**: ⬜ Pending (0/4 — T027–T030)
+**Status**: ✅ Complete (4/4 — T027–T030)
 **Goal**: The Vercel section mirrors Supabase — project name, latest deployment status + URL, and (with `VERCEL_TOKEN`) team/plan, region, members — degrading per AvailabilityState.
 
 **Independent Test**: `.vercel/project.json` + `vercel` installed → project + latest deployment + link; with token → team/region/members; no link file → collapsed "no linked Vercel project".
 
-- [ ] T027 [P] [US4] Unit-test `collect_vercel` in `tests/unit/test_dashboard_services.py` — not-linked / no-CLI / baseline, and enrich TOKEN_MISSING / TOKEN_REJECTED / TIMEOUT / OK with CLI + REST HTTP stubbed; assert no token leaks (FR-040…FR-043) — Owner: @python-tester
-- [ ] T028 [US4] Implement `setup/src/cabal/dashboard_vercel_service.py::collect_vercel(project)` — link via `dashboard_links.find_vercel_link` (`.vercel/project.json`), CLI baseline (project name, latest deployment status/url), enrich via Vercel REST GET (`urllib.request`, `VERCEL_TOKEN` env only, bounded timeout); never raises, never returns the token (contracts §dashboard_vercel_service, research D5/D8/D9) — Owner: @python-architect
-- [ ] T029 [US4] Wire the vercel worker + render `VercelSection` in `DashboardPanel` — baseline + enriched rows, clickable project/deployment link + copyable URL, `enrich_hint`; register collector in `build_snapshot` (depends T019, T028) — Owner: @python-architect
-- [ ] T030 [US4] Integration test (Pilot) in `tests/integration/test_dashboard_panel.py` — Vercel section renders baseline, token-enriched, and collapsed not-linked states (stubbed service) — Owner: @python-tester
+- [X] T027 [P] [US4] Unit-test `collect_vercel` in `tests/unit/test_dashboard_services.py` — not-linked / no-CLI / baseline, and enrich TOKEN_MISSING / TOKEN_REJECTED / TIMEOUT / OK with CLI + REST HTTP stubbed; assert no token leaks (FR-040…FR-043) — Owner: @python-tester
+- [X] T028 [US4] Implement `setup/src/cabal/dashboard_vercel_service.py::collect_vercel(project)` — link via `dashboard_links.find_vercel_link` (`.vercel/project.json`), CLI baseline (project name, latest deployment status/url), enrich via Vercel REST GET (`urllib.request`, `VERCEL_TOKEN` env only, bounded timeout); never raises, never returns the token (contracts §dashboard_vercel_service, research D5/D8/D9) — Owner: @python-architect
+- [X] T029 [US4] Wire the vercel worker + render `VercelSection` in `DashboardPanel` — baseline + enriched rows, clickable project/deployment link + copyable URL, `enrich_hint`; register collector in `build_snapshot` (depends T019, T028) — Owner: @python-architect
+- [X] T030 [US4] Integration test (Pilot) in `tests/integration/test_dashboard_panel.py` — Vercel section renders baseline, token-enriched, and collapsed not-linked states (stubbed service) — Owner: @python-tester
 
 **Checkpoint**: All four sources independently functional.
 

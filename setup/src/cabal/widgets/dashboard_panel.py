@@ -168,6 +168,15 @@ class DashboardPanel(Widget):
             self._apply_section, "supabase", section, str(project)
         )
 
+    def _fetch_vercel(self) -> None:
+        project = self._resolve_project()
+        if project is None:
+            return
+        from cabal.dashboard_vercel_service import collect_vercel
+
+        section = collect_vercel(project)
+        self.app.call_from_thread(self._apply_section, "vercel", section, str(project))
+
     def _apply_section(self, name: str, section, owner: str | None = None) -> None:
         project = self._resolve_project()
         if project is None or (owner is not None and owner != str(project)):
