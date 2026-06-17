@@ -75,15 +75,15 @@ tasks that touch different files and have no incomplete-task dependency.
 
 ## Phase 4: User Story 2 - GitHub Actions + PRs (Priority: P2)
 
-**Status**: ⬜ Pending (0/4 — T015–T018)
+**Status**: ✅ Complete (4/4 — T015–T018)
 **Goal**: The GitHub section shows connection status, Actions runs for the current branch, and open PRs, reusing cabal's `gh` auth.
 
 **Independent Test**: With `gh` authed + a GitHub remote → runs (status/conclusion/url) + open PRs (number/title/author/url); `gh` unauth → "run `gh auth login`" hint + link to gh-accounts.
 
-- [ ] T015 [P] [US2] Unit-test `collect_github` in `tests/unit/test_dashboard_services.py` — remote choice (origin vs first GitHub), no-GitHub-remote (`NOT_LINKED`), no-`gh` (`NO_CLI`), unauth (`NOT_AUTHED`), and `gh run list`/`gh pr list` `--json` parsing, with `gh` stubbed (no network) — Owner: @python-tester
-- [ ] T016 [US2] Implement `setup/src/cabal/dashboard_github_service.py::collect_github(project, current_branch, remotes)` — choose remote + set `remote_used`, derive `owner_repo`, `gh run list --branch <b> --json …`, `gh pr list --state open --json …`, auth-state hints; never raises (FR-020…FR-023, contracts §dashboard_github_service) — Owner: @python-architect
-- [ ] T017 [US2] Wire the github worker + render `GitHubSection` in `DashboardPanel` — connected flag, runs ("no workflow runs" when empty), open PRs, and the unauth hint linking the existing gh-accounts / device-flow path (depends T007, T016) — Owner: @python-architect
-- [ ] T018 [US2] Integration test (Pilot) in `tests/integration/test_dashboard_panel.py` — GitHub section renders runs + PRs (stubbed service) and the unauth hint state — Owner: @python-tester
+- [X] T015 [P] [US2] Unit-test `collect_github` in `tests/unit/test_dashboard_services.py` — remote choice (origin vs first GitHub), no-GitHub-remote (`NOT_LINKED`), no-`gh` (`NO_CLI`), unauth (`NOT_AUTHED`), and `gh run list`/`gh pr list` `--json` parsing, with `gh` stubbed (no network) — Owner: @python-tester
+- [X] T016 [US2] Implement `setup/src/cabal/dashboard_github_service.py::collect_github(project, current_branch, remotes)` — choose remote + set `remote_used`, derive `owner_repo`, `gh run list --branch <b> --json …`, `gh pr list --state open --json …`, auth-state hints; never raises (FR-020…FR-023, contracts §dashboard_github_service) — Owner: @python-architect
+- [X] T017 [US2] Wire the github worker + render `GitHubSection` in `DashboardPanel` — connected flag, runs ("no workflow runs" when empty), open PRs, and the unauth hint linking the existing gh-accounts / device-flow path (depends T007, T016) — Owner: @python-architect
+- [X] T018 [US2] Integration test (Pilot) in `tests/integration/test_dashboard_panel.py` — GitHub section renders runs + PRs (stubbed service) and the unauth hint state — Owner: @python-tester
 
 **Checkpoint**: US1 + US2 both work independently.
 

@@ -119,13 +119,17 @@ def _init_git_repo(path: Path) -> None:
     )
 
 
-async def _settle_git_section(pilot, app) -> str:
+async def _settle_section(pilot, app, section_id: str) -> str:
     for _ in range(50):
-        body = str(app.query_one("#dash-git", Static).render())
+        body = str(app.query_one(section_id, Static).render())
         if "refreshing" not in body and "loading" not in body:
             return body
         await pilot.pause()
-    return str(app.query_one("#dash-git", Static).render())
+    return str(app.query_one(section_id, Static).render())
+
+
+async def _settle_git_section(pilot, app) -> str:
+    return await _settle_section(pilot, app, "#dash-git")
 
 
 @pytest.mark.asyncio
@@ -149,3 +153,115 @@ async def test_panel_shows_not_a_git_repository_hint(isolated_cache, tmp_project
         body = await _settle_git_section(pilot, app)
 
         assert "not a git repository" in body
+
+
+def _stub_github_section(monkeypatch, section) -> None:
+    from cabal import dashboard_git_service, dashboard_github_service
+    from cabal.models.dashboard import AvailabilityState, GitSection
+
+    monkeypatch.setattr(
+        dashboard_git_service,
+        "collect_git",
+        lambda _project: GitSection(state=AvailabilityState.OK, current_branch="main"),
+    )
+    monkeypatch.setattr(
+        dashboard_github_service,
+        "collect_github",
+        lambda _project, _branch, _remotes: section,
+    )
+
+
+@pytest.mark.asyncio
+async def test_panel_renders_github_runs_and_prs(
+    isolated_cache, tmp_project_dir, monkeypatch
+):
+    from cabal.models.dashboard import (
+        AvailabilityState,
+        GitHubSection,
+        PullRequest,
+        WorkflowRun,
+    )
+
+    section = GitHubSection(
+        state=AvailabilityState.OK,
+        connected=True,
+        owner_repo="o/r",
+        remote_used="origin",
+        runs=[
+            WorkflowRun(
+                name="CI",
+                branch="main",
+                status="completed",
+                conclusion="success",
+                url="https://x/run/1",
+                created_at="2026-06-01",
+            )
+        ],
+        pull_requests=[
+            PullRequest(
+                number=7,
+                title="Add dashboard panel",
+                author="octocat",
+                url="https://x/pr/7",
+            )
+        ],
+    )
+    _stub_github_section(monkeypatch, section)
+    app = _DashboardHost(selected_project=tmp_project_dir)
+
+    async with app.run_test() as pilot:
+        body = await _settle_section(pilot, app, "#dash-github")
+
+        assert "Add dashboard panel" in body
+
+
+@pytest.mark.asyncio
+async def test_panel_renders_github_run_conclusion(
+    isolated_cache, tmp_project_dir, monkeypatch
+):
+    from cabal.models.dashboard import AvailabilityState, GitHubSection, WorkflowRun
+
+    section = GitHubSection(
+        state=AvailabilityState.OK,
+        connected=True,
+        owner_repo="o/r",
+        remote_used="origin",
+        runs=[
+            WorkflowRun(
+                name="CI",
+                branch="main",
+                status="completed",
+                conclusion="success",
+                url="https://x/run/1",
+                created_at="2026-06-01",
+            )
+        ],
+    )
+    _stub_github_section(monkeypatch, section)
+    app = _DashboardHost(selected_project=tmp_project_dir)
+
+    async with app.run_test() as pilot:
+        body = await _settle_section(pilot, app, "#dash-github")
+
+        assert "success" in body
+
+
+@pytest.mark.asyncio
+async def test_panel_shows_github_unauth_hint(
+    isolated_cache, tmp_project_dir, monkeypatch
+):
+    from cabal.models.dashboard import AvailabilityState, GitHubSection
+
+    section = GitHubSection(
+        state=AvailabilityState.NOT_AUTHED,
+        owner_repo="o/r",
+        remote_used="origin",
+        hint="not authenticated — run `gh auth login`",
+    )
+    _stub_github_section(monkeypatch, section)
+    app = _DashboardHost(selected_project=tmp_project_dir)
+
+    async with app.run_test() as pilot:
+        body = await _settle_section(pilot, app, "#dash-github")
+
+        assert "gh auth login" in body

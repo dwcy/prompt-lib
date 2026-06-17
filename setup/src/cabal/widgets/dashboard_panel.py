@@ -132,6 +132,17 @@ class DashboardPanel(Widget):
         section = collect_git(project)
         self.app.call_from_thread(self._apply_section, "git", section)
 
+    def _fetch_github(self) -> None:
+        project = self._resolve_project()
+        if project is None:
+            return
+        from cabal.dashboard_git_service import collect_git
+        from cabal.dashboard_github_service import collect_github
+
+        git = collect_git(project)
+        section = collect_github(project, git.current_branch, git.remotes)
+        self.app.call_from_thread(self._apply_section, "github", section)
+
     def _apply_section(self, name: str, section) -> None:
         if self._snapshot is None:
             self._snapshot = self._default_snapshot()
