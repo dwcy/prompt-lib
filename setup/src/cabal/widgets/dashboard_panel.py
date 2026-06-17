@@ -87,30 +87,44 @@ class DashboardPanel(Widget):
             yield Static(_LOADING, id=f"dash-{name}", classes="dash-section-body")
 
     def on_mount(self) -> None:
-        project = self._resolve_project()
-        if project is None:
-            self._paint_placeholder()
-            return
-        cached = load_entry(self._cache_key(project))
-        if cached is not None:
-            restored = DashboardSnapshot.from_cached(cached)
-            if restored is not None:
-                self._snapshot = restored
-                self._paint_all()
         self.refresh_dashboard()
 
     def refresh_dashboard(self) -> None:
         project = self._resolve_project()
         if project is None:
+            self._snapshot = None
             self._paint_placeholder()
             return
+        self._rescope_to(project)
+        warm = self._snapshot is not None
         for name in SECTIONS:
             fetcher = getattr(self, f"_fetch_{name}", None)
             if callable(fetcher):
-                self.query_one(f"#dash-{name}", Static).update(
-                    Text.from_markup(_REFRESHING)
-                )
+                if not warm:
+                    self.query_one(f"#dash-{name}", Static).update(
+                        Text.from_markup(_REFRESHING)
+                    )
                 self.run_worker(fetcher, thread=True, exclusive=True, group=name)
+
+    def _rescope_to(self, project: Path) -> None:
+        """Re-key the cache to `project`; reset + repaint cached snapshot on project change.
+
+        Guarantees C-P4: switching the selected project never shows the previous
+        project's data. When the live snapshot belongs to a different project (or none),
+        clear it, paint all four sections to "loading…", then paint this project's cached
+        snapshot if one exists — all before any worker is dispatched.
+        """
+        target = str(project)
+        if self._snapshot is not None and self._snapshot.project_path == target:
+            return
+        self._snapshot = None
+        self._paint_loading()
+        cached = load_entry(self._cache_key(project))
+        if cached is not None:
+            restored = DashboardSnapshot.from_cached(cached)
+            if restored is not None and restored.project_path == target:
+                self._snapshot = restored
+                self._paint_all()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "dash-refresh":
@@ -130,7 +144,7 @@ class DashboardPanel(Widget):
         from cabal.dashboard_git_service import collect_git
 
         section = collect_git(project)
-        self.app.call_from_thread(self._apply_section, "git", section)
+        self.app.call_from_thread(self._apply_section, "git", section, str(project))
 
     def _fetch_github(self) -> None:
         project = self._resolve_project()
@@ -141,18 +155,19 @@ class DashboardPanel(Widget):
 
         git = collect_git(project)
         section = collect_github(project, git.current_branch, git.remotes)
-        self.app.call_from_thread(self._apply_section, "github", section)
+        self.app.call_from_thread(self._apply_section, "github", section, str(project))
 
-    def _apply_section(self, name: str, section) -> None:
+    def _apply_section(self, name: str, section, owner: str | None = None) -> None:
+        project = self._resolve_project()
+        if project is None or (owner is not None and owner != str(project)):
+            return
         if self._snapshot is None:
             self._snapshot = self._default_snapshot()
         setattr(self._snapshot, name, section)
         self.query_one(f"#dash-{name}", Static).update(
             self._section_text(name, section)
         )
-        project = self._resolve_project()
-        if project is not None:
-            save_entry(self._cache_key(project), self._snapshot.to_cacheable())
+        save_entry(self._cache_key(project), self._snapshot.to_cacheable())
 
     def _resolve_project(self) -> Path | None:
         selected = getattr(self.app, "selected_project", None)
@@ -180,6 +195,10 @@ class DashboardPanel(Widget):
             self.query_one(f"#dash-{name}", Static).update(
                 Text.from_markup(_PLACEHOLDER)
             )
+
+    def _paint_loading(self) -> None:
+        for name in SECTIONS:
+            self.query_one(f"#dash-{name}", Static).update(Text.from_markup(_LOADING))
 
     def _paint_all(self) -> None:
         if self._snapshot is None:

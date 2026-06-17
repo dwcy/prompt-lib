@@ -53,22 +53,22 @@ def collect_github(
             remote_used=remote.name,
         )
 
-    if not _is_authed():
-        return GitHubSection(
-            state=AvailabilityState.NOT_AUTHED,
-            hint=_HINT_NOT_AUTHED,
-            owner_repo=owner_repo,
-            remote_used=remote.name,
-        )
-
-    if owner_repo is None:
-        return GitHubSection(
-            state=AvailabilityState.ERROR,
-            hint=_HINT_NO_REMOTE,
-            remote_used=remote.name,
-        )
-
     try:
+        if not _is_authed():
+            return GitHubSection(
+                state=AvailabilityState.NOT_AUTHED,
+                hint=_HINT_NOT_AUTHED,
+                owner_repo=owner_repo,
+                remote_used=remote.name,
+            )
+
+        if owner_repo is None:
+            return GitHubSection(
+                state=AvailabilityState.ERROR,
+                hint=_HINT_NO_REMOTE,
+                remote_used=remote.name,
+            )
+
         runs = _collect_runs(owner_repo, current_branch)
         pull_requests = _collect_pull_requests(owner_repo)
     except subprocess.TimeoutExpired:

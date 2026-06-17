@@ -6,8 +6,10 @@ placeholder with no workers started (C-P-T4). Later story phases append here.
 
 from __future__ import annotations
 
+import json
 import shutil
 import subprocess
+import threading
 from pathlib import Path
 
 import pytest
@@ -265,3 +267,156 @@ async def test_panel_shows_github_unauth_hint(
         body = await _settle_section(pilot, app, "#dash-github")
 
         assert "gh auth login" in body
+
+
+def _cache_key_for(project: Path) -> str:
+    import hashlib
+
+    from cabal.widgets.dashboard_panel import CACHE_PREFIX
+
+    digest = hashlib.sha1(str(project).encode("utf-8")).hexdigest()[:16]
+    return f"{CACHE_PREFIX}{digest}"
+
+
+def _seed_cache(project: Path, branch: str, supabase_ref: str = "CACHED_REF") -> None:
+    from cabal.models.dashboard import (
+        AvailabilityState,
+        DashboardSnapshot,
+        GitHubSection,
+        GitSection,
+        SupabaseSection,
+        VercelSection,
+    )
+
+    snapshot = DashboardSnapshot(
+        project_path=str(project),
+        captured_at="2026-06-01T00:00:00+00:00",
+        git=GitSection(state=AvailabilityState.OK, current_branch=branch),
+        github=GitHubSection(state=AvailabilityState.NOT_AUTHED),
+        supabase=SupabaseSection(state=AvailabilityState.OK, project_ref=supabase_ref),
+        vercel=VercelSection(state=AvailabilityState.NOT_LINKED),
+    )
+    widget_cache.save_entry(_cache_key_for(project), snapshot.to_cacheable())
+
+
+@pytest.mark.asyncio
+async def test_panel_paints_cached_section_before_workers_finish(
+    isolated_cache, tmp_project_dir, monkeypatch
+):
+    from cabal import dashboard_git_service
+
+    _seed_cache(tmp_project_dir, "cached-branch-xyz", supabase_ref="CACHED_REF_42")
+    gate = threading.Event()
+
+    def blocked_collect_git(_project):
+        gate.wait(timeout=5)
+        from cabal.models.dashboard import AvailabilityState, GitSection
+
+        return GitSection(state=AvailabilityState.OK, current_branch="live-branch")
+
+    monkeypatch.setattr(dashboard_git_service, "collect_git", blocked_collect_git)
+    app = _DashboardHost(selected_project=tmp_project_dir)
+
+    try:
+        async with app.run_test() as pilot:
+            await pilot.pause()
+
+            git_body = str(app.query_one("#dash-git", Static).render())
+
+            assert "cached-branch-xyz" in git_body and "refreshing" not in git_body
+    finally:
+        gate.set()
+
+
+@pytest.mark.asyncio
+async def test_panel_isolates_failing_git_section_from_github(
+    isolated_cache, tmp_project_dir, monkeypatch
+):
+    from cabal import dashboard_git_service, dashboard_github_service
+    from cabal.models.dashboard import AvailabilityState, GitHubSection, GitSection
+
+    monkeypatch.setattr(
+        dashboard_git_service,
+        "collect_git",
+        lambda _project: GitSection(state=AvailabilityState.ERROR, hint="git blew up"),
+    )
+    monkeypatch.setattr(
+        dashboard_github_service,
+        "collect_github",
+        lambda _project, _branch, _remotes: GitHubSection(
+            state=AvailabilityState.OK, connected=True, owner_repo="o/r"
+        ),
+    )
+    app = _DashboardHost(selected_project=tmp_project_dir)
+
+    async with app.run_test() as pilot:
+        git_body = await _settle_section(pilot, app, "#dash-git")
+        github_body = await _settle_section(pilot, app, "#dash-github")
+
+        assert "git blew up" in git_body and "o/r" in github_body
+
+
+@pytest.mark.asyncio
+async def test_panel_rescope_to_new_project_drops_previous_branch(
+    isolated_cache, monkeypatch, tmp_path
+):
+    from cabal import dashboard_git_service
+    from cabal.models.dashboard import AvailabilityState, GitSection
+
+    project_a = tmp_path / "proj-a"
+    project_b = tmp_path / "proj-b"
+    project_a.mkdir()
+    project_b.mkdir()
+    branches = {str(project_a): "aaa", str(project_b): "bbb"}
+    monkeypatch.setattr(
+        dashboard_git_service,
+        "collect_git",
+        lambda project: GitSection(
+            state=AvailabilityState.OK, current_branch=branches[str(project)]
+        ),
+    )
+
+    app_a = _DashboardHost(selected_project=project_a)
+    async with app_a.run_test() as pilot:
+        await _settle_section(pilot, app_a, "#dash-git")
+
+    app_b = _DashboardHost(selected_project=project_b)
+    async with app_b.run_test() as pilot:
+        body_b = await _settle_section(pilot, app_b, "#dash-git")
+
+        assert "aaa" not in body_b and "bbb" in body_b
+
+
+@pytest.mark.asyncio
+async def test_panel_cache_file_never_contains_access_tokens(
+    isolated_cache, tmp_project_dir, monkeypatch
+):
+    from cabal import dashboard_git_service, dashboard_github_service
+    from cabal.models.dashboard import (
+        AvailabilityState,
+        GitHubSection,
+        GitSection,
+    )
+
+    monkeypatch.setenv("SUPABASE_ACCESS_TOKEN", "sbp_sentinel_supabase_999")
+    monkeypatch.setenv("VERCEL_TOKEN", "vrc_sentinel_vercel_888")
+    monkeypatch.setattr(
+        dashboard_git_service,
+        "collect_git",
+        lambda _project: GitSection(state=AvailabilityState.OK, current_branch="main"),
+    )
+    monkeypatch.setattr(
+        dashboard_github_service,
+        "collect_github",
+        lambda _project, _branch, _remotes: GitHubSection(
+            state=AvailabilityState.OK, connected=True, owner_repo="o/r"
+        ),
+    )
+    app = _DashboardHost(selected_project=tmp_project_dir)
+
+    async with app.run_test() as pilot:
+        await _settle_section(pilot, app, "#dash-git")
+        await _settle_section(pilot, app, "#dash-github")
+        cache_text = (isolated_cache / "cache.json").read_text(encoding="utf-8")
+
+        assert "sentinel" not in cache_text

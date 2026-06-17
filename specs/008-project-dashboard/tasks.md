@@ -91,15 +91,15 @@ tasks that touch different files and have no incomplete-task dependency.
 
 ## Phase 5: User Story 5 - Fast, non-blocking refresh (Priority: P2)
 
-**Status**: ⬜ Pending (0/4 — T019–T022)
+**Status**: ✅ Complete (4/4 — T019–T022) — also fixed warm-cache paint clobber (FR-050) + gh auth-status timeout guard; closed analyze finding C2 (git ERROR/TIMEOUT tests)
 **Goal**: The dashboard paints from cache instantly, refreshes in the background, re-scopes on project change, and isolates per-section failures — with a manual refresh control.
 
 **Independent Test**: Warm-cache mount paints last-known values without awaiting workers; a failing section shows only its own error; switching projects re-keys the cache; `Ctrl+D` re-fetches all sections.
 
-- [ ] T019 [US5] Implement `setup/src/cabal/dashboard_service.py::build_snapshot(project, captured_at)` — call the available collectors, assemble a `DashboardSnapshot`; wire `DashboardPanel.refresh_dashboard()` to dispatch all section workers and re-key the cache by project path (FR-050, FR-052, C-P4; depends T014, T017) — Owner: @python-architect
-- [ ] T020 [US5] Save fresh snapshots via `widget_cache.save_entry(key, snapshot.to_cacheable())` (no token fields) and ensure `Ctrl+D` / `action_refresh_dashboard` triggers every wired worker without blocking the UI thread (FR-051, FR-054, C-P7) — Owner: @python-architect
-- [ ] T021 [P] [US5] Integration test (Pilot) in `tests/integration/test_dashboard_panel.py` — warm-cache first paint without awaiting workers (C-P1), a worker exception isolates to its section while others render (C-P3), and a project change re-keys the cache (C-P4) — Owner: @python-tester
-- [ ] T022 [P] [US5] Regression test in `tests/integration/test_dashboard_panel.py` — after a refresh with tokens set in env, assert no access-token value appears in `~/.cabal/cache.json` (SC-005, FR-054) — Owner: @python-tester
+- [X] T019 [US5] (re-scope + refresh-all implemented in the panel per the I1 design note; no separate `dashboard_service.py`) Implement `setup/src/cabal/dashboard_service.py::build_snapshot(project, captured_at)` — call the available collectors, assemble a `DashboardSnapshot`; wire `DashboardPanel.refresh_dashboard()` to dispatch all section workers and re-key the cache by project path (FR-050, FR-052, C-P4; depends T014, T017) — Owner: @python-architect
+- [X] T020 [US5] Save fresh snapshots via `widget_cache.save_entry(key, snapshot.to_cacheable())` (no token fields) and ensure `Ctrl+D` / `action_refresh_dashboard` triggers every wired worker without blocking the UI thread (FR-051, FR-054, C-P7) — Owner: @python-architect
+- [X] T021 [P] [US5] Integration test (Pilot) in `tests/integration/test_dashboard_panel.py` — warm-cache first paint without awaiting workers (C-P1), a worker exception isolates to its section while others render (C-P3), and a project change re-keys the cache (C-P4) — Owner: @python-tester
+- [X] T022 [P] [US5] Regression test in `tests/integration/test_dashboard_panel.py` — after a refresh with tokens set in env, assert no access-token value appears in `~/.cabal/cache.json` (SC-005, FR-054) — Owner: @python-tester
 
 **Checkpoint**: Cross-cutting refresh/caching/isolation behavior verified against real sections.
 

@@ -173,3 +173,48 @@ def test_collect_git_detached_head_reports_short_sha_as_branch(stub_git, tmp_pat
     section = collect_git(tmp_path)
 
     assert section.current_branch == "abc1234"
+
+
+def test_collect_git_subprocess_timeout_returns_timeout_state(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        dashboard_git_service.shutil, "which", lambda _name: "/usr/bin/git"
+    )
+
+    def fake_run(argv, *args, **kwargs):
+        raise subprocess.TimeoutExpired(cmd=argv, timeout=10)
+
+    monkeypatch.setattr(dashboard_git_service.subprocess, "run", fake_run)
+
+    section = collect_git(tmp_path)
+
+    assert section.state == AvailabilityState.TIMEOUT
+
+
+def test_collect_git_os_error_returns_error_state(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        dashboard_git_service.shutil, "which", lambda _name: "/usr/bin/git"
+    )
+
+    def fake_run(argv, *args, **kwargs):
+        raise OSError("boom")
+
+    monkeypatch.setattr(dashboard_git_service.subprocess, "run", fake_run)
+
+    section = collect_git(tmp_path)
+
+    assert section.state == AvailabilityState.ERROR
+
+
+def test_collect_git_os_error_hint_carries_message(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        dashboard_git_service.shutil, "which", lambda _name: "/usr/bin/git"
+    )
+
+    def fake_run(argv, *args, **kwargs):
+        raise OSError("boom")
+
+    monkeypatch.setattr(dashboard_git_service.subprocess, "run", fake_run)
+
+    section = collect_git(tmp_path)
+
+    assert "boom" in section.hint
