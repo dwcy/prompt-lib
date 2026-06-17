@@ -107,15 +107,15 @@ tasks that touch different files and have no incomplete-task dependency.
 
 ## Phase 6: User Story 3 - Supabase stats + links (Priority: P3)
 
-**Status**: ⬜ Pending (0/4 — T023–T026)
+**Status**: ✅ Complete (4/4 — T023–T026) — v1 limitation: `plan_name`/`github_connected` left None (org/subscription endpoint shape uncertain; graceful partial enrichment per research D4)
 **Goal**: The Supabase section shows linked-project baseline (ref, last migration, db location, dashboard + Schema Visualizer links) and, when `SUPABASE_ACCESS_TOKEN` is set, status/region/plan/last-backup/github-connected/members — degrading per AvailabilityState.
 
 **Independent Test**: Linked project + `supabase` installed → baseline + clickable links; with token → enriched rows; remove token → enrich hint, baseline still shown; no link file → collapsed "no linked Supabase project".
 
-- [ ] T023 [P] [US3] Unit-test `collect_supabase` in `tests/unit/test_dashboard_services.py` — not-linked / no-CLI / baseline, and enrich states TOKEN_MISSING / TOKEN_REJECTED (401/403) / TIMEOUT / OK with CLI + management-API HTTP stubbed (no network); assert no token in the returned section (FR-030…FR-034) — Owner: @python-tester
-- [ ] T024 [US3] Implement `setup/src/cabal/dashboard_supabase_service.py::collect_supabase(project)` — link via `dashboard_links.find_supabase_ref`, baseline (last migration, db location, derived dashboard + schema URLs), enrich via Supabase Management API GET (`urllib.request`, `SUPABASE_ACCESS_TOKEN` from env only, bounded timeout); never raises, never returns the token (contracts §dashboard_supabase_service, research D4/D8/D9) — Owner: @python-architect
-- [ ] T025 [US3] Wire the supabase worker + render `SupabaseSection` in `DashboardPanel` — baseline + enriched rows, clickable dashboard/Schema-Visualizer links via `[@click=...]` + copyable URL (research D7), `enrich_hint` when token missing/rejected; register collector in `build_snapshot` (depends T019, T024) — Owner: @python-architect
-- [ ] T026 [US3] Integration test (Pilot) in `tests/integration/test_dashboard_panel.py` — Supabase section renders baseline, token-enriched, and collapsed not-linked states (stubbed service) — Owner: @python-tester
+- [X] T023 [P] [US3] Unit-test `collect_supabase` in `tests/unit/test_dashboard_services.py` — not-linked / no-CLI / baseline, and enrich states TOKEN_MISSING / TOKEN_REJECTED (401/403) / TIMEOUT / OK with CLI + management-API HTTP stubbed (no network); assert no token in the returned section (FR-030…FR-034) — Owner: @python-tester
+- [X] T024 [US3] Implement `setup/src/cabal/dashboard_supabase_service.py::collect_supabase(project)` — link via `dashboard_links.find_supabase_ref`, baseline (last migration, db location, derived dashboard + schema URLs), enrich via Supabase Management API GET (`urllib.request`, `SUPABASE_ACCESS_TOKEN` from env only, bounded timeout); never raises, never returns the token (contracts §dashboard_supabase_service, research D4/D8/D9) — Owner: @python-architect
+- [X] T025 [US3] Wire the supabase worker + render `SupabaseSection` in `DashboardPanel` — baseline + enriched rows, clickable dashboard/Schema-Visualizer links via `[@click=...]` + copyable URL (research D7), `enrich_hint` when token missing/rejected; register collector in `build_snapshot` (depends T019, T024) — Owner: @python-architect
+- [X] T026 [US3] Integration test (Pilot) in `tests/integration/test_dashboard_panel.py` — Supabase section renders baseline, token-enriched, and collapsed not-linked states (stubbed service) — Owner: @python-tester
 
 **Checkpoint**: US1 + US2 + US5 + US3 functional.
 

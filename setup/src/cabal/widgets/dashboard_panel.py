@@ -157,6 +157,17 @@ class DashboardPanel(Widget):
         section = collect_github(project, git.current_branch, git.remotes)
         self.app.call_from_thread(self._apply_section, "github", section, str(project))
 
+    def _fetch_supabase(self) -> None:
+        project = self._resolve_project()
+        if project is None:
+            return
+        from cabal.dashboard_supabase_service import collect_supabase
+
+        section = collect_supabase(project)
+        self.app.call_from_thread(
+            self._apply_section, "supabase", section, str(project)
+        )
+
     def _apply_section(self, name: str, section, owner: str | None = None) -> None:
         project = self._resolve_project()
         if project is None or (owner is not None and owner != str(project)):
@@ -306,6 +317,9 @@ class DashboardPanel(Widget):
         ):
             if value:
                 lines.append(f"[bold]{label}:[/bold] {value}")
+        if section.github_connected is not None:
+            connected = "yes" if section.github_connected else "no"
+            lines.append(f"[bold]github connected:[/bold] {connected}")
         for member in section.members:
             role = f" — {member.role}" if member.role else ""
             lines.append(f"  [dim]member:[/dim] {member.name}{role}")

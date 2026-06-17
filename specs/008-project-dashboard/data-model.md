@@ -83,7 +83,7 @@ a non-None `current_branch`.
 | `project_ref` | `str \| None` | linked project ref |
 | `dashboard_url` | `str \| None` | `https://supabase.com/dashboard/project/<ref>` |
 | `schema_visualizer_url` | `str \| None` | `.../project/<ref>/database/schemas` |
-| `db_location` | `str \| None` | database connection location / host |
+| `db_location` | `str \| None` | database connection host, derived as `db.<ref>.supabase.co` (Supabase direct connection host) |
 | `last_migration` | `str \| None` | last applied migration id/name |
 | `status` | `str \| None` | project status (token-enriched) |
 | `region` | `str \| None` | token-enriched |

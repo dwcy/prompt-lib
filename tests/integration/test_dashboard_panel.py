@@ -420,3 +420,109 @@ async def test_panel_cache_file_never_contains_access_tokens(
         cache_text = (isolated_cache / "cache.json").read_text(encoding="utf-8")
 
         assert "sentinel" not in cache_text
+
+
+def _stub_supabase_section(monkeypatch, section) -> None:
+    from cabal import dashboard_supabase_service
+
+    monkeypatch.setattr(
+        dashboard_supabase_service, "collect_supabase", lambda _project: section
+    )
+
+
+@pytest.mark.asyncio
+async def test_panel_renders_supabase_baseline_ref(
+    isolated_cache, tmp_project_dir, monkeypatch
+):
+    from cabal.models.dashboard import AvailabilityState, SupabaseSection
+
+    section = SupabaseSection(
+        state=AvailabilityState.OK,
+        project_ref="abcdefgh",
+        dashboard_url="https://supabase.com/dashboard/project/abcdefgh",
+        schema_visualizer_url="https://supabase.com/dashboard/project/abcdefgh/database/schemas",
+        db_location="db.abcdefgh.supabase.co",
+        last_migration="0001_init",
+        enrich_state=AvailabilityState.TOKEN_MISSING,
+        enrich_hint="set SUPABASE_ACCESS_TOKEN for plan/region/members/backups",
+    )
+    _stub_supabase_section(monkeypatch, section)
+    app = _DashboardHost(selected_project=tmp_project_dir)
+
+    async with app.run_test() as pilot:
+        body = await _settle_section(pilot, app, "#dash-supabase")
+
+        assert "abcdefgh" in body
+
+
+@pytest.mark.asyncio
+async def test_panel_renders_supabase_baseline_enrich_hint(
+    isolated_cache, tmp_project_dir, monkeypatch
+):
+    from cabal.models.dashboard import AvailabilityState, SupabaseSection
+
+    section = SupabaseSection(
+        state=AvailabilityState.OK,
+        project_ref="abcdefgh",
+        dashboard_url="https://supabase.com/dashboard/project/abcdefgh",
+        db_location="db.abcdefgh.supabase.co",
+        last_migration="0001_init",
+        enrich_state=AvailabilityState.TOKEN_MISSING,
+        enrich_hint="set SUPABASE_ACCESS_TOKEN for plan/region/members/backups",
+    )
+    _stub_supabase_section(monkeypatch, section)
+    app = _DashboardHost(selected_project=tmp_project_dir)
+
+    async with app.run_test() as pilot:
+        body = await _settle_section(pilot, app, "#dash-supabase")
+
+        assert "set SUPABASE_ACCESS_TOKEN" in body
+
+
+@pytest.mark.asyncio
+async def test_panel_renders_supabase_enriched_region(
+    isolated_cache, tmp_project_dir, monkeypatch
+):
+    from cabal.models.dashboard import (
+        AvailabilityState,
+        ProjectMember,
+        SupabaseSection,
+    )
+
+    section = SupabaseSection(
+        state=AvailabilityState.OK,
+        project_ref="abcdefgh",
+        dashboard_url="https://supabase.com/dashboard/project/abcdefgh",
+        db_location="db.abcdefgh.supabase.co",
+        status="ACTIVE_HEALTHY",
+        region="us-east-1",
+        plan_name="pro",
+        members=[ProjectMember(name="octocat", role="Owner")],
+        enrich_state=AvailabilityState.OK,
+    )
+    _stub_supabase_section(monkeypatch, section)
+    app = _DashboardHost(selected_project=tmp_project_dir)
+
+    async with app.run_test() as pilot:
+        body = await _settle_section(pilot, app, "#dash-supabase")
+
+        assert "us-east-1" in body
+
+
+@pytest.mark.asyncio
+async def test_panel_renders_supabase_not_linked_hint(
+    isolated_cache, tmp_project_dir, monkeypatch
+):
+    from cabal.models.dashboard import AvailabilityState, SupabaseSection
+
+    section = SupabaseSection(
+        state=AvailabilityState.NOT_LINKED,
+        hint="no linked Supabase project",
+    )
+    _stub_supabase_section(monkeypatch, section)
+    app = _DashboardHost(selected_project=tmp_project_dir)
+
+    async with app.run_test() as pilot:
+        body = await _settle_section(pilot, app, "#dash-supabase")
+
+        assert "no linked Supabase project" in body
