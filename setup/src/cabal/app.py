@@ -19,6 +19,9 @@ from textual.binding import Binding
 from cabal.clipboard import read_clipboard
 from cabal.app_widgets import AppCommandsProvider, AppHeader  # noqa: F401  (re-export)
 from cabal.views.claude_info import ClaudeInfoScreen  # noqa: F401
+from cabal.views.codex_conversion import CodexConversionScreen  # noqa: F401
+from cabal.views.codex_local import CodexLocalScreen  # noqa: F401
+from cabal.views.codex_update import CodexUpdateScreen  # noqa: F401
 from cabal.views.env import EnvScreen  # noqa: F401
 from cabal.views.folder_browser import FolderBrowserScreen  # noqa: F401
 from cabal.views.gh_device import GhDeviceFlowScreen  # noqa: F401

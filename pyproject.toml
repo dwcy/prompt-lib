@@ -5,13 +5,13 @@ build-backend = "hatchling.build"
 [project]
 name = "cabal"
 version = "0.1.0"
-description = "Claude Code Setup Wizard — deploy skills, agents, hooks, MCP servers, and project scaffolding from one TUI."
+description = "Claude Code and Codex Setup Wizard — deploy skills, agents, hooks, MCP servers, Codex assets, and project scaffolding from one TUI."
 readme = "setup/src/cabal/README.md"
 requires-python = ">=3.11"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Dawid" }]
-keywords = ["claude-code", "agentic", "wizard", "setup", "textual", "mcp"]
+keywords = ["claude-code", "codex", "agentic", "wizard", "setup", "textual", "mcp"]
 classifiers = [
   "License :: OSI Approved :: MIT License",
   "Environment :: Console :: Curses",

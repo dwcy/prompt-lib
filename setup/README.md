@@ -1,6 +1,6 @@
 # setup/
 
-One-stop entry point for setting up this machine's Claude Code environment.
+One-stop entry point for setting up this machine's Claude Code and Codex environment.
 
 The wizard is published to PyPI as **`cabal`** and bundled into a standalone `.exe`. Three install paths cover every host:
 
@@ -15,7 +15,7 @@ The wizard is published to PyPI as **`cabal`** and bundled into a standalone `.e
 
 ## Primary
 
-**`cabal`** — interactive TUI wizard. Deploys `global/` config to `~/.claude/`, initializes machine env vars, runs drift checks, restores backups, and scaffolds `.claude/` in other projects.
+**`cabal`** — interactive TUI wizard. Deploys `global/` config to `~/.claude/`, deploys `global/codex/` assets to `~/.codex/`, initializes machine env vars, shows inline drift markers, restores backups, and scaffolds `.claude/` or `.agents/` in other projects.
 
 ### Modes
 
@@ -26,6 +26,7 @@ The wizard is published to PyPI as **`cabal`** and bundled into a standalone `.e
 | Doctor | Compare `~/.claude/` against `global/` and report drift (missing, changed, extra files). |
 | Restore | Roll back `~/.claude/settings.json` from a timestamped backup. |
 | Local project setup | In the current cwd: scaffold `.claude/`, pick a `CLAUDE.md` template, apply git repo-init template, run `specify init` to bootstrap Spec Kit (`.specify/`). |
+| Codex setup | Deploy Codex skills to `~/.codex/skills`, scaffold project `.agents/skills`, apply an `AGENTS.md` template, and inspect conversion diffs. |
 | Tools | Install / update optional companion tools (Claude CLI, GitHub CLI, **Specify CLI** for GitHub Spec Kit, `claude-devtools`). Spec Kit's `specify` is installed via `uv tool install` from the upstream git repo and auto-installs `uv` if missing. |
 
 ## Structure

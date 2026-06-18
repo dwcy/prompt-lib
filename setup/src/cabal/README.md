@@ -1,6 +1,6 @@
 # cabal
 
-**Claude Code Setup Wizard.** A Textual TUI that deploys [prompt-lib](https://github.com/dwcy/prompt-lib)'s `global/` tree (skills, agents, hooks, output styles, project templates) into `~/.claude/`, manages MCP servers via `claude mcp`, scaffolds `.claude/` in other projects, and runs drift / restore against your local Claude Code config.
+**Claude Code and Codex Setup Wizard.** A Textual TUI that deploys [prompt-lib](https://github.com/dwcy/prompt-lib)'s `global/` tree into `~/.claude/`, manages MCP servers via `claude mcp`, scaffolds `.claude/` in other projects, and manages curated Codex assets from `global/codex/`.
 
 ## Install
 
@@ -26,6 +26,7 @@ cabal
 | Doctor | Compare `~/.claude/` against the bundled `global/`, report drift. |
 | Restore | Roll back `~/.claude/settings.json` from a timestamped backup. |
 | Local | In another project: scaffold `.claude/`, apply a `CLAUDE.md` template, set up git repo template, optionally `specify init`. |
+| Codex | Deploy `global/codex/` to `~/.codex`, scaffold `.agents/`, and inspect Claude -> Codex conversion diffs. |
 | Tools | Install / update companion CLIs (Claude CLI, GitHub CLI, Specify CLI, claude-devtools). |
 
 ## Naming

@@ -1,0 +1,53 @@
+/* ──────────────────────────────────────────────────────────────────────────
+   Design tokens — drop into the <style> block of an infographic.
+   One accent colour by convention. Swap --accent for the project's brand.
+   ────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* Paper / ink */
+  --paper:    #FAF6EB;      /* primary background */
+  --paper-2:  #F1EBDC;      /* tinted background, axis fills, light pill bg */
+  --ink:      #1A1726;      /* primary text, dark cells */
+  --ink-2:    #5B5468;      /* secondary text, subtitle */
+  --ink-3:    #908A9C;      /* tertiary text, cell footer */
+  --rule:     #D9D3C2;      /* card borders, axis lines */
+  --rule-2:   #EAE3D1;      /* internal dividers (header bottom-rule) */
+
+  /* Accent (swap this for the project's brand) */
+  --accent:       #CC006B;
+  --accent-soft:  #FBE7F0;
+
+  /* Optional secondary accents — use sparingly */
+  --teal:   #0F4A40;
+  --amber:  #B8870E;
+}
+
+/* ── Reset ─────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; }
+html { color-scheme: light; }
+
+body {
+  font-family: "Inter", system-ui, sans-serif;
+  color: var(--ink);
+  background: #2F2A3B;         /* dark wash around the floating sheet */
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+/* ── Typography hooks ──────────────────────────────────────────────────── */
+.cell {
+  font-feature-settings: "tnum" 1, "ss01" 1;
+}
+
+/* Recommended Google Fonts import (in <head>):
+
+   <link rel="preconnect" href="https://fonts.googleapis.com">
+   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+
+   - Inter        — body
+   - Space Grotesk — titles, big numbers
+   - JetBrains Mono — labels, idx, badge text, footer, paths
+*/

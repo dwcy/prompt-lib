@@ -1,0 +1,713 @@
+{
+    "version":  1,
+    "generated_by":  "cabal codex-setup curated conversion",
+    "entries":  [
+                    {
+                        "source":  "global/skills/add-mcp.md",
+                        "output":  "global/codex/skills/add-mcp/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Flat Claude slash skill converted to Codex folder skill."
+                    },
+                    {
+                        "source":  "global/skills/commit.md",
+                        "output":  "global/codex/skills/commit/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Flat Claude slash skill converted to Codex folder skill."
+                    },
+                    {
+                        "source":  "global/skills/css.md",
+                        "output":  "global/codex/skills/css/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Flat Claude slash skill converted to Codex folder skill."
+                    },
+                    {
+                        "source":  "global/skills/design.md",
+                        "output":  "global/codex/skills/design/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Flat Claude slash skill converted to Codex folder skill."
+                    },
+                    {
+                        "source":  "global/skills/docs.md",
+                        "output":  "global/codex/skills/docs/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Flat Claude slash skill converted to Codex folder skill."
+                    },
+                    {
+                        "source":  "global/skills/executing-plans.md",
+                        "output":  "global/codex/skills/executing-plans/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Flat Claude slash skill converted to Codex folder skill."
+                    },
+                    {
+                        "source":  "global/skills/finishing-a-development-branch.md",
+                        "output":  "global/codex/skills/finishing-a-development-branch/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Flat Claude slash skill converted to Codex folder skill."
+                    },
+                    {
+                        "source":  "global/skills/git-restore-identity.md",
+                        "output":  "global/codex/skills/git-restore-identity/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Flat Claude slash skill converted to Codex folder skill."
+                    },
+                    {
+                        "source":  "global/skills/git.md",
+                        "output":  "global/codex/skills/git/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Flat Claude slash skill converted to Codex folder skill."
+                    },
+                    {
+                        "source":  "global/skills/github-audit.md",
+                        "output":  "global/codex/skills/github-audit/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Flat Claude slash skill converted to Codex folder skill."
+                    },
+                    {
+                        "source":  "global/skills/github-scaffold.md",
+                        "output":  "global/codex/skills/github-scaffold/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Flat Claude slash skill converted to Codex folder skill."
+                    },
+                    {
+                        "source":  "global/skills/lovable-cleanup.md",
+                        "output":  "global/codex/skills/lovable-cleanup/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Flat Claude slash skill converted to Codex folder skill."
+                    },
+                    {
+                        "source":  "global/skills/orchestrate.md",
+                        "output":  "global/codex/skills/orchestrate/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Flat Claude slash skill converted to Codex folder skill."
+                    },
+                    {
+                        "source":  "global/skills/pr.md",
+                        "output":  "global/codex/skills/pr/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Flat Claude slash skill converted to Codex folder skill."
+                    },
+                    {
+                        "source":  "global/skills/react-init.md",
+                        "output":  "global/codex/skills/react-init/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Flat Claude slash skill converted to Codex folder skill."
+                    },
+                    {
+                        "source":  "global/skills/react-perf.md",
+                        "output":  "global/codex/skills/react-perf/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Flat Claude slash skill converted to Codex folder skill."
+                    },
+                    {
+                        "source":  "global/skills/react-review.md",
+                        "output":  "global/codex/skills/react-review/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Flat Claude slash skill converted to Codex folder skill."
+                    },
+                    {
+                        "source":  "global/skills/react-safe.md",
+                        "output":  "global/codex/skills/react-safe/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Flat Claude slash skill converted to Codex folder skill."
+                    },
+                    {
+                        "source":  "global/skills/react-test.md",
+                        "output":  "global/codex/skills/react-test/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Flat Claude slash skill converted to Codex folder skill."
+                    },
+                    {
+                        "source":  "global/skills/readme.md",
+                        "output":  "global/codex/skills/readme/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Flat Claude slash skill converted to Codex folder skill."
+                    },
+                    {
+                        "source":  "global/skills/review.md",
+                        "output":  "global/codex/skills/review/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Flat Claude slash skill converted to Codex folder skill."
+                    },
+                    {
+                        "source":  "global/skills/skill-create.md",
+                        "output":  "global/codex/skills/skill-create/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Flat Claude slash skill converted to Codex folder skill."
+                    },
+                    {
+                        "source":  "global/skills/ui-component.md",
+                        "output":  "global/codex/skills/ui-component/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Flat Claude slash skill converted to Codex folder skill."
+                    },
+                    {
+                        "source":  "global/skills/using-git-worktrees.md",
+                        "output":  "global/codex/skills/using-git-worktrees/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Flat Claude slash skill converted to Codex folder skill."
+                    },
+                    {
+                        "source":  "global/skills/css-guide/SKILL.md",
+                        "output":  "global/codex/skills/css-guide/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Folder skill copied with resources and Codex path adjustments."
+                    },
+                    {
+                        "source":  "global/skills/infographics-design/SKILL.md",
+                        "output":  "global/codex/skills/infographics-design/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Folder skill copied with resources and Codex path adjustments."
+                    },
+                    {
+                        "source":  ".claude/skills/commit.md",
+                        "output":  "global/codex/skills/commit/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Project-local Claude skill converted to Codex folder skill."
+                    },
+                    {
+                        "source":  ".claude/skills/executing-plans.md",
+                        "output":  "global/codex/skills/executing-plans/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Project-local Claude skill converted to Codex folder skill."
+                    },
+                    {
+                        "source":  ".claude/skills/pr.md",
+                        "output":  "global/codex/skills/pr/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Project-local Claude skill converted to Codex folder skill."
+                    },
+                    {
+                        "source":  ".claude/skills/review.md",
+                        "output":  "global/codex/skills/review/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Project-local Claude skill converted to Codex folder skill."
+                    },
+                    {
+                        "source":  ".claude/skills/standup.md",
+                        "output":  "global/codex/skills/standup/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Project-local Claude skill converted to Codex folder skill."
+                    },
+                    {
+                        "source":  ".claude/skills/xlsx.md",
+                        "output":  "global/codex/skills/xlsx/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Project-local Claude skill converted to Codex folder skill."
+                    },
+                    {
+                        "source":  ".claude/skills/self-improvement/SKILL.md",
+                        "output":  "global/codex/skills/self-improvement/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Project-local folder skill copied with resources and Codex path adjustments."
+                    },
+                    {
+                        "source":  ".claude/skills/speckit-analyze/SKILL.md",
+                        "output":  "global/codex/skills/speckit-analyze/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Project-local folder skill copied with resources and Codex path adjustments."
+                    },
+                    {
+                        "source":  ".claude/skills/speckit-checklist/SKILL.md",
+                        "output":  "global/codex/skills/speckit-checklist/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Project-local folder skill copied with resources and Codex path adjustments."
+                    },
+                    {
+                        "source":  ".claude/skills/speckit-clarify/SKILL.md",
+                        "output":  "global/codex/skills/speckit-clarify/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Project-local folder skill copied with resources and Codex path adjustments."
+                    },
+                    {
+                        "source":  ".claude/skills/speckit-constitution/SKILL.md",
+                        "output":  "global/codex/skills/speckit-constitution/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Project-local folder skill copied with resources and Codex path adjustments."
+                    },
+                    {
+                        "source":  ".claude/skills/speckit-git-commit/SKILL.md",
+                        "output":  "global/codex/skills/speckit-git-commit/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Project-local folder skill copied with resources and Codex path adjustments."
+                    },
+                    {
+                        "source":  ".claude/skills/speckit-git-feature/SKILL.md",
+                        "output":  "global/codex/skills/speckit-git-feature/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Project-local folder skill copied with resources and Codex path adjustments."
+                    },
+                    {
+                        "source":  ".claude/skills/speckit-git-initialize/SKILL.md",
+                        "output":  "global/codex/skills/speckit-git-initialize/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Project-local folder skill copied with resources and Codex path adjustments."
+                    },
+                    {
+                        "source":  ".claude/skills/speckit-git-remote/SKILL.md",
+                        "output":  "global/codex/skills/speckit-git-remote/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Project-local folder skill copied with resources and Codex path adjustments."
+                    },
+                    {
+                        "source":  ".claude/skills/speckit-git-validate/SKILL.md",
+                        "output":  "global/codex/skills/speckit-git-validate/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Project-local folder skill copied with resources and Codex path adjustments."
+                    },
+                    {
+                        "source":  ".claude/skills/speckit-implement/SKILL.md",
+                        "output":  "global/codex/skills/speckit-implement/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Project-local folder skill copied with resources and Codex path adjustments."
+                    },
+                    {
+                        "source":  ".claude/skills/speckit-plan/SKILL.md",
+                        "output":  "global/codex/skills/speckit-plan/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Project-local folder skill copied with resources and Codex path adjustments."
+                    },
+                    {
+                        "source":  ".claude/skills/speckit-specify/SKILL.md",
+                        "output":  "global/codex/skills/speckit-specify/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Project-local folder skill copied with resources and Codex path adjustments."
+                    },
+                    {
+                        "source":  ".claude/skills/speckit-tasks/SKILL.md",
+                        "output":  "global/codex/skills/speckit-tasks/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Project-local folder skill copied with resources and Codex path adjustments."
+                    },
+                    {
+                        "source":  ".claude/skills/speckit-taskstoissues/SKILL.md",
+                        "output":  "global/codex/skills/speckit-taskstoissues/SKILL.md",
+                        "kind":  "skill",
+                        "status":  "converted",
+                        "reason":  "Project-local folder skill copied with resources and Codex path adjustments."
+                    },
+                    {
+                        "source":  "global/agents/api-designer.md",
+                        "output":  "global/codex/skills/role-api-designer/SKILL.md",
+                        "kind":  "agent-role",
+                        "status":  "converted",
+                        "reason":  "Claude subagent converted to a Codex role skill; it is not a separate runtime subagent."
+                    },
+                    {
+                        "source":  "global/agents/code-cleaner.md",
+                        "output":  "global/codex/skills/role-code-cleaner/SKILL.md",
+                        "kind":  "agent-role",
+                        "status":  "converted",
+                        "reason":  "Claude subagent converted to a Codex role skill; it is not a separate runtime subagent."
+                    },
+                    {
+                        "source":  "global/agents/code-plan-verifier.md",
+                        "output":  "global/codex/skills/role-code-plan-verifier/SKILL.md",
+                        "kind":  "agent-role",
+                        "status":  "converted",
+                        "reason":  "Claude subagent converted to a Codex role skill; it is not a separate runtime subagent."
+                    },
+                    {
+                        "source":  "global/agents/data-analyst.md",
+                        "output":  "global/codex/skills/role-data-analyst/SKILL.md",
+                        "kind":  "agent-role",
+                        "status":  "converted",
+                        "reason":  "Claude subagent converted to a Codex role skill; it is not a separate runtime subagent."
+                    },
+                    {
+                        "source":  "global/agents/db-architect.md",
+                        "output":  "global/codex/skills/role-db-architect/SKILL.md",
+                        "kind":  "agent-role",
+                        "status":  "converted",
+                        "reason":  "Claude subagent converted to a Codex role skill; it is not a separate runtime subagent."
+                    },
+                    {
+                        "source":  "global/agents/dotnet-architect.md",
+                        "output":  "global/codex/skills/role-dotnet-architect/SKILL.md",
+                        "kind":  "agent-role",
+                        "status":  "converted",
+                        "reason":  "Claude subagent converted to a Codex role skill; it is not a separate runtime subagent."
+                    },
+                    {
+                        "source":  "global/agents/dotnet-tester.md",
+                        "output":  "global/codex/skills/role-dotnet-tester/SKILL.md",
+                        "kind":  "agent-role",
+                        "status":  "converted",
+                        "reason":  "Claude subagent converted to a Codex role skill; it is not a separate runtime subagent."
+                    },
+                    {
+                        "source":  "global/agents/frontend-architect.md",
+                        "output":  "global/codex/skills/role-frontend-architect/SKILL.md",
+                        "kind":  "agent-role",
+                        "status":  "converted",
+                        "reason":  "Claude subagent converted to a Codex role skill; it is not a separate runtime subagent."
+                    },
+                    {
+                        "source":  "global/agents/frontend-css.md",
+                        "output":  "global/codex/skills/role-frontend-css/SKILL.md",
+                        "kind":  "agent-role",
+                        "status":  "converted",
+                        "reason":  "Claude subagent converted to a Codex role skill; it is not a separate runtime subagent."
+                    },
+                    {
+                        "source":  "global/agents/frontend-designer.md",
+                        "output":  "global/codex/skills/role-frontend-designer/SKILL.md",
+                        "kind":  "agent-role",
+                        "status":  "converted",
+                        "reason":  "Claude subagent converted to a Codex role skill; it is not a separate runtime subagent."
+                    },
+                    {
+                        "source":  "global/agents/git-repo-analyst.md",
+                        "output":  "global/codex/skills/role-git-repo-analyst/SKILL.md",
+                        "kind":  "agent-role",
+                        "status":  "converted",
+                        "reason":  "Claude subagent converted to a Codex role skill; it is not a separate runtime subagent."
+                    },
+                    {
+                        "source":  "global/agents/github-config-manager.md",
+                        "output":  "global/codex/skills/role-github-config-manager/SKILL.md",
+                        "kind":  "agent-role",
+                        "status":  "converted",
+                        "reason":  "Claude subagent converted to a Codex role skill; it is not a separate runtime subagent."
+                    },
+                    {
+                        "source":  "global/agents/gitignore-auditor.md",
+                        "output":  "global/codex/skills/role-gitignore-auditor/SKILL.md",
+                        "kind":  "agent-role",
+                        "status":  "converted",
+                        "reason":  "Claude subagent converted to a Codex role skill; it is not a separate runtime subagent."
+                    },
+                    {
+                        "source":  "global/agents/init-project.md",
+                        "output":  "global/codex/skills/role-init-project/SKILL.md",
+                        "kind":  "agent-role",
+                        "status":  "converted",
+                        "reason":  "Claude subagent converted to a Codex role skill; it is not a separate runtime subagent."
+                    },
+                    {
+                        "source":  "global/agents/load-project.md",
+                        "output":  "global/codex/skills/role-load-project/SKILL.md",
+                        "kind":  "agent-role",
+                        "status":  "converted",
+                        "reason":  "Claude subagent converted to a Codex role skill; it is not a separate runtime subagent."
+                    },
+                    {
+                        "source":  "global/agents/owasp-security-reviewer.md",
+                        "output":  "global/codex/skills/role-owasp-security-reviewer/SKILL.md",
+                        "kind":  "agent-role",
+                        "status":  "converted",
+                        "reason":  "Claude subagent converted to a Codex role skill; it is not a separate runtime subagent."
+                    },
+                    {
+                        "source":  "global/agents/pi-arduino-architect.md",
+                        "output":  "global/codex/skills/role-pi-arduino-architect/SKILL.md",
+                        "kind":  "agent-role",
+                        "status":  "converted",
+                        "reason":  "Claude subagent converted to a Codex role skill; it is not a separate runtime subagent."
+                    },
+                    {
+                        "source":  "global/agents/python-architect.md",
+                        "output":  "global/codex/skills/role-python-architect/SKILL.md",
+                        "kind":  "agent-role",
+                        "status":  "converted",
+                        "reason":  "Claude subagent converted to a Codex role skill; it is not a separate runtime subagent."
+                    },
+                    {
+                        "source":  "global/agents/python-tester.md",
+                        "output":  "global/codex/skills/role-python-tester/SKILL.md",
+                        "kind":  "agent-role",
+                        "status":  "converted",
+                        "reason":  "Claude subagent converted to a Codex role skill; it is not a separate runtime subagent."
+                    },
+                    {
+                        "source":  "global/agents/react-architect.md",
+                        "output":  "global/codex/skills/role-react-architect/SKILL.md",
+                        "kind":  "agent-role",
+                        "status":  "converted",
+                        "reason":  "Claude subagent converted to a Codex role skill; it is not a separate runtime subagent."
+                    },
+                    {
+                        "source":  "global/agents/requirements-analyst.md",
+                        "output":  "global/codex/skills/role-requirements-analyst/SKILL.md",
+                        "kind":  "agent-role",
+                        "status":  "converted",
+                        "reason":  "Claude subagent converted to a Codex role skill; it is not a separate runtime subagent."
+                    },
+                    {
+                        "source":  "global/agents/secret-auditor.md",
+                        "output":  "global/codex/skills/role-secret-auditor/SKILL.md",
+                        "kind":  "agent-role",
+                        "status":  "converted",
+                        "reason":  "Claude subagent converted to a Codex role skill; it is not a separate runtime subagent."
+                    },
+                    {
+                        "source":  "global/agents/tanstack-architect.md",
+                        "output":  "global/codex/skills/role-tanstack-architect/SKILL.md",
+                        "kind":  "agent-role",
+                        "status":  "converted",
+                        "reason":  "Claude subagent converted to a Codex role skill; it is not a separate runtime subagent."
+                    },
+                    {
+                        "source":  "global/agents/unity-architect.md",
+                        "output":  "global/codex/skills/role-unity-architect/SKILL.md",
+                        "kind":  "agent-role",
+                        "status":  "converted",
+                        "reason":  "Claude subagent converted to a Codex role skill; it is not a separate runtime subagent."
+                    },
+                    {
+                        "source":  "global/agents/ux-analyst.md",
+                        "output":  "global/codex/skills/role-ux-analyst/SKILL.md",
+                        "kind":  "agent-role",
+                        "status":  "converted",
+                        "reason":  "Claude subagent converted to a Codex role skill; it is not a separate runtime subagent."
+                    },
+                    {
+                        "source":  "global/agents/website-content-analyst.md",
+                        "output":  "global/codex/skills/role-website-content-analyst/SKILL.md",
+                        "kind":  "agent-role",
+                        "status":  "converted",
+                        "reason":  "Claude subagent converted to a Codex role skill; it is not a separate runtime subagent."
+                    },
+                    {
+                        "source":  "global/rules/csharp.md",
+                        "output":  "global/codex/references/rules/csharp.md",
+                        "kind":  "rule-reference",
+                        "status":  "converted",
+                        "reason":  "Claude conditional rule copied as explicit Codex reference material."
+                    },
+                    {
+                        "source":  "global/rules/python.md",
+                        "output":  "global/codex/references/rules/python.md",
+                        "kind":  "rule-reference",
+                        "status":  "converted",
+                        "reason":  "Claude conditional rule copied as explicit Codex reference material."
+                    },
+                    {
+                        "source":  "global/rules/react.md",
+                        "output":  "global/codex/references/rules/react.md",
+                        "kind":  "rule-reference",
+                        "status":  "converted",
+                        "reason":  "Claude conditional rule copied as explicit Codex reference material."
+                    },
+                    {
+                        "source":  "global/rules/tests.md",
+                        "output":  "global/codex/references/rules/tests.md",
+                        "kind":  "rule-reference",
+                        "status":  "converted",
+                        "reason":  "Claude conditional rule copied as explicit Codex reference material."
+                    },
+                    {
+                        "source":  "global/rules/typescript.md",
+                        "output":  "global/codex/references/rules/typescript.md",
+                        "kind":  "rule-reference",
+                        "status":  "converted",
+                        "reason":  "Claude conditional rule copied as explicit Codex reference material."
+                    },
+                    {
+                        "source":  "global/rules/unity.md",
+                        "output":  "global/codex/references/rules/unity.md",
+                        "kind":  "rule-reference",
+                        "status":  "converted",
+                        "reason":  "Claude conditional rule copied as explicit Codex reference material."
+                    },
+                    {
+                        "source":  "global/rules/_size-discipline.md",
+                        "output":  "global/codex/references/rules/_size-discipline.md",
+                        "kind":  "rule-reference",
+                        "status":  "converted",
+                        "reason":  "Claude conditional rule copied as explicit Codex reference material."
+                    },
+                    {
+                        "source":  "global/output-styles/architect.md",
+                        "output":  "global/codex/references/output-styles/architect.md",
+                        "kind":  "reference",
+                        "status":  "converted",
+                        "reason":  "Claude output style copied as explicit Codex reference material."
+                    },
+                    {
+                        "source":  "global/output-styles/concise.md",
+                        "output":  "global/codex/references/output-styles/concise.md",
+                        "kind":  "reference",
+                        "status":  "converted",
+                        "reason":  "Claude output style copied as explicit Codex reference material."
+                    },
+                    {
+                        "source":  "global/output-styles/review.md",
+                        "output":  "global/codex/references/output-styles/review.md",
+                        "kind":  "reference",
+                        "status":  "converted",
+                        "reason":  "Claude output style copied as explicit Codex reference material."
+                    },
+                    {
+                        "source":  "global/output-styles/technical.md",
+                        "output":  "global/codex/references/output-styles/technical.md",
+                        "kind":  "reference",
+                        "status":  "converted",
+                        "reason":  "Claude output style copied as explicit Codex reference material."
+                    },
+                    {
+                        "source":  "global/project-templates/dotnet.md",
+                        "output":  "global/codex/project-templates/dotnet.md",
+                        "kind":  "template",
+                        "status":  "converted",
+                        "reason":  "Project template converted from CLAUDE.md guidance to AGENTS.md guidance."
+                    },
+                    {
+                        "source":  "global/project-templates/frontend.md",
+                        "output":  "global/codex/project-templates/frontend.md",
+                        "kind":  "template",
+                        "status":  "converted",
+                        "reason":  "Project template converted from CLAUDE.md guidance to AGENTS.md guidance."
+                    },
+                    {
+                        "source":  "global/project-templates/monorepo.md",
+                        "output":  "global/codex/project-templates/monorepo.md",
+                        "kind":  "template",
+                        "status":  "converted",
+                        "reason":  "Project template converted from CLAUDE.md guidance to AGENTS.md guidance."
+                    },
+                    {
+                        "source":  "global/project-templates/other.md",
+                        "output":  "global/codex/project-templates/other.md",
+                        "kind":  "template",
+                        "status":  "converted",
+                        "reason":  "Project template converted from CLAUDE.md guidance to AGENTS.md guidance."
+                    },
+                    {
+                        "source":  "global/project-templates/python.md",
+                        "output":  "global/codex/project-templates/python.md",
+                        "kind":  "template",
+                        "status":  "converted",
+                        "reason":  "Project template converted from CLAUDE.md guidance to AGENTS.md guidance."
+                    },
+                    {
+                        "source":  "global/project-templates/unity.md",
+                        "output":  "global/codex/project-templates/unity.md",
+                        "kind":  "template",
+                        "status":  "converted",
+                        "reason":  "Project template converted from CLAUDE.md guidance to AGENTS.md guidance."
+                    },
+                    {
+                        "source":  null,
+                        "output":  "global/codex/README.md",
+                        "kind":  "reference",
+                        "status":  "codex-only",
+                        "reason":  "Codex-specific setup documentation."
+                    },
+                    {
+                        "source":  null,
+                        "output":  "global/codex/references/unsupported-runtime-features.md",
+                        "kind":  "reference",
+                        "status":  "codex-only",
+                        "reason":  "Codex-specific explanation of unsupported Claude runtime features."
+                    },
+                    {
+                        "source":  null,
+                        "output":  "global/codex/conversion-manifest.json",
+                        "kind":  "reference",
+                        "status":  "codex-only",
+                        "reason":  "Manifest consumed by the Conversion Diff panel."
+                    },
+                    {
+                        "source":  "global/hooks/",
+                        "output":  null,
+                        "kind":  "unsupported",
+                        "status":  "unsupported",
+                        "reason":  "Claude Code event hooks do not run from Codex setup."
+                    },
+                    {
+                        "source":  "global/statusline.py",
+                        "output":  null,
+                        "kind":  "unsupported",
+                        "status":  "unsupported",
+                        "reason":  "Depends on Claude Code statusline stdin contract."
+                    },
+                    {
+                        "source":  "global/statusline-segments.json",
+                        "output":  null,
+                        "kind":  "unsupported",
+                        "status":  "unsupported",
+                        "reason":  "Metadata for Claude Code statusline only."
+                    },
+                    {
+                        "source":  "global/settings.json",
+                        "output":  null,
+                        "kind":  "unsupported",
+                        "status":  "unsupported",
+                        "reason":  "Claude Code settings are not copied into Codex config.toml."
+                    },
+                    {
+                        "source":  "global/MCP.md",
+                        "output":  null,
+                        "kind":  "unsupported",
+                        "status":  "unsupported",
+                        "reason":  "Claude MCP documentation is reference-only; Codex MCP config differs."
+                    },
+                    {
+                        "source":  "global/keybindings.json",
+                        "output":  null,
+                        "kind":  "unsupported",
+                        "status":  "unsupported",
+                        "reason":  "Claude Code keybindings are not a Codex runtime feature."
+                    },
+                    {
+                        "source":  ".claude/commands/",
+                        "output":  null,
+                        "kind":  "unsupported",
+                        "status":  "not-converted",
+                        "reason":  "Project-local Claude commands are not Codex skills in this first curated pass."
+                    },
+                    {
+                        "source":  "global/project-templates/run/",
+                        "output":  null,
+                        "kind":  "unsupported",
+                        "status":  "not-converted",
+                        "reason":  "Run launcher is project-template support code, not a Codex skill or guidance file."
+                    }
+                ]
+}

@@ -1,0 +1,71 @@
+/* ──────────────────────────────────────────────────────────────────────────
+   A4 fit-to-viewport pattern — single page, no scroll.
+
+   The sheet container has fixed aspect-ratio (A4 landscape or portrait),
+   sized via `min(100vw, 100vh × ratio)` so it always fits the viewport.
+
+   `container-type: size` + `container-name: sheet` lets every descendant
+   size itself in `cqw` / `cqh` units — proportional to the sheet, not the
+   viewport. The whole design scales smoothly when the user resizes the
+   window.
+
+   Prints cleanly to A4 via @page + media print.
+   ────────────────────────────────────────────────────────────────────────── */
+
+/* ── Sheet — landscape A4 (default) ────────────────────────────────────── */
+.sheet {
+  width: min(100vw, calc(100vh * 297 / 210));
+  aspect-ratio: 297 / 210;
+  background: var(--paper);
+  box-shadow:
+    0 24px 60px -20px rgba(0, 0, 0, 0.5),
+    0  6px 14px  -6px rgba(0, 0, 0, 0.3);
+  container-type: size;
+  container-name: sheet;
+  overflow: hidden;
+  padding: 2.4cqh 2.6cqw;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;  /* head · tracks-label · body · foot */
+  gap: 1.2cqh;
+}
+
+/* ── Portrait A4 alternative ───────────────────────────────────────────── */
+.sheet.portrait {
+  width: min(100vw, calc(100vh * 210 / 297));
+  aspect-ratio: 210 / 297;
+}
+
+/* ── Print ─────────────────────────────────────────────────────────────── */
+@page { size: A4 landscape; margin: 0; }
+
+@media print {
+  body { background: white; }
+  .sheet {
+    box-shadow: none;
+    width: 100%;
+    height: 100%;
+    aspect-ratio: auto;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Why container queries here:
+
+   - `vh`/`vw` would size against the viewport, not the sheet. When the user
+     resizes the window, font sizes would change but the sheet aspect would
+     stay fixed → things would not stay proportionate.
+   - With `container-type: size`, `cqh`/`cqw` is "1% of the container".
+     Resizing the window resizes the container, and every `cqh` value
+     scales with it. The design stays proportional.
+
+   Common values inside cards:
+     padding: 1cqh 1.1cqw;
+     font-size: 0.92cqh;      // subtitle
+     font-size: 1.55cqh;      // title
+     font-size: 2cqh;         // badge
+
+   Things that don't use container units:
+     border-width      → keep at 1px for clarity at all sizes
+     box-shadow        → fixed pixel values
+     letter-spacing    → em-relative is fine
+   ────────────────────────────────────────────────────────────────────────── */
