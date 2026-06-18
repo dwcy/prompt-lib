@@ -1,0 +1,63 @@
+/* Accordion / FAQ disclosure for native <details> — replaces click-toggle JS.
+   Markup:
+     <details class="disclosure">
+       <summary>Question</summary>
+       <div class="disclosure-body">Answer…</div>
+     </details>
+   Values reference design tokens from globals.css (see /css scaffold). */
+
+.disclosure {
+  background-color: var(--color-surface-container);
+  border-radius: var(--radius-md);
+  padding: var(--size-2) var(--size-4);
+}
+
+.disclosure > summary {
+  cursor: pointer;
+  list-style: none;
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--color-on-surface);
+  padding: var(--size-2) 0;
+}
+
+.disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Open-state surface lift, expressed declaratively via :has() — no JS. */
+.disclosure:has(> summary:hover) {
+  background-color: var(--color-surface-bright);
+}
+
+.disclosure[open] > summary {
+  color: var(--color-secondary);
+}
+
+.disclosure-body {
+  padding-bottom: var(--size-2);
+  color: var(--color-on-surface);
+}
+
+/* Smooth open/close where supported; height keywords stay animatable. */
+@supports (interpolate-size: allow-keywords) {
+  :root {
+    interpolate-size: allow-keywords;
+  }
+
+  .disclosure::details-content {
+    block-size: 0;
+    overflow: hidden;
+    transition: block-size 250ms ease, content-visibility 250ms allow-discrete;
+  }
+
+  .disclosure[open]::details-content {
+    block-size: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .disclosure::details-content {
+    transition: none;
+  }
+}
