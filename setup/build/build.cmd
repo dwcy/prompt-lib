@@ -16,8 +16,8 @@ if %ERRORLEVEL%==0 (
     goto :end
 )
 
-echo Python not found. Install Python 3.10+ from https://www.python.org/downloads/ or via winget:
-echo   winget install Python.Python.3.12
+echo Python not found. Install Python 3.11+ from https://www.python.org/downloads/ or via winget:
+echo   winget install --id Python.Python.3 --exact
 exit /b 1
 
 :end

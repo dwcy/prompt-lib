@@ -118,7 +118,7 @@ setup/src/cabal/
 │   ├── __init__.py
 │   ├── home.py                       # MODIFIED (Part B) — adds Init/Open Project buttons
 │   ├── readme.py · env.py · git_config.py · github_repos.py · global_env.py
-│   ├── operations.py · update.py · doctor.py · restore.py · mcp.py
+│   ├── operations.py · update.py · restore.py · mcp.py
 │   ├── gh_device.py · folder_browser.py · local.py · tools.py
 │   ├── init_project.py               # NEW (Part B) — InitProjectScreen (FR-8)
 │   ├── init_project_prompt.py        # NEW (Part B) — prompt template builder (FR-14)

@@ -5,7 +5,7 @@ This stack is opinionated and dense. There's a fast way and a slow way to learn 
 ## Day 1 — get it running
 
 1. Read [`architecture.md`](architecture.md) end-to-end. Skip nothing. The five-step boot is the only model you need.
-2. Run `python setup/settings-configurator-ui.py`. Try every mode (Update / Doctor / Restore). The wizard is reversible — explore.
+2. Run `python setup/settings-configurator-ui.py`. Try the main flows (Update / Restore / Env vars / MCP / Local setup). The wizard is reversible — explore.
 3. Open Claude Code in any project. Watch the `SessionStart` hook fire — it either offers to scaffold `CLAUDE.md` or says "@load-project will brief you."
 4. Type `/git`. Observe how the skill body becomes the next instruction. That's the whole skill model.
 
@@ -60,7 +60,7 @@ This stack is opinionated and dense. There's a fast way and a slow way to learn 
 When something behaves unexpectedly:
 
 1. Open `~/.claude/write_audit.jsonl` and grep by timestamp — every Write/Edit is logged.
-2. Run the wizard's "Doctor" mode — it diffs `~/.claude/` against the source in `global/` and shows drift.
+2. Check the home screen drift markers, then open the matching update screen for a dry-run preview against the source in `global/`.
 3. Check `claude mcp list` for MCP server health.
 4. Run `/output-style concise` to strip framing during debugging — the model's actual reasoning becomes visible.
 

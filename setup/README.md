@@ -7,8 +7,9 @@ The wizard is published to PyPI as **`cabal`** and bundled into a standalone `.e
 | Path | Command | Notes |
 |---|---|---|
 | Install from PyPI (recommended) | `uv tool install cabal` then `cabal` | Single command. Needs only a Python ≥ 3.11. Works on any OS that `uv` / `pipx` support. Heads-up: there is also a Haskell tool called `cabal` distributed via Hackage — different registry, but the shell binary name collides. See the package README for mitigation. |
-| Terminal (source) | `python setup/settings-configurator-ui.py` | Dev mode. Any shell, runs straight from a git checkout. First run auto-installs `textual` + `rich` via pip. |
-| Terminal (Windows convenience) | `setup\settings-configurator-ui.cmd` | Same as above, finds `py` or `python` on PATH. |
+| Terminal (source) | `python setup/settings-configurator-ui.py` | Dev mode when Python is already installed. First run auto-installs `textual` + `rich` via pip. |
+| Terminal (Windows convenience) | `setup\settings-configurator-ui.cmd` | Finds Python 3.11+ or asks to install the latest Python 3 via `winget`, then launches the wizard. |
+| Terminal (Linux convenience) | `sh setup/settings-configurator-ui.sh` | Finds Python 3.11+ or asks to install Python via the system package manager (`apt`, `dnf`, `yum`, `zypper`, `pacman`, or `apk`), then launches the wizard. |
 | Standalone exe | `setup/build/dist/cabal[.exe]` | One-file binary that bundles Python, `textual`, `rich`, `global/`, and `setup/env/`. **No Python install required on the target machine.** Build with `python setup/build/build_exe.py`. See [`build/README.md`](build/README.md). |
 
 > **Alternative**: if you only need the shareable Claude Code surface (skills, agents, hooks, MCP servers, output styles) and don't need the global `CLAUDE.md` / permissions / theme / `rules/` / `project-templates/`, you can install prompt-lib as a Claude Code marketplace plugin instead. No Python required. See [`docs/plugin-install.md`](../docs/plugin-install.md). The two install paths ship different surfaces — the PyPI tool deploys the global config; the plugin only registers slash commands and agents inside Claude Code.
@@ -23,7 +24,6 @@ The wizard is published to PyPI as **`cabal`** and bundled into a standalone `.e
 |---|---|
 | Update global settings | Deploy `global/` → `~/.claude/` with dry-run preview, multi-select component toggles, env-var status panel, and timestamped backups. |
 | Initialize env vars | Prompt for each var in `env/setup.env.json`, write to `setx` (Windows) or shell rc (Unix). |
-| Doctor | Compare `~/.claude/` against `global/` and report drift (missing, changed, extra files). |
 | Restore | Roll back `~/.claude/settings.json` from a timestamped backup. |
 | Local project setup | In the current cwd: scaffold `.claude/`, pick a `CLAUDE.md` template, apply git repo-init template, run `specify init` to bootstrap Spec Kit (`.specify/`). |
 | Codex setup | Deploy Codex skills to `~/.codex/skills`, scaffold project `.agents/skills`, apply an `AGENTS.md` template, and inspect conversion diffs. |
@@ -40,7 +40,8 @@ setup/
 │   ├── wizard.py                   ← the Textual TUI
 │   └── README.md                   ← PyPI page README
 ├── settings-configurator-ui.py     ← dev shim — delegates to cabal.__main__
-├── settings-configurator-ui.cmd    ← Windows launcher for the dev shim
+├── settings-configurator-ui.cmd    ← Windows launcher/bootstrapper for the dev shim
+├── settings-configurator-ui.sh     ← POSIX launcher/bootstrapper for the dev shim
 ├── build/                          ← PyInstaller spec + driver for the .exe
 ├── env/                            ← machine env var initialization
 ├── mcp-templates.json              ← MCP server templates (bundled into wheel + exe)

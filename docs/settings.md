@@ -101,4 +101,4 @@ These are pure file-system conventions. Drop a file in the right folder → run 
 3. Restart Claude Code.
 4. If something breaks: rerun the wizard → "Restore" → pick the timestamped backup.
 
-The "Doctor" mode in the wizard diffs `~/.claude/` against `global/` and reports drift (missing, changed, extra files) without modifying anything.
+The home screen marks global Claude/Codex configuration buttons when the repo and deployed copies drift. Use the corresponding update screen for a dry-run preview before applying changes.

@@ -55,7 +55,7 @@ include = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["setup/tests", "global/hooks/tests"]
+testpaths = ["tests", "setup/tests", "global/hooks/tests"]
 filterwarnings = [
   "ignore::DeprecationWarning:textual",
 ]

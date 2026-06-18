@@ -26,7 +26,7 @@ Both parts share the same module layout from Part A and the same testing/build g
 - ~24 per-tool installers (Node, pnpm, bun, Python, .NET, Docker, Podman, kubectl, Terraform, az, gcloud, aws, gh, claude-cli, claude-devtools, specify, uv, gemini, codex, opencode, grok, cursor, windsurf, copilot, antigravity, ollama, vscode)
 - The `Tool` dataclass + `TOOLS` registry + version-floor / outdated detection
 - 2 widgets (`EnvPanel`, `UpdatePanel`)
-- 17 screens (`HomeScreen`, `ReadmeScreen`, `EnvScreen`, `GitConfigScreen`, `GitHubReposScreen`, `GlobalEnvScreen`, `OperationsScreen`, `UpdateScreen`, `DoctorScreen`, `RestoreScreen`, `McpScreen`, `GhDeviceFlowScreen`, `FolderBrowserScreen`, `LocalScreen`, `ToolsScreen`) plus `AppCommandsProvider` / `AppHeader`
+- 14 legacy screens (`HomeScreen`, `ReadmeScreen`, `EnvScreen`, `GitConfigScreen`, `GitHubReposScreen`, `GlobalEnvScreen`, `OperationsScreen`, `UpdateScreen`, `RestoreScreen`, `McpScreen`, `GhDeviceFlowScreen`, `FolderBrowserScreen`, `LocalScreen`, `ToolsScreen`) plus `AppCommandsProvider` / `AppHeader`. The standalone Doctor screen has since been retired; drift is surfaced by home-screen markers and update previews.
 - `CabalApp` (the Textual `App` subclass) + the CSS blob + `main()` / `run()` entry points
 
 A single-file Textual app at this size is hostile to maintenance:

@@ -2,9 +2,9 @@
 """Component registry + per-env-var help text + FileStatus dataclass.
 
 A Component describes one source under `global/` that maps onto a destination
-inside `~/.claude/`. The wizard iterates COMPONENTS during update / doctor /
-restore flows; ENV_DESCRIPTIONS supplies the long-form help for env-var rows
-on the Init Env screen.
+inside `~/.claude/`. The wizard iterates COMPONENTS during update / restore
+flows and inline drift checks; ENV_DESCRIPTIONS supplies the long-form help for
+env-var rows on the Init Env screen.
 """
 
 from __future__ import annotations

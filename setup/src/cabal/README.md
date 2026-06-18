@@ -16,6 +16,17 @@ Then run:
 cabal
 ```
 
+From a source checkout, use the bootstrap launchers when Python may not already
+be installed:
+
+```bash
+# Windows
+setup\settings-configurator-ui.cmd
+
+# Linux
+sh setup/settings-configurator-ui.sh
+```
+
 ## What it does
 
 | Mode | Purpose |
@@ -23,7 +34,6 @@ cabal
 | Update | Deploy `global/` → `~/.claude/` with dry-run preview, multi-select component toggles, env-var status panel, timestamped backups. |
 | Initialize env vars | Prompt for each var, write via `setx` (Windows) or shell rc (Unix). |
 | MCP | Live status from `claude mcp list`. Toggle = `claude mcp add/remove`. |
-| Doctor | Compare `~/.claude/` against the bundled `global/`, report drift. |
 | Restore | Roll back `~/.claude/settings.json` from a timestamped backup. |
 | Local | In another project: scaffold `.claude/`, apply a `CLAUDE.md` template, set up git repo template, optionally `specify init`. |
 | Codex | Deploy `global/codex/` to `~/.codex`, scaffold `.agents/`, and inspect Claude -> Codex conversion diffs. |

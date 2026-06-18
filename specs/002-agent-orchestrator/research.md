@@ -126,7 +126,7 @@ class Trigger(Protocol):
 
 ## R7 — Dashboard: separate Textual process tailing the event log on a 500 ms `set_interval`
 
-**Decision**: `orchestrator dash` is a separate Typer subcommand that launches a `textual.app.App`. Visual style mirrors `setup/apply.py`: gradient banner header (style of `render_banner` lines 87–104), `DataTable` of recent runs (style of `DoctorScreen` lines 785–825), Textual `Log` widget for the event tail, status footer. Updates are polled via Textual's `set_interval(0.5, self._refresh)` calling `eventlog.tail_since(self._last_id)`. No Workers in v1 — SQLite reads are sub-millisecond and the timer pattern is the simplest correct shape.
+**Decision**: `orchestrator dash` is a separate Typer subcommand that launches a `textual.app.App`. Visual style mirrors the setup TUI: gradient banner header (style of `render_banner` lines 87–104), `DataTable` of recent runs, Textual `Log` widget for the event tail, status footer. Updates are polled via Textual's `set_interval(0.5, self._refresh)` calling `eventlog.tail_since(self._last_id)`. No Workers in v1 — SQLite reads are sub-millisecond and the timer pattern is the simplest correct shape.
 
 **Rationale**:
 - **Separate process** decouples crash domains: daemon can be killed and restarted without affecting the dashboard, and vice versa. The SQLite event log is the join point.

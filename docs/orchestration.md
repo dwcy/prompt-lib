@@ -103,7 +103,7 @@ Setup and tool reference: [`specs/007-mcp-bus/quickstart.md`](../specs/007-mcp-b
 | Feature | Spec |
 |---|---|
 | `/orchestrate` skill — subagent routing (this doc) | `specs/006-orchestrate-skill/` |
-| MCP message bus — inter-agent comms + shared memory | `specs/007-mcp-bus/` (planned) |
+| MCP message bus — inter-agent comms + shared memory | `specs/007-mcp-bus/` (implemented in `services/mcp-bus/`) |
 | Autonomous pollers — git/GitHub watching via CronCreate | `specs/002-agent-orchestrator/` (partial) |
-| Full daemon + Textual dashboard | `specs/002-agent-orchestrator/` (planned) |
+| Full daemon + Textual dashboard | `specs/002-agent-orchestrator/` (implemented in `services/orchestrator/`) |
 | A2A bridge — Claude ↔ Gemini ↔ Codex | `specs/001-a2a-bridge/` (redesign planned) |
