@@ -115,10 +115,21 @@ class TestBlockPath:
         assert result.returncode == 2
         assert json.loads(result.stdout)["decision"] == "block"
 
+    def test_command_guard_blocks_hidden_unicode(self):
+        result = _invoke("command_guard", _bash("echo safe\u200btext"))
+        assert result.returncode == 2
+        assert "zero-width space" in json.loads(result.stdout)["reason"]
+
     def test_file_write_guard_blocks_protected_file(self):
         result = _invoke("file_write_guard", _write(PROTECTED_FILE))
         assert result.returncode == 2
         assert json.loads(result.stdout)["decision"] == "block"
+
+    def test_command_guard_source_keeps_hidden_unicode_escaped(self):
+        text = (HOOKS_DIR / "command_guard.py").read_text(encoding="utf-8")
+        for char in ("\u200b", "\u200c", "\u200d", "\u202e", "\ufeff"):
+            assert char not in text
+        assert '"\\u200b"' in text
 
 
 class TestMalformedJsonTolerance:

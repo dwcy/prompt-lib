@@ -23,6 +23,7 @@ def _callable(tool):
 bus_post = _callable(server.bus_post)
 bus_read = _callable(server.bus_read)
 bus_channels = _callable(server.bus_channels)
+bus_prune = _callable(server.bus_prune)
 mem_set = _callable(server.mem_set)
 mem_get = _callable(server.mem_get)
 mem_list = _callable(server.mem_list)
@@ -61,6 +62,14 @@ class TestBusShapes:
         channels = bus_channels()
         assert channels == ["alpha"]
         assert all(isinstance(c, str) for c in channels)
+
+    def test_bus_prune_returns_deleted_count(self, db):
+        for i in range(3):
+            bus_post("alpha", str(i), "agent")
+
+        result = bus_prune(keep_last_per_channel=1)
+
+        assert result == {"deleted": 2}
 
 
 class TestMemoryShapes:

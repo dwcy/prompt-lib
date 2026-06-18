@@ -24,8 +24,8 @@ classifiers = [
   "Topic :: System :: Installation/Setup",
 ]
 dependencies = [
-  "textual>=0.50",
-  "rich>=13",
+  "textual>=0.50,<7",
+  "rich>=13,<15",
 ]
 
 [project.urls]

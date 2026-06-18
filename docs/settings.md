@@ -19,7 +19,7 @@ Each entry is a glob over a `Tool(arg-pattern)` shape. If a call matches, the to
 - **Network read** — `WebSearch`, `WebFetch`, `Fetch`
 - **Read-only git** — `git status`, `git diff`, `git log`, `git branch`, `git rev-parse`, `git show`, `git config`, `git tag` — across both `Bash(...)` and `PowerShell(...)`
 - **Safe git mutations** — `git init`, `git add`, `git checkout`, `git switch`, `git restore`, `git stash` (these don't push or destroy history)
-- **Build/test runners** — `pnpm:*`, `bun:*`, `bunx:*`, `dotnet build/test/format/restore/new/add/sln/publish/pack/run/nuget`, `pytest:*`, `pip:*`, `poetry init/install/add`, `uv:*`, `uvx:*`, `python:*`, `python3:*`, `py:*`, `nuget:*`
+- **Build/test runners** — `pnpm:*`, `bun:*`, `bunx:*`, `dotnet build/test/format/restore/new/add/sln/publish/pack/run/nuget`, `pytest:*`, selected `python -m pytest/unittest/venv` commands, `poetry init/install/add`, selected `uv sync/lock/run/tree` commands, and `nuget:*`
 - **Read-only shell** — `ls`, `cat`, `pwd`, plus `Get-ChildItem`, `Get-Location`, `Test-Path`
 
 The intent: anything strictly local, reversible, or read-only is auto-approved so you stop click-confirming during normal flow. Anything that can rewrite history, force-push, or wipe files goes through `deny` or prompts for confirmation.

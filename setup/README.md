@@ -8,7 +8,7 @@ The wizard is published to PyPI as **`cabal`** and bundled into a standalone `.e
 |---|---|---|
 | Repo root (source checkout) | `./run` on POSIX, `.\run.cmd` on Windows | Convenience entry point that delegates to the platform-specific source launcher below. |
 | Install from PyPI (recommended) | `uv tool install cabal` then `cabal` | Single command. Needs only a Python ≥ 3.11. Works on any OS that `uv` / `pipx` support. Heads-up: there is also a Haskell tool called `cabal` distributed via Hackage — different registry, but the shell binary name collides. See the package README for mitigation. |
-| Terminal (source) | `python setup/settings-configurator-ui.py` | Dev mode when Python is already installed. First run auto-installs `textual` + `rich` via pip. |
+| Terminal (source) | `python setup/settings-configurator-ui.py` | Dev mode when Python is already installed. First run asks before installing `textual` + `rich` via pip. |
 | Terminal (Windows convenience) | `setup\settings-configurator-ui.cmd` | Finds Python or asks to install the latest Python via `winget`, then launches the wizard. |
 | Terminal (Linux convenience) | `sh setup/settings-configurator-ui.sh` | Finds Python or asks to install Python via the system package manager (`apt`, `dnf`, `yum`, `zypper`, `pacman`, or `apk`), then launches the wizard. |
 | Standalone exe | `setup/build/dist/cabal[.exe]` | One-file binary that bundles Python, `textual`, `rich`, `global/`, and `setup/env/`. **No Python install required on the target machine.** Build with `python setup/build/build_exe.py`. See [`build/README.md`](build/README.md). |
@@ -28,7 +28,7 @@ The wizard is published to PyPI as **`cabal`** and bundled into a standalone `.e
 | Restore | Roll back `~/.claude/settings.json` from a timestamped backup. |
 | Local project setup | In the current cwd: scaffold `.claude/`, pick a `CLAUDE.md` template, apply git repo-init template, run `specify init` to bootstrap Spec Kit (`.specify/`). |
 | Codex setup | Deploy Codex skills to `~/.codex/skills`, scaffold project `.agents/skills`, apply an `AGENTS.md` template, and inspect conversion diffs. |
-| Tools | Install / update optional companion tools (Claude CLI, GitHub CLI, **Specify CLI** for GitHub Spec Kit, `claude-devtools`). Spec Kit's `specify` is installed via `uv tool install` from the upstream git repo and auto-installs `uv` if missing. |
+| Tools | Install / update optional companion tools (Claude CLI, GitHub CLI, **Specify CLI** for GitHub Spec Kit, `claude-devtools`). Spec Kit's `specify` is installed via `uv tool install` from the upstream git repo and offers an OS-package `uv` install if missing. |
 
 ## Structure
 

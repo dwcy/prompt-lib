@@ -1,5 +1,7 @@
 # The POSIX run shim and the launcher must stay LF — they are copied verbatim
 # into new projects, and CRLF breaks `#!/usr/bin/env sh` on Linux/macOS.
+run                                  text eol=lf
+setup/settings-configurator-ui.sh    text eol=lf
 global/project-templates/run/run    text eol=lf
 global/project-templates/run/run.py text eol=lf
 
