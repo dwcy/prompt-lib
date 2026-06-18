@@ -73,7 +73,7 @@ install_python() {
 }
 
 if ! find_python; then
-  echo "Python was not found. This wizard requires Python 3.11 or newer."
+  echo "Python was not found. This wizard requires Python."
   LATEST=$(latest_version || true)
   if [ -n "${LATEST:-}" ]; then
     echo "Latest Python available from your package manager: $LATEST"

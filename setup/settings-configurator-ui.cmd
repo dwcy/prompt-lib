@@ -13,7 +13,7 @@ set "PYTHON_WINGET_VERSION="
 call :find_python
 if defined PYTHON_EXE goto :run_app
 
-echo Python was not found. This wizard requires Python 3.11 or newer.
+echo Python was not found. This wizard requires Python.
 
 where winget >nul 2>nul
 if not %ERRORLEVEL%==0 (
@@ -26,7 +26,7 @@ if not %ERRORLEVEL%==0 (
 echo Checking latest Python version available from winget...
 call :find_winget_python
 if not defined PYTHON_WINGET_ID (
-    echo Could not find a supported Python 3.11+ package in winget.
+    echo Could not find a supported Python package in winget.
     echo Winget search output:
     winget search --id Python.Python --source winget
     echo Cannot continue without Python.
