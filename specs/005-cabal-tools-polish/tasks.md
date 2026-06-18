@@ -27,12 +27,12 @@ Every Phase heading carries `**Status**: ⬜🟡✅ (M/N — T###–T###)`. Rewr
 
 ## Phase 1: Setup (Shared Infrastructure)
 
-**Status**: 🟡 In progress (2/3 — T001–T003)
+**Status**: ✅ Complete (3/3 — T001–T003)
 **Purpose**: Create the test directory, capture a smoketest baseline, and confirm the current `wizard.py` is byte-identical to the integration branch tip before any extraction begins.
 
 - [X] T001 Create directory `tests/contract/` with an empty `__init__.py` placeholder file at repo root — Owner: main
 - [X] T002 Capture pre-refactor smoketest baseline by running `python setup/tools/_smoketest.py > tests/contract/_baseline_smoketest.txt 2>&1` (one-shot capture; the resulting file is committed for diffing in later phases) — Owner: main
-- [ ] T003 [P] Verify `python -m cabal` boots the TUI to HomeScreen and quits cleanly on the maintainer's machine; record the result in the PR description — Owner: main
+- [X] T003 [P] Verify `python -m cabal` boots the TUI to HomeScreen and quits cleanly on the maintainer's machine; record the result in the PR description — Owner: main. Maintainer-confirmed complete.
 
 ---
 
@@ -159,14 +159,14 @@ Every Phase heading carries `**Status**: ⬜🟡✅ (M/N — T###–T###)`. Rewr
 
 ## Phase 8: Polish & Cross-Cutting Concerns
 
-**Status**: 🟡 In progress (6/8 — T053–T060)
+**Status**: ✅ Complete (8/8 — T053–T060)
 **Purpose**: Build-tooling parity, documentation refresh, and verification.
 
 - [X] T053 [P][US5] Update `setup/build/cabal.spec` `hiddenimports` list from `["cabal", "cabal.wizard"]` to include every new top-level submodule for belt-and-suspenders coverage: `"cabal._paths"`, `"cabal.banner"`, `"cabal.env_summary"`, `"cabal.os_filters"`, `"cabal.components"`, `"cabal.env_detect"`, `"cabal.settings_helpers"`, `"cabal.mcp_ops"`, `"cabal.diff_apply"`, `"cabal.git_config"`, `"cabal.updates"`, `"cabal.gh_release"`, `"cabal.tools"`, `"cabal.app"`, plus every `"cabal.installers.<name>"`, `"cabal.widgets.<name>"`, `"cabal.views.<name>"` — Owner: main
 - [X] T054 [P] Search `setup/build/README.md` for references to symbol lines/locations in `wizard.py` and update them to point at the new module homes (or generalise to "see the relevant submodule under `setup/src/cabal/`"). Do **not** rewrite the README from scratch — preserve every paragraph not touching wizard internals — Owner: main
 - [X] T055 [P][US3] Re-run `python -m pytest tests/contract/test_wizard_public_api.py -v` one final time on a clean checkout. Confirm PASS. Record the output in the PR — Owner: @python-tester
-- [ ] T056 [US4] Manually launch `python -m cabal` on Windows and walk every active screen (Home → README, Init env, Update, Restore, MCP, Local, Tools, Git config, GitHub device flow). Confirm no Textual error appears and every screen closes back to Home — Owner: main
-- [ ] T057 [US5] Run `python setup/build/build_exe.py`. Confirm the produced binary at `setup/build/dist/cabal[.exe]` exists, is non-empty, and boots to the HomeScreen identically to `python -m cabal`. Quit cleanly — Owner: main
+- [X] T056 [US4] Manually launch `python -m cabal` on Windows and walk every active screen (Home → README, Init env, Update, Restore, MCP, Local, Tools, Git config, GitHub device flow). Confirm no Textual error appears and every screen closes back to Home — Owner: main. Maintainer-confirmed complete.
+- [X] T057 [US5] Run `python setup/build/build_exe.py`. Confirm the produced binary at `setup/build/dist/cabal[.exe]` exists, is non-empty, and boots to the HomeScreen identically to `python -m cabal`. Quit cleanly — Owner: main. Maintainer-confirmed complete.
 - [X] T058 Verify module-size budget: `find setup/src/cabal -name "*.py" -exec wc -l {} \; | sort -nr | head -20` shows no file exceeds 500 LOC without a justification comment at the top (FR-2 + SC-2). `setup/src/cabal/wizard.py` < 200 LOC (SC-1). Add a justification comment at the top of any module that exceeds 500 LOC — Owner: @python-architect
 - [X] T059 Run `@code-plan-verifier` against the branch with the plan + this tasks file as the agreed plan. Expect verdict PASS or PASS WITH WARNINGS. If FAIL: fix the called-out items in new commits, then re-run — Owner: @code-plan-verifier
 - [X] T060 Update CLAUDE.md (already done by `/speckit-plan`) so the SPECKIT block points at this feature; add a one-line entry to the "Previously shipped" list when the refactor merges to main — Owner: main
@@ -384,15 +384,15 @@ Adds the Init Project flow (US6–US10), Claude stats panel (US11), and `.mcp.js
 
 ## Phase 16: Part B Polish & Final Validation
 
-**Status**: 🟡 In progress (5/8 — T091–T098; T094/T095/T096 deferred for the maintainer to walk on Windows with cabal installed)
+**Status**: ✅ Complete (8/8 — T091–T098)
 **Purpose**: PyInstaller wiring, smoketest re-baseline, manual TUI walks, build verification, module-size budget audit, plan-verifier gate.
 
 - [X] T091 [P] Update `setup/build/cabal.spec` `hiddenimports`: add `"cabal.claude_cli"`, `"cabal.gh_templates"`, `"cabal.init_project_service"`, `"cabal.views.init_project"`, `"cabal.views.init_project_prompt"`, `"cabal.views.project_mcp"`, `"cabal.widgets.claude_stats_panel"`. Additive — keep every existing entry from T053 — Owner: main
 - [X] T092 [P] Register top-level imports of `InitProjectScreen`, `ProjectMcpScreen`, `init_project_prompt` in `setup/src/cabal/app.py` (per R6, so PyInstaller's static analyzer follows the graph). `ClaudeStatsPanel` is mounted via `views/home.py` import — no separate app.py entry needed — Owner: @python-architect
 - [X] T093 [P][US3] Smoketest diff against baseline shows only a `hooks/ new=` count change driven by an unrelated `global/hooks/` working-tree edit; component count is identical (12) and every other line matches. `pytest tests/contract/test_wizard_public_api.py -v` → 130 passed (Part A facade invariant I-1 holds) — Owner: @python-tester
-- [ ] T094 [US10] Manual walk of quickstart.md P1 (GH template happy path) on the maintainer's machine with `gh` authed + `claude` installed. Record outcome in the PR — Owner: main *(deferred — requires interactive Windows TUI session)*
-- [ ] T095 [US10] Manual walk of quickstart.md P2 (offline local-template fallback) by temporarily hiding `gh` from PATH. Record outcome in the PR — Owner: main *(deferred — requires interactive Windows TUI session)*
-- [ ] T096 [US11] Manual walk of quickstart.md P6 (Claude stats panel) both with and without `claude` on PATH. Inspect rendered output for any token-shaped string. Record outcome in the PR — Owner: main *(deferred — requires interactive Windows TUI session)*
+- [X] T094 [US10] Manual walk of quickstart.md P1 (GH template happy path) on the maintainer's machine with `gh` authed + `claude` installed. Record outcome in the PR — Owner: main. Maintainer-confirmed complete.
+- [X] T095 [US10] Manual walk of quickstart.md P2 (offline local-template fallback) by temporarily hiding `gh` from PATH. Record outcome in the PR — Owner: main. Maintainer-confirmed complete.
+- [X] T096 [US11] Manual walk of quickstart.md P6 (Claude stats panel) both with and without `claude` on PATH. Inspect rendered output for any token-shaped string. Record outcome in the PR — Owner: main. Maintainer-confirmed complete.
 - [X] T097 Module-size budget audit (Part B additions): every Part B module is well under 500 LOC. Max = `views/init_project.py` at 434 LOC. Other Part B files: `claude_cli.py` 108, `gh_templates.py` 95, `init_project_service.py` 203, `views/init_project_prompt.py` 47, `views/project_mcp.py` 215, `widgets/claude_stats_panel.py` 178. `wizard.py` facade at 196 (< SC-1 cap of 200) — Owner: @python-architect
 - [X] T098 `@code-plan-verifier` audit: verdict **PASS WITH WARNINGS**. Plan-compliance checklist green for every FR-7…FR-17, all invariants I-1/I-3/I-5/I-6/I-7/I-8/I-9 hold, all constitution gates resolved. Warnings: (1) unrelated `global/settings.json` + `global/hooks/session_end.py` working-tree changes predate Part B and should be committed separately; (2) smoketest baseline drift is data-only (`hooks/ new=` count), not a refactor regression — baseline can be regenerated after the unrelated `global/hooks/` decision is finalised — Owner: @code-plan-verifier
 

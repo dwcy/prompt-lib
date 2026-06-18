@@ -53,7 +53,7 @@ class ProjectGateScreen(Screen):
             yield subtitle_bar()
             yield Static(
                 "[bold bright_magenta]Select a project[/bold bright_magenta]\n"
-                "[dim]CABAL operates on one project at a time. Init a new project or open "
+                "[dim]Cabal is the local control room for agent work. Init a new project or open "
                 "an existing one — Local MCP, Local Config and Git local scope all bind to it.[/dim]",
                 classes="panel",
             )

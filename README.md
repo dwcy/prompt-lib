@@ -14,7 +14,7 @@ Versioned source for everything in `~/.claude/` — agents, skills, hooks, rules
 | Always-on context bloat | Conditional rules in `global/rules/` (`csharp.md`, `typescript.md`, `react.md`, `tests.md`) load only when Claude touches a matching file |
 | Response-mode switching | Four output styles — `concise`, `technical`, `review`, `architect` — picked per session via `/output-style` |
 | External tool integrations | Eight pre-wired MCP servers: `context7`, `github`, `figma`, `playwright`, `azure-devops`, `supabase`, `obsidian`, `docker` (env vars resolved via `${VAR}` substitution) |
-| Multi-machine setup / deployment | Interactive TUI wizard via the root launcher (`./run` on POSIX, `.\run.cmd` on Windows) — deploy, init env vars, show inline drift markers, restore from backup, local project scaffold, optional companion tools |
+| Multi-machine setup / deployment | Cabal, an interactive local agent control panel via the root launcher (`./run` on POSIX, `.\run.cmd` on Windows) — deploy, init env vars, show inline drift markers, restore from backup, local project scaffold, optional companion tools |
 | Install without cloning | `/plugin marketplace add dwcy/prompt-lib` + `/plugin install prompt-lib@prompt-lib` ships skills, agents, hooks, MCP servers, and output styles as a Claude Code plugin. The apply-script path remains the way to get the full setup (global `CLAUDE.md`, rules, permissions, theme). See [`docs/plugin-install.md`](docs/plugin-install.md). |
 | Cross-agent delegation (Claude ↔ Gemini) | [`services/a2a-bridge`](services/a2a-bridge/) — A2A protocol v1.0.0 implementation, Python 3.13 + FastAPI, 199 tests passing |
 | Autonomous PR review | [`services/orchestrator`](services/orchestrator/) — daemon that watches a GitHub repo, dispatches each PR to a peer Claude agent over the A2A bridge, posts the review back via `gh`, persists state to SQLite, pushes phone notifications via ntfy.sh, ships with a Textual dashboard |
@@ -188,6 +188,27 @@ Direct source fallback: `python setup/settings-configurator-ui.py`.
 
 Fallback (non-interactive): `bash setup/tools/apply-global-claude-settings.sh`.
 
+## Development validation
+
+Run all test suites that are available on the current machine:
+
+```bash
+python scripts/test-all.py
+```
+
+For release readiness, require every suite runner to be present:
+
+```bash
+python scripts/test-all.py --strict-missing
+```
+
+Service integration tests that need real CLIs, GitHub auth, or live local
+daemons stay opt-in:
+
+```bash
+python scripts/test-all.py --include-integration --strict-missing
+```
+
 ### Alternative: install as a Claude Code plugin
 
 You can install skills/agents/hooks/MCP servers without cloning the repo:
@@ -215,6 +236,7 @@ Plugin install ships the shareable surface (skills become `/prompt-lib:*`, agent
 - [`docs/speckit.md`](docs/speckit.md) — spec-kit configuration in this repo: constitution, gates, slash commands, templates, delegation roster, phase-status rule, git-extension override
 - [`docs/services.md`](docs/services.md) — `a2a-bridge` and `orchestrator` daemons in detail
 - [`docs/plugin-install.md`](docs/plugin-install.md) — install prompt-lib as a Claude Code plugin (no clone), scope split with the apply path
+- [`docs/release-readiness.md`](docs/release-readiness.md) — package-publishing prerequisites and release checklist
 - [`docs/learning.md`](docs/learning.md) — 5-day learning path, mental shortcuts, debugging surprises
 
 ### Other references

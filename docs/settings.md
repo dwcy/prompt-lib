@@ -2,14 +2,18 @@
 
 The single most important file in this repo. This document explains every field, what it controls, and what changes when you edit it.
 
+Claude Code reads `global/settings.json`; this document is explanatory only.
+Values below use placeholders when they are expected to change per machine or
+preference.
+
 ## Top-level fields
 
-| Field | Current value | What it does |
+| Field | Configured value | What it does |
 |---|---|---|
-| `autoUpdatesChannel` | `"latest"` | Which Claude Code release channel to track. `"latest"` follows stable; switch to a beta channel if you want to test pre-releases. |
-| `theme` | `"dark"` | UI theme. Cosmetic. |
-| `model` | `"sonnet"` | Default model picked at session start. Override per session with `/model`. Claude family aliases: `sonnet`, `opus`, `haiku`. |
-| `defaultMode` | `"acceptEdits"` | Permission mode when a session starts. `acceptEdits` means edits to existing files are auto-approved; commands and writes still go through permission checks. Other modes: `default`, `plan`, `bypassPermissions`. |
+| `autoUpdatesChannel` | `{selected release channel}` | Which Claude Code release channel to track. `"latest"` follows stable; switch to a beta channel if you want to test pre-releases. |
+| `theme` | `{selected theme}` | UI theme. Cosmetic. |
+| `model` | `{selected model}` | Default model picked at session start. Override per session with `/model`. Claude family aliases include `sonnet`, `opus`, and `haiku`. |
+| `defaultMode` | `{selected permission mode}` | Permission mode when a session starts. Common modes include `default`, `acceptEdits`, `plan`, and `bypassPermissions`. |
 | `statusLine` | command running `statusline.py` | Renders the bottom-of-screen status. Our script shows the full project path as a clickable link. Replace with any command that outputs a single line of text. |
 
 ## `permissions.allow` — auto-approved tool patterns

@@ -81,7 +81,7 @@ def render_banner(target_width: int | None = None, subtitle: bool = True) -> Tex
             txt.append(base + "\n", style=mascot_style)
 
     if subtitle:
-        txt.append("\n« Agent Orchestration Setup »", style="italic bright_cyan")
+        txt.append("\n« Local Agent Control Panel »", style="italic bright_cyan")
     return txt
 
 
@@ -109,7 +109,7 @@ def subtitle_bar() -> Horizontal:
     must define `action_readme` (the link fires `screen.readme`).
     """
     return Horizontal(
-        Static("« Agent Orchestration Setup »", id="subtitle"),
+        Static("« Local Agent Control Panel »", id="subtitle"),
         Static("", classes="home-spacer"),
         Static("[@click=screen.readme]README[/]", id="readme-link"),
         id="banner-row",

@@ -34,9 +34,24 @@ def read_clipboard() -> str:
 
 def _read_windows() -> str:
     import ctypes
+    from ctypes import wintypes
 
     user32 = ctypes.windll.user32
     kernel32 = ctypes.windll.kernel32
+
+    user32.OpenClipboard.argtypes = [wintypes.HWND]
+    user32.OpenClipboard.restype = wintypes.BOOL
+    user32.CloseClipboard.argtypes = []
+    user32.CloseClipboard.restype = wintypes.BOOL
+    user32.IsClipboardFormatAvailable.argtypes = [wintypes.UINT]
+    user32.IsClipboardFormatAvailable.restype = wintypes.BOOL
+    user32.GetClipboardData.argtypes = [wintypes.UINT]
+    user32.GetClipboardData.restype = wintypes.HANDLE
+    kernel32.GlobalLock.argtypes = [wintypes.HANDLE]
+    kernel32.GlobalLock.restype = ctypes.c_void_p
+    kernel32.GlobalUnlock.argtypes = [wintypes.HANDLE]
+    kernel32.GlobalUnlock.restype = wintypes.BOOL
+
     if not user32.OpenClipboard(0):
         return ""
     try:
@@ -50,7 +65,7 @@ def _read_windows() -> str:
         if not pointer:
             return ""
         try:
-            return ctypes.c_wchar_p(pointer).value or ""
+            return ctypes.wstring_at(pointer) or ""
         finally:
             kernel32.GlobalUnlock(handle)
     finally:

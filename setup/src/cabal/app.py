@@ -44,7 +44,7 @@ from cabal.views.update import UpdateScreen  # noqa: F401
 
 
 class CabalApp(App):
-    """CABAL — Agent Orchestration Setup."""
+    """CABAL — Local Agent Control Panel."""
 
     selected_project: Path | None = None
     # Set by ToolsScreen after a successful install/update so HomeScreen re-scans
@@ -257,7 +257,7 @@ class CabalApp(App):
 
     def on_mount(self) -> None:
         self.title = "CABAL"
-        self.sub_title = "Agent Orchestration Setup"
+        self.sub_title = "Local Agent Control Panel"
         self.push_screen(ProjectGateScreen())
 
 

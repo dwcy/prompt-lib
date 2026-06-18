@@ -103,7 +103,7 @@ class HomeScreen(Screen):
                     "[bold]Claude Settings[/bold]", classes="home-section-title"
                 )
                 yield Static(
-                    "[dim]Deploy and tune the files in ~/.claude — agents, hooks, skills, MCP servers, settings.[/dim]",
+                    "[dim]Deploy, inspect, and tune ~/.claude — agents, hooks, skills, MCP servers, settings.[/dim]",
                     classes="home-section-desc",
                 )
                 with Horizontal(classes="ops-row"):

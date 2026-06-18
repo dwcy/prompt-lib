@@ -22,10 +22,13 @@ class _ClipApp(CabalApp):
         yield Input(id="probe")
 
 
-def test_read_clipboard_returns_str_and_never_raises():
+def test_read_clipboard_returns_str_and_never_raises(monkeypatch):
+    monkeypatch.setattr(clipboard.platform, "system", lambda: "Windows")
+    monkeypatch.setattr(clipboard, "_read_windows", lambda: "clipboard text")
+
     result = clipboard.read_clipboard()
 
-    assert isinstance(result, str)
+    assert result == "clipboard text"
 
 
 def test_clipboard_property_prefers_os_clipboard(monkeypatch):

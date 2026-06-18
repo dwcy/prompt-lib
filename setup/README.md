@@ -1,13 +1,13 @@
 # setup/
 
-One-stop entry point for setting up this machine's Claude Code and Codex environment.
+Local agent control panel for this machine's Claude Code and Codex environment.
 
-The wizard is published to PyPI as **`cabal`** and bundled into a standalone `.exe`. Source checkout launchers and install paths cover every host:
+The control panel is published to PyPI as **`cabal`** and bundled into a standalone `.exe`. Source checkout launchers and install paths cover every host:
 
 | Path | Command | Notes |
 |---|---|---|
 | Repo root (source checkout) | `./run` on POSIX, `.\run.cmd` on Windows | Convenience entry point that delegates to the platform-specific source launcher below. |
-| Install from PyPI (recommended) | `uv tool install cabal` then `cabal` | Single command. Needs only a Python ≥ 3.11. Works on any OS that `uv` / `pipx` support. Heads-up: there is also a Haskell tool called `cabal` distributed via Hackage — different registry, but the shell binary name collides. See the package README for mitigation. |
+| Install from PyPI (recommended) | `uv tool install cabal` then `cabal` | Single command. Needs only a Python ≥ 3.11. Works on any OS that `uv` / `pipx` support. |
 | Terminal (source) | `python setup/settings-configurator-ui.py` | Dev mode when Python is already installed. First run asks before installing `textual` + `rich` via pip. |
 | Terminal (Windows convenience) | `setup\settings-configurator-ui.cmd` | Finds Python or asks to install the latest Python via `winget`, then launches the wizard. |
 | Terminal (Linux convenience) | `sh setup/settings-configurator-ui.sh` | Finds Python or asks to install Python via the system package manager (`apt`, `dnf`, `yum`, `zypper`, `pacman`, or `apk`), then launches the wizard. |
@@ -15,9 +15,17 @@ The wizard is published to PyPI as **`cabal`** and bundled into a standalone `.e
 
 > **Alternative**: if you only need the shareable Claude Code surface (skills, agents, hooks, MCP servers, output styles) and don't need the global `CLAUDE.md` / permissions / theme / `rules/` / `project-templates/`, you can install prompt-lib as a Claude Code marketplace plugin instead. No Python required. See [`docs/plugin-install.md`](../docs/plugin-install.md). The two install paths ship different surfaces — the PyPI tool deploys the global config; the plugin only registers slash commands and agents inside Claude Code.
 
+## Publishing status
+
+The package metadata and release workflow exist, but a real package release is
+gated on the checklist in [`docs/release-readiness.md`](../docs/release-readiness.md).
+Do not create a `v*.*.*` tag until the package name, PyPI Trusted Publishing
+setup, root test orchestration, local wheel inspection, and executable smoke
+test are all complete.
+
 ## Primary
 
-**`cabal`** — interactive TUI wizard. Deploys `global/` config to `~/.claude/`, deploys `global/codex/` assets to `~/.codex/`, initializes machine env vars, shows inline drift markers, restores backups, and scaffolds `.claude/` or `.agents/` in other projects.
+**`cabal`** — interactive local agent control panel. Deploys `global/` config to `~/.claude/`, deploys `global/codex/` assets to `~/.codex/`, initializes machine env vars, shows inline drift markers, restores backups, and scaffolds `.claude/` or `.agents/` in other projects.
 
 ### Modes
 

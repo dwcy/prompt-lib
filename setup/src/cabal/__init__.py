@@ -1,4 +1,4 @@
-"""cabal - Claude Code and Codex Setup Wizard.
+"""cabal - local agent control panel for Claude Code and Codex.
 
 A Textual TUI for deploying the prompt-lib `global/` tree into `~/.claude/`,
 deploying curated Codex assets into `~/.codex/`, managing MCP servers via

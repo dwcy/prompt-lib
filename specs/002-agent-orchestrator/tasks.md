@@ -173,11 +173,11 @@ description: "Task list for Agent Orchestrator — GitHub PR Review (v1)"
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-**Status**: 🟡 In progress (2/3 — T034–T036) — T035 awaiting operator's manual real-repo verification pass
+**Status**: ✅ Complete (3/3 — T034–T036)
 **Purpose**: Final-mile improvements after every story is independently green.
 
 - [X] T034 [P] Update `services/orchestrator/README.md` (created in T006) with a concrete usage block: pre-reqs (Python 3.13, uv, gh, A2A bridge running), env-var setup snippet (PowerShell + bash), the two `uv run orchestrator serve` / `dash` invocations, link to `specs/002-agent-orchestrator/quickstart.md` for the full walkthrough — Owner: main
-- [ ] T035 Run `specs/002-agent-orchestrator/quickstart.md` end-to-end on a real throwaway GitHub repo: all 10 steps pass, all 4 acceptance-scenario checks (review posted, peer-down failure, replayable history, dashboard auto-update) succeed within their stated time budgets, `uv run pytest` and `INTEGRATION=1 uv run pytest` are both green in `services/orchestrator/`, `uv run pytest` is still green in `services/a2a-bridge/` — Owner: main
+- [X] T035 Run `specs/002-agent-orchestrator/quickstart.md` end-to-end on a real throwaway GitHub repo: all 10 steps pass, all 4 acceptance-scenario checks (review posted, peer-down failure, replayable history, dashboard auto-update) succeed within their stated time budgets, `uv run pytest` and `INTEGRATION=1 uv run pytest` are both green in `services/orchestrator/`, `uv run pytest` is still green in `services/a2a-bridge/` — Owner: main. Maintainer-confirmed complete; A2A Inspector conformance remains tracked separately in `specs/001-a2a-bridge/tasks.md` T039.
 - [X] T036 Plan-conformance audit by `@code-plan-verifier` against `specs/002-agent-orchestrator/plan.md` and the constitution gates: report verdict (PASS / PASS-WITH-WARNINGS / FAIL), no implementation shortcuts, no mock data left behind, no unplanned global/ changes, no skill/agent additions, contract tests precede implementations in tasks.md ordering, every task has an Owner from agents.md — Owner: @code-plan-verifier
 
 ---

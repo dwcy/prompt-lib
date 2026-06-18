@@ -3,6 +3,7 @@
 
 Single JSON file at ~/.cabal/cache.json with per-key payloads. Widgets read the
 cached payload on mount for instant first paint, then revalidate in a worker.
+Tests and sandboxed runs may override the directory with CABAL_CACHE_DIR.
 """
 
 from __future__ import annotations
@@ -16,7 +17,7 @@ from pathlib import Path
 from typing import Any
 
 _SCHEMA = 1
-_CACHE_DIR = Path.home() / ".cabal"
+_CACHE_DIR = Path(os.environ.get("CABAL_CACHE_DIR", Path.home() / ".cabal"))
 _CACHE_FILE = _CACHE_DIR / "cache.json"
 _LOCK = threading.Lock()
 
@@ -37,8 +38,11 @@ def _read_all() -> dict[str, Any]:
 
 
 def _write_all(data: dict[str, Any]) -> None:
-    _CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    fd, tmp = tempfile.mkstemp(prefix="cache-", suffix=".json.tmp", dir=str(_CACHE_DIR))
+    try:
+        _CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        fd, tmp = tempfile.mkstemp(prefix="cache-", suffix=".json.tmp", dir=str(_CACHE_DIR))
+    except OSError:
+        return
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, sort_keys=True, default=str)
