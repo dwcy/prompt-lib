@@ -27,7 +27,7 @@ class CodexComponent:
     @property
     def dst_path(self) -> Path:
         if self.dst.startswith("prompt-lib/"):
-            return CODEX_TARGET / self.dst
+            return CODEX_PROMPTLIB_TARGET / self.dst.removeprefix("prompt-lib/")
         return CODEX_TARGET / self.dst
 
     def list_files(self) -> list[tuple[Path, Path]]:

@@ -145,21 +145,25 @@ def build_codex_local_plan(
 
 
 def apply_codex_local_group(action: str, chosen: list[dict[str, Any]]) -> list[str]:
+    actionable = [child for child in chosen if child.get("op") is not None]
+    if not actionable:
+        return []
+
     if action == "scaffold":
-        for ch in chosen:
+        for ch in actionable:
             _, target = ch["op"]
             target.mkdir(parents=True, exist_ok=True)
         return ["[green]OK Created .agents/ scaffold[/green]"]
 
     if action == "template":
-        _, src, dst = chosen[0]["op"]
+        _, src, dst = actionable[0]["op"]
         dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(src, dst)
         return [f"[green]OK Wrote AGENTS.md from {src.stem}[/green]"]
 
     if action == "skills":
         count = 0
-        for ch in chosen:
+        for ch in actionable:
             _, src, dst = ch["op"]
             if dst.exists():
                 shutil.rmtree(dst)

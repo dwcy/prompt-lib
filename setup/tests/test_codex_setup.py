@@ -58,6 +58,30 @@ def test_codex_local_plan_and_apply_syncs_skill_folder(tmp_path, monkeypatch):
     ) == "new"
 
 
+def test_codex_local_apply_ignores_noop_rows(tmp_path):
+    noop = {
+        "key": "template::none",
+        "label": "AGENTS.md",
+        "state": "[yellow]Pick a template above[/yellow]",
+        "op": None,
+    }
+
+    assert local_setup.apply_codex_local_group("template", [noop]) == []
+
+
+def test_codex_promptlib_component_targets_promptlib_subdir():
+    comp = CodexComponent(
+        "manifest",
+        "prompt-lib/conversion-manifest.json",
+        "file",
+        "conversion-manifest.json",
+        "prompt-lib/conversion-manifest.json",
+    )
+
+    assert comp.dst_path.name == "conversion-manifest.json"
+    assert comp.dst_path.parent.name == "prompt-lib"
+
+
 def test_conversion_manifest_audit_classifies_rows(tmp_path, monkeypatch):
     root = tmp_path / "repo"
     codex = root / "global" / "codex"
