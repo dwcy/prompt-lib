@@ -9,11 +9,15 @@ set "PYTHON_EXE="
 set "PYTHON_ARGS="
 set "PYTHON_WINGET_ID="
 set "PYTHON_WINGET_VERSION="
+set "DETECTED_ARCH=%PROCESSOR_ARCHITEW6432%"
+if not defined DETECTED_ARCH set "DETECTED_ARCH=%PROCESSOR_ARCHITECTURE%"
+if not defined DETECTED_ARCH set "DETECTED_ARCH=unknown"
 
 call :find_python
 if defined PYTHON_EXE goto :run_app
 
 echo Python was not found. This wizard requires Python.
+echo Detected architecture: %DETECTED_ARCH%
 
 where winget >nul 2>nul
 if not %ERRORLEVEL%==0 (
@@ -41,9 +45,10 @@ if errorlevel 2 (
     exit /b 1
 )
 
+echo Installing Python for this architecture via winget.
 winget install --id %PYTHON_WINGET_ID% --exact --source winget --accept-source-agreements --accept-package-agreements
 if not %ERRORLEVEL%==0 (
-    echo Python installation failed or was cancelled. See the winget error above.
+    echo Could not install Python for architecture %DETECTED_ARCH% using winget. See the winget error above.
     echo Cannot continue without Python.
     exit /b 1
 )

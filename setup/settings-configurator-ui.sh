@@ -7,6 +7,17 @@ set -u
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 PYTHON_CMD=""
+ARCH=$(uname -m 2>/dev/null || echo unknown)
+
+detect_arch() {
+  if command -v dpkg >/dev/null 2>&1; then
+    dpkg --print-architecture 2>/dev/null || printf '%s\n' "$ARCH"
+  elif command -v rpm >/dev/null 2>&1; then
+    rpm --eval '%{_arch}' 2>/dev/null || printf '%s\n' "$ARCH"
+  else
+    printf '%s\n' "$ARCH"
+  fi
+}
 
 python_is_supported() {
   "$1" -c 'import sys; raise SystemExit(sys.version_info < (3, 11))' >/dev/null 2>&1
@@ -74,6 +85,8 @@ install_python() {
 
 if ! find_python; then
   echo "Python was not found. This wizard requires Python."
+  ARCH=$(detect_arch)
+  echo "Detected architecture: $ARCH"
   LATEST=$(latest_version || true)
   if [ -n "${LATEST:-}" ]; then
     echo "Latest Python available from your package manager: $LATEST"
@@ -84,8 +97,9 @@ if ! find_python; then
   read -r ANSWER
   case "$ANSWER" in
     y|Y|yes|YES)
+      echo "Installing Python for this architecture via the system package manager."
       if ! install_python; then
-        echo "Python installation failed or was cancelled."
+        echo "Could not install Python for architecture $ARCH using the system package manager."
         echo "Cannot continue without Python."
         exit 1
       fi
