@@ -565,28 +565,28 @@
                     {
                         "source":  "global/output-styles/architect.md",
                         "output":  "global/codex/references/output-styles/architect.md",
-                        "kind":  "reference",
+                        "kind":  "rule-reference",
                         "status":  "converted",
                         "reason":  "Claude output style copied as explicit Codex reference material."
                     },
                     {
                         "source":  "global/output-styles/concise.md",
                         "output":  "global/codex/references/output-styles/concise.md",
-                        "kind":  "reference",
+                        "kind":  "rule-reference",
                         "status":  "converted",
                         "reason":  "Claude output style copied as explicit Codex reference material."
                     },
                     {
                         "source":  "global/output-styles/review.md",
                         "output":  "global/codex/references/output-styles/review.md",
-                        "kind":  "reference",
+                        "kind":  "rule-reference",
                         "status":  "converted",
                         "reason":  "Claude output style copied as explicit Codex reference material."
                     },
                     {
                         "source":  "global/output-styles/technical.md",
                         "output":  "global/codex/references/output-styles/technical.md",
-                        "kind":  "reference",
+                        "kind":  "rule-reference",
                         "status":  "converted",
                         "reason":  "Claude output style copied as explicit Codex reference material."
                     },
@@ -635,21 +635,21 @@
                     {
                         "source":  null,
                         "output":  "global/codex/README.md",
-                        "kind":  "reference",
+                        "kind":  "rule-reference",
                         "status":  "codex-only",
                         "reason":  "Codex-specific setup documentation."
                     },
                     {
                         "source":  null,
                         "output":  "global/codex/references/unsupported-runtime-features.md",
-                        "kind":  "reference",
+                        "kind":  "rule-reference",
                         "status":  "codex-only",
                         "reason":  "Codex-specific explanation of unsupported Claude runtime features."
                     },
                     {
                         "source":  null,
                         "output":  "global/codex/conversion-manifest.json",
-                        "kind":  "reference",
+                        "kind":  "rule-reference",
                         "status":  "codex-only",
                         "reason":  "Manifest consumed by the Conversion Diff panel."
                     },

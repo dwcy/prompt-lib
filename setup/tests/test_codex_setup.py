@@ -90,6 +90,8 @@ def test_conversion_manifest_audit_classifies_rows(tmp_path, monkeypatch):
 
     _write(root / "global" / "skills" / "demo.md", "source")
     _write(codex / "skills" / "demo" / "SKILL.md", "converted")
+    _write(root / "global" / "settings.json", "{}")
+    _write(root / ".claude" / "commands" / "demo.md", "command")
     manifest = {
         "version": 1,
         "entries": [
@@ -108,11 +110,32 @@ def test_conversion_manifest_audit_classifies_rows(tmp_path, monkeypatch):
                 "reason": "hook runtime",
             },
             {
+                "source": "global/settings.json",
+                "output": None,
+                "kind": "unsupported",
+                "status": "unsupported",
+                "reason": "settings runtime",
+            },
+            {
+                "source": ".claude/commands/demo.md",
+                "output": None,
+                "kind": "unsupported",
+                "status": "not-converted",
+                "reason": "not in curated pass",
+            },
+            {
                 "source": None,
                 "output": "global/codex/README.md",
-                "kind": "reference",
+                "kind": "rule-reference",
                 "status": "codex-only",
                 "reason": "doc",
+            },
+            {
+                "source": None,
+                "output": "global/codex/README.md",
+                "kind": "unexpected-kind",
+                "status": "codex-only",
+                "reason": "invalid kind fallback",
             },
         ],
     }
@@ -121,6 +144,14 @@ def test_conversion_manifest_audit_classifies_rows(tmp_path, monkeypatch):
 
     rows = conversion.audit_conversion_entries()
 
-    assert [row.status for row in rows] == ["converted", "stale", "codex-only"]
+    assert [row.status for row in rows] == [
+        "converted",
+        "stale",
+        "unsupported",
+        "not-converted",
+        "codex-only",
+        "codex-only",
+    ]
     assert rows[0].source_label == "global/skills/demo.md"
     assert rows[0].output_label == "global/codex/skills/demo/SKILL.md"
+    assert rows[-1].kind == "unsupported"

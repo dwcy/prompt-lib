@@ -111,10 +111,22 @@ class CodexConversionScreen(Screen):
             self.app.push_screen(FileViewerModal(entry.output, entry.output_label))
             return
         if entry.source and entry.source.is_file():
-            title = entry.source_label
+            text = entry.source.read_text(encoding="utf-8", errors="replace")
             if entry.reason:
-                title = f"{title} - {entry.reason}"
-            self.app.push_screen(FileViewerModal(entry.source, title))
+                text = (
+                    f"# Conversion note\n\n"
+                    f"**Status:** {entry.status}\n\n"
+                    f"**Reason:** {entry.reason}\n\n"
+                    "---\n\n"
+                    f"{text}"
+                )
+            self.app.push_screen(
+                FileViewerModal(
+                    entry.source,
+                    f"{entry.source_label} - {entry.status}",
+                    new_text=text,
+                )
+            )
             return
         if entry.source and entry.source.is_dir():
             files = sorted(

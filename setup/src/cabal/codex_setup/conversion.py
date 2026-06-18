@@ -10,6 +10,7 @@ from pathlib import Path
 from cabal._paths import RESOURCE_ROOT
 from cabal.codex_setup.paths import CODEX_SOURCE_DIR
 
+VALID_KINDS = {"skill", "agent-role", "rule-reference", "template", "unsupported"}
 VALID_STATUSES = {"converted", "not-converted", "codex-only", "stale", "unsupported"}
 
 
@@ -56,6 +57,9 @@ def load_conversion_entries() -> list[ConversionEntry]:
     data = json.loads(path.read_text(encoding="utf-8-sig"))
     entries: list[ConversionEntry] = []
     for raw in data.get("entries", []):
+        kind = raw.get("kind", "unsupported")
+        if kind not in VALID_KINDS:
+            kind = "unsupported"
         status = raw.get("status", "not-converted")
         if status not in VALID_STATUSES:
             status = "not-converted"
@@ -63,7 +67,7 @@ def load_conversion_entries() -> list[ConversionEntry]:
             ConversionEntry(
                 source=_resolve(raw.get("source")),
                 output=_resolve(raw.get("output")),
-                kind=str(raw.get("kind", "unsupported")),
+                kind=str(kind),
                 status=status,
                 reason=str(raw.get("reason", "")),
             )
