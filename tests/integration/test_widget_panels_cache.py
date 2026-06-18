@@ -82,6 +82,9 @@ async def test_update_panel_worker_writes_cache(isolated_cache, monkeypatch):
 
 
 class _EnvHost(App):
+    # EnvPanel._update_paths reads app.selected_project — mirror CabalApp's attr.
+    selected_project = None
+
     def compose(self) -> ComposeResult:
         yield EnvPanel()
 

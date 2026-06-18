@@ -1,7 +1,8 @@
 """Smoke tests for StatuslineScreen — segment reorder / toggle / row + save.
 
 Mounts through Textual's compose() pipeline (catches framework-shadow bugs) and
-isolates the user config file so the real ~/.claude is never touched.
+isolates the user config file so the real ~/.claude is never touched. Segments
+live in two grouped tables (#sl-table-1 / #sl-table-2) backed by screen._rows.
 """
 
 from __future__ import annotations
@@ -10,6 +11,7 @@ import json
 from pathlib import Path
 
 import pytest
+from textual.widgets import DataTable
 
 from cabal import statusline_config
 from cabal.app import CabalApp
@@ -37,11 +39,11 @@ async def test_screen_mounts_and_builds_rows(tmp_user_config):
         app.push_screen(screen)
         await pilot.pause()
 
-        from textual.widgets import DataTable
+        total = sum(
+            screen.query_one(f"#sl-table-{r}", DataTable).row_count for r in (1, 2)
+        )
 
-        table = screen.query_one("#sl-table", DataTable)
-
-        assert table.row_count == len(screen._layout)
+        assert total == len(statusline_config.load_layout())
 
 
 @pytest.mark.asyncio
@@ -52,12 +54,13 @@ async def test_row_selection_toggles_enabled(tmp_user_config):
         app.push_screen(screen)
         await pilot.pause()
 
-        key = screen._layout[0]["key"]
-        before = screen._layout[0]["enabled"]
-        screen.on_data_table_row_selected(_FakeRowSelected(key, 0))
+        table = screen.query_one("#sl-table-1", DataTable)
+        seg = screen._rows[1][0]
+        before = seg["enabled"]
+        screen.on_data_table_row_selected(_FakeRowSelected(table, seg["key"], 0))
         await pilot.pause()
 
-        assert screen._layout[0]["enabled"] is (not before)
+        assert screen._rows[1][0]["enabled"] is (not before)
 
 
 @pytest.mark.asyncio
@@ -68,12 +71,18 @@ async def test_move_down_reorders(tmp_user_config):
         app.push_screen(screen)
         await pilot.pause()
 
-        first, second = screen._layout[0]["key"], screen._layout[1]["key"]
-        screen.query_one("#sl-table").move_cursor(row=0)
+        first, second = screen._rows[1][0]["key"], screen._rows[1][1]["key"]
+        # Filling table 2 on mount leaves its RowHighlighted as the last event,
+        # so _active_row ends at 2 — pin it back as a user highlighting table 1 would.
+        screen._active_row = 1
+        screen.query_one("#sl-table-1", DataTable).move_cursor(row=0)
         screen.action_move_down()
         await pilot.pause()
 
-        assert (screen._layout[0]["key"], screen._layout[1]["key"]) == (second, first)
+        assert (screen._rows[1][0]["key"], screen._rows[1][1]["key"]) == (
+            second,
+            first,
+        )
 
 
 @pytest.mark.asyncio
@@ -84,7 +93,7 @@ async def test_save_writes_user_config(tmp_user_config: Path):
         app.push_screen(screen)
         await pilot.pause()
 
-        screen._layout[0]["enabled"] = False
+        screen._rows[1][0]["enabled"] = False
         screen.action_save()
         await pilot.pause()
 
@@ -94,6 +103,9 @@ async def test_save_writes_user_config(tmp_user_config: Path):
 
 
 class _FakeRowSelected:
-    def __init__(self, key: str, cursor_row: int) -> None:
+    """Minimal stand-in for DataTable.RowSelected (data_table + row_key.value + cursor_row)."""
+
+    def __init__(self, data_table: DataTable, key: str, cursor_row: int) -> None:
+        self.data_table = data_table
         self.row_key = type("RowKey", (), {"value": key})()
         self.cursor_row = cursor_row

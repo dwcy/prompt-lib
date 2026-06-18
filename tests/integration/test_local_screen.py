@@ -38,14 +38,9 @@ def test_gitignore_by_template_is_importable_in_local_module():
 async def test_scaffold_children_are_selectable(tmp_project_dir):
     app = CabalApp()
     async with app.run_test() as pilot:
+        app.selected_project = tmp_project_dir
         screen = LocalScreen()
         app.push_screen(screen)
-        await pilot.pause()
-
-        from textual.widgets import Input
-
-        screen.query_one("#loc-path", Input).value = str(tmp_project_dir)
-        screen._refresh()
         await pilot.pause()
 
         scaffold_keys = screen._child_keys["scaffold"]
@@ -60,14 +55,9 @@ async def test_scaffold_children_are_selectable(tmp_project_dir):
 async def test_parent_row_bulk_toggles_scaffold(tmp_project_dir):
     app = CabalApp()
     async with app.run_test() as pilot:
+        app.selected_project = tmp_project_dir
         screen = LocalScreen()
         app.push_screen(screen)
-        await pilot.pause()
-
-        from textual.widgets import Input
-
-        screen.query_one("#loc-path", Input).value = str(tmp_project_dir)
-        screen._refresh()
         await pilot.pause()
 
         screen.on_data_table_row_selected(_FakeRowSelected("action::scaffold", 0))
