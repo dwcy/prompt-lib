@@ -2,10 +2,11 @@
 
 One-stop entry point for setting up this machine's Claude Code and Codex environment.
 
-The wizard is published to PyPI as **`cabal`** and bundled into a standalone `.exe`. Three install paths cover every host:
+The wizard is published to PyPI as **`cabal`** and bundled into a standalone `.exe`. Source checkout launchers and install paths cover every host:
 
 | Path | Command | Notes |
 |---|---|---|
+| Repo root (source checkout) | `./run` on POSIX, `.\run.cmd` on Windows | Convenience entry point that delegates to the platform-specific source launcher below. |
 | Install from PyPI (recommended) | `uv tool install cabal` then `cabal` | Single command. Needs only a Python ≥ 3.11. Works on any OS that `uv` / `pipx` support. Heads-up: there is also a Haskell tool called `cabal` distributed via Hackage — different registry, but the shell binary name collides. See the package README for mitigation. |
 | Terminal (source) | `python setup/settings-configurator-ui.py` | Dev mode when Python is already installed. First run auto-installs `textual` + `rich` via pip. |
 | Terminal (Windows convenience) | `setup\settings-configurator-ui.cmd` | Finds Python or asks to install the latest Python via `winget`, then launches the wizard. |
@@ -47,5 +48,7 @@ setup/
 ├── mcp-templates.json              ← MCP server templates (bundled into wheel + exe)
 └── tools/                          ← supporting scripts (bash fallback, smoke test, dev installer)
 ```
+
+The repo root also contains `run` and `run.cmd`; keep them as thin delegators so the setup logic stays inside this folder.
 
 See `build/README.md`, `env/README.md`, and `tools/README.md` for subfolder details.

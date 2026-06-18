@@ -9,7 +9,9 @@ Personal Claude Code configuration library. Source of truth for everything in `~
 Deploy with the TUI wizard (preferred) or the bash script:
 
 ```bash
-python setup/settings-configurator-ui.py          # interactive wizard
+./run                                            # interactive wizard on POSIX
+.\run.cmd                                       # interactive wizard on Windows
+python setup/settings-configurator-ui.py         # direct source fallback
 bash setup/tools/apply-global-claude-settings.sh   # non-interactive fallback
 ```
 

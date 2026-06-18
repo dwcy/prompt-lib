@@ -35,6 +35,10 @@ After editing anything in `global/`, deploy and restart:
 
 ```bash
 # Recommended — interactive TUI wizard (preview, doctor, restore, env init, local setup)
+./run        # POSIX
+.\run.cmd    # Windows
+
+# Direct source fallback
 python setup/settings-configurator-ui.py
 
 # Fallback — non-interactive bash script
