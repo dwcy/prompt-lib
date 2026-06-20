@@ -81,7 +81,6 @@ from cabal.tools import (
 from cabal.updates import check_for_updates, do_git_pull
 from cabal.widgets.claude_stats_panel import ClaudeStatsPanel
 from cabal.widgets.dashboard_panel import DashboardPanel
-from cabal.widgets.env_panel import EnvPanel
 from cabal.widgets.update_panel import UpdatePanel
 
 
@@ -99,7 +98,6 @@ class HomeScreen(Screen):
         with VerticalScroll(id="home-scroll"):
             yield HexBanner(id="banner", classes="centered", show_subtitle=False)
             yield subtitle_bar()
-            yield EnvPanel(id="env-summary")
             yield DashboardPanel(id="dashboard")
             with Vertical(classes="home-section"):
                 yield Static(
@@ -126,15 +124,10 @@ class HomeScreen(Screen):
                 )
                 with Horizontal(classes="ops-row"):
                     yield Button("Local Config", id="btn-op-local", variant="default")
-        with Horizontal(id="home-bottom"):
-            yield Button("Env vars", id="btn-env", variant="primary")
-            yield Button("GitHub", id="btn-github", variant="primary")
-            yield Static("", classes="home-spacer")
-            yield Button("Quit", id="btn-quit", variant="error")
         yield Footer(show_command_palette=False)
 
     def on_mount(self) -> None:
-        self.query_one("#btn-env", Button).focus()
+        self.query_one("#btn-op-update", Button).focus()
         self._apply_drift_markers()
 
     def action_readme(self) -> None:
@@ -142,18 +135,12 @@ class HomeScreen(Screen):
 
     def action_go(self, name: str) -> None:
         from cabal.views.readme import ReadmeScreen
-        from cabal.views.env import EnvScreen
         from cabal.views.git_config import GitConfigScreen
-        from cabal.views.github_repos import GitHubReposScreen
 
         if name == "readme":
             self.app.push_screen(ReadmeScreen())
-        elif name == "env":
-            self.app.push_screen(EnvScreen())
         elif name == "git":
             self.app.push_screen(GitConfigScreen())
-        elif name == "github":
-            self.app.push_screen(GitHubReposScreen())
 
     def action_refresh_claude_stats(self) -> None:
         try:
@@ -164,12 +151,6 @@ class HomeScreen(Screen):
     def action_refresh_dashboard(self) -> None:
         try:
             self.query_one("#dashboard", DashboardPanel).refresh_dashboard()
-        except Exception:
-            pass
-
-    def _refresh_env_panel(self) -> None:
-        try:
-            self.query_one("#env-summary", EnvPanel).refresh_project()
         except Exception:
             pass
 
@@ -199,24 +180,16 @@ class HomeScreen(Screen):
             btn.label = label
 
     def on_screen_resume(self) -> None:
-        self._refresh_env_panel()
         try:
             self.query_one("#dashboard", DashboardPanel).refresh_dashboard()
         except Exception:
             pass
         self._apply_drift_markers()
-        if getattr(self.app, "env_needs_refresh", False):
-            self.app.env_needs_refresh = False
-            try:
-                self.query_one("#env-summary", EnvPanel).refresh_env()
-            except Exception:
-                pass
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         from cabal.views.update import UpdateScreen
         from cabal.views.mcp import McpScreen
         from cabal.views.local import LocalScreen
-        from cabal.views.tools import ToolsScreen
         from cabal.views.statusline import StatuslineScreen
 
         bid = event.button.id or ""
@@ -224,16 +197,9 @@ class HomeScreen(Screen):
             "btn-op-update": UpdateScreen,
             "btn-op-mcp": McpScreen,
             "btn-op-local": LocalScreen,
-            "btn-op-tools": ToolsScreen,
             "btn-op-statusline": StatuslineScreen,
         }
-        if bid == "btn-env":
-            self.action_go("env")
-        elif bid == "btn-git":
+        if bid == "btn-git":
             self.action_go("git")
-        elif bid == "btn-github":
-            self.action_go("github")
-        elif bid == "btn-quit":
-            self.app.exit()
         elif bid in op_screens:
             self.app.push_screen(op_screens[bid]())

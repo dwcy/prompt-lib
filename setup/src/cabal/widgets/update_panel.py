@@ -38,6 +38,13 @@ class UpdatePanel(Widget):
         height: auto;
     }
     #btn-pull { margin: 0; }
+    #env-refresh {
+        width: auto;
+        height: auto;
+        padding: 0 1 0 0;
+        content-align: right middle;
+        display: none;
+    }
     #update-branch {
         height: 1;
         padding: 0 1;
@@ -49,6 +56,7 @@ class UpdatePanel(Widget):
     def compose(self) -> ComposeResult:
         with Horizontal(id="update-row"):
             yield Static("[dim]Checking for updates…[/dim]", id="update-msg")
+            yield Static("", id="env-refresh")
             yield Button("⬇ Pull update", id="btn-pull", variant="warning")
         yield Static("", id="update-branch")
 

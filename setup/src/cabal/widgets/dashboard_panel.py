@@ -14,10 +14,11 @@ from pathlib import Path
 
 from rich.text import Text
 from textual.app import ComposeResult
-from textual.containers import Horizontal
+from textual.containers import Horizontal, Vertical
 from textual.widget import Widget
 from textual.widgets import Button, Static
 
+from cabal.big_font import render_big
 from cabal.models.dashboard import (
     AvailabilityState,
     DashboardSnapshot,
@@ -29,6 +30,9 @@ from cabal.models.dashboard import (
 from cabal.widget_cache import load_entry, save_entry
 
 SECTIONS = ("git", "github", "supabase", "vercel")
+# Sections tied to an external service the project may simply not use — hidden
+# entirely when the project isn't linked to them, rather than showing "not linked".
+HIDEABLE_SECTIONS = ("github", "supabase", "vercel")
 CACHE_PREFIX = "dashboard:"
 
 _SECTION_TITLES = {
@@ -63,7 +67,9 @@ class DashboardPanel(Widget):
     }
     DashboardPanel #dash-titlebar { height: 3; align-vertical: middle; }
     DashboardPanel #dash-title { content-align: left middle; height: auto; width: 1fr; }
+    DashboardPanel #btn-git { min-width: 14; height: 3; margin: 0 2 0 0; }
     DashboardPanel #dash-refresh { min-width: 14; height: 3; margin: 0; }
+    DashboardPanel .dash-group { height: auto; }
     DashboardPanel .dash-section-title { height: auto; margin: 1 0 0 0; }
     DashboardPanel .dash-section-body { height: auto; padding: 0 0 0 2; }
     """
@@ -74,23 +80,24 @@ class DashboardPanel(Widget):
 
     def compose(self) -> ComposeResult:
         with Horizontal(id="dash-titlebar"):
-            yield Static(
-                "[bold bright_magenta]✦ Project dashboard[/bold bright_magenta]",
-                id="dash-title",
-            )
+            yield Static("", id="dash-title")
+            yield Button("Git config", id="btn-git", variant="primary")
             yield Button("⟳  Refresh", id="dash-refresh", variant="primary")
         for name in SECTIONS:
-            yield Static(
-                f"[bold]{_SECTION_TITLES[name]}[/bold]",
-                classes="dash-section-title",
-            )
-            yield Static(_LOADING, id=f"dash-{name}", classes="dash-section-body")
+            with Vertical(id=f"dash-sec-{name}", classes="dash-group"):
+                yield Static(
+                    f"[bold]{_SECTION_TITLES[name]}[/bold]",
+                    classes="dash-section-title",
+                )
+                yield Static(_LOADING, id=f"dash-{name}", classes="dash-section-body")
 
     def on_mount(self) -> None:
+        self.border_title = "Project Dashboard"
         self.refresh_dashboard()
 
     def refresh_dashboard(self) -> None:
         project = self._resolve_project()
+        self._paint_title(project)
         if project is None:
             self._snapshot = None
             self._paint_placeholder()
@@ -187,6 +194,7 @@ class DashboardPanel(Widget):
         self.query_one(f"#dash-{name}", Static).update(
             self._section_text(name, section)
         )
+        self._apply_visibility(name, section)
         save_entry(self._cache_key(project), self._snapshot.to_cacheable())
 
     def _resolve_project(self) -> Path | None:
@@ -210,14 +218,34 @@ class DashboardPanel(Widget):
             vercel=VercelSection(state=AvailabilityState.ERROR),
         )
 
+    def _paint_title(self, project: Path | None) -> None:
+        title = self.query_one("#dash-title", Static)
+        if project is None:
+            title.update("[dim]no project selected[/dim]")
+        else:
+            title.update(Text(render_big(project.name), style="bold bright_magenta"))
+
+    def _apply_visibility(self, name: str, section) -> None:
+        """Hide a service section the project isn't linked to; show all others."""
+        if name not in HIDEABLE_SECTIONS:
+            return
+        try:
+            container = self.query_one(f"#dash-sec-{name}", Vertical)
+        except Exception:
+            return
+        hidden = section is not None and section.state == AvailabilityState.NOT_LINKED
+        container.display = not hidden
+
     def _paint_placeholder(self) -> None:
         for name in SECTIONS:
+            self._apply_visibility(name, None)
             self.query_one(f"#dash-{name}", Static).update(
                 Text.from_markup(_PLACEHOLDER)
             )
 
     def _paint_loading(self) -> None:
         for name in SECTIONS:
+            self._apply_visibility(name, None)
             self.query_one(f"#dash-{name}", Static).update(Text.from_markup(_LOADING))
 
     def _paint_all(self) -> None:
@@ -228,6 +256,7 @@ class DashboardPanel(Widget):
             self.query_one(f"#dash-{name}", Static).update(
                 self._section_text(name, section)
             )
+            self._apply_visibility(name, section)
 
     def _section_text(self, name: str, section) -> Text:
         if section is None:
