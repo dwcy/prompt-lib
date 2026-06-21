@@ -61,6 +61,7 @@ class ProjectGateScreen(Screen):
             )
             with Horizontal(classes="ops-row"):
                 yield Button("Init new project", id="gate-init", variant="error")
+                yield Button("Clone repo", id="gate-clone", variant="primary")
                 yield Button("Open existing project", id="gate-open", variant="primary")
             with Vertical(id="gate-recents-section"):
                 yield Static("✦ Recent projects", id="gate-recents-title")
@@ -122,6 +123,11 @@ class ProjectGateScreen(Screen):
             )
         )
 
+    def action_clone_repo(self) -> None:
+        from cabal.views.github_repos import GitHubReposScreen
+
+        self.app.push_screen(GitHubReposScreen(on_clone_done=self._after_clone))
+
     def action_open_project(self) -> None:
         from cabal.views.folder_browser import FolderBrowserScreen
 
@@ -136,6 +142,10 @@ class ProjectGateScreen(Screen):
     def _after_project_chosen(self, path: Path, action: str) -> None:
         record_recent(path, action)
         self._enter_home()
+
+    def _after_clone(self, path: Path) -> None:
+        self.app.selected_project = path
+        self._after_project_chosen(path, "clone")
 
     def _enter_home(self) -> None:
         from cabal.views.home import HomeScreen
@@ -163,6 +173,8 @@ class ProjectGateScreen(Screen):
         bid = event.button.id or ""
         if bid == "gate-init":
             self.action_init_project()
+        elif bid == "gate-clone":
+            self.action_clone_repo()
         elif bid == "gate-open":
             self.action_open_project()
         elif bid == "btn-op-tools":
