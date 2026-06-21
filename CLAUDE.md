@@ -69,8 +69,10 @@ git checkout -- .claude-plugin global/.claude-plugin
 ```
 
 <!-- SPECKIT START -->
-Active spec-kit feature: **008-project-dashboard** — Add a per-project dashboard panel to the cabal HomeScreen aggregating local git, GitHub (Actions + PRs), Supabase, and Vercel status for `CabalApp.selected_project`. CLI + link files baseline, management/REST API enrichment when an access token is present. Planned 2026-06-15.
-For technical context, structure, stack decisions, and constitution gate status, read [`specs/008-project-dashboard/plan.md`](specs/008-project-dashboard/plan.md). The full design tree is at `specs/008-project-dashboard/` (spec, plan, research, data-model, contracts, quickstart).
+Active spec-kit feature: **009-headroom-tool** — Integrate Headroom (`chopratejas/headroom`, a context-compression layer for AI agents) into prompt-lib as a first-class managed tool in the cabal TUI: an installer module (Tools view + AI-CLIs group), an opt-in `headroom` MCP server template, and an investigate-only research spike on whether the proxy/wrap mode works with subscription/OAuth Claude Code. Out of scope: auto-compression nudge hook/skill, `headroom learn`. Planned 2026-06-21.
+For technical context, structure, stack decisions, and constitution gate status, read [`specs/009-headroom-tool/plan.md`](specs/009-headroom-tool/plan.md). The full design tree is at `specs/009-headroom-tool/` (spec, plan, research, data-model, contracts, quickstart).
+
+Previously: **008-project-dashboard** — per-project dashboard panel on the cabal HomeScreen aggregating local git, GitHub (Actions + PRs), Supabase, and Vercel status. Design tree at [`specs/008-project-dashboard/plan.md`](specs/008-project-dashboard/plan.md).
 
 Also in flight: **005-cabal-tools-polish** — Part A: Refactor `cabal/wizard.py` into maintainable modules. Part B (extended 2026-05-28): Add Init Project wizard view + Project MCP screen + Claude Stats panel. Design tree at [`specs/005-cabal-tools-polish/plan.md`](specs/005-cabal-tools-polish/plan.md).
 
