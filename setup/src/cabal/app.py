@@ -122,12 +122,6 @@ class CabalApp(App):
         padding: 0;
     }
 
-    #home-bottom {
-        height: 5;
-        align-vertical: middle;
-        padding: 0 2;
-        margin: 0;
-    }
     .home-spacer { width: 1fr; }
 
     .home-section {

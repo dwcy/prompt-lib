@@ -15,6 +15,7 @@ from textual.widgets import Button, DataTable, Footer, Static
 from cabal.app_widgets import AppHeader
 from cabal.banner import HexBanner, subtitle_bar
 from cabal.recent_projects import load_recents, record_recent, remove_recent
+from cabal.widgets.env_panel import EnvPanel
 
 
 def _fmt_time(iso: str) -> str:
@@ -51,6 +52,7 @@ class ProjectGateScreen(Screen):
         with VerticalScroll(id="gate-scroll"):
             yield HexBanner(id="banner", classes="centered", show_subtitle=False)
             yield subtitle_bar()
+            yield EnvPanel(id="env-summary")
             yield Static(
                 "[bold bright_magenta]Select a project[/bold bright_magenta]\n"
                 "[dim]CABAL operates on one project at a time. Init a new project or open "
@@ -58,7 +60,7 @@ class ProjectGateScreen(Screen):
                 classes="panel",
             )
             with Horizontal(classes="ops-row"):
-                yield Button("Init new project", id="gate-init", variant="primary")
+                yield Button("Init new project", id="gate-init", variant="error")
                 yield Button("Clone repo", id="gate-clone", variant="primary")
                 yield Button("Open existing project", id="gate-open", variant="primary")
             with Vertical(id="gate-recents-section"):
@@ -82,6 +84,19 @@ class ProjectGateScreen(Screen):
     def on_screen_resume(self) -> None:
         # Reload after returning from Home so freshly init/opened projects show.
         self._load_recents()
+        self._refresh_env_panel()
+
+    def _refresh_env_panel(self) -> None:
+        try:
+            self.query_one("#env-summary", EnvPanel).refresh_project()
+        except Exception:
+            pass
+        if getattr(self.app, "env_needs_refresh", False):
+            self.app.env_needs_refresh = False
+            try:
+                self.query_one("#env-summary", EnvPanel).refresh_env()
+            except Exception:
+                pass
 
     def _load_recents(self) -> None:
         table = self.query_one("#gate-recents", DataTable)
@@ -162,3 +177,15 @@ class ProjectGateScreen(Screen):
             self.action_clone_repo()
         elif bid == "gate-open":
             self.action_open_project()
+        elif bid == "btn-op-tools":
+            from cabal.views.tools import ToolsScreen
+
+            self.app.push_screen(ToolsScreen())
+        elif bid == "btn-env":
+            from cabal.views.env import EnvScreen
+
+            self.app.push_screen(EnvScreen())
+        elif bid == "btn-github":
+            from cabal.views.github_repos import GitHubReposScreen
+
+            self.app.push_screen(GitHubReposScreen())

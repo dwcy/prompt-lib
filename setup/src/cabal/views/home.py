@@ -12,7 +12,6 @@ import shutil
 import subprocess
 import sys
 from datetime import datetime
-from pathlib import Path
 from typing import Callable
 
 from rich.markup import escape as escape_markup
@@ -81,7 +80,7 @@ from cabal.tools import (
 )
 from cabal.updates import check_for_updates, do_git_pull
 from cabal.widgets.claude_stats_panel import ClaudeStatsPanel
-from cabal.widgets.env_panel import EnvPanel
+from cabal.widgets.dashboard_panel import DashboardPanel
 from cabal.widgets.update_panel import UpdatePanel
 
 
@@ -91,6 +90,7 @@ class HomeScreen(Screen):
     BINDINGS = [
         Binding("escape", "app.pop_screen", "Back"),
         Binding("ctrl+s", "refresh_claude_stats", "Refresh stats"),
+        Binding("ctrl+d", "refresh_dashboard", "Refresh dashboard"),
     ]
 
     def compose(self) -> ComposeResult:
@@ -98,7 +98,7 @@ class HomeScreen(Screen):
         with VerticalScroll(id="home-scroll"):
             yield HexBanner(id="banner", classes="centered", show_subtitle=False)
             yield subtitle_bar()
-            yield EnvPanel(id="env-summary")
+            yield DashboardPanel(id="dashboard")
             with Vertical(classes="home-section"):
                 yield Static(
                     "[bold]Claude Settings[/bold]", classes="home-section-title"
@@ -109,14 +109,15 @@ class HomeScreen(Screen):
                 )
                 with Horizontal(classes="ops-row"):
                     yield Button(
-                        "Global Claude file Config",
+                        "Global File Configuration",
                         id="btn-op-update",
                         variant="default",
                     )
                     yield Button(
-                        "Statusline", id="btn-op-statusline", variant="default"
+                        "StatusLine", id="btn-op-statusline", variant="default"
                     )
                 with Horizontal(classes="ops-row"):
+                    yield Button("Settings", id="btn-op-settings", variant="default")
                     yield Button("MCP Connectors", id="btn-op-mcp", variant="default")
                 yield ClaudeStatsPanel(id="claude-stats")
                 yield Static(
@@ -124,27 +125,10 @@ class HomeScreen(Screen):
                 )
                 with Horizontal(classes="ops-row"):
                     yield Button("Local Config", id="btn-op-local", variant="default")
-            with Vertical(classes="home-section"):
-                yield Static("[bold]Project[/bold]", classes="home-section-title")
-                with Horizontal(classes="ops-row"):
-                    yield Button(
-                        "Init new project", id="btn-op-init", variant="primary"
-                    )
-                    yield Button("Clone repo", id="btn-op-clone", variant="primary")
-                    yield Button(
-                        "Open existing project",
-                        id="btn-op-open-project",
-                        variant="primary",
-                    )
-        with Horizontal(id="home-bottom"):
-            yield Button("Env vars", id="btn-env", variant="primary")
-            yield Button("GitHub", id="btn-github", variant="primary")
-            yield Static("", classes="home-spacer")
-            yield Button("Quit", id="btn-quit", variant="error")
         yield Footer(show_command_palette=False)
 
     def on_mount(self) -> None:
-        self.query_one("#btn-env", Button).focus()
+        self.query_one("#btn-op-update", Button).focus()
         self._apply_drift_markers()
 
     def action_readme(self) -> None:
@@ -152,42 +136,12 @@ class HomeScreen(Screen):
 
     def action_go(self, name: str) -> None:
         from cabal.views.readme import ReadmeScreen
-        from cabal.views.env import EnvScreen
         from cabal.views.git_config import GitConfigScreen
-        from cabal.views.github_repos import GitHubReposScreen
 
         if name == "readme":
             self.app.push_screen(ReadmeScreen())
-        elif name == "env":
-            self.app.push_screen(EnvScreen())
         elif name == "git":
             self.app.push_screen(GitConfigScreen())
-        elif name == "github":
-            self.app.push_screen(GitHubReposScreen())
-
-    def action_init_project(self) -> None:
-        from cabal.views.init_project import InitProjectScreen
-
-        self.app.push_screen(InitProjectScreen(on_created=self._project_changed))
-
-    def action_clone_repo(self) -> None:
-        from cabal.views.github_repos import GitHubReposScreen
-
-        self.app.push_screen(GitHubReposScreen(on_clone_done=self._project_changed))
-
-    def action_open_project(self) -> None:
-        from cabal.views.folder_browser import FolderBrowserScreen
-
-        self.app.push_screen(FolderBrowserScreen(Path.cwd()), self._after_folder_picked)
-
-    def _after_folder_picked(self, path: Path | None) -> None:
-        if path is None:
-            return
-        self._project_changed(path)
-
-    def _project_changed(self, path: Path) -> None:
-        self.app.selected_project = path
-        self._refresh_env_panel()
 
     def action_refresh_claude_stats(self) -> None:
         try:
@@ -195,9 +149,9 @@ class HomeScreen(Screen):
         except Exception:
             pass
 
-    def _refresh_env_panel(self) -> None:
+    def action_refresh_dashboard(self) -> None:
         try:
-            self.query_one("#env-summary", EnvPanel).refresh_project()
+            self.query_one("#dashboard", DashboardPanel).refresh_dashboard()
         except Exception:
             pass
 
@@ -208,7 +162,7 @@ class HomeScreen(Screen):
         except Exception:
             drift = False
         for bid, base in (
-            ("btn-op-update", "Global Claude file Config"),
+            ("btn-op-update", "Global File Configuration"),
             ("btn-op-local", "Local Config"),
         ):
             try:
@@ -220,50 +174,35 @@ class HomeScreen(Screen):
                 label.append("  ⚠ update available", style="yellow")
                 btn.tooltip = (
                     "Repo has changes not yet deployed to ~/.claude — "
-                    "run Global Claude file Config to sync."
+                    "run Global File Configuration to sync."
                 )
             else:
                 btn.tooltip = None
             btn.label = label
 
     def on_screen_resume(self) -> None:
-        self._refresh_env_panel()
+        try:
+            self.query_one("#dashboard", DashboardPanel).refresh_dashboard()
+        except Exception:
+            pass
         self._apply_drift_markers()
-        if getattr(self.app, "env_needs_refresh", False):
-            self.app.env_needs_refresh = False
-            try:
-                self.query_one("#env-summary", EnvPanel).refresh_env()
-            except Exception:
-                pass
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         from cabal.views.update import UpdateScreen
         from cabal.views.mcp import McpScreen
         from cabal.views.local import LocalScreen
-        from cabal.views.tools import ToolsScreen
         from cabal.views.statusline import StatuslineScreen
+        from cabal.views.settings import SettingsScreen
 
         bid = event.button.id or ""
         op_screens = {
             "btn-op-update": UpdateScreen,
             "btn-op-mcp": McpScreen,
             "btn-op-local": LocalScreen,
-            "btn-op-tools": ToolsScreen,
             "btn-op-statusline": StatuslineScreen,
+            "btn-op-settings": SettingsScreen,
         }
-        if bid == "btn-env":
-            self.action_go("env")
-        elif bid == "btn-git":
+        if bid == "btn-git":
             self.action_go("git")
-        elif bid == "btn-github":
-            self.action_go("github")
-        elif bid == "btn-quit":
-            self.app.exit()
-        elif bid == "btn-op-init":
-            self.action_init_project()
-        elif bid == "btn-op-clone":
-            self.action_clone_repo()
-        elif bid == "btn-op-open-project":
-            self.action_open_project()
         elif bid in op_screens:
             self.app.push_screen(op_screens[bid]())

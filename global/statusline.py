@@ -331,16 +331,35 @@ def _pytest_tests(cwd):
     lastfailed_file = cache / "lastfailed"
     if not nodeids_file.exists():
         return None
+    base = Path(cwd)
+    _seen = {}
+
+    def _live(nodeid):
+        # pytest's cache only ever grows: `nodeids` is the union of every id ever
+        # collected and `lastfailed` only clears an id when that exact id runs and
+        # passes. So a deleted or moved test file leaves ghost ids that inflate the
+        # count forever (until `pytest --cache-clear`). Drop ids whose file is gone.
+        rel = nodeid.split("::", 1)[0]
+        if rel not in _seen:
+            _seen[rel] = (base / rel).exists()
+        return _seen[rel]
+
     try:
         with nodeids_file.open(encoding="utf-8") as f:
-            total = sum(1 for l in f if l.strip())
-        if total == 0:
+            ids = [l.strip() for l in f if l.strip()]
+        if not ids:
             return None
+        live_ids = [i for i in ids if _live(i)]
+        # If nothing resolves (e.g. pytest rootdir differs from cwd), the path
+        # check is misaligned — fall back to raw counts rather than hide the segment.
+        use_filter = bool(live_ids)
+        total = len(live_ids) if use_filter else len(ids)
         failed = 0
         if lastfailed_file.exists():
             with lastfailed_file.open(encoding="utf-8") as f:
                 data = json.load(f)
-            failed = len(data) if isinstance(data, dict) else 0
+            if isinstance(data, dict):
+                failed = sum(1 for nid in data if not use_filter or _live(nid))
         if failed:
             return rgb(f"✗ {failed}/{total}", 255, 80, 80)
         return rgb(f"✓ {total}", 100, 220, 120)

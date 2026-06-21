@@ -1,0 +1,1 @@
+This folder is for executable helpers used by SKILL.md. None are needed yet — css-guide is a technique guide, not a code generator. Drop a script here if a future check (e.g. a hardcoded-value linter) is added.

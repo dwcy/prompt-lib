@@ -103,3 +103,27 @@ In this system, depth is organic, not artificial. We use **Tonal Layering** inst
 ## 7. Signature Element: The "Lab" Overlay
 
 To honor the creative essence of the brand, designers are encouraged to use "Micro-Grids"—small, 10% opacity dot-matrix patterns—in the background of `surface-container` elements. This provides a tactile, "blueprinted" feel to the creative work being displayed.
+
+---
+
+## 8. Motion & Interaction: CSS-First
+
+Motion is part of the "Premium Digital Agency 2.0" feel — but it belongs in CSS, not JavaScript. Animations, transitions, hover/scroll/reveal effects, and state toggles must be implemented in CSS by default. Modern CSS (2024–2025) expresses nearly all of this declaratively, and CSS-driven motion runs on the compositor, degrades gracefully, and stays in sync with the design tokens.
+
+### Default to CSS
+
+- **Transitions & animations:** `transition` and `@keyframes`. Animate `transform`/`opacity` for the smooth, premium feel; use `@property` to animate custom properties (e.g. gradient angles, color stops).
+- **Scroll reveals & parallax:** scroll-driven animations (`animation-timeline: view()` / `scroll()`) — not scroll listeners or `IntersectionObserver`.
+- **Parent / sibling state:** `:has()` (e.g. lift a card when its checkbox is checked) — not class toggling.
+- **Disclosure / accordions:** native `<details>` styled with `::details-content` — not click handlers.
+- **Tooltips / popovers / menus:** the `popover` attribute + CSS anchor positioning — not show/hide JS.
+- **Component responsiveness:** container queries — not `ResizeObserver`.
+- **View Transitions:** the CSS View Transitions API for cross-state morphs.
+
+### Reserve JavaScript for genuine logic
+
+Data fetching and async state, complex orchestration that branches on runtime data, gesture physics (momentum, drag inertia), focus management/ARIA wiring beyond what native elements provide, and persisting state across reloads. If the only reason to reach for JS is "toggle a class on an event," a CSS state selector almost certainly already covers it.
+
+Always honor `@media (prefers-reduced-motion: reduce)` — provide a no-animation path that leaves content fully usable.
+
+For the technique catalog, the effect → CSS-approach → when-JS-is-needed matrix, and copy-ready snippets, use the [`/css-guide`](skills/css-guide/SKILL.md) skill. For token scaffolding use [`/css`](skills/css.md).

@@ -1,0 +1,31 @@
+/* Scroll-driven fade-and-rise reveal — replaces IntersectionObserver.
+   Apply .scroll-reveal to any element; it animates as it scrolls into view.
+   Values reference design tokens from globals.css (see /css scaffold). */
+
+.scroll-reveal {
+  animation: reveal-rise linear both;
+  animation-timeline: view();
+  /* Start when the element is 20% up from the bottom edge,
+     finish by the time it is 40% into the viewport. */
+  animation-range: entry 20% cover 40%;
+}
+
+@keyframes reveal-rise {
+  from {
+    opacity: 0;
+    transform: translateY(var(--size-6));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Respect the user's motion preference: show content with no animation. */
+@media (prefers-reduced-motion: reduce) {
+  .scroll-reveal {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}

@@ -1,0 +1,394 @@
+# -*- coding: utf-8 -*-
+"""DashboardPanel — home-screen widget that renders a per-project dashboard snapshot.
+
+Framework + rendering only: cache-first paint, per-section worker dispatch, and pure
+section-to-Text rendering. No subprocess/network here — collectors live in services.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import webbrowser
+from datetime import datetime, timezone
+from pathlib import Path
+
+from rich.text import Text
+from textual.app import ComposeResult
+from textual.containers import Horizontal, Vertical
+from textual.widget import Widget
+from textual.widgets import Button, Static
+
+from cabal.big_font import render_big
+from cabal.models.dashboard import (
+    AvailabilityState,
+    DashboardSnapshot,
+    GitHubSection,
+    GitSection,
+    SupabaseSection,
+    VercelSection,
+)
+from cabal.widget_cache import load_entry, save_entry
+
+SECTIONS = ("git", "github", "supabase", "vercel")
+# Sections tied to an external service the project may simply not use — hidden
+# entirely when the project isn't linked to them, rather than showing "not linked".
+HIDEABLE_SECTIONS = ("github", "supabase", "vercel")
+CACHE_PREFIX = "dashboard:"
+
+_SECTION_TITLES = {
+    "git": "Git",
+    "github": "GitHub",
+    "supabase": "Supabase",
+    "vercel": "Vercel",
+}
+_PLACEHOLDER = "[dim]select a project to see its dashboard[/dim]"
+_REFRESHING = "[dim]refreshing…[/dim]"
+_LOADING = "[dim]loading…[/dim]"
+
+_STATE_HINTS = {
+    AvailabilityState.NO_CLI: "required CLI not found on PATH",
+    AvailabilityState.NOT_LINKED: "not linked",
+    AvailabilityState.NOT_AUTHED: "not authenticated",
+    AvailabilityState.TIMEOUT: "timed out",
+    AvailabilityState.ERROR: "error",
+}
+
+
+class DashboardPanel(Widget):
+    """Per-project dashboard: cache-first paint, threaded section workers, pure rendering."""
+
+    DEFAULT_CSS = """
+    DashboardPanel {
+        height: auto;
+        padding: 1 2;
+        margin: 0 2;
+        background: $boost;
+        border: round $primary;
+    }
+    DashboardPanel #dash-titlebar { height: 3; align-vertical: middle; }
+    DashboardPanel #dash-title { content-align: left middle; height: auto; width: 1fr; }
+    DashboardPanel #btn-git { min-width: 14; height: 3; margin: 0 2 0 0; }
+    DashboardPanel #dash-refresh { min-width: 14; height: 3; margin: 0; }
+    DashboardPanel .dash-group { height: auto; }
+    DashboardPanel .dash-section-title { height: auto; margin: 1 0 0 0; }
+    DashboardPanel .dash-section-body { height: auto; padding: 0 0 0 2; }
+    """
+
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
+        self._snapshot: DashboardSnapshot | None = None
+
+    def compose(self) -> ComposeResult:
+        with Horizontal(id="dash-titlebar"):
+            yield Static("", id="dash-title")
+            yield Button("Git config", id="btn-git", variant="primary")
+            yield Button("⟳  Refresh", id="dash-refresh", variant="primary")
+        for name in SECTIONS:
+            with Vertical(id=f"dash-sec-{name}", classes="dash-group"):
+                yield Static(
+                    f"[bold]{_SECTION_TITLES[name]}[/bold]",
+                    classes="dash-section-title",
+                )
+                yield Static(_LOADING, id=f"dash-{name}", classes="dash-section-body")
+
+    def on_mount(self) -> None:
+        self.border_title = "Project Dashboard"
+        self.refresh_dashboard()
+
+    def refresh_dashboard(self) -> None:
+        project = self._resolve_project()
+        self._paint_title(project)
+        if project is None:
+            self._snapshot = None
+            self._paint_placeholder()
+            return
+        self._rescope_to(project)
+        warm = self._snapshot is not None
+        for name in SECTIONS:
+            fetcher = getattr(self, f"_fetch_{name}", None)
+            if callable(fetcher):
+                if not warm:
+                    self.query_one(f"#dash-{name}", Static).update(
+                        Text.from_markup(_REFRESHING)
+                    )
+                self.run_worker(fetcher, thread=True, exclusive=True, group=name)
+
+    def _rescope_to(self, project: Path) -> None:
+        """Re-key the cache to `project`; reset + repaint cached snapshot on project change.
+
+        Guarantees C-P4: switching the selected project never shows the previous
+        project's data. When the live snapshot belongs to a different project (or none),
+        clear it, paint all four sections to "loading…", then paint this project's cached
+        snapshot if one exists — all before any worker is dispatched.
+        """
+        target = str(project)
+        if self._snapshot is not None and self._snapshot.project_path == target:
+            return
+        self._snapshot = None
+        self._paint_loading()
+        cached = load_entry(self._cache_key(project))
+        if cached is not None:
+            restored = DashboardSnapshot.from_cached(cached)
+            if restored is not None and restored.project_path == target:
+                self._snapshot = restored
+                self._paint_all()
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "dash-refresh":
+            event.stop()
+            self.refresh_dashboard()
+
+    def action_open_url(self, url: str) -> None:
+        try:
+            webbrowser.open(url)
+        except Exception:
+            pass
+
+    def _fetch_git(self) -> None:
+        project = self._resolve_project()
+        if project is None:
+            return
+        from cabal.dashboard_git_service import collect_git
+
+        section = collect_git(project)
+        self.app.call_from_thread(self._apply_section, "git", section, str(project))
+
+    def _fetch_github(self) -> None:
+        project = self._resolve_project()
+        if project is None:
+            return
+        from cabal.dashboard_git_service import collect_git
+        from cabal.dashboard_github_service import collect_github
+
+        git = collect_git(project)
+        section = collect_github(project, git.current_branch, git.remotes)
+        self.app.call_from_thread(self._apply_section, "github", section, str(project))
+
+    def _fetch_supabase(self) -> None:
+        project = self._resolve_project()
+        if project is None:
+            return
+        from cabal.dashboard_supabase_service import collect_supabase
+
+        section = collect_supabase(project)
+        self.app.call_from_thread(
+            self._apply_section, "supabase", section, str(project)
+        )
+
+    def _fetch_vercel(self) -> None:
+        project = self._resolve_project()
+        if project is None:
+            return
+        from cabal.dashboard_vercel_service import collect_vercel
+
+        section = collect_vercel(project)
+        self.app.call_from_thread(self._apply_section, "vercel", section, str(project))
+
+    def _apply_section(self, name: str, section, owner: str | None = None) -> None:
+        project = self._resolve_project()
+        if project is None or (owner is not None and owner != str(project)):
+            return
+        if self._snapshot is None:
+            self._snapshot = self._default_snapshot()
+        setattr(self._snapshot, name, section)
+        self.query_one(f"#dash-{name}", Static).update(
+            self._section_text(name, section)
+        )
+        self._apply_visibility(name, section)
+        save_entry(self._cache_key(project), self._snapshot.to_cacheable())
+
+    def _resolve_project(self) -> Path | None:
+        selected = getattr(self.app, "selected_project", None)
+        if selected is not None:
+            return Path(selected)
+        return None
+
+    def _cache_key(self, project: Path) -> str:
+        digest = hashlib.sha1(str(project).encode("utf-8")).hexdigest()[:16]
+        return f"{CACHE_PREFIX}{digest}"
+
+    def _default_snapshot(self) -> DashboardSnapshot:
+        project = self._resolve_project()
+        return DashboardSnapshot(
+            project_path=str(project) if project is not None else "",
+            captured_at=datetime.now(timezone.utc).isoformat(),
+            git=GitSection(state=AvailabilityState.ERROR),
+            github=GitHubSection(state=AvailabilityState.ERROR),
+            supabase=SupabaseSection(state=AvailabilityState.ERROR),
+            vercel=VercelSection(state=AvailabilityState.ERROR),
+        )
+
+    def _paint_title(self, project: Path | None) -> None:
+        title = self.query_one("#dash-title", Static)
+        if project is None:
+            title.update("[dim]no project selected[/dim]")
+        else:
+            title.update(Text(render_big(project.name), style="bold bright_magenta"))
+
+    def _apply_visibility(self, name: str, section) -> None:
+        """Hide a service section the project isn't linked to; show all others."""
+        if name not in HIDEABLE_SECTIONS:
+            return
+        try:
+            container = self.query_one(f"#dash-sec-{name}", Vertical)
+        except Exception:
+            return
+        hidden = section is not None and section.state == AvailabilityState.NOT_LINKED
+        container.display = not hidden
+
+    def _paint_placeholder(self) -> None:
+        for name in SECTIONS:
+            self._apply_visibility(name, None)
+            self.query_one(f"#dash-{name}", Static).update(
+                Text.from_markup(_PLACEHOLDER)
+            )
+
+    def _paint_loading(self) -> None:
+        for name in SECTIONS:
+            self._apply_visibility(name, None)
+            self.query_one(f"#dash-{name}", Static).update(Text.from_markup(_LOADING))
+
+    def _paint_all(self) -> None:
+        if self._snapshot is None:
+            return
+        for name in SECTIONS:
+            section = getattr(self._snapshot, name, None)
+            self.query_one(f"#dash-{name}", Static).update(
+                self._section_text(name, section)
+            )
+            self._apply_visibility(name, section)
+
+    def _section_text(self, name: str, section) -> Text:
+        if section is None:
+            return Text.from_markup(_LOADING)
+        builders = {
+            "git": self._build_git_text,
+            "github": self._build_github_text,
+            "supabase": self._build_supabase_text,
+            "vercel": self._build_vercel_text,
+        }
+        return builders[name](section)
+
+    def _link_lines(self, label: str, url: str | None) -> list[str]:
+        if not url:
+            return []
+        return [
+            f"[bold]{label}:[/bold] [@click=open_url('{url}')]open[/]",
+            f"  [dim]{url}[/dim]",
+        ]
+
+    def _state_hint(self, section) -> list[str]:
+        hint = getattr(section, "hint", None) or _STATE_HINTS.get(
+            section.state, "unavailable"
+        )
+        return [f"[dim]{hint}[/dim]"]
+
+    def _enrich_lines(self, section) -> list[str]:
+        enrich_state = getattr(section, "enrich_state", None)
+        if enrich_state in (
+            AvailabilityState.TOKEN_MISSING,
+            AvailabilityState.TOKEN_REJECTED,
+        ):
+            hint = section.enrich_hint or (
+                "token rejected"
+                if enrich_state == AvailabilityState.TOKEN_REJECTED
+                else "set a token for account-level fields"
+            )
+            return [f"[dim]{hint}[/dim]"]
+        return []
+
+    def _build_git_text(self, section: GitSection) -> Text:
+        if section.state != AvailabilityState.OK:
+            return Text.from_markup("\n".join(self._state_hint(section)))
+        lines: list[str] = []
+        if section.current_branch:
+            label = "detached at" if section.detached else "branch"
+            lines.append(f"[bold]{label}:[/bold] {section.current_branch}")
+        if section.local_branches:
+            lines.append(f"[bold]local branches:[/bold] {len(section.local_branches)}")
+        for remote in section.remotes:
+            tag = " [green](github)[/green]" if remote.is_github else ""
+            lines.append(f"[bold]{remote.name}:[/bold] {remote.url}{tag}")
+        return Text.from_markup("\n".join(lines) or _LOADING)
+
+    def _build_github_text(self, section: GitHubSection) -> Text:
+        if section.state != AvailabilityState.OK:
+            return Text.from_markup("\n".join(self._state_hint(section)))
+        lines: list[str] = []
+        if section.owner_repo:
+            via = (
+                f" [dim](via {section.remote_used})[/dim]"
+                if section.remote_used
+                else ""
+            )
+            lines.append(f"[bold]repo:[/bold] {section.owner_repo}{via}")
+        if section.runs:
+            lines.append("[bold]workflow runs:[/bold]")
+            for run in section.runs:
+                outcome = run.conclusion or run.status
+                lines.append(f"  {run.name} — {outcome} ({run.branch})")
+                lines.extend(self._link_lines("  run", run.url))
+        else:
+            lines.append("[dim]no workflow runs[/dim]")
+        if section.pull_requests:
+            lines.append("[bold]open PRs:[/bold]")
+            for pr in section.pull_requests:
+                lines.append(f"  #{pr.number} {pr.title} — @{pr.author}")
+                lines.extend(self._link_lines("  PR", pr.url))
+        return Text.from_markup("\n".join(lines) or _LOADING)
+
+    def _build_supabase_text(self, section: SupabaseSection) -> Text:
+        if section.state != AvailabilityState.OK:
+            lines = self._state_hint(section)
+            lines.extend(self._link_lines("dashboard", section.dashboard_url))
+            return Text.from_markup("\n".join(lines))
+        lines = []
+        if section.project_ref:
+            lines.append(f"[bold]ref:[/bold] {section.project_ref}")
+        for label, value in (
+            ("status", section.status),
+            ("region", section.region),
+            ("plan", section.plan_name),
+            ("db location", section.db_location),
+            ("last migration", section.last_migration),
+            ("last backup", section.last_backup),
+        ):
+            if value:
+                lines.append(f"[bold]{label}:[/bold] {value}")
+        if section.github_connected is not None:
+            connected = "yes" if section.github_connected else "no"
+            lines.append(f"[bold]github connected:[/bold] {connected}")
+        for member in section.members:
+            role = f" — {member.role}" if member.role else ""
+            lines.append(f"  [dim]member:[/dim] {member.name}{role}")
+        lines.extend(self._link_lines("dashboard", section.dashboard_url))
+        lines.extend(
+            self._link_lines("schema visualizer", section.schema_visualizer_url)
+        )
+        lines.extend(self._enrich_lines(section))
+        return Text.from_markup("\n".join(lines) or _LOADING)
+
+    def _build_vercel_text(self, section: VercelSection) -> Text:
+        if section.state != AvailabilityState.OK:
+            lines = self._state_hint(section)
+            lines.extend(self._link_lines("dashboard", section.dashboard_url))
+            return Text.from_markup("\n".join(lines))
+        lines = []
+        if section.project_name:
+            lines.append(f"[bold]project:[/bold] {section.project_name}")
+        for label, value in (
+            ("deployment", section.latest_deployment_status),
+            ("team / plan", section.team_plan),
+            ("region", section.region),
+        ):
+            if value:
+                lines.append(f"[bold]{label}:[/bold] {value}")
+        for member in section.members:
+            role = f" — {member.role}" if member.role else ""
+            lines.append(f"  [dim]member:[/dim] {member.name}{role}")
+        lines.extend(self._link_lines("dashboard", section.dashboard_url))
+        lines.extend(
+            self._link_lines("latest deployment", section.latest_deployment_url)
+        )
+        lines.extend(self._enrich_lines(section))
+        return Text.from_markup("\n".join(lines) or _LOADING)

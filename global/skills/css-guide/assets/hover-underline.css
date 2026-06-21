@@ -1,0 +1,33 @@
+/* Center-out underline on hover — pure CSS, no JS.
+   Matches the design system's tertiary-button motion.
+   Values reference design tokens from globals.css (see /css scaffold). */
+
+.hover-underline {
+  position: relative;
+  color: var(--color-secondary);
+  text-decoration: none;
+  padding-bottom: var(--size-1);
+}
+
+.hover-underline::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  right: 50%;
+  height: 1px;
+  background-color: var(--color-secondary);
+  transition: left 200ms ease, right 200ms ease;
+}
+
+.hover-underline:hover::after,
+.hover-underline:focus-visible::after {
+  left: 0;
+  right: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hover-underline::after {
+    transition: none;
+  }
+}
