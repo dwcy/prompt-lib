@@ -109,14 +109,15 @@ class HomeScreen(Screen):
                 )
                 with Horizontal(classes="ops-row"):
                     yield Button(
-                        "Global Claude file Config",
+                        "Global File Configuration",
                         id="btn-op-update",
                         variant="default",
                     )
                     yield Button(
-                        "Statusline", id="btn-op-statusline", variant="default"
+                        "StatusLine", id="btn-op-statusline", variant="default"
                     )
                 with Horizontal(classes="ops-row"):
+                    yield Button("Settings", id="btn-op-settings", variant="default")
                     yield Button("MCP Connectors", id="btn-op-mcp", variant="default")
                 yield ClaudeStatsPanel(id="claude-stats")
                 yield Static(
@@ -161,7 +162,7 @@ class HomeScreen(Screen):
         except Exception:
             drift = False
         for bid, base in (
-            ("btn-op-update", "Global Claude file Config"),
+            ("btn-op-update", "Global File Configuration"),
             ("btn-op-local", "Local Config"),
         ):
             try:
@@ -173,7 +174,7 @@ class HomeScreen(Screen):
                 label.append("  ⚠ update available", style="yellow")
                 btn.tooltip = (
                     "Repo has changes not yet deployed to ~/.claude — "
-                    "run Global Claude file Config to sync."
+                    "run Global File Configuration to sync."
                 )
             else:
                 btn.tooltip = None
@@ -191,6 +192,7 @@ class HomeScreen(Screen):
         from cabal.views.mcp import McpScreen
         from cabal.views.local import LocalScreen
         from cabal.views.statusline import StatuslineScreen
+        from cabal.views.settings import SettingsScreen
 
         bid = event.button.id or ""
         op_screens = {
@@ -198,6 +200,7 @@ class HomeScreen(Screen):
             "btn-op-mcp": McpScreen,
             "btn-op-local": LocalScreen,
             "btn-op-statusline": StatuslineScreen,
+            "btn-op-settings": SettingsScreen,
         }
         if bid == "btn-git":
             self.action_go("git")
