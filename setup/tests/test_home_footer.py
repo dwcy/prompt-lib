@@ -70,4 +70,4 @@ async def test_escape_returns_to_start_view():
 def test_home_bindings_are_escape_and_refresh_only():
     keys = {b.key for b in HomeScreen.BINDINGS}
 
-    assert keys == {"escape", "ctrl+s"}
+    assert keys == {"escape", "ctrl+s", "ctrl+d"}
