@@ -135,7 +135,11 @@ class HomeScreen(Screen):
                     classes="home-section-title",
                 )
                 yield Static(
-                    "[dim]Browse the exported knowledge graph and OKF bundle status.[/dim]",
+                    "[dim]OKF (Open Knowledge Format) turns agents, skills, hooks, "
+                    "rules, and specs into a portable knowledge map for AI tools. "
+                    "Use it to inspect how prompt-lib pieces connect, spot routing "
+                    "overlap, and open the graph viewer.[/dim]",
+                    id="okf-analytics-desc",
                     classes="home-section-desc",
                 )
                 with Horizontal(classes="ops-row"):

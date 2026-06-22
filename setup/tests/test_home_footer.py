@@ -116,3 +116,6 @@ async def test_codex_settings_are_in_their_own_panel():
         assert "OKF Analytics" in str(
             screen.query_one("#okf-analytics-title", Static).render()
         )
+        assert "Open Knowledge Format" in str(
+            screen.query_one("#okf-analytics-desc", Static).render()
+        )
