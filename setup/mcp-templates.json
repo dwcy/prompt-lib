@@ -49,6 +49,13 @@
       "args": ["docker-mcp"],
       "env_required": [],
       "default_enabled": false
+    },
+    "headroom": {
+      "transport": "stdio",
+      "command": "headroom",
+      "args": ["mcp", "serve"],
+      "env_required": [],
+      "default_enabled": false
     }
   }
 }

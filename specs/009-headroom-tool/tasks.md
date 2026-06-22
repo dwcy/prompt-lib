@@ -22,14 +22,16 @@ description: "Task list for 009-headroom-tool implementation"
 
 ## Phase 1: Research Spike (Foundational — corresponds to plan Phase 0)
 
-**Status**: ⬜ Pending (0/3 — T001–T003)
+**Status**: ✅ Complete (3/3 — T001–T003)
 **Purpose**: Confirm the empirical unknowns the installer + template depend on, and produce the investigate-only proxy verdict.
 
 **⚠️ CRITICAL**: T001–T002 block Phase 2 and Phase 3 (the installer extra and the MCP serve invocation must be confirmed before they are written). T003 (US3) blocks nothing — it is the FR-009 deliverable and no code depends on its outcome (FR-010).
 
-- [ ] T001 Install Headroom locally and confirm the exact `uv tool install` package spec/extra that yields a working `headroom` CLI **with** the MCP server present (`headroom-ai[mcp]` vs `[all]`); verify `headroom --version`; record the confirmed spec in `specs/009-headroom-tool/research.md` §A2 — Owner: main
-- [ ] T002 Confirm the exact stdio invocation the Headroom MCP server runs (inspect what `headroom mcp install` writes to `~/.claude.json`, and/or `headroom mcp --help`); record the confirmed `command`/`args` in `specs/009-headroom-tool/research.md` §A3 — Owner: main
-- [ ] T003 [US3] Run the proxy/subscription-auth investigation per `research.md` §B steps (does `headroom wrap claude`/proxy work with subscription/OAuth Claude Code without an API key; risks; measured savings if any) and fill §B **Findings / Risks / Measured savings / Verdict** (pursue/shelve/reject) — Owner: main
+> **Spike outcome (2026-06-22→23)**: install is the confirmed `headroom-ai[mcp]`, BUT there is **no Windows wheel** and the sdist needs a Rust + MSVC build toolchain that is absent → user chose **auto-provision** (Rust via `Rustlang.Rustup` + VS Build Tools VCTools workload, then build). MCP serve command confirmed from docs as `headroom mcp serve` (⚠️ unverified locally). Proxy verdict: **SHELVE** (docs-based, unverified — undocumented for subscription auth, ToS/auth risk). Full detail in `research.md`.
+
+- [X] T001 Install Headroom locally and confirm the exact `uv tool install` package spec/extra that yields a working `headroom` CLI **with** the MCP server present (`headroom-ai[mcp]` vs `[all]`); verify `headroom --version`; record the confirmed spec in `specs/009-headroom-tool/research.md` §A2 — Owner: main *(outcome: spec = `headroom-ai[mcp]`; install BLOCKED on Windows — no wheel + missing Rust/MSVC toolchain; resolution = auto-provision)*
+- [X] T002 Confirm the exact stdio invocation the Headroom MCP server runs (inspect what `headroom mcp install` writes to `~/.claude.json`, and/or `headroom mcp --help`); record the confirmed `command`/`args` in `specs/009-headroom-tool/research.md` §A3 — Owner: main *(outcome: `headroom mcp serve`, docs-confirmed, unverified locally)*
+- [X] T003 [US3] Run the proxy/subscription-auth investigation per `research.md` §B steps (does `headroom wrap claude`/proxy work with subscription/OAuth Claude Code without an API key; risks; measured savings if any) and fill §B **Findings / Risks / Measured savings / Verdict** (pursue/shelve/reject) — Owner: main *(outcome: SHELVE, docs-based unverified)*
 
 **Checkpoint**: research.md §A2, §A3 confirmed and §B verdict recorded. Implementation can begin.
 
@@ -37,14 +39,14 @@ description: "Task list for 009-headroom-tool implementation"
 
 ## Phase 2: User Story 1 — Install Headroom from the Tools view (Priority: P1) 🎯 MVP
 
-**Status**: ⬜ Pending (0/3 — T004–T006)
+**Status**: ✅ Complete (3/3 — T004–T006)
 **Goal**: Headroom appears in the cabal Tools view and the AI-CLIs group, and installs/upgrades in one action.
 
 **Independent Test**: Launch the cabal TUI → Tools view shows the Headroom row → Install → status flips to `installed {version}`; `headroom --version` works in a fresh shell.
 
-- [ ] T004 [US1] Create `setup/src/cabal/installers/headroom.py` mirroring `setup/src/cabal/installers/specify.py`: module docstring; `headroom_status() -> str` (via `shutil.which("headroom")` + `headroom --version`); `headroom_install() -> tuple[bool, str]` (ensure `uv` via `cabal.installers.uv.uv_install`; `uv tool upgrade` if present else `uv tool install` with the spec confirmed in T001). Keep well under the python.md script soft cap — Owner: @python-architect
-- [ ] T005 [US1] Wire Headroom into `setup/src/cabal/tools.py`: import `headroom_install`/`headroom_status`; append a `Tool(key="headroom", name="Headroom (context compression)", …)` to `TOOLS`; add `("headroom", "Headroom", headroom_install)` to `ENV_INSTALLERS`; add `"headroom"` to the `"AI CLIs"` group in `ENV_TOOL_GROUPS`. No `WINGET_IDS` entry — Owner: @python-architect
-- [ ] T006 [US1] Add a pytest smoke check under `setup/` (e.g. `tests/`) asserting `import cabal.tools` succeeds, `"headroom"` is present in `TOOLS`/`ENV_INSTALLERS` and in the `"AI CLIs"` group, and `headroom_status()` returns a `str` — Owner: @python-tester
+- [X] T004 [US1] Create `setup/src/cabal/installers/headroom.py` mirroring `setup/src/cabal/installers/specify.py`: module docstring; `headroom_status() -> str` (via `shutil.which("headroom")` + `headroom --version`); `headroom_install() -> tuple[bool, str]` (ensure `uv` via `cabal.installers.uv.uv_install`; `uv tool upgrade` if present else `uv tool install` with the spec confirmed in T001). Keep well under the python.md script soft cap — Owner: @python-architect
+- [X] T005 [US1] Wire Headroom into `setup/src/cabal/tools.py`: import `headroom_install`/`headroom_status`; append a `Tool(key="headroom", name="Headroom (context compression)", …)` to `TOOLS`; add `("headroom", "Headroom", headroom_install)` to `ENV_INSTALLERS`; add `"headroom"` to the `"AI CLIs"` group in `ENV_TOOL_GROUPS`. No `WINGET_IDS` entry — Owner: @python-architect
+- [X] T006 [US1] Add a pytest smoke check under `setup/` (e.g. `tests/`) asserting `import cabal.tools` succeeds, `"headroom"` is present in `TOOLS`/`ENV_INSTALLERS` and in the `"AI CLIs"` group, and `headroom_status()` returns a `str` — Owner: @python-tester
 
 **Checkpoint**: US1 fully functional and independently testable in the Tools view.
 
@@ -52,13 +54,13 @@ description: "Task list for 009-headroom-tool implementation"
 
 ## Phase 3: User Story 2 — Register Headroom as an opt-in MCP server (Priority: P2)
 
-**Status**: ⬜ Pending (0/2 — T007–T008)
+**Status**: ✅ Complete (2/2 — T007–T008)
 **Goal**: The cabal MCP manager lists Headroom as an opt-in server that registers cleanly for Claude Code.
 
 **Independent Test**: MCP manager shows `headroom` (not enabled by default) → register → `claude mcp list` shows it Connected → fresh Claude Code session exposes the 3 tools and a compress→retrieve round-trip succeeds.
 
-- [ ] T007 [US2] Add a `headroom` entry to `setup/mcp-templates.json` per `contracts/mcp-template.md`: `transport: stdio`, `command`/`args` confirmed in T002, `env_required: []`, `default_enabled: false` — Owner: @python-architect
-- [ ] T008 [US2] Add a pytest visibility check that `mcp-templates.json` parses and that `enumerate_mcp_servers()` returns a `headroom` key carrying the `"template"` scope (live `claude mcp add` registration + in-session tool round-trip is covered manually in T011) — Owner: @python-tester
+- [X] T007 [US2] Add a `headroom` entry to `setup/mcp-templates.json` per `contracts/mcp-template.md`: `transport: stdio`, `command`/`args` confirmed in T002, `env_required: []`, `default_enabled: false` — Owner: @python-architect
+- [X] T008 [US2] Add a pytest visibility check that `mcp-templates.json` parses and that `enumerate_mcp_servers()` returns a `headroom` key carrying the `"template"` scope (live `claude mcp add` registration + in-session tool round-trip is covered manually in T011) — Owner: @python-tester
 
 **Checkpoint**: US1 AND US2 both work; Headroom is registrable and opt-in.
 
@@ -66,13 +68,13 @@ description: "Task list for 009-headroom-tool implementation"
 
 ## Phase 4: Docs, Deploy & Verification (Polish & Cross-Cutting)
 
-**Status**: ⬜ Pending (0/4 — T009–T012)
+**Status**: 🟡 In progress (3/4 — T009–T012) — only T011's live install + in-session round-trip remains (user-gated; cannot run on this dev machine without provisioning the Windows toolchain).
 **Purpose**: Document, deploy through the reversible flow, verify end-to-end, and gate the commit.
 
-- [ ] T009 Document the Headroom MCP server in `global/MCP.md`: the 3 tools (`headroom_compress`/`headroom_retrieve`/`headroom_stats`), that compression is on-demand (not automatic), and the opt-in default (FR-011) — Owner: main
-- [ ] T010 Note Headroom in `setup/README.md` where it enumerates featured tools / MCP coverage — Owner: main
-- [ ] T011 Deploy via `python setup/settings-configurator-ui.py`, then run `quickstart.md` §1–§4 end-to-end: Tools install + status flip (SC-001/SC-002), MCP register + 3 tools in a fresh session + compress/retrieve round-trip (SC-003), opt-in absence check (SC-004), and regression of existing Tools/MCP entries (SC-006) — Owner: main
-- [ ] T012 Read-only plan-compliance audit of the implementation against `plan.md` + `quickstart.md` (no shortcuts, no unplanned files, python.md size discipline, gates honored); emit PASS / PASS WITH WARNINGS / FAIL before commit — Owner: @code-plan-verifier
+- [X] T009 Document the Headroom MCP server in `global/MCP.md`: the 3 tools (`headroom_compress`/`headroom_retrieve`/`headroom_stats`), that compression is on-demand (not automatic), and the opt-in default (FR-011) — Owner: main
+- [X] T010 Note Headroom in `setup/README.md` where it enumerates featured tools / MCP coverage — Owner: main
+- [ ] T011 Deploy via `python setup/settings-configurator-ui.py`, then run `quickstart.md` §1–§4 end-to-end: Tools install + status flip (SC-001/SC-002), MCP register + 3 tools in a fresh session + compress/retrieve round-trip (SC-003), opt-in absence check (SC-004), and regression of existing Tools/MCP entries (SC-006) — Owner: main *(PARTIAL: regression/SC-006 ✓ — full 81-test cabal suite passes incl. 6 new headroom tests; import + registries + JSON template + enumerate-template-scope all verified. PENDING & USER-GATED: live `headroom` install (heavyweight Windows toolchain build) and the in-session MCP 3-tool + compress/retrieve round-trip (SC-001/002/003) — cannot run on this dev machine without provisioning Rust + VS Build Tools; run from cabal Tools view when ready.)*
+- [X] T012 Read-only plan-compliance audit of the implementation against `plan.md` + `quickstart.md` (no shortcuts, no unplanned files, python.md size discipline, gates honored); emit PASS / PASS WITH WARNINGS / FAIL before commit — Owner: @code-plan-verifier
 
 ---
 

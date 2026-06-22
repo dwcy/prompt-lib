@@ -59,6 +59,7 @@ from cabal.installers.containers import (
 )
 from cabal.installers.editors import cursor_install, vscode_install, windsurf_install
 from cabal.installers.gh import gh_install, gh_status
+from cabal.installers.headroom import headroom_install, headroom_status
 from cabal.installers.runtimes import (
     bun_install,
     dotnet_install,
@@ -304,6 +305,7 @@ ENV_INSTALLERS: list[tuple[str, str, Callable[[], tuple[bool, str]]]] = [
     ("codex", "Codex CLI", codex_install),
     ("opencode", "OpenCode", opencode_install),
     ("grok", "Grok", grok_install),
+    ("headroom", "Headroom", headroom_install),
     ("skills", "Vercel Skills CLI", skills_install),
     ("vercel-plugin", "Vercel Plugin", vercel_plugin_install),
     ("cursor", "Cursor", cursor_install),
@@ -338,6 +340,7 @@ ENV_TOOL_GROUPS: list[tuple[str, list[str]]] = [
             "codex",
             "opencode",
             "grok",
+            "headroom",
             "copilot",
             "skills",
             "vercel-plugin",
@@ -443,5 +446,19 @@ TOOLS: list[Tool] = [
         repo_url="https://github.com/matt1398/claude-devtools",
         install=cdt_install,
         status=cdt_status,
+    ),
+    Tool(
+        key="headroom",
+        name="Headroom (context compression)",
+        description=(
+            "Compresses tool outputs, logs, RAG chunks, and files before they reach "
+            "the LLM, and exposes on-demand compress/retrieve/stats MCP tools — "
+            "compression is manual and opt-in. On Windows the first install builds "
+            "from source and auto-provisions Rust + VS Build Tools."
+        ),
+        homepage="https://headroom-docs.vercel.app/docs",
+        repo_url="https://github.com/chopratejas/headroom",
+        install=headroom_install,
+        status=headroom_status,
     ),
 ]

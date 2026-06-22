@@ -26,7 +26,7 @@ The wizard is published to PyPI as **`cabal`** and bundled into a standalone `.e
 | Doctor | Compare `~/.claude/` against `global/` and report drift (missing, changed, extra files). |
 | Restore | Roll back `~/.claude/settings.json` from a timestamped backup. |
 | Local project setup | In the current cwd: scaffold `.claude/`, pick a `CLAUDE.md` template, apply git repo-init template, run `specify init` to bootstrap Spec Kit (`.specify/`). |
-| Tools | Install / update optional companion tools (Claude CLI, GitHub CLI, **Specify CLI** for GitHub Spec Kit, `claude-devtools`). Spec Kit's `specify` is installed via `uv tool install` from the upstream git repo and auto-installs `uv` if missing. |
+| Tools | Install / update optional companion tools (Claude CLI, GitHub CLI, **Specify CLI** for GitHub Spec Kit, `claude-devtools`, **Headroom** context-compression CLI). Spec Kit's `specify` is installed via `uv tool install` from the upstream git repo and auto-installs `uv` if missing. Headroom installs via `uv tool install "headroom-ai[mcp]"`; on Windows it builds from source and auto-provisions Rust + VS Build Tools (multi-GB first run). It also registers as an opt-in `headroom` MCP server — see [`../global/MCP.md`](../global/MCP.md). |
 
 ## Structure
 
