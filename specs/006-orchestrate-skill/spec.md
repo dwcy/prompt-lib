@@ -2,14 +2,14 @@
 
 **Feature Branch**: `feat/006-orchestrate-skill`
 **Created**: 2026-06-01
-**Status**: Draft
+**Status**: Implemented — active skill lives at `global/skills/orchestrate.md`; proactive routing guidance lives in `global/CLAUDE.md`. Manual validation depends on a Claude Code runtime with subagent support.
 **Input**: Build a skill that allows the main Claude Code session to automatically route tasks to the right specialist subagent(s) without the user having to know which agent exists or how to invoke it.
 
 ---
 
 ## Problem
 
-The main Claude Code session has 17 specialist subagents available but uses them only when the user or a skill explicitly calls `Agent(subagent_type=...)`. This means:
+The main Claude Code session has a growing roster of specialist subagents available but uses them only when the user or a skill explicitly calls `Agent(subagent_type=...)`. This means:
 
 - Users must know agent names and when to use them
 - Complex tasks that span multiple domains (e.g. Python backend + React frontend) require manual multi-agent coordination

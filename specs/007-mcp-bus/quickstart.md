@@ -2,6 +2,8 @@
 
 A local MCP server giving every Claude Code session and subagent a shared message bus, a key-value memory, and an agent registry.
 
+Status: implemented in `services/mcp-bus/`. Manual registration validation requires local Claude Code tooling.
+
 ## Install
 
 From the prompt-lib repo root:

@@ -2,14 +2,18 @@
 
 The single most important file in this repo. This document explains every field, what it controls, and what changes when you edit it.
 
+Claude Code reads `global/settings.json`; this document is explanatory only.
+Values below use placeholders when they are expected to change per machine or
+preference.
+
 ## Top-level fields
 
-| Field | Current value | What it does |
+| Field | Configured value | What it does |
 |---|---|---|
-| `autoUpdatesChannel` | `"latest"` | Which Claude Code release channel to track. `"latest"` follows stable; switch to a beta channel if you want to test pre-releases. |
-| `theme` | `"dark"` | UI theme. Cosmetic. |
-| `model` | `"sonnet"` | Default model picked at session start. Override per session with `/model`. Claude family aliases: `sonnet`, `opus`, `haiku`. |
-| `defaultMode` | `"acceptEdits"` | Permission mode when a session starts. `acceptEdits` means edits to existing files are auto-approved; commands and writes still go through permission checks. Other modes: `default`, `plan`, `bypassPermissions`. |
+| `autoUpdatesChannel` | `{selected release channel}` | Which Claude Code release channel to track. `"latest"` follows stable; switch to a beta channel if you want to test pre-releases. |
+| `theme` | `{selected theme}` | UI theme. Cosmetic. |
+| `model` | `{selected model}` | Default model picked at session start. Override per session with `/model`. Claude family aliases include `sonnet`, `opus`, and `haiku`. |
+| `defaultMode` | `{selected permission mode}` | Permission mode when a session starts. Common modes include `default`, `acceptEdits`, `plan`, and `bypassPermissions`. |
 | `statusLine` | command running `statusline.py` | Renders the bottom-of-screen status. Our script shows the full project path as a clickable link. Replace with any command that outputs a single line of text. |
 
 ## `permissions.allow` — auto-approved tool patterns
@@ -19,7 +23,7 @@ Each entry is a glob over a `Tool(arg-pattern)` shape. If a call matches, the to
 - **Network read** — `WebSearch`, `WebFetch`, `Fetch`
 - **Read-only git** — `git status`, `git diff`, `git log`, `git branch`, `git rev-parse`, `git show`, `git config`, `git tag` — across both `Bash(...)` and `PowerShell(...)`
 - **Safe git mutations** — `git init`, `git add`, `git checkout`, `git switch`, `git restore`, `git stash` (these don't push or destroy history)
-- **Build/test runners** — `pnpm:*`, `bun:*`, `bunx:*`, `dotnet build/test/format/restore/new/add/sln/publish/pack/run/nuget`, `pytest:*`, `pip:*`, `poetry init/install/add`, `uv:*`, `uvx:*`, `python:*`, `python3:*`, `py:*`, `nuget:*`
+- **Build/test runners** — `pnpm:*`, `bun:*`, `bunx:*`, `dotnet build/test/format/restore/new/add/sln/publish/pack/run/nuget`, `pytest:*`, selected `python -m pytest/unittest/venv` commands, `poetry init/install/add`, selected `uv sync/lock/run/tree` commands, and `nuget:*`
 - **Read-only shell** — `ls`, `cat`, `pwd`, plus `Get-ChildItem`, `Get-Location`, `Test-Path`
 
 The intent: anything strictly local, reversible, or read-only is auto-approved so you stop click-confirming during normal flow. Anything that can rewrite history, force-push, or wipe files goes through `deny` or prompts for confirmation.
@@ -101,4 +105,4 @@ These are pure file-system conventions. Drop a file in the right folder → run 
 3. Restart Claude Code.
 4. If something breaks: rerun the wizard → "Restore" → pick the timestamped backup.
 
-The "Doctor" mode in the wizard diffs `~/.claude/` against `global/` and reports drift (missing, changed, extra files) without modifying anything.
+The home screen marks global Claude/Codex configuration buttons when the repo and deployed copies drift. Use the corresponding update screen for a dry-run preview before applying changes.

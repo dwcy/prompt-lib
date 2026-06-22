@@ -39,6 +39,19 @@ def bus_channels() -> list[str]:
 
 
 @mcp.tool()
+def bus_prune(
+    max_age_days: int | None = None,
+    keep_last_per_channel: int | None = None,
+) -> dict[str, int]:
+    """Delete old bus messages by age and/or per-channel retention count."""
+    deleted = storage.prune_messages(
+        max_age_days=max_age_days,
+        keep_last_per_channel=keep_last_per_channel,
+    )
+    return {"deleted": deleted}
+
+
+@mcp.tool()
 def mem_set(namespace: str, key: str, value: str) -> dict[str, bool]:
     """Set a key in a namespace, overwriting any existing value."""
     storage.mem_set(namespace, key, value)

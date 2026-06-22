@@ -44,7 +44,7 @@ def run_hook(
 
 
 def _init_repo(repo: Path, branch: str) -> None:
-    subprocess.run(["git", "-C", str(repo), "init", "-q"], check=True)
+    subprocess.run(["git", "-C", str(repo), "init", "-q", "-b", "base"], check=True)
     subprocess.run(["git", "-C", str(repo), "config", "user.email", "t@t"], check=True)
     subprocess.run(["git", "-C", str(repo), "config", "user.name", "t"], check=True)
     subprocess.run(["git", "-C", str(repo), "config", "commit.gpgsign", "false"], check=True)

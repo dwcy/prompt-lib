@@ -9,7 +9,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from cabal.gh_release import _gh_latest_release, _gh_pick_asset, _download
+from cabal.gh_release import _download_verified_asset, _gh_latest_release, _gh_pick_asset
 
 CDT_REPO = "matt1398/claude-devtools"
 
@@ -71,9 +71,9 @@ def cdt_install() -> tuple[bool, str]:
         tmp_root = Path(os.environ.get("TEMP") or Path.home())
         tmp = tmp_root / asset["name"]
         try:
-            _download(asset["browser_download_url"], tmp)
+            _download_verified_asset(asset, tmp, release=release)
         except Exception as e:
-            return False, f"Download failed: {e}"
+            return False, f"Download verification failed: {e}"
         r = subprocess.run([str(tmp), "/S"])
         if r.returncode != 0:
             return False, f"Installer exit code {r.returncode}"
@@ -85,16 +85,21 @@ def cdt_install() -> tuple[bool, str]:
         elif shutil.which("apt-get"):
             asset, installer = _gh_pick_asset(release, ".deb"), ["sudo", "apt-get", "install", "-y"]
         elif shutil.which("pacman"):
-            asset, installer = _gh_pick_asset(release, ".pacman"), ["sudo", "pacman", "-U", "--noconfirm"]
+            asset, installer = _gh_pick_asset(release, ".pacman"), [
+                "sudo",
+                "pacman",
+                "-U",
+                "--noconfirm",
+            ]
         else:
             return False, "No supported package manager (need dnf, apt-get, or pacman)"
         if not asset:
             return False, "No matching Linux package in latest release"
         tmp = Path("/tmp") / asset["name"]
         try:
-            _download(asset["browser_download_url"], tmp)
+            _download_verified_asset(asset, tmp, release=release)
         except Exception as e:
-            return False, f"Download failed: {e}"
+            return False, f"Download verification failed: {e}"
         r = subprocess.run([*installer, str(tmp)])
         return r.returncode == 0, f"Installed {tag}"
 

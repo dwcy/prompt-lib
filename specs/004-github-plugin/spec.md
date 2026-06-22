@@ -55,7 +55,7 @@ An existing prompt-lib user who has been deploying via `python setup/settings-co
 2. **Given** the apply wizard ran, **When** the user invokes any prompt-lib skill by its short name (e.g. `/commit`, `/git`, `/review`), **Then** it runs as before — no namespace prefix required.
 3. **Given** the apply wizard ran, **When** Claude Code starts, **Then** the session-start, command-guard, file-write-guard, write-audit, and stop-session hooks fire as before.
 4. **Given** the apply wizard ran, **When** the user inspects `~/.claude/settings.json`, **Then** `mcpServers`, `hooks`, `permissions`, `statusLine`, `model`, `theme`, and `defaultMode` are identical to what the prior `global/settings.json` produced.
-5. **Given** a user has *both* the apply-deployed copy AND the plugin installed, **When** they invoke a skill, **Then** behaviour is well-defined (either path works) and `/doctor` does not flag a structural error.
+5. **Given** a user has *both* the apply-deployed copy AND the plugin installed, **When** they invoke a skill, **Then** behaviour is well-defined (either path works) and the setup wizard does not flag a structural error.
 
 ---
 

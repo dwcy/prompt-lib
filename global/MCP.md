@@ -120,9 +120,9 @@ Local message bus, shared key-value memory, and agent registry for inter-agent c
    ```bash
    claude mcp add mcp-bus -- mcp-bus
    ```
-3. Restart Claude Code — the 10 bus tools appear automatically.
+3. Restart Claude Code — the 11 bus tools appear automatically.
 
-**Tools:** `bus_post`, `bus_read`, `bus_channels`, `mem_set`, `mem_get`, `mem_list`, `mem_delete`, `agent_register`, `agent_list`, `agent_heartbeat`
+**Tools:** `bus_post`, `bus_read`, `bus_channels`, `bus_prune`, `mem_set`, `mem_get`, `mem_list`, `mem_delete`, `agent_register`, `agent_list`, `agent_heartbeat`
 **Source:** `services/mcp-bus/` (in this repo) — see [`docs/orchestration.md`](docs/orchestration.md) and `specs/007-mcp-bus/`
 
 ---

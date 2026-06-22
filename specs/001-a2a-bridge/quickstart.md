@@ -162,7 +162,7 @@ Expected: every contract test (Agent Card schema, JSON-RPC envelope, `tasks/send
 
 ---
 
-## Step 9 — (Optional) Open the Inspector for manual conformance check
+## Step 9 — Open the Inspector for manual conformance check
 
 ```bash
 git clone https://github.com/a2aproject/a2a-inspector ~/tools/a2a-inspector
@@ -172,4 +172,24 @@ uv sync
 # follow inspector's README to start backend + frontend
 ```
 
-Open `http://127.0.0.1:5001`, point it at `http://127.0.0.1:8765`, fetch the Agent Card, send a chat message. Confirm the validation panel reports zero violations. This is the manual verification step for SC-002 — record the result in the v1 release notes.
+Keep the Claude and Gemini adapters from Steps 3 and 4 running, with the same
+`A2A_BEARER_TOKEN` still exported in their shells.
+
+Open `http://127.0.0.1:5001` and test both local adapters:
+
+| Adapter | URL |
+|---|---|
+| Claude Code inbound adapter | `http://127.0.0.1:8765` |
+| Gemini adapter | `http://127.0.0.1:8766` |
+
+For each adapter:
+
+1. Fetch the Agent Card.
+2. Confirm the Inspector validation panel reports zero Agent Card violations.
+3. Send a message such as `Reply with the single word: pong`.
+4. Confirm the streamed task reaches `completed` and returns a text artifact.
+5. Confirm the validation panel reports zero message-flow violations.
+
+This is the remaining manual verification step for SC-002. Record the date,
+adapter URLs, Inspector commit/version if visible, and pass/fail result in the
+v1 release notes or PR before marking T039 complete.

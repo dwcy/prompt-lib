@@ -17,7 +17,8 @@ Deeper documentation on what every piece of this repo does, why it exists, and h
 9. [`speckit.md`](speckit.md) — how spec-kit is configured in this repo: constitution, gates, slash commands, templates, delegation roster, phase-status convention, git-extension override.
 10. [`services.md`](services.md) — the `a2a-bridge` and `orchestrator` daemons: where they live, what they do, how they extend Claude Code.
 11. [`plugin-install.md`](plugin-install.md) — install prompt-lib as a Claude Code plugin without cloning (no Python script). Covers install commands, the scope split vs. the apply path, prerequisites, local-dev workflow, and troubleshooting. Design lives in [`specs/004-github-plugin/`](../specs/004-github-plugin/).
-12. [`learning.md`](learning.md) — how to grow muscle memory with this stack: what to learn first, what to skip, how to debug surprises.
+12. [`release-readiness.md`](release-readiness.md) — what must be true before tagging a package release; includes the package-name decision, PyPI setup, and root test orchestration.
+13. [`learning.md`](learning.md) — how to grow muscle memory with this stack: what to learn first, what to skip, how to debug surprises.
 
 ## Conventions used in these docs
 

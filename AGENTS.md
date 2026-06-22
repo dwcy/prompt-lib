@@ -9,7 +9,9 @@ Personal Claude Code configuration library. Source of truth for everything in `~
 Deploy with the TUI wizard (preferred) or the bash script:
 
 ```bash
-python setup/settings-configurator-ui.py          # interactive wizard
+./run                                            # interactive wizard on POSIX
+.\run.cmd                                       # interactive wizard on Windows
+python setup/settings-configurator-ui.py         # direct source fallback
 bash setup/tools/apply-global-claude-settings.sh   # non-interactive fallback
 ```
 
@@ -28,6 +30,7 @@ This is **not** an application. It is a library of agents, hooks, skills, rules,
 | [`global/output-styles/`](./global/output-styles/) | Response formatting profiles. |
 | [`global/project-templates/`](./global/project-templates/) | CLAUDE.md scaffolds + the cross-platform `run` launcher used by `@init-project`. |
 | [`global/statusline.py`](./global/statusline.py) | Terminal statusline; segments configured in `global/statusline-segments.json`. |
+| [`global/codex/`](./global/codex/) | Curated Codex-compatible skills, references, project templates, and conversion manifest. |
 | [`.specify/memory/agents.md`](./.specify/memory/agents.md) | Spec-kit subagent roster — drives `/speckit-plan` and `/speckit-tasks` delegation. |
 | [`specs/`](./specs/) | Feature specifications (Spec Kit format). |
 | [`setup/`](./setup/) | Deploy wizard (`settings-configurator-ui.py`), the cabal TUI package (`setup/src/cabal/`), and tests. |

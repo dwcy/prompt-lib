@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+# Root launcher for the settings configurator.
+
+set -u
+
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+exec sh "$SCRIPT_DIR/setup/settings-configurator-ui.sh" "$@"

@@ -94,7 +94,7 @@ ollama_install, vscode_install, _probe_key, _parse_major_minor, _below_floor,
 _outdated_packages, _installer_for, EnvPanel, UpdatePanel,
 GitConfigScreen, GitHubReposScreen, GlobalEnvScreen, AppCommandsProvider,
 AppHeader, HomeScreen, ReadmeScreen, EnvScreen, OperationsScreen, UpdateScreen,
-DoctorScreen, RestoreScreen, McpScreen, _render_scopes, GhDeviceFlowScreen,
+RestoreScreen, McpScreen, _render_scopes, GhDeviceFlowScreen,
 FolderBrowserScreen, LocalScreen, ToolsScreen
 ```
 

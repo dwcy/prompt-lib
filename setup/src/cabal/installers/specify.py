@@ -20,7 +20,7 @@ def specify_status() -> str:
 
 
 def specify_install() -> tuple[bool, str]:
-    """Install or upgrade `specify` via `uv tool install`. Auto-installs uv if missing."""
+    """Install or upgrade `specify`; attempts OS-package uv install if missing."""
     if not shutil.which("uv"):
         ok, msg = uv_install()
         if not ok:

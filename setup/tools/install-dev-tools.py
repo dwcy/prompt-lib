@@ -160,8 +160,8 @@ elif system == "Linux":
     if shutil.which("uv"):
         ok("uv  already installed")
     else:
-        miss("uv not installed — running official installer")
-        run_visible("bash", "-c", "curl -LsSf https://astral.sh/uv/install.sh | sh")
+        miss("uv not installed — installing distro package")
+        dnf_ensure("uv")
 
 else:
     print(f"{RED}Unsupported platform: {system}{RESET}")

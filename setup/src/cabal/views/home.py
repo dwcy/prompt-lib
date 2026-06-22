@@ -99,12 +99,12 @@ class HomeScreen(Screen):
             yield HexBanner(id="banner", classes="centered", show_subtitle=False)
             yield subtitle_bar()
             yield DashboardPanel(id="dashboard")
-            with Vertical(classes="home-section"):
+            with Vertical(id="claude-settings-panel", classes="home-section"):
                 yield Static(
                     "[bold]Claude Settings[/bold]", classes="home-section-title"
                 )
                 yield Static(
-                    "[dim]Deploy and tune the files in ~/.claude — agents, hooks, skills, MCP servers, settings.[/dim]",
+                    "[dim]Deploy, inspect, and tune ~/.claude — agents, hooks, skills, MCP servers, settings.[/dim]",
                     classes="home-section-desc",
                 )
                 with Horizontal(classes="ops-row"):
@@ -125,6 +125,31 @@ class HomeScreen(Screen):
                 )
                 with Horizontal(classes="ops-row"):
                     yield Button("Local Config", id="btn-op-local", variant="default")
+            with Vertical(id="codex-settings-panel", classes="home-section"):
+                yield Static(
+                    "[bold]Codex Settings[/bold]", classes="home-section-title"
+                )
+                yield Static(
+                    "[dim]Deploy Codex-compatible skills to ~/.codex and scaffold .agents/ in projects.[/dim]",
+                    classes="home-section-desc",
+                )
+                with Horizontal(classes="ops-row"):
+                    yield Button(
+                        "Global Codex Config",
+                        id="btn-op-codex-update",
+                        variant="default",
+                    )
+                    yield Button(
+                        "Local Codex Config",
+                        id="btn-op-codex-local",
+                        variant="default",
+                    )
+                with Horizontal(classes="ops-row"):
+                    yield Button(
+                        "Conversion Diff",
+                        id="btn-op-codex-conversion",
+                        variant="default",
+                    )
         yield Footer(show_command_palette=False)
 
     def on_mount(self) -> None:
@@ -179,6 +204,23 @@ class HomeScreen(Screen):
             else:
                 btn.tooltip = None
             btn.label = label
+        try:
+            from cabal.codex_setup.diff_apply import has_codex_deploy_drift
+
+            codex_drift = has_codex_deploy_drift()
+        except Exception:
+            codex_drift = False
+        try:
+            btn = self.query_one("#btn-op-codex-update", Button)
+            label = Text("Global Codex Config")
+            if codex_drift:
+                label.append("  ⚠ update available", style="yellow")
+                btn.tooltip = "Repo has Codex assets not yet deployed to ~/.codex."
+            else:
+                btn.tooltip = None
+            btn.label = label
+        except Exception:
+            pass
 
     def on_screen_resume(self) -> None:
         try:
@@ -193,6 +235,9 @@ class HomeScreen(Screen):
         from cabal.views.local import LocalScreen
         from cabal.views.statusline import StatuslineScreen
         from cabal.views.settings import SettingsScreen
+        from cabal.views.codex_update import CodexUpdateScreen
+        from cabal.views.codex_local import CodexLocalScreen
+        from cabal.views.codex_conversion import CodexConversionScreen
 
         bid = event.button.id or ""
         op_screens = {
@@ -201,6 +246,9 @@ class HomeScreen(Screen):
             "btn-op-local": LocalScreen,
             "btn-op-statusline": StatuslineScreen,
             "btn-op-settings": SettingsScreen,
+            "btn-op-codex-update": CodexUpdateScreen,
+            "btn-op-codex-local": CodexLocalScreen,
+            "btn-op-codex-conversion": CodexConversionScreen,
         }
         if bid == "btn-git":
             self.action_go("git")

@@ -13,7 +13,7 @@ python setup/tools/_smoketest.py > /tmp/cabal_smoketest_before.txt 2>&1
 
 # 2. Boot the TUI manually, hit every top-level screen, confirm no Textual error appears.
 python -m cabal
-#    (touch: Home → README, Init env, Update, MCP, Doctor, Restore, Local, Tools, Github device flow)
+#    (touch: Home → README, Init env, Update, MCP, Restore, Local, Tools, Github device flow)
 
 # 3. (Optional but recommended) Build the exe; confirm it boots.
 python setup/build/build_exe.py

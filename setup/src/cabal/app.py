@@ -20,6 +20,9 @@ from cabal.clipboard import read_clipboard
 from cabal.app_widgets import AppCommandsProvider, AppHeader  # noqa: F401  (re-export)
 from cabal.views.claude_info import ClaudeInfoScreen  # noqa: F401
 from cabal.views.clone_repo import CloneRepoScreen  # noqa: F401
+from cabal.views.codex_conversion import CodexConversionScreen  # noqa: F401
+from cabal.views.codex_local import CodexLocalScreen  # noqa: F401
+from cabal.views.codex_update import CodexUpdateScreen  # noqa: F401
 from cabal.views.env import EnvScreen  # noqa: F401
 from cabal.views.folder_browser import FolderBrowserScreen  # noqa: F401
 from cabal.views.gh_device import GhDeviceFlowScreen  # noqa: F401
@@ -42,7 +45,7 @@ from cabal.views.update import UpdateScreen  # noqa: F401
 
 
 class CabalApp(App):
-    """CABAL — Agent Orchestration Setup."""
+    """CABAL — Local Agent Control Panel."""
 
     selected_project: Path | None = None
     # Set by ToolsScreen after a successful install/update so HomeScreen re-scans
@@ -249,7 +252,7 @@ class CabalApp(App):
 
     def on_mount(self) -> None:
         self.title = "CABAL"
-        self.sub_title = "Agent Orchestration Setup"
+        self.sub_title = "Local Agent Control Panel"
         self.push_screen(ProjectGateScreen())
 
 

@@ -67,6 +67,14 @@ Exit codes: `0` completed, `1` connect refused, `2` auth fail, `3` protocol erro
 
 See [`quickstart.md`](../../specs/001-a2a-bridge/quickstart.md) for the full 9-step verification walkthrough including `curl`-driven inbound testing and Agent Card discovery.
 
+### Manual Inspector conformance
+
+The only deferred validation is the A2A Inspector pass. Start both adapters,
+then follow [quickstart Step 9](../../specs/001-a2a-bridge/quickstart.md#step-9--open-the-inspector-for-manual-conformance-check)
+against `http://127.0.0.1:8765` and `http://127.0.0.1:8766`. The expected
+result is zero Agent Card violations and zero message-flow violations for both
+adapters.
+
 ## Tests
 
 ```bash

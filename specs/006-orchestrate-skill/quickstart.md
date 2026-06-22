@@ -4,6 +4,8 @@
 
 `/orchestrate` routes your task to the right specialist subagent automatically. You describe what you want; the skill picks the agent, dispatches it with proper isolation, and returns the result.
 
+Status: implemented as `global/skills/orchestrate.md`. Runtime validation requires Claude Code subagent support.
+
 ## Basic usage
 
 ```
