@@ -5,6 +5,7 @@
   "defaultMode": "plan",
   "verbose": true,
   "feedbackSurveyRate": 0,
+  "remoteControlAtStartup": true,
   "statusLine": {
     "type": "command",
     "command": "python \"$USERPROFILE/.claude/statusline.py\""

@@ -80,7 +80,7 @@ from cabal.tools import (
 )
 from cabal.updates import check_for_updates, do_git_pull
 from cabal.widgets.claude_stats_panel import ClaudeStatsPanel
-from cabal.widgets.env_panel import EnvPanel
+from cabal.widgets.dashboard_panel import DashboardPanel
 from cabal.widgets.okf_panel import OkfPanel
 from cabal.widgets.update_panel import UpdatePanel
 
@@ -91,6 +91,7 @@ class HomeScreen(Screen):
     BINDINGS = [
         Binding("escape", "app.pop_screen", "Back"),
         Binding("ctrl+s", "refresh_claude_stats", "Refresh stats"),
+        Binding("ctrl+d", "refresh_dashboard", "Refresh dashboard"),
     ]
 
     def compose(self) -> ComposeResult:
@@ -98,8 +99,8 @@ class HomeScreen(Screen):
         with VerticalScroll(id="home-scroll"):
             yield HexBanner(id="banner", classes="centered", show_subtitle=False)
             yield subtitle_bar()
-            yield EnvPanel(id="env-summary")
-            with Vertical(classes="home-section"):
+            yield DashboardPanel(id="dashboard")
+            with Vertical(id="claude-settings-panel", classes="home-section"):
                 yield Static(
                     "[bold]Claude Settings[/bold]", classes="home-section-title"
                 )
@@ -109,18 +110,29 @@ class HomeScreen(Screen):
                 )
                 with Horizontal(classes="ops-row"):
                     yield Button(
-                        "Global Claude file Config",
+                        "Global File Configuration",
                         id="btn-op-update",
                         variant="default",
                     )
                     yield Button(
-                        "Statusline", id="btn-op-statusline", variant="default"
+                        "StatusLine", id="btn-op-statusline", variant="default"
                     )
                 with Horizontal(classes="ops-row"):
+                    yield Button("Settings", id="btn-op-settings", variant="default")
                     yield Button("MCP Connectors", id="btn-op-mcp", variant="default")
-                    yield Button("Knowledge Graph", id="btn-op-knowledge", variant="default")
+                    yield Button(
+                        "Knowledge Graph",
+                        id="btn-op-knowledge",
+                        variant="default",
+                    )
                 yield ClaudeStatsPanel(id="claude-stats")
                 yield OkfPanel(id="okf-summary")
+                yield Static(
+                    "[bold]Local Claude Settings[/bold]", classes="home-section-title"
+                )
+                with Horizontal(classes="ops-row"):
+                    yield Button("Local Config", id="btn-op-local", variant="default")
+            with Vertical(id="codex-settings-panel", classes="home-section"):
                 yield Static(
                     "[bold]Codex Settings[/bold]", classes="home-section-title"
                 )
@@ -145,20 +157,10 @@ class HomeScreen(Screen):
                         id="btn-op-codex-conversion",
                         variant="default",
                     )
-                yield Static(
-                    "[bold]Local Claude Settings[/bold]", classes="home-section-title"
-                )
-                with Horizontal(classes="ops-row"):
-                    yield Button("Local Config", id="btn-op-local", variant="default")
-        with Horizontal(id="home-bottom"):
-            yield Button("Env vars", id="btn-env", variant="primary")
-            yield Button("GitHub", id="btn-github", variant="primary")
-            yield Static("", classes="home-spacer")
-            yield Button("Quit", id="btn-quit", variant="error")
         yield Footer(show_command_palette=False)
 
     def on_mount(self) -> None:
-        self.query_one("#btn-env", Button).focus()
+        self.query_one("#btn-op-update", Button).focus()
         self._apply_drift_markers()
 
     def action_readme(self) -> None:
@@ -166,18 +168,12 @@ class HomeScreen(Screen):
 
     def action_go(self, name: str) -> None:
         from cabal.views.readme import ReadmeScreen
-        from cabal.views.env import EnvScreen
         from cabal.views.git_config import GitConfigScreen
-        from cabal.views.github_repos import GitHubReposScreen
 
         if name == "readme":
             self.app.push_screen(ReadmeScreen())
-        elif name == "env":
-            self.app.push_screen(EnvScreen())
         elif name == "git":
             self.app.push_screen(GitConfigScreen())
-        elif name == "github":
-            self.app.push_screen(GitHubReposScreen())
 
     def action_refresh_claude_stats(self) -> None:
         try:
@@ -185,9 +181,9 @@ class HomeScreen(Screen):
         except Exception:
             pass
 
-    def _refresh_env_panel(self) -> None:
+    def action_refresh_dashboard(self) -> None:
         try:
-            self.query_one("#env-summary", EnvPanel).refresh_project()
+            self.query_one("#dashboard", DashboardPanel).refresh_dashboard()
         except Exception:
             pass
 
@@ -198,7 +194,7 @@ class HomeScreen(Screen):
         except Exception:
             drift = False
         for bid, base in (
-            ("btn-op-update", "Global Claude file Config"),
+            ("btn-op-update", "Global File Configuration"),
             ("btn-op-local", "Local Config"),
         ):
             try:
@@ -210,7 +206,7 @@ class HomeScreen(Screen):
                 label.append("  ⚠ update available", style="yellow")
                 btn.tooltip = (
                     "Repo has changes not yet deployed to ~/.claude — "
-                    "run Global Claude file Config to sync."
+                    "run Global File Configuration to sync."
                 )
             else:
                 btn.tooltip = None
@@ -234,22 +230,19 @@ class HomeScreen(Screen):
             pass
 
     def on_screen_resume(self) -> None:
-        self._refresh_env_panel()
+        try:
+            self.query_one("#dashboard", DashboardPanel).refresh_dashboard()
+        except Exception:
+            pass
         self._apply_drift_markers()
-        if getattr(self.app, "env_needs_refresh", False):
-            self.app.env_needs_refresh = False
-            try:
-                self.query_one("#env-summary", EnvPanel).refresh_env()
-            except Exception:
-                pass
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         from cabal.views.update import UpdateScreen
         from cabal.views.mcp import McpScreen
         from cabal.views.local import LocalScreen
-        from cabal.views.tools import ToolsScreen
         from cabal.views.statusline import StatuslineScreen
         from cabal.views.knowledge import KnowledgeScreen
+        from cabal.views.settings import SettingsScreen
         from cabal.views.codex_update import CodexUpdateScreen
         from cabal.views.codex_local import CodexLocalScreen
         from cabal.views.codex_conversion import CodexConversionScreen
@@ -259,20 +252,14 @@ class HomeScreen(Screen):
             "btn-op-update": UpdateScreen,
             "btn-op-mcp": McpScreen,
             "btn-op-local": LocalScreen,
-            "btn-op-tools": ToolsScreen,
             "btn-op-statusline": StatuslineScreen,
             "btn-op-knowledge": KnowledgeScreen,
+            "btn-op-settings": SettingsScreen,
             "btn-op-codex-update": CodexUpdateScreen,
             "btn-op-codex-local": CodexLocalScreen,
             "btn-op-codex-conversion": CodexConversionScreen,
         }
-        if bid == "btn-env":
-            self.action_go("env")
-        elif bid == "btn-git":
+        if bid == "btn-git":
             self.action_go("git")
-        elif bid == "btn-github":
-            self.action_go("github")
-        elif bid == "btn-quit":
-            self.app.exit()
         elif bid in op_screens:
             self.app.push_screen(op_screens[bid]())

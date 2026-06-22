@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Callable
 
 from rich.text import Text
@@ -12,7 +13,7 @@ from textual.widget import Widget
 from textual.widgets import Button, Static
 
 from cabal import widget_cache
-from cabal._paths import GLOBAL_DIR, TARGET
+from cabal._paths import CODEX_DIR, GEMINI_DIR, GLOBAL_DIR, TARGET
 from cabal.env_detect import detect_env
 from cabal.env_summary import (
     _short_aws_version,
@@ -97,9 +98,23 @@ class EnvPanel(Widget):
         padding: 0 1 0 0;
         content-align: left middle;
     }
-    EnvPanel #btn-git { margin: 0 2 0 0; }
+    EnvPanel #btn-github,
+    EnvPanel #btn-github:focus {
+        background: #8B5CF6;
+        color: white;
+        margin: 0 2 0 0;
+    }
+    EnvPanel #btn-github:hover { background: #7C3AED; color: white; }
+    EnvPanel #btn-env,
+    EnvPanel #btn-env:focus {
+        background: black;
+        color: white;
+        margin: 0 2 0 0;
+    }
+    EnvPanel #btn-env:hover { background: #1A1A1A; color: white; }
     EnvPanel #btn-op-tools { margin: 0; }
     EnvPanel #env-status {
+        display: none;
         height: auto;
         max-height: 12;
         margin: 1 0 0 0;
@@ -135,7 +150,8 @@ class EnvPanel(Widget):
                 )  # AI-augmented editors
                 with Horizontal(id="env-tools-row"):
                     yield Static("", classes="env-spacer")
-                    yield Button("Git config", id="btn-git", variant="primary")
+                    yield Button("GitHub", id="btn-github")
+                    yield Button("Env vars", id="btn-env")
                     yield Button("⌬  Tools", id="btn-op-tools", variant="warning")
             yield Static("", id="env-paths")
             yield Static("", id="env-status")
@@ -163,15 +179,15 @@ class EnvPanel(Widget):
         def _apply() -> None:
             self._apply_env(fresh)
             self._stop_refresh_status()
-            self.query_one("#env-status", Static).update("")
 
         self.app.call_from_thread(_apply)
 
     _SPINNER_FRAMES = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
 
     def _start_refresh_status(self) -> None:
-        """Show an animated spinner ahead of the 'refreshing…' label while detecting env."""
-        status = self.query_one("#env-status", Static)
+        """Animate a spinner on the 'Latest version' row (right-aligned) while detecting env."""
+        status = self.query_one("#env-refresh", Static)
+        status.display = True
         state: dict = {"frame": 0}
 
         def tick() -> None:
@@ -188,6 +204,12 @@ class EnvPanel(Widget):
         if state and "timer" in state:
             state["timer"].stop()
         self._refresh_spinner = None
+        try:
+            indicator = self.query_one("#env-refresh", Static)
+            indicator.update("")
+            indicator.display = False
+        except Exception:
+            pass
 
     _LABEL = "bold #5FAFFF"  # light blue for every Label:
 
@@ -356,16 +378,21 @@ class EnvPanel(Widget):
         self._update_paths()
 
     def _update_paths(self) -> None:
-        exists = (
+        claude_mark = (
             "[bright_green](exists)[/]"
             if TARGET.exists()
             else "[bright_yellow](will be created)[/]"
         )
         self.query_one("#env-paths", Static).update(
-            f"{self._lbl('Source')} [cyan]{GLOBAL_DIR}[/]\n"
-            f"{self._lbl('Claude')} [cyan]{TARGET}[/] {exists}\n"
-            f"{self._lbl('Selected Project')} [cyan]{self.app.selected_project or '(none)'}[/]"
+            f"{self._lbl('Source')} [#FFAF5F]{GLOBAL_DIR}[/]\n"
+            f"{self._lbl('Claude')} [cyan]{TARGET}[/] {claude_mark}\n"
+            f"{self._lbl('OpenAI')} [cyan]{CODEX_DIR}[/] {self._dir_mark(CODEX_DIR)}\n"
+            f"{self._lbl('Gemini')} [cyan]{GEMINI_DIR}[/] {self._dir_mark(GEMINI_DIR)}"
         )
+
+    @staticmethod
+    def _dir_mark(path: Path) -> str:
+        return "[bright_green](exists)[/]" if path.exists() else "[dim](not found)[/]"
 
     def refresh_project(self) -> None:
         """Re-render the paths block after the active project changes."""
@@ -404,6 +431,7 @@ class EnvPanel(Widget):
         btn.disabled = True
         btn.label = "Installing…"
         status = self.query_one("#env-status", Static)
+        status.display = True
         status.update(
             f"[yellow]⏳ Installing {key}…[/yellow]  "
             f"[dim](running in background — UI stays responsive)[/dim]"
@@ -428,9 +456,9 @@ class EnvPanel(Widget):
             lines = msg.splitlines() if msg else []
             snippet = "\n".join(lines[-8:]) if lines else ""
             body = f"\n[dim]{snippet}[/dim]" if snippet else ""
-            self.query_one("#env-status", Static).update(
-                f"{mark} {key} {'installed' if ok else 'failed'}{body}"
-            )
+            status = self.query_one("#env-status", Static)
+            status.display = True
+            status.update(f"{mark} {key} {'installed' if ok else 'failed'}{body}")
             button.disabled = False
             button.label = "Install"
             self.run_worker(self._refresh_env, thread=True, exclusive=True)

@@ -1,6 +1,6 @@
 # prompt-lib
 
-Personal Claude Code configuration library — versioned source for agents, hooks, skills, rules, output styles, and settings that power the global Claude Code setup across all projects on this machine.
+Personal Claude Code configuration library - versioned source for agents, hooks, skills, rules, output styles, and settings that power the global Claude Code setup across all projects on this machine.
 
 ## What this repo is
 
@@ -8,25 +8,25 @@ Not an application. It is the source of truth for everything in `~/.claude/`. Ed
 
 ## Structure
 
-```
-global/                         ← deploy target: ~/.claude/
-├── settings.json               ← MCP servers, hooks, theme, model
-├── CLAUDE.md                   ← global behavioral instructions (always loaded)
-├── design.md                   ← design system preferences (imported by CLAUDE.md)
-├── MCP.md                      ← MCP server documentation
-├── scripts/
-│   └── apply-global-claude-settings.sh
-├── agents/                     ← subagent definitions
-├── hooks/                      ← SessionStart / PreToolUse / PostToolUse / Stop scripts
-├── skills/                     ← slash command definitions
-├── rules/                      ← file-pattern-conditional rules (loaded only when paths match)
-├── output-styles/              ← response formatting profiles
-└── project-templates/          ← CLAUDE.md templates used by @init-project
+```text
+global/                         <- deploy target: ~/.claude/
+|-- settings.json               <- MCP servers, hooks, theme, model
+|-- CLAUDE.md                   <- global behavioral instructions (always loaded)
+|-- design.md                   <- design system preferences (imported by CLAUDE.md)
+|-- MCP.md                      <- MCP server documentation
+|-- scripts/
+|   `-- apply-global-claude-settings.sh
+|-- agents/                     <- subagent definitions
+|-- hooks/                      <- SessionStart / PreToolUse / PostToolUse / Stop scripts
+|-- skills/                     <- slash command definitions
+|-- rules/                      <- file-pattern-conditional rules (loaded only when paths match)
+|-- output-styles/              <- response formatting profiles
+`-- project-templates/          <- CLAUDE.md templates used by @init-project
 
-.claude/                        ← project-local config (not deployed globally)
-├── commands/                   ← project slash commands
-├── skills/                     ← project skill overrides
-└── settings.json               ← project-level settings
+.claude/                        <- project-local config (not deployed globally)
+|-- commands/                   <- project slash commands
+|-- skills/                     <- project skill overrides
+`-- settings.json               <- project-level settings
 ```
 
 ## Key workflows
@@ -34,23 +34,23 @@ global/                         ← deploy target: ~/.claude/
 After editing anything in `global/`, deploy and restart:
 
 ```bash
-# Recommended — interactive TUI wizard (preview, doctor, restore, env init, local setup)
+# Recommended - interactive TUI wizard (preview, doctor, restore, env init, local setup)
 ./run        # POSIX
 .\run.cmd    # Windows
 
 # Direct source fallback
 python setup/settings-configurator-ui.py
 
-# Fallback — non-interactive bash script
+# Fallback - non-interactive bash script
 bash setup/tools/apply-global-claude-settings.sh
 ```
 
 See `setup/README.md` for the wizard's structure and modes.
 
-- **Add a skill:** `global/skills/<name>.md` → apply → available as `/<name>`
-- **Add an agent:** `global/agents/<name>.md` → apply → available as `@<name>`
-- **Change MCP servers:** edit `global/settings.json` → apply → update `global/MCP.md`
-- **Change hooks:** edit `global/hooks/<name>` → apply
+- **Add a skill:** `global/skills/<name>.md` -> apply -> available as `/<name>`
+- **Add an agent:** `global/agents/<name>.md` -> apply -> available as `@<name>`
+- **Change MCP servers:** edit `global/settings.json` -> apply -> update `global/MCP.md`
+- **Change hooks:** edit `global/hooks/<name>` -> apply
 
 ### One-time per clone
 
@@ -76,5 +76,7 @@ git checkout -- .claude-plugin global/.claude-plugin
 Active spec-kit feature: **009-okf-analytics-rag** - OKF Analytics and RAG Index for SQLite-backed search, overlap analytics, visual graph lenses, context packs, optional semantic retrieval, and optional DuckDB exploration.
 For technical context, structure, stack decisions, and constitution gate status, read [`specs/009-okf-analytics-rag/plan.md`](specs/009-okf-analytics-rag/plan.md). The full design tree is at `specs/009-okf-analytics-rag/` (spec, plan, research, data-model, contracts, quickstart).
 
-Previously shipped: `008-okf-knowledge-graph` (OKF bundle and graph viewer) at `specs/008-okf-knowledge-graph/`. `005-cabal-tools-polish` (Cabal tools polish) at `specs/005-cabal-tools-polish/`. `004-github-plugin` (Installable Claude Code Plugin v1) at `specs/004-github-plugin/`. `003-issue-triage` (GitHub Issue Triage Orchestrator v1) at `specs/003-issue-triage/`. `002-agent-orchestrator` (GitHub PR Review v1) at `specs/002-agent-orchestrator/`. `001-a2a-bridge` (A2A Bridge for Multi-Agent CLI Delegation v1) at `specs/001-a2a-bridge/`.
+Also in flight: **005-cabal-tools-polish** - Part A: Refactor `cabal/wizard.py` into maintainable modules. Part B (extended 2026-05-28): Add Init Project wizard view + Project MCP screen + Claude Stats panel. Design tree at [`specs/005-cabal-tools-polish/plan.md`](specs/005-cabal-tools-polish/plan.md).
+
+Previously shipped: `008-project-dashboard` (Cabal project dashboard) at `specs/008-project-dashboard/`. `008-okf-knowledge-graph` (OKF bundle and graph viewer) at `specs/008-okf-knowledge-graph/`. `005-cabal-tools-polish` (Cabal tools polish) at `specs/005-cabal-tools-polish/`. `004-github-plugin` (Installable Claude Code Plugin v1) at `specs/004-github-plugin/`. `003-issue-triage` (GitHub Issue Triage Orchestrator v1) at `specs/003-issue-triage/`. `002-agent-orchestrator` (GitHub PR Review v1) at `specs/002-agent-orchestrator/`. `001-a2a-bridge` (A2A Bridge for Multi-Agent CLI Delegation v1) at `specs/001-a2a-bridge/`.
 <!-- SPECKIT END -->
