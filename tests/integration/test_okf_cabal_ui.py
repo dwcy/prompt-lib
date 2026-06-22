@@ -25,6 +25,9 @@ async def test_knowledge_screen_mounts() -> None:
         await pilot.pause()
 
         assert app.query_one("#okf-status", Static)
+        help_text = str(app.query_one("#okf-export-help", Static).render())
+        assert "docs/okf/prompt-lib" in help_text
+        assert "auto-inject" in help_text
 
 
 @pytest.mark.asyncio

@@ -72,6 +72,19 @@ git config filter.inject-email.clean  "python setup/tools/email-filter.py clean"
 git checkout -- .claude-plugin global/.claude-plugin
 ```
 
+## OKF knowledge catalog
+
+The generated OKF catalog lives under `docs/okf/prompt-lib/` after running the Cabal Knowledge screen export or:
+
+```bash
+python -m cabal.okf export --out docs/okf/prompt-lib
+python -m cabal.okf doctor docs/okf/prompt-lib --format human
+```
+
+Use `docs/okf/README.md` for the human explanation and `docs/okf/prompt-lib/graph.json` for machine-readable agent, skill, hook, rule, template, Codex, output-style, and Spec Kit relations. The bundle is generated reference data, not the source of truth; fix source files first and regenerate.
+
+Claude, Codex, and compatible agents do not automatically ingest this bundle just because it exists. When a task asks about how the agent ecosystem connects, routing overlap, unused concepts, or skill-agent references, explicitly read the OKF docs or graph. The active `009-okf-analytics-rag` feature is the planned path for SQLite search, analytics lenses, context packs, and later RAG-style retrieval.
+
 <!-- SPECKIT START -->
 Active spec-kit feature: **009-okf-analytics-rag** - OKF Analytics and RAG Index for SQLite-backed search, overlap analytics, visual graph lenses, context packs, optional semantic retrieval, and optional DuckDB exploration.
 For technical context, structure, stack decisions, and constitution gate status, read [`specs/009-okf-analytics-rag/plan.md`](specs/009-okf-analytics-rag/plan.md). The full design tree is at `specs/009-okf-analytics-rag/` (spec, plan, research, data-model, contracts, quickstart).

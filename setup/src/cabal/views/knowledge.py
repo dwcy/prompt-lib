@@ -30,6 +30,16 @@ class KnowledgeScreen(Screen):
                 "[bold bright_magenta]OKF Knowledge Graph[/bold bright_magenta]",
                 classes="panel",
             )
+            yield Static(
+                "[bold]Export behavior[/bold]\n"
+                "Export writes the OKF bundle to `docs/okf/prompt-lib/`, including "
+                "`graph.json` for machine-readable relations. Claude, Codex, and "
+                "other AI tools can use it when prompts, repo instructions, or "
+                "future analytics/RAG flows point them there; exporting does not "
+                "auto-inject the bundle into every session.",
+                id="okf-export-help",
+                classes="panel",
+            )
             yield Static(self._status_text(), id="okf-status", classes="panel")
             with Horizontal(id="okf-actions"):
                 yield Button("[E] Export", id="okf-export", variant="primary")
@@ -58,7 +68,12 @@ class KnowledgeScreen(Screen):
     def action_export(self) -> None:
         result = export_okf(self._repo_root(), self._bundle_root())
         self.query_one("#okf-status", Static).update(
-            f"[green]Exported {result.document_count} documents and {result.relation_count} relations.[/green]"
+            "[green]"
+            f"Exported {result.document_count} documents and "
+            f"{result.relation_count} relations to `{result.bundle_root}`.\n"
+            "[/green]"
+            "`graph.json` is ready for prompts, project instructions, and "
+            "future OKF analytics/RAG indexing."
         )
 
     def action_doctor(self) -> None:
