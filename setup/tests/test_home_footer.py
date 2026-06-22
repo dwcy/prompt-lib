@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import pytest
 from textual.containers import Vertical
-from textual.widgets import Footer
+from textual.widgets import Footer, Static
 
 from cabal.app import CabalApp
 from cabal.views.home import HomeScreen
@@ -98,8 +98,21 @@ async def test_codex_settings_are_in_their_own_panel():
 
         codex_panel = screen.query_one("#codex-settings-panel", Vertical)
         claude_panel = screen.query_one("#claude-settings-panel", Vertical)
+        okf_panel = screen.query_one("#okf-analytics-panel", Vertical)
 
         assert screen.query_one("#btn-op-codex-update").parent.parent is codex_panel
         assert screen.query_one("#btn-op-codex-local").parent.parent is codex_panel
         assert screen.query_one("#btn-op-codex-conversion").parent.parent is codex_panel
         assert screen.query_one("#btn-op-update").parent.parent is claude_panel
+        assert screen.query_one("#btn-op-knowledge").parent.parent is okf_panel
+        assert screen.query_one("#okf-summary").parent is okf_panel
+
+        assert "~/.claude" in str(
+            screen.query_one("#claude-settings-title", Static).render()
+        )
+        assert "~/.codex" in str(
+            screen.query_one("#codex-settings-title", Static).render()
+        )
+        assert "OKF Analytics" in str(
+            screen.query_one("#okf-analytics-title", Static).render()
+        )

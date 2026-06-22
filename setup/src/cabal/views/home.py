@@ -102,7 +102,9 @@ class HomeScreen(Screen):
             yield DashboardPanel(id="dashboard")
             with Vertical(id="claude-settings-panel", classes="home-section"):
                 yield Static(
-                    "[bold]Claude Settings[/bold]", classes="home-section-title"
+                    "[bold]Claude Settings (~/.claude)[/bold]",
+                    id="claude-settings-title",
+                    classes="home-section-title",
                 )
                 yield Static(
                     "[dim]Deploy, inspect, and tune ~/.claude — agents, hooks, skills, MCP servers, settings.[/dim]",
@@ -120,21 +122,34 @@ class HomeScreen(Screen):
                 with Horizontal(classes="ops-row"):
                     yield Button("Settings", id="btn-op-settings", variant="default")
                     yield Button("MCP Connectors", id="btn-op-mcp", variant="default")
-                    yield Button(
-                        "Knowledge Graph",
-                        id="btn-op-knowledge",
-                        variant="default",
-                    )
                 yield ClaudeStatsPanel(id="claude-stats")
-                yield OkfPanel(id="okf-summary")
                 yield Static(
                     "[bold]Local Claude Settings[/bold]", classes="home-section-title"
                 )
                 with Horizontal(classes="ops-row"):
                     yield Button("Local Config", id="btn-op-local", variant="default")
+            with Vertical(id="okf-analytics-panel", classes="home-section"):
+                yield Static(
+                    "[bold]OKF Analytics (docs/okf)[/bold]",
+                    id="okf-analytics-title",
+                    classes="home-section-title",
+                )
+                yield Static(
+                    "[dim]Browse the exported knowledge graph and OKF bundle status.[/dim]",
+                    classes="home-section-desc",
+                )
+                with Horizontal(classes="ops-row"):
+                    yield Button(
+                        "Knowledge Graph",
+                        id="btn-op-knowledge",
+                        variant="default",
+                    )
+                yield OkfPanel(id="okf-summary")
             with Vertical(id="codex-settings-panel", classes="home-section"):
                 yield Static(
-                    "[bold]Codex Settings[/bold]", classes="home-section-title"
+                    "[bold]Codex Settings (~/.codex)[/bold]",
+                    id="codex-settings-title",
+                    classes="home-section-title",
                 )
                 yield Static(
                     "[dim]Deploy Codex-compatible skills to ~/.codex and scaffold .agents/ in projects.[/dim]",
