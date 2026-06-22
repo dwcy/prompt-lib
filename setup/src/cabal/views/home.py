@@ -81,6 +81,7 @@ from cabal.tools import (
 from cabal.updates import check_for_updates, do_git_pull
 from cabal.widgets.claude_stats_panel import ClaudeStatsPanel
 from cabal.widgets.dashboard_panel import DashboardPanel
+from cabal.widgets.okf_panel import OkfPanel
 from cabal.widgets.update_panel import UpdatePanel
 
 
@@ -101,7 +102,9 @@ class HomeScreen(Screen):
             yield DashboardPanel(id="dashboard")
             with Vertical(id="claude-settings-panel", classes="home-section"):
                 yield Static(
-                    "[bold]Claude Settings[/bold]", classes="home-section-title"
+                    "[bold]Claude Settings (~/.claude)[/bold]",
+                    id="claude-settings-title",
+                    classes="home-section-title",
                 )
                 yield Static(
                     "[dim]Deploy, inspect, and tune ~/.claude — agents, hooks, skills, MCP servers, settings.[/dim]",
@@ -125,9 +128,32 @@ class HomeScreen(Screen):
                 )
                 with Horizontal(classes="ops-row"):
                     yield Button("Local Config", id="btn-op-local", variant="default")
+            with Vertical(id="okf-analytics-panel", classes="home-section"):
+                yield Static(
+                    "[bold]OKF Analytics (docs/okf)[/bold]",
+                    id="okf-analytics-title",
+                    classes="home-section-title",
+                )
+                yield Static(
+                    "[dim]OKF (Open Knowledge Format) turns agents, skills, hooks, "
+                    "rules, and specs into a portable knowledge map for AI tools. "
+                    "Use it to inspect how prompt-lib pieces connect, spot routing "
+                    "overlap, and open the graph viewer.[/dim]",
+                    id="okf-analytics-desc",
+                    classes="home-section-desc",
+                )
+                with Horizontal(classes="ops-row"):
+                    yield Button(
+                        "Knowledge Graph",
+                        id="btn-op-knowledge",
+                        variant="default",
+                    )
+                yield OkfPanel(id="okf-summary")
             with Vertical(id="codex-settings-panel", classes="home-section"):
                 yield Static(
-                    "[bold]Codex Settings[/bold]", classes="home-section-title"
+                    "[bold]Codex Settings (~/.codex)[/bold]",
+                    id="codex-settings-title",
+                    classes="home-section-title",
                 )
                 yield Static(
                     "[dim]Deploy Codex-compatible skills to ~/.codex and scaffold .agents/ in projects.[/dim]",
@@ -234,6 +260,7 @@ class HomeScreen(Screen):
         from cabal.views.mcp import McpScreen
         from cabal.views.local import LocalScreen
         from cabal.views.statusline import StatuslineScreen
+        from cabal.views.knowledge import KnowledgeScreen
         from cabal.views.settings import SettingsScreen
         from cabal.views.codex_update import CodexUpdateScreen
         from cabal.views.codex_local import CodexLocalScreen
@@ -245,6 +272,7 @@ class HomeScreen(Screen):
             "btn-op-mcp": McpScreen,
             "btn-op-local": LocalScreen,
             "btn-op-statusline": StatuslineScreen,
+            "btn-op-knowledge": KnowledgeScreen,
             "btn-op-settings": SettingsScreen,
             "btn-op-codex-update": CodexUpdateScreen,
             "btn-op-codex-local": CodexLocalScreen,

@@ -79,6 +79,7 @@ from cabal.tools import (
     _installer_for,
     _outdated_packages,
     _probe_key,
+    _tool_unavailable_reason,
 )
 from cabal.updates import check_for_updates, do_git_pull
 from cabal.widgets.env_panel import EnvPanel
@@ -172,15 +173,17 @@ class ToolsScreen(Screen):
                         if meta is None:
                             continue
                         label, _fn = meta
+                        unavailable = _tool_unavailable_reason(key) is not None
                         with Horizontal(classes="tool-row"):
                             yield Static(f"[white]{label}[/]", classes="tool-name")
                             yield Static(
                                 "", classes="tool-state", id=f"tool-state-{key}"
                             )
                             yield Button(
-                                "Install",
+                                "N/A" if unavailable else "Install",
                                 id=f"tool-install-{key}",
                                 classes="tool-install",
+                                disabled=unavailable,
                             )
             yield Static("", id="tools-status", classes="panel")
         yield Footer(show_command_palette=False)
@@ -237,6 +240,10 @@ class ToolsScreen(Screen):
             state_w = self.query_one(f"#tool-state-{key}", Static)
             btn = self.query_one(f"#tool-install-{key}", Button)
         except Exception:
+            return
+        reason = _tool_unavailable_reason(key)
+        if reason:
+            self._apply_unavailable_row(key, state_w, btn, reason)
             return
         if installed:
             self._installed_keys.add(key)
@@ -315,6 +322,10 @@ class ToolsScreen(Screen):
                     btn = self.query_one(f"#tool-install-{key}", Button)
                 except Exception:
                     continue  # widget missing — skip this key, don't trap the group
+                reason = _tool_unavailable_reason(key)
+                if reason:
+                    self._apply_unavailable_row(key, state_w, btn, reason)
+                    continue
                 if installed:
                     self._installed_keys.add(key)
                     self._installed_details[key] = detail
@@ -365,6 +376,20 @@ class ToolsScreen(Screen):
             return True, val
         return bool(val), ""
 
+    def _apply_unavailable_row(
+        self, key: str, state_w: Static, btn: Button, reason: str
+    ) -> None:
+        self._installed_keys.discard(key)
+        self._installed_details.pop(key, None)
+        state_w.update(
+            f"[bright_yellow]not available[/bright_yellow] "
+            f"[dim]{escape_markup(reason)}[/dim]"
+        )
+        btn.display = True
+        btn.disabled = True
+        btn.label = "N/A"
+        btn.remove_class("-update")
+
     _SPINNER_FRAMES = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -374,6 +399,13 @@ class ToolsScreen(Screen):
         key = bid.removeprefix("tool-install-")
         meta = _installer_for(key)
         if meta is None:
+            return
+        reason = _tool_unavailable_reason(key)
+        if reason:
+            self.query_one("#tools-status", Static).update(
+                f"[bright_yellow]{escape_markup(reason)}[/bright_yellow]"
+            )
+            self.notify(reason, title="Tools", severity="warning", timeout=10)
             return
         label, installer = meta
         btn = event.button

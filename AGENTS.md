@@ -34,11 +34,17 @@ This is **not** an application. It is a library of agents, hooks, skills, rules,
 | [`.specify/memory/agents.md`](./.specify/memory/agents.md) | Spec-kit subagent roster — drives `/speckit-plan` and `/speckit-tasks` delegation. |
 | [`specs/`](./specs/) | Feature specifications (Spec Kit format). |
 | [`setup/`](./setup/) | Deploy wizard (`settings-configurator-ui.py`), the cabal TUI package (`setup/src/cabal/`), and tests. |
+| [`docs/okf/`](./docs/okf/) | Generated Open Knowledge Format catalog, graph data, and viewer for agent/skill/hook/spec relationships. |
 
 ## Tool-specific notes
 
 - **Claude Code**: reads `CLAUDE.md` automatically. The deploy wizard installs everything from `global/` into `~/.claude/`.
 - **Codex / Cursor / OpenCode** (future): start from `CLAUDE.md`. Hooks and skills under `global/` are Claude-Code-specific; treat them as data, not instructions.
+- **OKF catalog**: `docs/okf/prompt-lib/` is generated reference data. Agents should read `docs/okf/README.md` and `docs/okf/prompt-lib/graph.json` when a task asks how agents, skills, hooks, rules, specs, or Codex assets connect. The bundle is not auto-ingested by Claude or Codex; prompts, repo instructions, or the future `009-okf-analytics-rag` index must point to it.
+
+## Current Spec Kit feature
+
+- Active feature: [`specs/009-okf-analytics-rag/plan.md`](./specs/009-okf-analytics-rag/plan.md)
 
 ## Conventions worth knowing
 

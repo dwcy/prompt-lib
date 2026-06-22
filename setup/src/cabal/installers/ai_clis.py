@@ -55,3 +55,20 @@ def ollama_install() -> tuple[bool, str]:
     if sysname == "Linux":
         return False, "Install manually from https://ollama.com/download"
     return False, f"Unsupported platform: {sysname}"
+
+
+def vllm_install() -> tuple[bool, str]:
+    sysname = platform.system()
+    if sysname != "Linux":
+        return (
+            False,
+            "vLLM is only enabled for Linux in Cabal. On Windows, use WSL2 or "
+            "a Linux Docker host for the official vLLM OpenAI-compatible server.",
+        )
+    return (
+        False,
+        "Install vLLM in a dedicated Linux Python environment. Recommended: "
+        "`uv venv --python 3.12 --seed --managed-python`, activate it, then "
+        "`uv pip install -U vllm --torch-backend=auto`. Docker users can run "
+        "`vllm/vllm-openai:latest` with GPU access.",
+    )

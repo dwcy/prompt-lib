@@ -146,6 +146,7 @@ from cabal.installers.ai_clis import (
     copilot_install,
     antigravity_install,
     ollama_install,
+    vllm_install,
 )
 from cabal.installers.editors import cursor_install, windsurf_install, vscode_install
 from cabal.tools import (
