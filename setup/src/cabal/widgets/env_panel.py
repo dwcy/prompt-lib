@@ -22,7 +22,7 @@ from cabal.env_summary import (
     _short_podman_version,
     _short_terraform_version,
 )
-from cabal.tools import ENV_INSTALLERS
+from cabal.tools import ENV_INSTALLERS, _tool_unavailable_reason
 from cabal.widgets.update_panel import UpdatePanel
 
 _CACHE_KEY = "env"
@@ -298,7 +298,7 @@ class EnvPanel(Widget):
             self._mount_present(clis, label, env.get(key, False))
 
         # Row 5 — Local AI runtimes (Ollama gets its own section)
-        if env["ollama"]:
+        if env.get("ollama"):
             models = env.get("ollama_models") or []
             cell = Text()
             cell.append("Ollama:", style=self._LABEL)
@@ -309,6 +309,24 @@ class EnvPanel(Widget):
             else:
                 cell.append("✓ ", style="bright_green")
                 cell.append("No local models installed", style="yellow")
+            local_ai.mount(Static(cell, classes="env-cell"))
+        vllm_reason = _tool_unavailable_reason("vllm")
+        vllm_value = env.get("vllm")
+        if vllm_value:
+            cell = Text()
+            cell.append("vLLM:", style=self._LABEL)
+            cell.append(" ")
+            cell.append("OK ", style="bright_green")
+            if isinstance(vllm_value, str):
+                cell.append(vllm_value, style="bright_white")
+            else:
+                cell.append("installed", style="bright_white")
+            local_ai.mount(Static(cell, classes="env-cell"))
+        elif vllm_reason:
+            cell = Text()
+            cell.append("vLLM:", style=self._LABEL)
+            cell.append(" ")
+            cell.append(vllm_reason, style="yellow")
             local_ai.mount(Static(cell, classes="env-cell"))
 
         # Row 6 — Database CLIs (only installed)

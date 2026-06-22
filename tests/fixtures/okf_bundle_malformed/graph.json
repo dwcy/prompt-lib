@@ -1,0 +1,43 @@
+{
+  "schema_version": "1",
+  "bundle_id": "prompt-lib",
+  "generated_at": "2026-06-18T00:00:00Z",
+  "nodes": [
+    {
+      "id": "agent:ghost",
+      "label": "missing",
+      "type": "agent",
+      "resource": "global/agents/missing.md",
+      "doc": "agents/missing.md",
+      "tags": ["prompt-lib", "agent"],
+      "metrics": {
+        "incoming": 0,
+        "outgoing": 0,
+        "warnings": 0,
+        "errors": 0
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge:skill:broken:routes_to:agent:ghost:abc123",
+      "source": "skill:broken",
+      "target": null,
+      "target_ref": "@ghost",
+      "kind": "routes_to",
+      "confidence": "explicit",
+      "reason": "Broken fixture.",
+      "evidence": []
+    }
+  ],
+  "counts": {
+    "nodes_by_type": {
+      "agent": 1
+    },
+    "edges_by_kind": {
+      "routes_to": 1
+    },
+    "findings_by_severity": {}
+  },
+  "findings": []
+}

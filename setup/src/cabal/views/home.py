@@ -81,6 +81,7 @@ from cabal.tools import (
 from cabal.updates import check_for_updates, do_git_pull
 from cabal.widgets.claude_stats_panel import ClaudeStatsPanel
 from cabal.widgets.env_panel import EnvPanel
+from cabal.widgets.okf_panel import OkfPanel
 from cabal.widgets.update_panel import UpdatePanel
 
 
@@ -117,7 +118,9 @@ class HomeScreen(Screen):
                     )
                 with Horizontal(classes="ops-row"):
                     yield Button("MCP Connectors", id="btn-op-mcp", variant="default")
+                    yield Button("Knowledge Graph", id="btn-op-knowledge", variant="default")
                 yield ClaudeStatsPanel(id="claude-stats")
+                yield OkfPanel(id="okf-summary")
                 yield Static(
                     "[bold]Codex Settings[/bold]", classes="home-section-title"
                 )
@@ -246,6 +249,7 @@ class HomeScreen(Screen):
         from cabal.views.local import LocalScreen
         from cabal.views.tools import ToolsScreen
         from cabal.views.statusline import StatuslineScreen
+        from cabal.views.knowledge import KnowledgeScreen
         from cabal.views.codex_update import CodexUpdateScreen
         from cabal.views.codex_local import CodexLocalScreen
         from cabal.views.codex_conversion import CodexConversionScreen
@@ -257,6 +261,7 @@ class HomeScreen(Screen):
             "btn-op-local": LocalScreen,
             "btn-op-tools": ToolsScreen,
             "btn-op-statusline": StatuslineScreen,
+            "btn-op-knowledge": KnowledgeScreen,
             "btn-op-codex-update": CodexUpdateScreen,
             "btn-op-codex-local": CodexLocalScreen,
             "btn-op-codex-conversion": CodexConversionScreen,

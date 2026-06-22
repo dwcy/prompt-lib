@@ -31,6 +31,7 @@ from cabal.views.global_env import GlobalEnvScreen  # noqa: F401
 from cabal.views.home import HomeScreen  # noqa: F401
 from cabal.views.init_project import InitProjectScreen  # noqa: F401
 from cabal.views.init_project_prompt import build_init_prompt, write_init_prompt  # noqa: F401
+from cabal.views.knowledge import KnowledgeScreen  # noqa: F401
 from cabal.views.local import LocalScreen  # noqa: F401
 from cabal.views.mcp import McpScreen  # noqa: F401
 from cabal.views.operations import OperationsScreen  # noqa: F401
@@ -160,6 +161,10 @@ class CabalApp(App):
     .ops-row Button { width: 1fr; }
 
     #home-nav, #ops-nav {
+        height: 5;
+        align: center middle;
+    }
+    #okf-actions {
         height: 5;
         align: center middle;
     }

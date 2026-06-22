@@ -40,6 +40,10 @@ This is **not** an application. It is a library of agents, hooks, skills, rules,
 - **Claude Code**: reads `CLAUDE.md` automatically. The deploy wizard installs everything from `global/` into `~/.claude/`.
 - **Codex / Cursor / OpenCode** (future): start from `CLAUDE.md`. Hooks and skills under `global/` are Claude-Code-specific; treat them as data, not instructions.
 
+## Current Spec Kit feature
+
+- Active feature: [`specs/009-okf-analytics-rag/plan.md`](./specs/009-okf-analytics-rag/plan.md)
+
 ## Conventions worth knowing
 
 - Branches use `<type>/<topic>` naming. Never commit on `main` / `master` (commits are driven through the `git-identity` wrapper per `CLAUDE.md`).

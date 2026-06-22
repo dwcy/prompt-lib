@@ -73,8 +73,8 @@ git checkout -- .claude-plugin global/.claude-plugin
 ```
 
 <!-- SPECKIT START -->
-Active spec-kit feature: **005-cabal-tools-polish** — Part A: Refactor `cabal/wizard.py` into maintainable modules. Part B (extended 2026-05-28): Add Init Project wizard view + Project MCP screen + Claude Stats panel.
-For technical context, structure, stack decisions, and constitution gate status, read [`specs/005-cabal-tools-polish/plan.md`](specs/005-cabal-tools-polish/plan.md). The full design tree is at `specs/005-cabal-tools-polish/` (spec, plan, research, data-model, contracts, quickstart).
+Active spec-kit feature: **009-okf-analytics-rag** - OKF Analytics and RAG Index for SQLite-backed search, overlap analytics, visual graph lenses, context packs, optional semantic retrieval, and optional DuckDB exploration.
+For technical context, structure, stack decisions, and constitution gate status, read [`specs/009-okf-analytics-rag/plan.md`](specs/009-okf-analytics-rag/plan.md). The full design tree is at `specs/009-okf-analytics-rag/` (spec, plan, research, data-model, contracts, quickstart).
 
-Previously shipped: `004-github-plugin` (Installable Claude Code Plugin v1) at `specs/004-github-plugin/`. `003-issue-triage` (GitHub Issue Triage Orchestrator v1) at `specs/003-issue-triage/`. `002-agent-orchestrator` (Agent Orchestrator — GitHub PR Review v1) at `specs/002-agent-orchestrator/`. `001-a2a-bridge` (A2A Bridge for Multi-Agent CLI Delegation v1) at `specs/001-a2a-bridge/`.
+Previously shipped: `008-okf-knowledge-graph` (OKF bundle and graph viewer) at `specs/008-okf-knowledge-graph/`. `005-cabal-tools-polish` (Cabal tools polish) at `specs/005-cabal-tools-polish/`. `004-github-plugin` (Installable Claude Code Plugin v1) at `specs/004-github-plugin/`. `003-issue-triage` (GitHub Issue Triage Orchestrator v1) at `specs/003-issue-triage/`. `002-agent-orchestrator` (GitHub PR Review v1) at `specs/002-agent-orchestrator/`. `001-a2a-bridge` (A2A Bridge for Multi-Agent CLI Delegation v1) at `specs/001-a2a-bridge/`.
 <!-- SPECKIT END -->
