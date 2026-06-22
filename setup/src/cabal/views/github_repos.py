@@ -90,6 +90,7 @@ class GitHubReposScreen(Screen):
     BINDINGS = [
         Binding("escape", "app.pop_screen", "Back"),
         Binding("ctrl+r", "refresh", "Refresh"),
+        Binding("c", "clone", "Clone"),
     ]
 
     CSS = """
@@ -107,6 +108,10 @@ class GitHubReposScreen(Screen):
     #gh-repos-actions Button { margin: 0 1; }
     """
 
+    def __init__(self, on_clone_done: Callable[[Path], None] | None = None) -> None:
+        super().__init__()
+        self._on_clone_done = on_clone_done
+
     def compose(self) -> ComposeResult:
         yield AppHeader()
         with Vertical(id="gh-repos-card"):
@@ -117,15 +122,19 @@ class GitHubReposScreen(Screen):
             yield Static("", id="gh-repos-status")
             yield DataTable(id="gh-repos-list")
             with Horizontal(id="gh-repos-actions"):
+                yield Button("Clone selected", id="gh-repos-clone", variant="success")
+                yield Button("Login with GitHub", id="gh-repos-login", variant="primary")
                 yield Button("Refresh", id="gh-repos-refresh", variant="default")
                 yield Button("Accounts", id="gh-repos-accounts", variant="primary")
                 yield Button("Back", id="gh-repos-back", variant="default")
         yield Footer(show_command_palette=False)
 
     def on_mount(self) -> None:
+        self._repos: list[dict] = []
         tbl = self.query_one("#gh-repos-list", DataTable)
         tbl.add_columns("Name", "Visibility", "Updated", "Description")
         tbl.cursor_type = "row"
+        self.query_one("#gh-repos-login", Button).display = False
         self.action_refresh()
 
     def action_refresh(self) -> None:
@@ -135,6 +144,16 @@ class GitHubReposScreen(Screen):
         self.run_worker(self._fetch, thread=True, exclusive=True)
 
     def _fetch(self) -> None:
+        gh = shutil.which("gh")
+        if not gh:
+            self.app.call_from_thread(
+                self._set_error, "gh not found on PATH — install GitHub CLI first"
+            )
+            return
+        token_r = subprocess.run(["gh", "auth", "token"], capture_output=True, text=True)
+        if token_r.returncode != 0 or not token_r.stdout.strip():
+            self.app.call_from_thread(self._set_logged_out)
+            return
         try:
             repos = self._gh_repos()
         except Exception as e:
@@ -154,7 +173,7 @@ class GitHubReposScreen(Screen):
                 "--limit",
                 "200",
                 "--json",
-                "name,description,visibility,updatedAt,url",
+                "name,nameWithOwner,description,visibility,updatedAt,url",
             ],
             capture_output=True,
             text=True,
@@ -173,7 +192,17 @@ class GitHubReposScreen(Screen):
     def _set_error(self, message: str) -> None:
         self.query_one("#gh-repos-status", Static).update(f"[red]✗ {message}[/red]")
 
+    def _set_logged_out(self) -> None:
+        self._repos = []
+        self.query_one("#gh-repos-list", DataTable).clear()
+        self.query_one("#gh-repos-login", Button).display = True
+        self.query_one("#gh-repos-status", Static).update(
+            "[yellow]⚠ Not logged in to GitHub — click Login with GitHub to authenticate.[/yellow]"
+        )
+
     def _set_repos(self, repos: list[dict]) -> None:
+        self._repos = repos
+        self.query_one("#gh-repos-login", Button).display = False
         tbl = self.query_one("#gh-repos-list", DataTable)
         tbl.clear()
         for repo in repos:
@@ -213,5 +242,56 @@ class GitHubReposScreen(Screen):
             self.app.pop_screen()
         elif bid == "gh-repos-refresh":
             self.action_refresh()
+        elif bid == "gh-repos-login":
+            self._start_login()
+        elif bid == "gh-repos-clone":
+            self.action_clone()
         elif bid == "gh-repos-accounts":
             self._open_accounts()
+
+    def action_clone(self) -> None:
+        from cabal.views.clone_repo import CloneRepoScreen
+
+        tbl = self.query_one("#gh-repos-list", DataTable)
+        row = tbl.cursor_row
+        if row is None or not (0 <= row < len(self._repos)):
+            self.query_one("#gh-repos-status", Static).update(
+                "[yellow]Select a repo row first, then Clone.[/yellow]"
+            )
+            return
+        repo = self._repos[row]
+        name_with_owner = repo.get("nameWithOwner") or repo.get("name", "")
+
+        def _cb(path: Path | None) -> None:
+            if path is not None and self._on_clone_done is not None:
+                self._on_clone_done(path)
+
+        self.app.push_screen(CloneRepoScreen(name_with_owner, repo.get("name", "")), _cb)
+
+    def _start_login(self) -> None:
+        self.query_one("#gh-repos-status", Static).update(
+            "[dim]Starting GitHub device flow…[/dim]"
+        )
+
+        def _start() -> None:
+            from cabal.views.gh_device import GhDeviceFlowScreen
+
+            device = gh_device_init(["repo", "read:org"])
+
+            def _push() -> None:
+                if device is None:
+                    self.query_one("#gh-repos-status", Static).update(
+                        "[red]Could not reach github.com — check your connection[/red]"
+                    )
+                    return
+                self.app.push_screen(GhDeviceFlowScreen(device), self._on_login)
+
+            self.app.call_from_thread(_push)
+
+        self.run_worker(_start, thread=True, exclusive=False)
+
+    def _on_login(self, token: str | None) -> None:
+        if not token:
+            self.query_one("#gh-repos-status", Static).update("[yellow]Login cancelled[/yellow]")
+            return
+        self.action_refresh()

@@ -19,6 +19,7 @@ from textual.binding import Binding
 from cabal.clipboard import read_clipboard
 from cabal.app_widgets import AppCommandsProvider, AppHeader  # noqa: F401  (re-export)
 from cabal.views.claude_info import ClaudeInfoScreen  # noqa: F401
+from cabal.views.clone_repo import CloneRepoScreen  # noqa: F401
 from cabal.views.codex_conversion import CodexConversionScreen  # noqa: F401
 from cabal.views.codex_local import CodexLocalScreen  # noqa: F401
 from cabal.views.codex_update import CodexUpdateScreen  # noqa: F401
@@ -124,12 +125,6 @@ class CabalApp(App):
         padding: 0;
     }
 
-    #home-bottom {
-        height: 5;
-        align-vertical: middle;
-        padding: 0 2;
-        margin: 0;
-    }
     .home-spacer { width: 1fr; }
 
     .home-section {
