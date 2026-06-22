@@ -16,11 +16,12 @@ from cabal.views.readme import ReadmeScreen
 def _stub_home_background_probes(monkeypatch):
     """Keep HomeScreen smoke tests from starting real host/network probes."""
     from cabal.views import home
-    from cabal.widgets import env_panel, update_panel
+    from cabal.widgets import dashboard_panel, env_panel, update_panel
     from cabal.codex_setup import diff_apply as codex_diff_apply
 
     monkeypatch.setattr(home, "has_deploy_drift", lambda: False)
     monkeypatch.setattr(codex_diff_apply, "has_codex_deploy_drift", lambda: False)
+    monkeypatch.setattr(dashboard_panel.DashboardPanel, "on_mount", lambda self: None)
     monkeypatch.setattr(env_panel.EnvPanel, "on_mount", lambda self: None)
     monkeypatch.setattr(update_panel.UpdatePanel, "on_mount", lambda self: None)
 

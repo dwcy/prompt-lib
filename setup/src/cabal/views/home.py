@@ -99,7 +99,7 @@ class HomeScreen(Screen):
             yield HexBanner(id="banner", classes="centered", show_subtitle=False)
             yield subtitle_bar()
             yield DashboardPanel(id="dashboard")
-            with Vertical(classes="home-section"):
+            with Vertical(id="claude-settings-panel", classes="home-section"):
                 yield Static(
                     "[bold]Claude Settings[/bold]", classes="home-section-title"
                 )
@@ -120,6 +120,12 @@ class HomeScreen(Screen):
                     yield Button("Settings", id="btn-op-settings", variant="default")
                     yield Button("MCP Connectors", id="btn-op-mcp", variant="default")
                 yield ClaudeStatsPanel(id="claude-stats")
+                yield Static(
+                    "[bold]Local Claude Settings[/bold]", classes="home-section-title"
+                )
+                with Horizontal(classes="ops-row"):
+                    yield Button("Local Config", id="btn-op-local", variant="default")
+            with Vertical(id="codex-settings-panel", classes="home-section"):
                 yield Static(
                     "[bold]Codex Settings[/bold]", classes="home-section-title"
                 )
@@ -144,11 +150,6 @@ class HomeScreen(Screen):
                         id="btn-op-codex-conversion",
                         variant="default",
                     )
-                yield Static(
-                    "[bold]Local Claude Settings[/bold]", classes="home-section-title"
-                )
-                with Horizontal(classes="ops-row"):
-                    yield Button("Local Config", id="btn-op-local", variant="default")
         yield Footer(show_command_palette=False)
 
     def on_mount(self) -> None:
