@@ -147,7 +147,7 @@ def _ensure_rust() -> tuple[bool, str]:
     if r.returncode != 0 and not (_CARGO_BIN / "cargo.exe").exists():
         out = (r.stdout or r.stderr or "").strip()
         return False, f"rustup install failed — {out or 'winget error'}"
-    return True, "rustup ✓"
+    return True, "rustup OK"
 
 
 def _ensure_msvc_build_tools() -> tuple[bool, str]:
@@ -174,7 +174,7 @@ def _ensure_msvc_build_tools() -> tuple[bool, str]:
     if r.returncode != 0 and not _has_vctools():
         out = (r.stdout or r.stderr or "").strip()
         return False, f"VS Build Tools install failed — {out or 'winget error'}"
-    return True, "VS Build Tools ✓"
+    return True, "VS Build Tools OK"
 
 
 def _has_vctools() -> bool:
