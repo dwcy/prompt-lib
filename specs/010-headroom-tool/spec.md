@@ -1,6 +1,6 @@
 # Feature Specification: Headroom as a Managed Tool
 
-**Feature Branch**: `009-headroom-tool`
+**Feature Branch**: `010-headroom-tool`
 **Created**: 2026-06-21
 **Status**: Draft
 **Input**: User description: "Integrate Headroom (chopratejas/headroom, a context-compression layer for AI agents) into prompt-lib as a first-class managed tool inside the cabal TUI — installer + tool registry rows + MCP server template + an investigate-only research spike on the proxy/subscription-auth path + docs."

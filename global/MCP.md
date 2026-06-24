@@ -140,9 +140,9 @@ claude mcp add -s user headroom -- headroom mcp serve
 ```
 
 **Tools:** `headroom_compress`, `headroom_retrieve`, `headroom_stats`
-**Source:** PyPI `headroom-ai` — see `specs/009-headroom-tool/`
+**Source:** PyPI `headroom-ai` — see `specs/010-headroom-tool/`
 
-> **Proxy/wrap mode is intentionally NOT used here.** Headroom's transparent "4× usage" proxy (`headroom wrap claude` / `ANTHROPIC_BASE_URL`) targets API-key traffic; its behavior on subscription/OAuth Claude Code is undocumented and unverified, and carries auth/ToS risk. Shelved — see the verdict in `specs/009-headroom-tool/research.md` §B. (The MCP-serve command above is docs-confirmed but not yet empirically verified on Windows, since the tool would not build on the dev machine.)
+> **Proxy/wrap mode is intentionally NOT used here.** Headroom's transparent "4× usage" proxy (`headroom wrap claude` / `ANTHROPIC_BASE_URL`) targets API-key traffic; its behavior on subscription/OAuth Claude Code is undocumented and unverified, and carries auth/ToS risk. Shelved — see the verdict in `specs/010-headroom-tool/research.md` §B. (The MCP-serve command above is docs-confirmed but not yet empirically verified on Windows, since the tool would not build on the dev machine.)
 
 ---
 

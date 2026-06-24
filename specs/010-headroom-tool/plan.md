@@ -1,7 +1,7 @@
 # Implementation Plan: Headroom as a Managed Tool
 
-**Branch**: `009-headroom-tool` | **Date**: 2026-06-21 | **Spec**: [spec.md](./spec.md)
-**Input**: Feature specification from `/specs/009-headroom-tool/spec.md`
+**Branch**: `010-headroom-tool` | **Date**: 2026-06-21 | **Spec**: [spec.md](./spec.md)
+**Input**: Feature specification from `/specs/010-headroom-tool/spec.md`
 
 ## Summary
 
@@ -56,7 +56,7 @@ N/A — no phase dispatches two or more writing subagents concurrently.
 ### Documentation (this feature)
 
 ```text
-specs/009-headroom-tool/
+specs/010-headroom-tool/
 ├── spec.md              # /speckit-specify output
 ├── plan.md              # This file
 ├── research.md          # Phase 0 — technical decisions + the proxy investigation verdict (FR-009 deliverable)
