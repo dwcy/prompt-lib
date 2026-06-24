@@ -1,0 +1,22 @@
+{
+	"nodes":[
+		{"id":"home","type":"file","file":"docs/ops/Home.md","x":-760,"y":-120,"width":300,"height":180},
+		{"id":"goal","type":"text","text":"# Goal\nWhat are we trying to make true this week?","x":-380,"y":-320,"width":320,"height":150,"color":"1"},
+		{"id":"inputs","type":"file","file":"docs/ops/Inbox.md","x":20,"y":-320,"width":300,"height":180,"color":"2"},
+		{"id":"projects","type":"file","file":"docs/ops/Learning/Active Projects.md","x":420,"y":-320,"width":340,"height":180,"color":"3"},
+		{"id":"map","type":"text","text":"# Map\nClarify the path: constraints, dependencies, risks, and open questions.","x":-380,"y":20,"width":320,"height":170,"color":"4"},
+		{"id":"weekly","type":"file","file":"docs/ops/Weekly/2026-W26.md","x":20,"y":20,"width":300,"height":190,"color":"5"},
+		{"id":"learning","type":"file","file":"docs/ops/Learning/Learning Map.md","x":420,"y":20,"width":340,"height":190,"color":"6"},
+		{"id":"next","type":"text","text":"# Next\nPick one concrete action, one learning loop, and one thing to deliberately ignore.","x":20,"y":320,"width":360,"height":170,"color":"5"},
+		{"id":"17c4fe70e1c9ae0f","x":-616,"y":-399,"width":250,"height":60,"type":"text","text":""}
+	],
+	"edges":[
+		{"id":"home-goal","fromNode":"home","fromSide":"right","toNode":"goal","toSide":"left"},
+		{"id":"goal-inputs","fromNode":"goal","fromSide":"right","toNode":"inputs","toSide":"left"},
+		{"id":"inputs-projects","fromNode":"inputs","fromSide":"right","toNode":"projects","toSide":"left"},
+		{"id":"goal-map","fromNode":"goal","fromSide":"bottom","toNode":"map","toSide":"top"},
+		{"id":"map-weekly","fromNode":"map","fromSide":"right","toNode":"weekly","toSide":"left"},
+		{"id":"weekly-learning","fromNode":"weekly","fromSide":"right","toNode":"learning","toSide":"left"},
+		{"id":"weekly-next","fromNode":"weekly","fromSide":"bottom","toNode":"next","toSide":"top"}
+	]
+}
