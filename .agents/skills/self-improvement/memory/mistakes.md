@@ -157,3 +157,10 @@ Concrete failures from past sessions, recorded so they aren't repeated. Each ent
 - **Root cause**: I first changed `EnvPanel.DEFAULT_CSS`, but the app-level `Horizontal` rule loaded later still supplied side margin and padding.
 - **Future rule**: For Cabal `Horizontal` alignment fixes, check mounted regions and put app-wide row exceptions in `CabalApp.CSS` when the global `Horizontal` rule is the source.
 - **Example**: `#env-row-system` and sibling setup rows need app-level `margin: 1 0; padding: 0;` so their first cells align with `#env-version-meta` and `#env-paths`.
+
+### M-20260624-14 — Mistook widget adjacency for visual logo spacing
+- **Date**: 2026-06-24
+- **Situation**: User noticed a larger visual gap between the Cabal elephant logo and the first panel on the start/project views.
+- **Root cause**: I checked adjacent widget regions but missed blank space inside the logo widget from `#banner` bottom padding.
+- **Future rule**: For Cabal logo-to-panel spacing, verify both mounted regions and the banner widget's internal padding.
+- **Example**: `#banner { padding: 1 2 0 2; }` keeps the top breathing room while removing the blank row below the logo.

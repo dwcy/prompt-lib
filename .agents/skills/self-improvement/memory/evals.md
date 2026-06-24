@@ -215,3 +215,13 @@ The evaluation questions:
 - **To remember**:
   - M-20260624-13 (global `Horizontal` requires app-level row exceptions)
 - **To unlearn**: nothing.
+
+### E-20260624-15 — Tighten Cabal logo-to-panel spacing
+- **Task**: Reduce the visual gap between the Cabal elephant logo and the first panel on start/project views.
+- **Constraints followed?** Yes — changed only the shared banner padding and added focused geometry tests.
+- **Unverified assumptions?** Reduced — measured mounted Textual regions and confirmed the remaining blank row was internal bottom padding.
+- **Verified current facts?** Yes — compile check passed and direct Textual smoke confirmed start/home banner bottom padding is 0 with panel gap 0.
+- **Requested format?** Yes — implemented the UI spacing fix.
+- **To remember**:
+  - M-20260624-14 (logo spacing needs padding checks, not just region checks)
+- **To unlearn**: nothing.

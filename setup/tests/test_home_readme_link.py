@@ -50,6 +50,25 @@ async def test_home_logo_owns_subtitle_and_has_no_old_readme_link_or_button():
 
 
 @pytest.mark.asyncio
+async def test_home_logo_sits_tightly_above_dashboard_panel():
+    app = CabalApp()
+
+    async with app.run_test() as pilot:
+        screen = HomeScreen()
+        await app.push_screen(screen)
+        await pilot.pause()
+        await pilot.pause()
+
+        banner = screen.query_one("#banner", CabalLogo)
+        dashboard = screen.query_one("#dashboard")
+        banner_region = screen.find_widget(banner).region
+        dashboard_region = screen.find_widget(dashboard).region
+
+        assert banner.styles.padding.bottom == 0
+        assert dashboard_region.y == banner_region.bottom
+
+
+@pytest.mark.asyncio
 async def test_readme_action_opens_readme_screen():
     app = CabalApp()
 
@@ -85,3 +104,21 @@ async def test_start_view_has_no_old_readme_link_but_action_still_opens_readme()
         await pilot.pause()
 
         assert isinstance(app.screen, ReadmeScreen)
+
+
+@pytest.mark.asyncio
+async def test_start_logo_sits_tightly_above_overview_panel():
+    app = CabalApp()
+
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        await pilot.pause()
+        gate = app.screen
+
+        banner = gate.query_one("#banner", CabalLogo)
+        overview = gate.query_one("#env-summary")
+        banner_region = gate.find_widget(banner).region
+        overview_region = gate.find_widget(overview).region
+
+        assert banner.styles.padding.bottom == 0
+        assert overview_region.y == banner_region.bottom

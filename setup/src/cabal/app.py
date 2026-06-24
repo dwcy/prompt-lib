@@ -114,7 +114,7 @@ class CabalApp(App):
 
     #banner {
         height: auto;
-        padding: 1 2;
+        padding: 1 2 0 2;
         content-align: center middle;
     }
 
