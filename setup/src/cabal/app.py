@@ -26,6 +26,7 @@ from cabal.views.codex_local import CodexLocalScreen  # noqa: F401
 from cabal.views.codex_update import CodexUpdateScreen  # noqa: F401
 from cabal.views.env import EnvScreen  # noqa: F401
 from cabal.views.folder_browser import FolderBrowserScreen  # noqa: F401
+from cabal.views.gh_accounts_modal import GhAccountsModal  # noqa: F401
 from cabal.views.gh_device import GhDeviceFlowScreen  # noqa: F401
 from cabal.views.git_config import GitConfigScreen  # noqa: F401
 from cabal.views.github_repos import GitHubReposScreen  # noqa: F401
@@ -59,6 +60,30 @@ class CabalApp(App):
     def project_path(self) -> Path:
         """The active project folder; falls back to cwd if somehow unset."""
         return self.selected_project or Path.cwd()
+
+    def open_github_accounts(self) -> None:
+        """Open gh account management and refresh local setup when it changes."""
+        from cabal.views.gh_accounts_modal import GhAccountsModal
+
+        self.push_screen(GhAccountsModal(), self._after_github_accounts_closed)
+
+    def _after_github_accounts_closed(self, changed: bool | None) -> None:
+        if not changed:
+            return
+        self.env_needs_refresh = True
+        try:
+            from cabal.widgets.env_panel import EnvPanel
+
+            env_panel = self.screen.query_one("#env-summary", EnvPanel)
+            self.env_needs_refresh = False
+            env_panel.refresh_env()
+        except Exception:
+            pass
+        try:
+            dashboard = self.screen.query_one("#dashboard")
+            dashboard.refresh_dashboard()
+        except Exception:
+            pass
 
     @property
     def clipboard(self) -> str:

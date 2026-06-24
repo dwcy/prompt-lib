@@ -305,6 +305,4 @@ class ProjectGateScreen(Screen):
 
             self.app.push_screen(EnvScreen())
         elif bid == "btn-github":
-            from cabal.views.github_repos import GitHubReposScreen
-
-            self.app.push_screen(GitHubReposScreen())
+            self.app.open_github_accounts()

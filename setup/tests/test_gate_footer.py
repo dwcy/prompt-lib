@@ -14,8 +14,10 @@ from textual.widgets import DataTable
 from textual.widgets import Footer
 from textual.widgets import Static
 
+from cabal import gh_accounts
 from cabal.app import CabalApp
 from cabal.recent_projects import RecentProject
+from cabal.views.gh_accounts_modal import GhAccountsModal
 from cabal.views.project_gate import ProjectGateScreen, _fmt_time
 from cabal.widgets.env_panel import EnvPanel
 from cabal.widgets.update_panel import UpdatePanel
@@ -48,6 +50,47 @@ async def test_gate_command_palette_hidden_from_footer():
         await pilot.pause()
 
         assert app.screen.query_one(Footer).show_command_palette is False
+
+
+@pytest.mark.asyncio
+async def test_gate_github_button_opens_accounts_modal(monkeypatch):
+    monkeypatch.setattr(gh_accounts, "list_accounts", lambda host="github.com": [])
+    monkeypatch.setattr(EnvPanel, "refresh_env", lambda self: None)
+    monkeypatch.setattr(UpdatePanel, "on_mount", lambda self: None)
+    app = CabalApp()
+
+    async with app.run_test(size=(120, 80)) as pilot:
+        await pilot.pause()
+        await pilot.pause()
+
+        app.screen.query_one("#btn-github", Button).press()
+        await pilot.pause()
+        await pilot.pause()
+        await pilot.pause()
+
+        assert isinstance(app.screen, GhAccountsModal)
+        assert str(app.screen.query_one("#gha-add", Button).label) == "Login to GitHub"
+
+
+@pytest.mark.asyncio
+async def test_github_account_change_refreshes_overview(monkeypatch):
+    refreshed: list[str | None] = []
+
+    def fake_refresh_env(self: EnvPanel) -> None:
+        refreshed.append(self.id)
+
+    monkeypatch.setattr(EnvPanel, "refresh_env", fake_refresh_env)
+    monkeypatch.setattr(UpdatePanel, "on_mount", lambda self: None)
+    app = CabalApp()
+
+    async with app.run_test(size=(120, 80)) as pilot:
+        await pilot.pause()
+        refreshed.clear()
+
+        app._after_github_accounts_closed(True)
+
+        assert refreshed == ["env-summary"]
+        assert app.env_needs_refresh is False
 
 
 @pytest.mark.asyncio

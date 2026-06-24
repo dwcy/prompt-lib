@@ -65,7 +65,7 @@ class GhAccountsModal(ModalScreen[bool]):
             yield Vertical(id="gha-list")
             yield Static("", id="gha-status")
             with Horizontal(id="gha-actions"):
-                yield Button("Add account", id="gha-add", variant="primary")
+                yield Button("Login to GitHub", id="gha-add", variant="primary")
                 yield Button("Close (Esc)", id="gha-close")
 
     def on_mount(self) -> None:
@@ -97,10 +97,13 @@ class GhAccountsModal(ModalScreen[bool]):
         if not accounts:
             lst.mount(
                 Static(
-                    "[dim]No gh CLI accounts — use Add account to log in.[/dim]",
+                    "[dim]No gh CLI accounts yet.[/dim]",
                     classes="gha-label",
                 )
             )
+        self.query_one("#gha-add", Button).label = (
+            "Add account" if accounts else "Login to GitHub"
+        )
         for i, acc in enumerate(accounts):
             lst.mount(self._account_row(i, acc))
         self._set_status("")
@@ -178,7 +181,7 @@ class GhAccountsModal(ModalScreen[bool]):
     # -- add / re-auth via device flow ---------------------------------------
 
     def _start_device_flow(self) -> None:
-        self._set_status("[dim]Starting GitHub device flow…[/dim]")
+        self._set_status("[dim]Starting GitHub login…[/dim]")
 
         def init() -> None:
             device = gh_device_init(_DEVICE_SCOPES)
