@@ -47,6 +47,7 @@ from textual.widgets import (
 from textual.widgets.option_list import Option
 from textual.widget import Widget
 
+from cabal import gh_accounts
 from cabal._paths import GLOBAL_DIR, TARGET, REPO_DIR, ENV_DIR, ENV_FILE, RESOURCE_ROOT
 from cabal.app_widgets import AppHeader
 from cabal.banner import HexBanner, render_banner
@@ -294,4 +295,18 @@ class GitHubReposScreen(Screen):
         if not token:
             self.query_one("#gh-repos-status", Static).update("[yellow]Login cancelled[/yellow]")
             return
-        self.action_refresh()
+        self.query_one("#gh-repos-status", Static).update(
+            "[dim]Registering account with gh…[/dim]"
+        )
+
+        def register() -> None:
+            ok, msg = gh_accounts.add_account_with_token(token)
+            self.app.call_from_thread(self._after_login_register, ok, msg)
+
+        self.run_worker(register, thread=True, exclusive=True)
+
+    def _after_login_register(self, ok: bool, msg: str) -> None:
+        if ok:
+            self.action_refresh()
+        else:
+            self.query_one("#gh-repos-status", Static).update(f"[red]✗ {msg}[/red]")
