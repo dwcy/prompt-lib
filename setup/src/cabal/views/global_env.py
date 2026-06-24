@@ -76,7 +76,7 @@ class GlobalEnvScreen(Screen):
         height: 90%;
         padding: 1 2;
         background: $boost;
-        border: round $primary;
+        border: round #CC006B;
     }
     #gv-search { margin: 0 0 1 0; }
     #gv-list { height: 1fr; }
@@ -128,5 +128,4 @@ class GlobalEnvScreen(Screen):
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "gv-back":
             self.app.pop_screen()
-
 

@@ -50,7 +50,7 @@ class StatuslineScreen(Screen):
         padding: 1 2;
         margin: 1 0 0 0;
         background: $boost;
-        border: round $primary;
+        border: round #CC006B;
     }
     StatuslineScreen #sl-status { height: auto; margin: 1 0 0 0; }
     """

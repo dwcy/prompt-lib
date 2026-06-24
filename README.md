@@ -1,12 +1,24 @@
-# prompt-lib
+![Cabal header: pink elephant logo beside the Cabal wordmark](docs/assets/cabal-header.png)
 
-Versioned source for everything in `~/.claude/` — agents, skills, hooks, rules, output styles, MCP servers, project templates — plus a TUI installer and two services that extend Claude Code into a multi-agent system.
+# Cabal
+
+**Agentic development configuration in one place.** Cabal is the local control
+panel for managing a machine's Claude Code and Codex setup. It gives you one
+terminal UI for deploying global agent configuration, checking setup drift,
+restoring backups, managing MCP connections, initializing environment variables,
+scaffolding local project configuration, installing companion CLIs, and browsing
+the agent/skill knowledge map.
+
+This repository is the versioned source Cabal deploys: agents, slash-command
+skills, hooks, rules, output styles, MCP server templates, project templates,
+Codex-compatible assets, OKF catalog data, and the supporting services that make
+multi-agent workflows easier to run across projects.
 
 > **Visual tour:** open [`docs/infographic.html`](docs/infographic.html) in a browser — single A4 landscape sheet, no scrolling, every feature at a glance. The longer scrollable variant is at [`docs/infographic-v1.html`](docs/infographic-v1.html).
 
-## Functionality
+## What Cabal Is Used For
 
-| Need | How this repo handles it |
+| Need | How Cabal handles it |
 |---|---|
 | Domain expertise on demand | 26 specialist subagents (`@dotnet-architect`, `@python-tester`, `@react-architect`, `@tanstack-architect`, `@frontend-css`, `@frontend-designer`, `@ux-analyst`, `@unity-architect`, `@requirements-analyst`, `@api-designer`, `@db-architect`, `@data-analyst`, `@website-content-analyst`, `@git-repo-analyst`, `@code-plan-verifier`, `@gitignore-auditor`, `@secret-auditor`, `@owasp-security-reviewer`, `@code-cleaner`, `@init-project`, `@load-project`, …) auto-invoked when the task matches their description |
 | Repetitive workflows (commit, PR, review, scaffold) | 17 slash-command skills under `global/skills/` — `/git`, `/commit`, `/pr`, `/review`, `/react-init`, `/react-review`, `/react-test`, `/react-perf`, `/react-safe`, `/css`, `/lovable-cleanup`, `/skill-create`, `/executing-plans`, `/finishing-a-development-branch`, `/using-git-worktrees`, `/design`, `/ui-component` |

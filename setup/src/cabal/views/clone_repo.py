@@ -31,19 +31,19 @@ class CloneRepoScreen(ModalScreen):
     CloneRepoScreen { align: center middle; background: $background 70%; }
     #clone-dialog {
         width: 86; height: 30; padding: 1 2;
-        background: $panel; border: double $accent;
+        background: $panel; border: double #CC006B;
     }
     #clone-title { height: 2; content-align: left middle; }
     #clone-target {
         height: 3; padding: 0 1; margin: 1 0;
-        background: $boost; border: round $primary; content-align: left middle;
+        background: $boost; border: round #CC006B; content-align: left middle;
     }
     #clone-choose-actions, #clone-run-actions {
         height: 3; margin-top: 1; align-horizontal: center;
     }
     #clone-choose-actions Button, #clone-run-actions Button { margin: 0 1; }
     #clone-cmd { height: auto; padding: 0 1; margin: 0 0 1 0; color: $text-muted; }
-    #clone-log { height: 1fr; border: round $primary; background: $surface; }
+    #clone-log { height: 1fr; border: round #CC006B; background: $surface; }
     """
 
     def __init__(self, name_with_owner: str, repo_name: str) -> None:

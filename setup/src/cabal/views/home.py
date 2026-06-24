@@ -47,7 +47,6 @@ from textual.widget import Widget
 
 from cabal._paths import GLOBAL_DIR, TARGET, REPO_DIR, ENV_DIR, ENV_FILE, RESOURCE_ROOT
 from cabal.app_widgets import AppHeader
-from cabal.banner import HexBanner, render_banner, subtitle_bar
 from cabal.components import COMPONENTS, Component, ENV_DESCRIPTIONS, FileStatus
 from cabal.diff_apply import (
     apply_statuses,
@@ -81,6 +80,7 @@ from cabal.tools import (
 from cabal.updates import check_for_updates, do_git_pull
 from cabal.widgets.claude_stats_panel import ClaudeStatsPanel
 from cabal.widgets.dashboard_panel import DashboardPanel
+from cabal.widgets.logo import CabalLogo
 from cabal.widgets.okf_panel import OkfPanel
 from cabal.widgets.update_panel import UpdatePanel
 
@@ -97,8 +97,7 @@ class HomeScreen(Screen):
     def compose(self) -> ComposeResult:
         yield AppHeader(show_clock=True)
         with VerticalScroll(id="home-scroll"):
-            yield HexBanner(id="banner", classes="centered", show_subtitle=False)
-            yield subtitle_bar()
+            yield CabalLogo(id="banner", classes="centered")
             yield DashboardPanel(id="dashboard")
             with Vertical(id="claude-settings-panel", classes="home-section"):
                 yield Static(

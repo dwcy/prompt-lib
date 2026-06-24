@@ -17,7 +17,7 @@ This module is a thin re-export surface. The implementation lives in:
   - cabal.gh_release          GitHub Releases asset fetch/download helpers
   - cabal.installers.*        per-tool installers
   - cabal.tools               Tool + TOOLS + ENV_INSTALLERS registries
-  - cabal.widgets.*           reusable widgets (EnvPanel, UpdatePanel)
+  - cabal.widgets.*           reusable widgets (EnvPanel, UpdatePanel, CabalLogo)
   - cabal.app_widgets         AppHeader + AppCommandsProvider (used by every screen)
   - cabal.views.*           one Textual screen per module
   - cabal.app                 CabalApp + main() + run() entry points
@@ -165,6 +165,7 @@ from cabal.tools import (
 
 # ─── Widgets + screens + app ───────────────────────────────────────────────────
 from cabal.widgets.env_panel import EnvPanel
+from cabal.widgets.logo import CabalLogo
 from cabal.widgets.update_panel import UpdatePanel
 from cabal.app_widgets import AppCommandsProvider, AppHeader
 from cabal.views.git_config import GitConfigScreen
@@ -204,6 +205,7 @@ __all__ = [
     "MASCOT_GRADIENT",
     "render_banner",
     "HexBanner",
+    "CabalLogo",
     "render_env_summary",
     "translate_for_os",
     "Component",

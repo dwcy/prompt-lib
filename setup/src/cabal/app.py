@@ -13,10 +13,11 @@ from __future__ import annotations
 import signal
 from pathlib import Path
 
+from textual.actions import SkipAction
 from textual.app import App
 from textual.binding import Binding
 
-from cabal.clipboard import read_clipboard
+from cabal.clipboard import read_clipboard, write_clipboard
 from cabal.app_widgets import AppCommandsProvider, AppHeader  # noqa: F401  (re-export)
 from cabal.views.claude_info import ClaudeInfoScreen  # noqa: F401
 from cabal.views.clone_repo import CloneRepoScreen  # noqa: F401
@@ -25,6 +26,7 @@ from cabal.views.codex_local import CodexLocalScreen  # noqa: F401
 from cabal.views.codex_update import CodexUpdateScreen  # noqa: F401
 from cabal.views.env import EnvScreen  # noqa: F401
 from cabal.views.folder_browser import FolderBrowserScreen  # noqa: F401
+from cabal.views.gh_accounts_modal import GhAccountsModal  # noqa: F401
 from cabal.views.gh_device import GhDeviceFlowScreen  # noqa: F401
 from cabal.views.git_config import GitConfigScreen  # noqa: F401
 from cabal.views.github_repos import GitHubReposScreen  # noqa: F401
@@ -46,16 +48,42 @@ from cabal.views.update import UpdateScreen  # noqa: F401
 
 
 class CabalApp(App):
-    """CABAL — Local Agent Control Panel."""
+    """CABAL — agentic development configuration in one place."""
+
+    ALLOW_SELECT = True
 
     selected_project: Path | None = None
     # Set by ToolsScreen after a successful install/update so HomeScreen re-scans
-    # the "Current setup" panel on resume instead of showing stale tool state.
+    # the "Local setup" panel on resume instead of showing stale tool state.
     env_needs_refresh: bool = False
 
     def project_path(self) -> Path:
         """The active project folder; falls back to cwd if somehow unset."""
         return self.selected_project or Path.cwd()
+
+    def open_github_accounts(self) -> None:
+        """Open gh account management and refresh local setup when it changes."""
+        from cabal.views.gh_accounts_modal import GhAccountsModal
+
+        self.push_screen(GhAccountsModal(), self._after_github_accounts_closed)
+
+    def _after_github_accounts_closed(self, changed: bool | None) -> None:
+        if not changed:
+            return
+        self.env_needs_refresh = True
+        try:
+            from cabal.widgets.env_panel import EnvPanel
+
+            env_panel = self.screen.query_one("#env-summary", EnvPanel)
+            self.env_needs_refresh = False
+            env_panel.refresh_env()
+        except Exception:
+            pass
+        try:
+            dashboard = self.screen.query_one("#dashboard")
+            dashboard.refresh_dashboard()
+        except Exception:
+            pass
 
     @property
     def clipboard(self) -> str:
@@ -67,6 +95,11 @@ class CabalApp(App):
         """
         return read_clipboard() or self._clipboard
 
+    def copy_to_clipboard(self, text: str) -> None:
+        """Copy text to both Textual's buffer and the OS clipboard."""
+        super().copy_to_clipboard(text)
+        write_clipboard(text)
+
     CSS = """
     Screen { background: $background; }
 
@@ -76,12 +109,12 @@ class CabalApp(App):
         padding: 1 2;
         margin: 1 2;
         background: $panel;
-        border: round $accent;
+        border: round #CC006B;
     }
 
     #banner {
         height: auto;
-        padding: 1 2;
+        padding: 1 2 0 2;
         content-align: center middle;
     }
 
@@ -93,22 +126,21 @@ class CabalApp(App):
     }
     #subtitle {
         width: auto;
-        color: cyan;
-        text-style: italic;
-    }
-    #readme-link {
-        width: auto;
-        link-color: dodgerblue;
-        link-style: underline;
-        link-color-hover: $text;
-        link-background-hover: dodgerblue;
+        color: #FF55A5;
+        text-style: italic bold;
     }
 
-    #env-summary, #update-summary, #mcp-target {
+    #env-summary {
+        padding: 0;
+        margin: 0 2;
+        border: none;
+    }
+
+    #update-summary, #mcp-target {
         padding: 1 2;
         margin: 0 2;
         background: $boost;
-        border: round $primary;
+        border: round #CC006B;
     }
 
     /* Every Horizontal needs explicit height or buttons collapse. */
@@ -118,18 +150,31 @@ class CabalApp(App):
         padding: 0 1;
         margin: 1 2;
     }
-    /* UpdatePanel's row must sit flush with the Current setup panel's left
+    /* UpdatePanel's row must sit flush with the Local setup panel's left
        edge; the broad Horizontal rule above would otherwise indent it. This
        id override outranks it (app CSS, id > type). */
     #update-row {
         margin: 0;
         padding: 0;
     }
-
-    .home-spacer { width: 1fr; }
+    #env-version-row {
+        margin: 0;
+        padding: 0;
+    }
+    #env-row-system,
+    #env-row-runtimes,
+    #env-row-pkg-mgrs,
+    #env-row-infra,
+    #env-row-clis,
+    #env-row-local-ai,
+    #env-row-databases,
+    #env-row-editors {
+        margin: 1 0;
+        padding: 0;
+    }
 
     .home-section {
-        border: round $accent;
+        border: round #CC006B;
         margin: 1 2;
         padding: 0 1 1 1;
         height: auto;
@@ -220,7 +265,7 @@ class CabalApp(App):
     }
     #browser-dialog {
         background: $panel;
-        border: double $accent;
+        border: double #CC006B;
         padding: 1 2;
         width: 72;
         height: 28;
@@ -229,7 +274,7 @@ class CabalApp(App):
         height: 3;
         padding: 0 1;
         background: $boost;
-        border: round $primary;
+        border: round #CC006B;
         margin: 0 0 1 0;
         content-align: left middle;
     }
@@ -249,6 +294,9 @@ class CabalApp(App):
     BINDINGS = [
         Binding("ctrl+q", "quit", "Quit", show=True),
         Binding("q", "quit", "Quit", show=False),
+        Binding("ctrl+c,ctrl+shift+c", "copy", "Copy", show=False),
+        Binding("ctrl+v,ctrl+shift+v", "paste", "Paste", show=False),
+        Binding("ctrl+shift+a", "select_all", "Select all", show=False),
         Binding("left", "focus_previous", show=False),
         Binding("right", "focus_next", show=False),
     ]
@@ -257,8 +305,31 @@ class CabalApp(App):
 
     def on_mount(self) -> None:
         self.title = "CABAL"
-        self.sub_title = "Local Agent Control Panel"
+        self.sub_title = "Cabal helps you manage your agentic development setup in one place."
         self.push_screen(ProjectGateScreen())
+
+    async def action_copy(self) -> None:
+        """Copy selected text from the focused widget or active screen."""
+        focused = self.focused
+        if focused is not None and await self.run_action("copy", focused):
+            return
+        if await self.run_action("screen.copy_text"):
+            return
+        raise SkipAction()
+
+    async def action_paste(self) -> None:
+        """Paste clipboard text into the focused widget when it supports paste."""
+        focused = self.focused
+        if focused is not None and await self.run_action("paste", focused):
+            return
+        raise SkipAction()
+
+    async def action_select_all(self) -> None:
+        """Select all editable text, or all selectable text on the active screen."""
+        focused = self.focused
+        if focused is not None and await self.run_action("select_all", focused):
+            return
+        self.screen.text_select_all()
 
 
 def _suppress_sigint() -> None:

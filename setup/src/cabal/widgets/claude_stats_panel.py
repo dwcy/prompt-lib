@@ -62,7 +62,7 @@ class ClaudeStatsPanel(Widget):
         padding: 1 2;
         margin: 0 2;
         background: $boost;
-        border: round $primary;
+        border: round #CC006B;
     }
     ClaudeStatsPanel #cs-titlebar { height: 3; align-vertical: middle; }
     ClaudeStatsPanel #cs-title { content-align: left middle; height: auto; width: 1fr; }

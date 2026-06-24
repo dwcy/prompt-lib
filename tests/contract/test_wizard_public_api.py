@@ -56,6 +56,7 @@ RECOMMENDED: tuple[str, ...] = (
     "MASCOT_GRADIENT",
     "render_banner",
     "HexBanner",
+    "CabalLogo",
     # env summary
     "render_env_summary",
     # components

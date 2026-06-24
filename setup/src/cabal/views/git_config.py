@@ -43,7 +43,7 @@ class GitConfigScreen(Screen):
         padding: 1 2;
         margin: 1 0 0 0;
         background: $boost;
-        border: round $primary;
+        border: round #CC006B;
     }
     .git-card Label { margin: 1 0 0 0; color: #5FAFFF; text-style: bold; }
     .git-card Input { margin: 0 0 0 0; }

@@ -41,6 +41,7 @@ packages = ["setup/src/cabal"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "global" = "cabal/_data/global"
+"setup/src/cabal/assets" = "cabal/assets"
 "setup/env" = "cabal/_data/setup/env"
 "setup/mcp-templates.json" = "cabal/_data/setup/mcp-templates.json"
 

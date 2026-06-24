@@ -3,30 +3,52 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, VerticalScroll
+from textual.geometry import Size
 from textual.screen import Screen
 from textual.widgets import Button, DataTable, Footer, Static
 
 from cabal.app_widgets import AppHeader
-from cabal.banner import HexBanner, subtitle_bar
 from cabal.recent_projects import load_recents, record_recent, remove_recent
 from cabal.widgets.env_panel import EnvPanel
+from cabal.widgets.logo import CabalLogo
+
+_RECENTS_COLUMN_LABELS = ("Project", "Path", "Last opened")
 
 
-def _fmt_time(iso: str) -> str:
-    """Render a stored ISO-8601 UTC stamp as local 'YYYY-MM-DD HH:MM'."""
+def _fmt_time(iso: str, now: datetime | None = None) -> str:
+    """Render a stored ISO-8601 UTC stamp as relative time, then date."""
     if not iso:
         return "—"
     try:
         dt = datetime.fromisoformat(iso)
     except ValueError:
         return iso
-    return dt.astimezone().strftime("%Y-%m-%d %H:%M")
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    local_dt = dt.astimezone()
+    current = now or datetime.now(local_dt.tzinfo)
+    if current.tzinfo is None:
+        current = current.replace(tzinfo=local_dt.tzinfo)
+    delta = current.astimezone(local_dt.tzinfo) - local_dt
+    seconds = max(0, int(delta.total_seconds()))
+    minutes = seconds // 60
+    if minutes < 1:
+        return "just now"
+    if minutes < 60:
+        return f"{minutes} minute{'s' if minutes != 1 else ''} ago"
+    hours = minutes // 60
+    if hours < 24:
+        return f"{hours} hour{'s' if hours != 1 else ''} ago"
+    days = hours // 24
+    if days <= 7:
+        return f"{days} day{'s' if days != 1 else ''} ago"
+    return local_dt.strftime("%Y-%m-%d")
 
 
 class ProjectGateScreen(Screen):
@@ -36,55 +58,113 @@ class ProjectGateScreen(Screen):
         Binding("ctrl+q", "app.quit", "Quit"),
     ]
 
+    _recent_rows: list[tuple[str, str, str]]
+
     CSS = """
-    ProjectGateScreen #gate-recents-section { height: auto; margin: 1 2; }
-    ProjectGateScreen #gate-recents-title {
-        text-style: bold;
-        color: #5FAFFF;
-        margin: 0 0 1 0;
+    ProjectGateScreen #gate-select-panel {
+        height: auto;
+        border: round #CC006B;
     }
-    ProjectGateScreen #gate-recents { height: auto; max-height: 16; }
+    ProjectGateScreen #gate-project-description {
+        height: auto;
+        margin: 0 0 1 0;
+        padding: 0;
+        color: $text-muted;
+    }
+    ProjectGateScreen #gate-actions {
+        height: 5;
+        align: center middle;
+        margin: 0;
+        padding: 0;
+    }
+    ProjectGateScreen #gate-actions Button { width: 1fr; }
+    ProjectGateScreen #gate-clone,
+    ProjectGateScreen #gate-clone:focus {
+        background: #16A34A;
+        border: none;
+        border-top: tall #86EFAC;
+        border-bottom: tall #166534;
+        color: white;
+    }
+    ProjectGateScreen #gate-clone:hover {
+        background: #15803D;
+        border: none;
+        border-top: tall #22C55E;
+        border-bottom: tall #14532D;
+        color: white;
+    }
+    ProjectGateScreen #gate-recents-panel {
+        width: 1fr;
+        height: auto;
+        margin: 1 0 0 0;
+        border: round #FF55A5;
+    }
+    ProjectGateScreen #gate-recents {
+        width: 1fr;
+        height: auto;
+        max-height: 16;
+        margin: 0;
+    }
     ProjectGateScreen #gate-recents-empty { color: $text-muted; }
     """
 
     def compose(self) -> ComposeResult:
         yield AppHeader()
         with VerticalScroll(id="gate-scroll"):
-            yield HexBanner(id="banner", classes="centered", show_subtitle=False)
-            yield subtitle_bar()
+            yield CabalLogo(id="banner", classes="centered")
             yield EnvPanel(id="env-summary")
-            yield Static(
-                "[bold bright_magenta]Select a project[/bold bright_magenta]\n"
-                "[dim]Cabal is the local control room for agent work. Init a new project or open "
-                "an existing one — Local MCP, Local Config and Git local scope all bind to it.[/dim]",
-                classes="panel",
-            )
-            with Horizontal(classes="ops-row"):
-                yield Button("Init new project", id="gate-init", variant="error")
-                yield Button("Clone repo", id="gate-clone", variant="primary")
-                yield Button("Open existing project", id="gate-open", variant="primary")
-            with Vertical(id="gate-recents-section"):
-                yield Static("✦ Recent projects", id="gate-recents-title")
+            with Vertical(id="gate-select-panel", classes="panel"):
                 yield Static(
-                    "[dim]No projects opened yet — init or open one and it will appear "
-                    "here. Click a row to reopen it.[/dim]",
-                    id="gate-recents-empty",
+                    "Create, clone, or open projects for managing agentic "
+                    "development assets like agents, skills, hooks, and settings.",
+                    id="gate-project-description",
                 )
-                yield DataTable(id="gate-recents")
+                with Horizontal(id="gate-actions"):
+                    yield Button("Init new project", id="gate-init", variant="error")
+                    yield Button("Clone repo", id="gate-clone")
+                    yield Button(
+                        "Open existing project",
+                        id="gate-open",
+                        variant="primary",
+                    )
+                with Vertical(id="gate-recents-panel", classes="panel"):
+                    yield Static(
+                        "[dim]No projects opened yet — init or open one and it will "
+                        "appear here. Click a row to reopen it.[/dim]",
+                        id="gate-recents-empty",
+                    )
+                    yield DataTable(id="gate-recents")
         yield Footer(show_command_palette=False)
 
     def on_mount(self) -> None:
         table = self.query_one("#gate-recents", DataTable)
         table.cursor_type = "row"
         table.zebra_stripes = True
-        table.add_columns("Project", "Path", "Last opened", "Type")
+        table.add_columns(*_RECENTS_COLUMN_LABELS)
+        self.query_one("#gate-select-panel", Vertical).border_title = (
+            "[bold #FF85B3]Projects[/]"
+        )
+        self.query_one("#gate-recents-panel", Vertical).border_title = (
+            "[bold #FF55A5]Recent Projects[/]"
+        )
         self._load_recents()
-        self.query_one("#gate-init", Button).focus()
+        self._reset_start_viewport()
 
     def on_screen_resume(self) -> None:
         # Reload after returning from Home so freshly init/opened projects show.
         self._load_recents()
         self._refresh_env_panel()
+        self._reset_start_viewport()
+
+    def _reset_start_viewport(self) -> None:
+        self.query_one("#gate-init", Button).focus(scroll_visible=False)
+        self.call_after_refresh(self._scroll_start_to_top)
+
+    def _scroll_start_to_top(self) -> None:
+        self.query_one("#gate-scroll", VerticalScroll).scroll_home(
+            animate=False,
+            immediate=True,
+        )
 
     def _refresh_env_panel(self) -> None:
         try:
@@ -98,16 +178,55 @@ class ProjectGateScreen(Screen):
             except Exception:
                 pass
 
+    def on_resize(self) -> None:
+        self.call_after_refresh(self._fit_recents_table_columns)
+
     def _load_recents(self) -> None:
         table = self.query_one("#gate-recents", DataTable)
         table.clear()
         recents = load_recents()
+        self._recent_rows = [
+            (r.name, r.path, _fmt_time(r.last_opened)) for r in recents
+        ]
         self.query_one("#gate-recents-empty", Static).display = not recents
         table.display = bool(recents)
-        for r in recents:
-            table.add_row(
-                r.name, r.path, _fmt_time(r.last_opened), r.action, key=r.path
-            )
+        for r, row in zip(recents, self._recent_rows):
+            table.add_row(*row, key=r.path)
+        self.call_after_refresh(self._fit_recents_table_columns)
+
+    def _fit_recents_table_columns(self) -> None:
+        table = self.query_one("#gate-recents", DataTable)
+        rows = getattr(self, "_recent_rows", [])
+        if not table.display or not rows:
+            return
+        columns = list(table.ordered_columns)
+        if len(columns) != len(_RECENTS_COLUMN_LABELS):
+            return
+
+        available_width = table.content_region.width or table.size.width
+        if available_width <= 0:
+            self.call_after_refresh(self._fit_recents_table_columns)
+            return
+
+        min_widths = [
+            max(len(label), *(len(row[index]) for row in rows))
+            for index, label in enumerate(_RECENTS_COLUMN_LABELS)
+        ]
+        content_width = max(
+            len(columns),
+            available_width - (2 * table.cell_padding * len(columns)),
+        )
+        if sum(min_widths) < content_width:
+            min_widths[1] += content_width - sum(min_widths)
+
+        for column, width in zip(columns, min_widths):
+            column.auto_width = False
+            column.width = width
+
+        render_width = sum(column.get_render_width(table) for column in columns)
+        table.virtual_size = Size(render_width, table.virtual_size.height)
+        table._clear_caches()
+        table.refresh()
 
     def action_readme(self) -> None:
         from cabal.views.readme import ReadmeScreen
@@ -186,6 +305,4 @@ class ProjectGateScreen(Screen):
 
             self.app.push_screen(EnvScreen())
         elif bid == "btn-github":
-            from cabal.views.github_repos import GitHubReposScreen
-
-            self.app.push_screen(GitHubReposScreen())
+            self.app.open_github_accounts()
