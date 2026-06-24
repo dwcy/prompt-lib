@@ -194,14 +194,14 @@ class GitHubReposScreen(Screen):
     def _set_logged_out(self) -> None:
         self._repos = []
         self.query_one("#gh-repos-list", DataTable).clear()
-        self.query_one("#gh-repos-login", Button).display = True
+        self._set_logged_out_actions()
         self.query_one("#gh-repos-status", Static).update(
             "[yellow]⚠ Not logged in to GitHub — click Login with GitHub to authenticate.[/yellow]"
         )
 
     def _set_repos(self, repos: list[dict]) -> None:
         self._repos = repos
-        self.query_one("#gh-repos-login", Button).display = False
+        self._set_logged_in_actions()
         tbl = self.query_one("#gh-repos-list", DataTable)
         tbl.clear()
         for repo in repos:
@@ -225,6 +225,16 @@ class GitHubReposScreen(Screen):
         self.query_one("#gh-repos-status", Static).update(
             f"[green]✓[/green] {len(repos)} repos loaded"
         )
+
+    def _set_logged_out_actions(self) -> None:
+        self.query_one("#gh-repos-clone", Button).display = False
+        self.query_one("#gh-repos-login", Button).display = True
+        self.query_one("#gh-repos-accounts", Button).display = False
+
+    def _set_logged_in_actions(self) -> None:
+        self.query_one("#gh-repos-clone", Button).display = True
+        self.query_one("#gh-repos-login", Button).display = False
+        self.query_one("#gh-repos-accounts", Button).display = True
 
     def _open_accounts(self) -> None:
         from cabal.views.gh_accounts_modal import GhAccountsModal
