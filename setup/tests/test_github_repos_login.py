@@ -94,6 +94,51 @@ async def test_login_registers_device_token_before_refresh(monkeypatch):
 
         assert tokens == ["token-123"]
         assert refreshes == [True]
+        assert app.env_needs_refresh is True
+
+
+@pytest.mark.asyncio
+async def test_account_modal_change_marks_overview_for_refresh(monkeypatch):
+    refreshes: list[bool] = []
+
+    def fake_refresh(self: GitHubReposScreen) -> None:
+        refreshes.append(True)
+
+    monkeypatch.setattr(GitHubReposScreen, "action_refresh", fake_refresh)
+
+    app = App()
+    async with app.run_test() as pilot:
+        screen = GitHubReposScreen()
+        await app.push_screen(screen)
+        await pilot.pause()
+        refreshes.clear()
+
+        screen._after_accounts_closed(True)
+
+        assert app.env_needs_refresh is True
+        assert refreshes == [True]
+
+
+@pytest.mark.asyncio
+async def test_unchanged_account_modal_does_not_refresh_overview(monkeypatch):
+    refreshes: list[bool] = []
+
+    def fake_refresh(self: GitHubReposScreen) -> None:
+        refreshes.append(True)
+
+    monkeypatch.setattr(GitHubReposScreen, "action_refresh", fake_refresh)
+
+    app = App()
+    async with app.run_test() as pilot:
+        screen = GitHubReposScreen()
+        await app.push_screen(screen)
+        await pilot.pause()
+        refreshes.clear()
+
+        screen._after_accounts_closed(False)
+
+        assert getattr(app, "env_needs_refresh", False) is False
+        assert refreshes == []
 
 
 @pytest.mark.asyncio

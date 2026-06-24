@@ -236,14 +236,18 @@ class GitHubReposScreen(Screen):
         self.query_one("#gh-repos-login", Button).display = False
         self.query_one("#gh-repos-accounts", Button).display = True
 
+    def _mark_env_changed(self) -> None:
+        self.app.env_needs_refresh = True
+
     def _open_accounts(self) -> None:
         from cabal.views.gh_accounts_modal import GhAccountsModal
 
-        def _done(changed: bool | None) -> None:
-            if changed:
-                self.action_refresh()
+        self.app.push_screen(GhAccountsModal(), self._after_accounts_closed)
 
-        self.app.push_screen(GhAccountsModal(), _done)
+    def _after_accounts_closed(self, changed: bool | None) -> None:
+        if changed:
+            self._mark_env_changed()
+            self.action_refresh()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         bid = event.button.id or ""
@@ -315,6 +319,7 @@ class GitHubReposScreen(Screen):
 
     def _after_login_register(self, ok: bool, msg: str) -> None:
         if ok:
+            self._mark_env_changed()
             self.action_refresh()
         else:
             self.query_one("#gh-repos-status", Static).update(f"[red]✗ {msg}[/red]")
