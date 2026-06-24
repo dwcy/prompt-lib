@@ -80,17 +80,17 @@ class ProjectGateScreen(Screen):
     ProjectGateScreen #gate-actions Button { width: 1fr; }
     ProjectGateScreen #gate-clone,
     ProjectGateScreen #gate-clone:focus {
-        background: #8B5CF6;
+        background: #16A34A;
         border: none;
-        border-top: tall #A78BFA;
-        border-bottom: tall #5B21B6;
+        border-top: tall #86EFAC;
+        border-bottom: tall #166534;
         color: white;
     }
     ProjectGateScreen #gate-clone:hover {
-        background: #7C3AED;
+        background: #15803D;
         border: none;
-        border-top: tall #8B5CF6;
-        border-bottom: tall #4C1D95;
+        border-top: tall #22C55E;
+        border-bottom: tall #14532D;
         color: white;
     }
     ProjectGateScreen #gate-recents-panel {

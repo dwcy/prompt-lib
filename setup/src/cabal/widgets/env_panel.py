@@ -143,18 +143,18 @@ class EnvPanel(Widget):
     }
     EnvPanel #btn-github,
     EnvPanel #btn-github:focus {
-        background: #8B5CF6;
+        background: #16A34A;
         border: none;
-        border-top: tall #A78BFA;
-        border-bottom: tall #5B21B6;
+        border-top: tall #86EFAC;
+        border-bottom: tall #166534;
         color: white;
         margin: 0 2 0 0;
     }
     EnvPanel #btn-github:hover {
-        background: #7C3AED;
+        background: #15803D;
         border: none;
-        border-top: tall #8B5CF6;
-        border-bottom: tall #4C1D95;
+        border-top: tall #22C55E;
+        border-bottom: tall #14532D;
         color: white;
     }
     EnvPanel #btn-env,

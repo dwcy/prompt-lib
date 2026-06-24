@@ -125,9 +125,7 @@ class GitHubReposScreen(Screen):
             with Horizontal(id="gh-repos-actions"):
                 yield Button("Clone selected", id="gh-repos-clone", variant="success")
                 yield Button("Login with GitHub", id="gh-repos-login", variant="primary")
-                yield Button("Refresh", id="gh-repos-refresh", variant="default")
                 yield Button("Accounts", id="gh-repos-accounts", variant="primary")
-                yield Button("Back", id="gh-repos-back", variant="default")
         yield Footer(show_command_palette=False)
 
     def on_mount(self) -> None:

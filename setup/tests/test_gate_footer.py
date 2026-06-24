@@ -82,9 +82,9 @@ async def test_current_setup_panel_places_version_metadata_above_os(monkeypatch)
         update_msg = app.screen.query_one("#update-msg", Static)
         refresh = app.screen.query_one("#env-refresh", Static)
         github_button = app.screen.query_one("#btn-github", Button)
-        github_purple = Color.parse("#8B5CF6")
-        github_purple_light = Color.parse("#A78BFA")
-        github_purple_dark = Color.parse("#5B21B6")
+        github_green = Color.parse("#16A34A")
+        github_green_light = Color.parse("#86EFAC")
+        github_green_dark = Color.parse("#166534")
         dark_pink = Color.parse("#CC006B")
         version_text = str(version_meta.content)
         assert not outer.styles.border
@@ -136,9 +136,9 @@ async def test_current_setup_panel_places_version_metadata_above_os(monkeypatch)
         env_paths_region = app.screen.find_widget(env_paths).region
         assert system_row_region.x == version_meta_region.x == env_paths_region.x
         assert system_first_cell_region.x == env_paths_region.x
-        assert github_button.styles.background == github_purple
-        assert github_button.styles.border.top[1] == github_purple_light
-        assert github_button.styles.border.bottom[1] == github_purple_dark
+        assert github_button.styles.background == github_green
+        assert github_button.styles.border.top[1] == github_green_light
+        assert github_button.styles.border.bottom[1] == github_green_dark
 
 
 def test_current_setup_update_available_metadata_uses_remote_hash():
@@ -197,13 +197,13 @@ async def test_gate_project_actions_and_recents_are_framed_in_panels():
         assert recents_table.styles.margin.left == 0
         assert recents_table.styles.margin.right == 0
         assert "Recent Projects" in recents_panel.border_title
-        github_purple = Color.parse("#8B5CF6")
-        github_purple_light = Color.parse("#A78BFA")
-        github_purple_dark = Color.parse("#5B21B6")
+        github_green = Color.parse("#16A34A")
+        github_green_light = Color.parse("#86EFAC")
+        github_green_dark = Color.parse("#166534")
         assert "-primary" not in clone_button.classes
-        assert clone_button.styles.background == github_purple
-        assert clone_button.styles.border.top[1] == github_purple_light
-        assert clone_button.styles.border.bottom[1] == github_purple_dark
+        assert clone_button.styles.background == github_green
+        assert clone_button.styles.border.top[1] == github_green_light
+        assert clone_button.styles.border.bottom[1] == github_green_dark
 
 
 @pytest.mark.asyncio

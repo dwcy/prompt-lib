@@ -5,10 +5,30 @@ from __future__ import annotations
 
 import pytest
 from textual.app import App
-from textual.widgets import Static
+from textual.css.query import NoMatches
+from textual.widgets import Button, Static
 
 from cabal import gh_accounts
 from cabal.views.github_repos import GitHubReposScreen
+
+
+@pytest.mark.asyncio
+async def test_refresh_and_back_buttons_are_not_rendered(monkeypatch):
+    monkeypatch.setattr(GitHubReposScreen, "action_refresh", lambda self: None)
+
+    app = App()
+    async with app.run_test() as pilot:
+        screen = GitHubReposScreen()
+        await app.push_screen(screen)
+        await pilot.pause()
+
+        assert screen.query_one("#gh-repos-clone", Button)
+        assert screen.query_one("#gh-repos-login", Button)
+        assert screen.query_one("#gh-repos-accounts", Button)
+        with pytest.raises(NoMatches):
+            screen.query_one("#gh-repos-refresh", Button)
+        with pytest.raises(NoMatches):
+            screen.query_one("#gh-repos-back", Button)
 
 
 @pytest.mark.asyncio
