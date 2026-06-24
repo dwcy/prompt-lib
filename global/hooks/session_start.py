@@ -15,6 +15,7 @@ import json
 import os
 import subprocess
 import sys
+import ctypes
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -36,13 +37,28 @@ def emit(message: str, title: str | None = None) -> None:
     print(json.dumps(out))
 
 
+def _git_executable() -> str:
+    override = os.environ.get("PROMPTLIB_GIT")
+    if override:
+        return override
+    if sys.platform == "win32":
+        for root in (
+            os.environ.get("ProgramFiles", r"C:\Program Files"),
+            os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)"),
+        ):
+            candidate = Path(root) / "Git" / "cmd" / "git.exe"
+            if candidate.exists():
+                return str(candidate)
+    return "git"
+
+
 def _session_title(cwd: Path) -> str:
     """Auto-name the session `<dir> · <branch>` so /resume and the terminal
     title stay descriptive without a manual /rename."""
     title = cwd.name
     try:
         branch = subprocess.run(
-            ["git", "-C", str(cwd), "rev-parse", "--abbrev-ref", "HEAD"],
+            [_git_executable(), "-C", str(cwd), "rev-parse", "--abbrev-ref", "HEAD"],
             capture_output=True,
             text=True,
             check=False,
@@ -100,7 +116,17 @@ def _has_existing_code(cwd: Path) -> bool:
 def _pid_alive(pid: int) -> bool:
     if not isinstance(pid, int) or pid <= 0:
         return False
+    if pid in (os.getpid(), os.getppid()):
+        return True
     if sys.platform == "win32":
+        try:
+            kernel32 = ctypes.windll.kernel32
+            handle = kernel32.OpenProcess(0x1000, False, pid)
+            if handle:
+                kernel32.CloseHandle(handle)
+                return True
+        except Exception:
+            pass
         try:
             out = subprocess.run(
                 ["tasklist", "/FI", f"PID eq {pid}", "/NH"],
@@ -135,7 +161,7 @@ def _next_session_slot(
 ) -> tuple[str, Path]:
     branches_out = subprocess.run(
         [
-            "git",
+            _git_executable(),
             "-C",
             str(main_checkout),
             "branch",
@@ -179,7 +205,7 @@ def _check_worktree_collision(cwd: Path) -> tuple[bool, str | None]:
     try:
         result = subprocess.run(
             [
-                "git",
+                _git_executable(),
                 "-C",
                 str(cwd),
                 "rev-parse",
@@ -257,7 +283,7 @@ def _check_worktree_collision(cwd: Path) -> tuple[bool, str | None]:
         target_rel = f"../{target_dir.name}"
         subprocess.run(
             [
-                "git",
+                _git_executable(),
                 "-C",
                 str(main_checkout),
                 "worktree",

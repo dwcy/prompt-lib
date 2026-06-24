@@ -19,24 +19,21 @@ except ImportError:
         return False
 
 
-# All keys use \u escapes — DO NOT replace with literal characters.
-# Literal Unicode in source files can be silently corrupted into ASCII spaces
-# during edits, which causes the U+0020 -> "paragraph separator" misfire that
-# blocks every command containing a space.
+# All keys use \u escapes; keep them visible in source reviews.
 DANGEROUS_UNICODE = {
-    "​": "zero-width space",
-    "‌": "zero-width non-joiner",
-    "‍": "zero-width joiner",
-    "‮": "right-to-left override (text direction reversal)",
-    "‪": "left-to-right embedding",
-    "‫": "right-to-left embedding",
-    "‬": "pop directional formatting",
-    " ": "line separator",
-    " ": "paragraph separator",
-    "﻿": "BOM / zero-width no-break space",
-    "­": "soft hyphen (invisible)",
-    "⁠": "word joiner (invisible)",
-    "᠎": "Mongolian vowel separator (invisible)",
+    "\u200b": "zero-width space",
+    "\u200c": "zero-width non-joiner",
+    "\u200d": "zero-width joiner",
+    "\u202e": "right-to-left override (text direction reversal)",
+    "\u202a": "left-to-right embedding",
+    "\u202b": "right-to-left embedding",
+    "\u202c": "pop directional formatting",
+    "\u2028": "line separator",
+    "\u2029": "paragraph separator",
+    "\ufeff": "BOM / zero-width no-break space",
+    "\u00ad": "soft hyphen (invisible)",
+    "\u2060": "word joiner (invisible)",
+    "\u180e": "Mongolian vowel separator (invisible)",
 }
 
 PROMPT_INJECTION = [

@@ -47,7 +47,6 @@ from textual.widget import Widget
 
 from cabal._paths import GLOBAL_DIR, TARGET, REPO_DIR, ENV_DIR, ENV_FILE, RESOURCE_ROOT
 from cabal.app_widgets import AppHeader
-from cabal.banner import HexBanner, render_banner, subtitle_bar
 from cabal.components import COMPONENTS, Component, ENV_DESCRIPTIONS, FileStatus
 from cabal.diff_apply import (
     apply_statuses,
@@ -81,6 +80,8 @@ from cabal.tools import (
 from cabal.updates import check_for_updates, do_git_pull
 from cabal.widgets.claude_stats_panel import ClaudeStatsPanel
 from cabal.widgets.dashboard_panel import DashboardPanel
+from cabal.widgets.logo import CabalLogo
+from cabal.widgets.okf_panel import OkfPanel
 from cabal.widgets.update_panel import UpdatePanel
 
 
@@ -96,15 +97,16 @@ class HomeScreen(Screen):
     def compose(self) -> ComposeResult:
         yield AppHeader(show_clock=True)
         with VerticalScroll(id="home-scroll"):
-            yield HexBanner(id="banner", classes="centered", show_subtitle=False)
-            yield subtitle_bar()
+            yield CabalLogo(id="banner", classes="centered")
             yield DashboardPanel(id="dashboard")
-            with Vertical(classes="home-section"):
+            with Vertical(id="claude-settings-panel", classes="home-section"):
                 yield Static(
-                    "[bold]Claude Settings[/bold]", classes="home-section-title"
+                    "[bold]Claude Settings (~/.claude)[/bold]",
+                    id="claude-settings-title",
+                    classes="home-section-title",
                 )
                 yield Static(
-                    "[dim]Deploy and tune the files in ~/.claude — agents, hooks, skills, MCP servers, settings.[/dim]",
+                    "[dim]Deploy, inspect, and tune ~/.claude — agents, hooks, skills, MCP servers, settings.[/dim]",
                     classes="home-section-desc",
                 )
                 with Horizontal(classes="ops-row"):
@@ -125,6 +127,54 @@ class HomeScreen(Screen):
                 )
                 with Horizontal(classes="ops-row"):
                     yield Button("Local Config", id="btn-op-local", variant="default")
+            with Vertical(id="okf-analytics-panel", classes="home-section"):
+                yield Static(
+                    "[bold]OKF Analytics (docs/okf)[/bold]",
+                    id="okf-analytics-title",
+                    classes="home-section-title",
+                )
+                yield Static(
+                    "[dim]OKF (Open Knowledge Format) turns agents, skills, hooks, "
+                    "rules, and specs into a portable knowledge map for AI tools. "
+                    "Use it to inspect how prompt-lib pieces connect, spot routing "
+                    "overlap, and open the graph viewer.[/dim]",
+                    id="okf-analytics-desc",
+                    classes="home-section-desc",
+                )
+                with Horizontal(classes="ops-row"):
+                    yield Button(
+                        "Knowledge Graph",
+                        id="btn-op-knowledge",
+                        variant="default",
+                    )
+                yield OkfPanel(id="okf-summary")
+            with Vertical(id="codex-settings-panel", classes="home-section"):
+                yield Static(
+                    "[bold]Codex Settings (~/.codex)[/bold]",
+                    id="codex-settings-title",
+                    classes="home-section-title",
+                )
+                yield Static(
+                    "[dim]Deploy Codex-compatible skills to ~/.codex and scaffold .agents/ in projects.[/dim]",
+                    classes="home-section-desc",
+                )
+                with Horizontal(classes="ops-row"):
+                    yield Button(
+                        "Global Codex Config",
+                        id="btn-op-codex-update",
+                        variant="default",
+                    )
+                    yield Button(
+                        "Local Codex Config",
+                        id="btn-op-codex-local",
+                        variant="default",
+                    )
+                with Horizontal(classes="ops-row"):
+                    yield Button(
+                        "Conversion Diff",
+                        id="btn-op-codex-conversion",
+                        variant="default",
+                    )
         yield Footer(show_command_palette=False)
 
     def on_mount(self) -> None:
@@ -179,6 +229,23 @@ class HomeScreen(Screen):
             else:
                 btn.tooltip = None
             btn.label = label
+        try:
+            from cabal.codex_setup.diff_apply import has_codex_deploy_drift
+
+            codex_drift = has_codex_deploy_drift()
+        except Exception:
+            codex_drift = False
+        try:
+            btn = self.query_one("#btn-op-codex-update", Button)
+            label = Text("Global Codex Config")
+            if codex_drift:
+                label.append("  ⚠ update available", style="yellow")
+                btn.tooltip = "Repo has Codex assets not yet deployed to ~/.codex."
+            else:
+                btn.tooltip = None
+            btn.label = label
+        except Exception:
+            pass
 
     def on_screen_resume(self) -> None:
         try:
@@ -192,7 +259,11 @@ class HomeScreen(Screen):
         from cabal.views.mcp import McpScreen
         from cabal.views.local import LocalScreen
         from cabal.views.statusline import StatuslineScreen
+        from cabal.views.knowledge import KnowledgeScreen
         from cabal.views.settings import SettingsScreen
+        from cabal.views.codex_update import CodexUpdateScreen
+        from cabal.views.codex_local import CodexLocalScreen
+        from cabal.views.codex_conversion import CodexConversionScreen
 
         bid = event.button.id or ""
         op_screens = {
@@ -200,7 +271,11 @@ class HomeScreen(Screen):
             "btn-op-mcp": McpScreen,
             "btn-op-local": LocalScreen,
             "btn-op-statusline": StatuslineScreen,
+            "btn-op-knowledge": KnowledgeScreen,
             "btn-op-settings": SettingsScreen,
+            "btn-op-codex-update": CodexUpdateScreen,
+            "btn-op-codex-local": CodexLocalScreen,
+            "btn-op-codex-conversion": CodexConversionScreen,
         }
         if bid == "btn-git":
             self.action_go("git")

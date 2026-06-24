@@ -47,6 +47,7 @@ from textual.widgets import (
 from textual.widgets.option_list import Option
 from textual.widget import Widget
 
+from cabal import gh_accounts
 from cabal._paths import GLOBAL_DIR, TARGET, REPO_DIR, ENV_DIR, ENV_FILE, RESOURCE_ROOT
 from cabal.app_widgets import AppHeader
 from cabal.banner import HexBanner, render_banner
@@ -100,7 +101,7 @@ class GitHubReposScreen(Screen):
         height: 90%;
         padding: 1 2;
         background: $boost;
-        border: round $primary;
+        border: round #CC006B;
     }
     #gh-repos-status { height: auto; margin: 0 0 1 0; }
     #gh-repos-list { height: 1fr; }
@@ -124,9 +125,7 @@ class GitHubReposScreen(Screen):
             with Horizontal(id="gh-repos-actions"):
                 yield Button("Clone selected", id="gh-repos-clone", variant="success")
                 yield Button("Login with GitHub", id="gh-repos-login", variant="primary")
-                yield Button("Refresh", id="gh-repos-refresh", variant="default")
                 yield Button("Accounts", id="gh-repos-accounts", variant="primary")
-                yield Button("Back", id="gh-repos-back", variant="default")
         yield Footer(show_command_palette=False)
 
     def on_mount(self) -> None:
@@ -195,14 +194,14 @@ class GitHubReposScreen(Screen):
     def _set_logged_out(self) -> None:
         self._repos = []
         self.query_one("#gh-repos-list", DataTable).clear()
-        self.query_one("#gh-repos-login", Button).display = True
+        self._set_logged_out_actions()
         self.query_one("#gh-repos-status", Static).update(
             "[yellow]⚠ Not logged in to GitHub — click Login with GitHub to authenticate.[/yellow]"
         )
 
     def _set_repos(self, repos: list[dict]) -> None:
         self._repos = repos
-        self.query_one("#gh-repos-login", Button).display = False
+        self._set_logged_in_actions()
         tbl = self.query_one("#gh-repos-list", DataTable)
         tbl.clear()
         for repo in repos:
@@ -227,14 +226,28 @@ class GitHubReposScreen(Screen):
             f"[green]✓[/green] {len(repos)} repos loaded"
         )
 
+    def _set_logged_out_actions(self) -> None:
+        self.query_one("#gh-repos-clone", Button).display = False
+        self.query_one("#gh-repos-login", Button).display = True
+        self.query_one("#gh-repos-accounts", Button).display = False
+
+    def _set_logged_in_actions(self) -> None:
+        self.query_one("#gh-repos-clone", Button).display = True
+        self.query_one("#gh-repos-login", Button).display = False
+        self.query_one("#gh-repos-accounts", Button).display = True
+
+    def _mark_env_changed(self) -> None:
+        self.app.env_needs_refresh = True
+
     def _open_accounts(self) -> None:
         from cabal.views.gh_accounts_modal import GhAccountsModal
 
-        def _done(changed: bool | None) -> None:
-            if changed:
-                self.action_refresh()
+        self.app.push_screen(GhAccountsModal(), self._after_accounts_closed)
 
-        self.app.push_screen(GhAccountsModal(), _done)
+    def _after_accounts_closed(self, changed: bool | None) -> None:
+        if changed:
+            self._mark_env_changed()
+            self.action_refresh()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         bid = event.button.id or ""
@@ -294,4 +307,19 @@ class GitHubReposScreen(Screen):
         if not token:
             self.query_one("#gh-repos-status", Static).update("[yellow]Login cancelled[/yellow]")
             return
-        self.action_refresh()
+        self.query_one("#gh-repos-status", Static).update(
+            "[dim]Registering account with gh…[/dim]"
+        )
+
+        def register() -> None:
+            ok, msg = gh_accounts.add_account_with_token(token)
+            self.app.call_from_thread(self._after_login_register, ok, msg)
+
+        self.run_worker(register, thread=True, exclusive=True)
+
+    def _after_login_register(self, ok: bool, msg: str) -> None:
+        if ok:
+            self._mark_env_changed()
+            self.action_refresh()
+        else:
+            self.query_one("#gh-repos-status", Static).update(f"[red]✗ {msg}[/red]")

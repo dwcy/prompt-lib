@@ -57,7 +57,7 @@ Adapters refuse to start if `A2A_BEARER_TOKEN` is unset or shorter than 32 chara
 
 - `spec.md`, `plan.md`, `quickstart.md`, `research.md`, `data-model.md`, `contracts/`, `tasks.md`
 
-**Status**: v1 feature-complete. Manual real-repo verification (`tasks.md` T035) is operator-driven before tagging the v1 release.
+**Status**: v1 feature-complete and manually verified. The real-repo verification pass (`tasks.md` T035) is complete; the remaining cross-service manual validation is the A2A Inspector pass tracked in `specs/001-a2a-bridge/tasks.md` T039.
 
 **Test layout**:
 

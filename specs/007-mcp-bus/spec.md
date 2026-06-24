@@ -2,7 +2,7 @@
 
 **Feature Branch**: `feat/007-mcp-bus`
 **Created**: 2026-06-01
-**Status**: Draft
+**Status**: Implemented — service lives at `services/mcp-bus/` with storage, tool-shape, and concurrency tests. Manual MCP registration validation depends on local Claude Code tooling.
 **Input**: Agents dispatched by `/orchestrate` sometimes need to talk to each other and share state. Build an MCP server exposing a message bus, a shared key-value memory, and an agent registry — all natively callable as MCP tools by any Claude Code session or subagent.
 
 ---

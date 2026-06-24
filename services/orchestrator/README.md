@@ -4,7 +4,7 @@ Agent-orchestration daemon. Watches a configured GitHub repository, dispatches e
 
 ## Status
 
-**v1 feature-complete** — see [`specs/002-agent-orchestrator/tasks.md`](../../specs/002-agent-orchestrator/tasks.md) for the per-phase status. Manual real-repo verification (`tasks.md` T035) is the operator's responsibility before tagging the v1 release.
+**v1 feature-complete and manually verified** — see [`specs/002-agent-orchestrator/tasks.md`](../../specs/002-agent-orchestrator/tasks.md) for the per-phase status. The real-repo verification pass (`tasks.md` T035) is complete; the remaining cross-service manual validation is the A2A Inspector pass tracked in [`specs/001-a2a-bridge/tasks.md`](../../specs/001-a2a-bridge/tasks.md) T039.
 
 ## Documentation
 

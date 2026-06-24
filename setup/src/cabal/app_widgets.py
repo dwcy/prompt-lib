@@ -21,7 +21,6 @@ class AppCommandsProvider(Provider):
         from cabal.views.readme import ReadmeScreen
         from cabal.views.env import EnvScreen
         from cabal.views.git_config import GitConfigScreen
-        from cabal.views.github_repos import GitHubReposScreen
         from cabal.views.global_env import GlobalEnvScreen
 
         app = self.app
@@ -42,8 +41,8 @@ class AppCommandsProvider(Provider):
         )
         yield DiscoveryHit(
             "GitHub",
-            lambda: app.push_screen(GitHubReposScreen()),
-            help="List repos owned by your gh-authenticated account",
+            app.open_github_accounts,
+            help="Manage gh accounts for github.com",
         )
         yield DiscoveryHit(
             "All env",

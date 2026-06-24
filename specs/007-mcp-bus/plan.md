@@ -1,10 +1,10 @@
 # Implementation Plan: MCP Message Bus (v1)
 
-**Branch**: `feat/007-mcp-bus` | **Date**: 2026-06-01 | **Spec**: [spec.md](./spec.md)
+**Branch**: `feat/007-mcp-bus` | **Date**: 2026-06-01 | **Spec**: [spec.md](./spec.md) | **Status**: Implemented
 
 ## Summary
 
-Build `mcp-bus`, a local MCP server at `services/mcp-bus/`, exposing 10 tools across three groups (message bus, shared memory, agent registry). State is durable in SQLite (`~/.claude/mcp-bus/bus.db`, WAL mode, stdlib `sqlite3`, no ORM). Transport is stdio via the official `mcp` Python SDK (FastMCP). No HTTP, no auth in v1.
+Built `mcp-bus`, a local MCP server at `services/mcp-bus/`, exposing 10 tools across three groups (message bus, shared memory, agent registry). State is durable in SQLite (`~/.claude/mcp-bus/bus.db`, WAL mode, stdlib `sqlite3`, no ORM). Transport is stdio via the official `mcp` Python SDK (FastMCP). No HTTP, no auth in v1.
 
 ## Technical Context
 

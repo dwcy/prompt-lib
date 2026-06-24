@@ -36,6 +36,7 @@ from cabal.installers.ai_clis import (
     grok_install,
     ollama_install,
     opencode_install,
+    vllm_install,
 )
 from cabal.installers.cdt import cdt_install, cdt_status
 from cabal.installers.claude_cli import claude_cli_install, claude_cli_status
@@ -145,7 +146,18 @@ def _probe_key(key: str) -> object:
         return shutil.which("code") is not None
     if key == "vercel-plugin":
         return vercel_plugin_status() == "installed"
+    if key == "vllm":
+        return _probe_version("vllm", "--version") or (
+            shutil.which("vllm") is not None
+        )
     return shutil.which(key) is not None
+
+
+def _tool_unavailable_reason(key: str) -> str | None:
+    """Return why a tool is visible but intentionally not installable here."""
+    if key == "vllm" and platform.system() != "Linux":
+        return "Linux only - use WSL2 or a Linux Docker host for vLLM."
+    return None
 
 
 # Minimum major.minor we consider "current" for keys where our install target is a
@@ -314,6 +326,7 @@ ENV_INSTALLERS: list[tuple[str, str, Callable[[], tuple[bool, str]]]] = [
     ("antigravity", "Antigravity", antigravity_install),
     ("vscode", "VS Code", vscode_install),
     ("ollama", "Ollama", ollama_install),
+    ("vllm", "vLLM", vllm_install),
     ("gh", "GitHub", gh_install),
     ("sqlcmd", "MSSQL", sqlcmd_install),
     ("psql", "Postgres", postgres_install),
@@ -346,7 +359,7 @@ ENV_TOOL_GROUPS: list[tuple[str, list[str]]] = [
             "vercel-plugin",
         ],
     ),
-    ("Local AI", ["ollama"]),
+    ("Local AI", ["ollama", "vllm"]),
     ("AI Editors", ["cursor", "windsurf", "antigravity", "vscode"]),
 ]
 

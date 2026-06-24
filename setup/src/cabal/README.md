@@ -1,6 +1,16 @@
-# cabal
+![Cabal header: pink elephant logo beside the Cabal wordmark](https://raw.githubusercontent.com/dwcy/prompt-lib/main/docs/assets/cabal-header.png)
 
-**Claude Code Setup Wizard.** A Textual TUI that deploys [prompt-lib](https://github.com/dwcy/prompt-lib)'s `global/` tree (skills, agents, hooks, output styles, project templates) into `~/.claude/`, manages MCP servers via `claude mcp`, scaffolds `.claude/` in other projects, and runs drift / restore against your local Claude Code config.
+# Cabal
+
+**Agentic development configuration in one place.** Cabal is the local control
+panel for a machine's Claude Code and Codex setup. Use it to deploy global agent
+configuration, check setup drift, restore backups, manage MCP connections,
+initialize environment variables, scaffold local project configuration, install
+companion CLIs, and manage curated Codex assets.
+
+Cabal is built for repeated local operations: it opens directly into useful
+controls, keeps version/update state visible, and gives agent-heavy projects one
+place to manage the configuration they depend on.
 
 ## Install
 
@@ -16,6 +26,17 @@ Then run:
 cabal
 ```
 
+From a source checkout, use the bootstrap launchers when Python may not already
+be installed:
+
+```bash
+# Windows
+setup\settings-configurator-ui.cmd
+
+# Linux
+sh setup/settings-configurator-ui.sh
+```
+
 ## What it does
 
 | Mode | Purpose |
@@ -23,14 +44,16 @@ cabal
 | Update | Deploy `global/` → `~/.claude/` with dry-run preview, multi-select component toggles, env-var status panel, timestamped backups. |
 | Initialize env vars | Prompt for each var, write via `setx` (Windows) or shell rc (Unix). |
 | MCP | Live status from `claude mcp list`. Toggle = `claude mcp add/remove`. |
-| Doctor | Compare `~/.claude/` against the bundled `global/`, report drift. |
 | Restore | Roll back `~/.claude/settings.json` from a timestamped backup. |
 | Local | In another project: scaffold `.claude/`, apply a `CLAUDE.md` template, set up git repo template, optionally `specify init`. |
+| Codex | Deploy `global/codex/` to `~/.codex`, scaffold `.agents/`, and inspect Claude -> Codex conversion diffs. |
 | Tools | Install / update companion CLIs (Claude CLI, GitHub CLI, Specify CLI, claude-devtools). |
 
-## Naming
+## Identity
 
-There is also a Haskell build tool called `cabal` distributed via Hackage. The two have no package-registry overlap (PyPI vs Hackage), but the shell binary is `cabal` in both. If you have both installed, whichever directory comes first on `PATH` wins. If you need them side-by-side, install this one into a dedicated venv and invoke it with the venv-qualified path.
+Cabal is meant to feel like a local control room: one focused place for agents,
+hooks, skills, MCP servers, project scaffolding, and setup drift. The TUI opens
+directly into useful controls; the name provides the frame, not a splash screen.
 
 ## Source
 

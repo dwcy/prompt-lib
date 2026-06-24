@@ -1,10 +1,10 @@
 # Implementation Plan: /orchestrate Skill — Automatic Subagent Routing (v1)
 
-**Branch**: `feat/006-orchestrate-skill` | **Date**: 2026-06-01 | **Spec**: [spec.md](./spec.md)
+**Branch**: `feat/006-orchestrate-skill` | **Date**: 2026-06-01 | **Spec**: [spec.md](./spec.md) | **Status**: Implemented
 
 ## Summary
 
-Implement a `/orchestrate` skill (`global/skills/orchestrate.md`) that routes tasks to the correct specialist subagent(s). Add proactive routing guidance to `global/CLAUDE.md` so the main session delegates automatically without being asked. Write user-facing docs.
+Implemented a `/orchestrate` skill (`global/skills/orchestrate.md`) that routes tasks to the correct specialist subagent(s). Added proactive routing guidance to `global/CLAUDE.md` so the main session can delegate automatically without being asked. User-facing docs live in `docs/orchestration.md`.
 
 No new Python services, no external dependencies, no database. Everything is markdown + the existing `Agent` tool.
 

@@ -29,7 +29,11 @@ def grok_install() -> tuple[bool, str]:
 def copilot_install() -> tuple[bool, str]:
     # Best path is the `gh` extension — needs gh CLI to be installed and authenticated.
     if not shutil.which("gh"):
-        return False, "gh CLI not found — install GitHub CLI first, then run `gh extension install github/gh-copilot`"
+        return (
+            False,
+            "gh CLI not found - install GitHub CLI first, then run "
+            "`gh extension install github/gh-copilot`",
+        )
     return _run_install(["gh", "extension", "install", "github/gh-copilot"])
 
 
@@ -49,5 +53,22 @@ def ollama_install() -> tuple[bool, str]:
             return _run_install(["brew", "install", "--cask", "ollama"])
         return False, "Install manually from https://ollama.com/download"
     if sysname == "Linux":
-        return False, "Install via `curl -fsSL https://ollama.com/install.sh | sh` (official installer)"
+        return False, "Install manually from https://ollama.com/download"
     return False, f"Unsupported platform: {sysname}"
+
+
+def vllm_install() -> tuple[bool, str]:
+    sysname = platform.system()
+    if sysname != "Linux":
+        return (
+            False,
+            "vLLM is only enabled for Linux in Cabal. On Windows, use WSL2 or "
+            "a Linux Docker host for the official vLLM OpenAI-compatible server.",
+        )
+    return (
+        False,
+        "Install vLLM in a dedicated Linux Python environment. Recommended: "
+        "`uv venv --python 3.12 --seed --managed-python`, activate it, then "
+        "`uv pip install -U vllm --torch-backend=auto`. Docker users can run "
+        "`vllm/vllm-openai:latest` with GPU access.",
+    )

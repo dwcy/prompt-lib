@@ -2,11 +2,11 @@
 
 Local MCP server exposing three tool groups for inter-agent coordination:
 
-- **Message bus** — agents post to and read from named channels (`bus_post`, `bus_read`, `bus_channels`).
+- **Message bus** — agents post to and read from named channels (`bus_post`, `bus_read`, `bus_channels`, `bus_prune`).
 - **Shared memory** — namespaced key-value store (`mem_set`, `mem_get`, `mem_list`, `mem_delete`).
 - **Agent registry** — agents register capabilities and heartbeat for discovery (`agent_register`, `agent_list`, `agent_heartbeat`).
 
-All state is durable in SQLite at `~/.claude/mcp-bus/bus.db` (WAL mode, stdlib `sqlite3`, no ORM). Transport is stdio via the official `mcp` Python SDK (FastMCP). No HTTP, no auth — localhost only.
+All state is durable in SQLite at `~/.claude/mcp-bus/bus.db` (WAL mode, stdlib `sqlite3`, no ORM). Transport is stdio via the official `mcp` Python SDK (FastMCP). No HTTP, no auth — localhost only. Message content and shared-memory values are capped at 64 KiB, metadata/capabilities at 16 KiB, and each channel keeps the newest 10,000 messages automatically.
 
 ## Run
 

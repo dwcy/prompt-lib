@@ -7,6 +7,7 @@ session: any error exits 0.
 """
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -26,6 +27,21 @@ def _resolve_git_path(raw: str, cwd: Path) -> Path:
     return p.resolve()
 
 
+def _git_executable() -> str:
+    override = os.environ.get("PROMPTLIB_GIT")
+    if override:
+        return override
+    if sys.platform == "win32":
+        for root in (
+            os.environ.get("ProgramFiles", r"C:\Program Files"),
+            os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)"),
+        ):
+            candidate = Path(root) / "Git" / "cmd" / "git.exe"
+            if candidate.exists():
+                return str(candidate)
+    return "git"
+
+
 def main() -> None:
     if should_skip("session_end_release_lock"):
         return
@@ -34,7 +50,7 @@ def main() -> None:
     try:
         result = subprocess.run(
             [
-                "git",
+                _git_executable(),
                 "-C",
                 str(cwd),
                 "rev-parse",

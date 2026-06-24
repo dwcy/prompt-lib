@@ -305,11 +305,11 @@ Source line numbers are anchored to `wizard.py` as it exists on branch `005-caba
 |---|---|
 | `UpdateScreen` | 2974–3095 |
 
-### `cabal/views/doctor.py`
+### Standalone Doctor screen retired
 
-| Symbol | Source lines |
-|---|---|
-| `DoctorScreen` | 3096–3155 |
+The standalone `DoctorScreen` and `cabal/views/doctor.py` are no longer part
+of the active TUI. Drift is surfaced through home-screen markers and the update
+preview flow.
 
 ### `cabal/views/restore.py`
 

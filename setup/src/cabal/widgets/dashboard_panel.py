@@ -63,7 +63,7 @@ class DashboardPanel(Widget):
         padding: 1 2;
         margin: 0 2;
         background: $boost;
-        border: round $primary;
+        border: round #CC006B;
     }
     DashboardPanel #dash-titlebar { height: 3; align-vertical: middle; }
     DashboardPanel #dash-title { content-align: left middle; height: auto; width: 1fr; }

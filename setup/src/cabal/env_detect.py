@@ -240,6 +240,8 @@ def detect_env() -> dict:
         "copilot": shutil.which("copilot") is not None
         or shutil.which("gh-copilot") is not None,
         "antigravity": shutil.which("antigravity") is not None,
+        "vllm": _probe_version("vllm", "--version")
+        or (shutil.which("vllm") is not None),
         "vscode": shutil.which("code") is not None,
         "rider": _has_rider(),
         "visualstudio": _has_visual_studio(),

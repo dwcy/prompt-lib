@@ -1,0 +1,3 @@
+"""Fixture hook."""
+
+print("ok")

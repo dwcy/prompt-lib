@@ -53,7 +53,7 @@ class FileViewerModal(ModalScreen):
         width: 90%;
         height: 90%;
         background: $surface;
-        border: round $accent;
+        border: round #CC006B;
         padding: 1 2;
     }
     FileViewerModal #fv-title {
@@ -74,12 +74,14 @@ class FileViewerModal(ModalScreen):
         *,
         compare_path: Path | None = None,
         new_text: str | None = None,
+        diff_label: str = "deployed -> repo",
     ) -> None:
         super().__init__()
         self._path = path
         self._title = title or str(path)
         self._compare_path = compare_path
         self._new_text = new_text
+        self._diff_label = diff_label
         self._diff_available = self._compute_diff_available()
         self._show_diff = self._diff_available
 
@@ -118,7 +120,7 @@ class FileViewerModal(ModalScreen):
     def _title_text(self) -> str:
         if not self._diff_available:
             return f"📄 {self._title}"
-        mode = "diff: deployed → repo" if self._show_diff else "full source"
+        mode = f"diff: {self._diff_label}" if self._show_diff else "full source"
         return f"📄 {self._title}  [dim]·[/dim] [yellow]{mode}[/yellow]"
 
     def _build_content(self) -> Widget:

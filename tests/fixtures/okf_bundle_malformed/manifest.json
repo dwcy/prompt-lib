@@ -1,0 +1,13 @@
+{
+  "bundle_id": "prompt-lib",
+  "okf_version": "0.1",
+  "generated_at": "2026-06-18T00:00:00Z",
+  "source_revision": null,
+  "source_categories": {},
+  "generated_files": [
+    "index.md",
+    "agents/missing.md"
+  ],
+  "skipped": [],
+  "tool_version": "unknown"
+}

@@ -98,9 +98,14 @@ See [`docs/parallel-isolation.md`](docs/parallel-isolation.md) for the full rule
 
 ## Subagent routing
 
+Before starting any non-trivial code task, decide whether specialist delegation is useful. Treat `/orchestrate` as the default preflight for work that may need architecture, tests, security review, data modelling, API design, frontend/UX judgement, cleanup, or cross-file coordination.
+
 When a task clearly belongs to a specialist domain, invoke `/orchestrate` proactively — do not wait to be asked. The user should not need to know which agent exists.
 
 **Invoke `/orchestrate` automatically when:**
+- The task touches more than one file, module, service, package, or subsystem
+- The task is vague but likely code-related, such as "fix this bug", "add this feature", "improve this repo", "clean this up", or "make this better"
+- The task involves refactoring, behavior changes, performance, reliability, release readiness, or unclear implementation scope
 - The task involves .NET / C# architecture or testing
 - The task involves Python service design or pytest authoring
 - The task involves React, Vue, Next.js, TanStack, or CSS architecture
@@ -116,9 +121,12 @@ When a task clearly belongs to a specialist domain, invoke `/orchestrate` proact
 **Do not invoke `/orchestrate` for:**
 - Quick one-line questions or explanations
 - File reads, git commands, or simple edits that need no specialist
+- Tiny single-file edits with obvious intent and low blast radius
 - Tasks the user has explicitly asked to handle in the main session
 
 When auto-routing, tell the user: "This looks like a [domain] task — routing to `@<agent>`." before dispatching.
+
+When skipping `/orchestrate` for a non-trivial-looking task, proceed without ceremony only if the task is clearly small and low risk; otherwise invoke `/orchestrate`.
 
 See [`docs/orchestration.md`](docs/orchestration.md) for the full routing table and agent registry.
 

@@ -40,6 +40,19 @@ async def test_renders_account_rows_with_expected_buttons(monkeypatch):
         assert "gha-forget-2" in ids
         assert "gha-switch-0" not in ids  # active account has no Switch
         assert "gha-forget-0" not in ids
+        assert str(modal.query_one("#gha-add", Button).label) == "Add account"
+
+
+@pytest.mark.asyncio
+async def test_no_accounts_show_login_button(monkeypatch):
+    monkeypatch.setattr(gh_accounts, "list_accounts", lambda host="github.com": [])
+    app = App()
+    async with app.run_test() as pilot:
+        modal = GhAccountsModal()
+        await app.push_screen(modal)
+        await _settle(app, pilot)
+
+        assert str(modal.query_one("#gha-add", Button).label) == "Login to GitHub"
 
 
 @pytest.mark.asyncio
@@ -126,3 +139,29 @@ async def test_forget_requires_second_press(monkeypatch):
         await _settle(app, pilot)
 
         assert calls == ["stale"]
+
+
+@pytest.mark.asyncio
+async def test_add_account_registers_device_token_and_marks_changed(monkeypatch):
+    tokens: list[str] = []
+    monkeypatch.setattr(
+        gh_accounts, "list_accounts", lambda host="github.com": ACCOUNTS
+    )
+
+    def fake_add(token: str, host: str = "github.com") -> tuple[bool, str]:
+        tokens.append(token)
+        return True, "account added"
+
+    monkeypatch.setattr(gh_accounts, "add_account_with_token", fake_add)
+    app = App()
+    async with app.run_test() as pilot:
+        modal = GhAccountsModal()
+        await app.push_screen(modal)
+        await _settle(app, pilot)
+        modal._reload = lambda: None
+
+        modal._token_received("token-456")
+        await _settle(app, pilot)
+
+        assert tokens == ["token-456"]
+        assert modal._changed is True

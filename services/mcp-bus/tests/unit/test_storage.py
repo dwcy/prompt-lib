@@ -63,6 +63,34 @@ class TestMessages:
         assert len(storage.read_messages("alpha", path=db)) == 1
         assert storage.read_messages("alpha", path=db)[0]["content"] == "a"
 
+    def test_rejects_oversized_content(self, db):
+        content = "x" * (storage.CONTENT_MAX_BYTES + 1)
+        with pytest.raises(ValueError, match="content"):
+            storage.post_message("c", content, "a", path=db)
+
+    def test_rejects_oversized_metadata(self, db):
+        metadata = {"x": "y" * storage.METADATA_MAX_BYTES}
+        with pytest.raises(ValueError, match="metadata"):
+            storage.post_message("c", "hi", "a", metadata, path=db)
+
+    def test_post_prunes_old_messages_per_channel(self, db, monkeypatch):
+        monkeypatch.setattr(storage, "CHANNEL_RETENTION_MAX", 3)
+        for i in range(5):
+            storage.post_message("c", str(i), "a", path=db)
+
+        messages = storage.read_messages("c", limit=10, path=db)
+
+        assert [m["content"] for m in messages] == ["2", "3", "4"]
+
+    def test_prune_messages_keeps_last_per_channel(self, db):
+        for i in range(5):
+            storage.post_message("c", str(i), "a", path=db)
+
+        deleted = storage.prune_messages(keep_last_per_channel=2, path=db)
+
+        assert deleted == 3
+        assert [m["content"] for m in storage.read_messages("c", path=db)] == ["3", "4"]
+
 
 class TestChannels:
     def test_list_channels_returns_distinct_with_messages(self, db):
@@ -118,6 +146,10 @@ class TestMemory:
     def test_delete_absent_key_is_noop(self, db):
         storage.mem_delete("ns", "absent", path=db)
         assert storage.mem_get("ns", "absent", path=db) is None
+
+    def test_rejects_oversized_memory_value(self, db):
+        with pytest.raises(ValueError, match="value"):
+            storage.mem_set("ns", "k", "x" * (storage.MEMORY_VALUE_MAX_BYTES + 1), path=db)
 
 
 class TestAgents:
