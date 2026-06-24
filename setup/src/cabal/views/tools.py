@@ -12,6 +12,7 @@ import re
 import shutil
 import subprocess
 import sys
+import webbrowser
 from datetime import datetime
 from pathlib import Path
 from typing import Callable
@@ -142,7 +143,40 @@ class ToolsScreen(Screen):
         background: $surface;
         color: $text-muted;
     }
+    ToolsScreen .tool-desc {
+        height: auto;
+        color: $text-muted;
+        margin: 0 0 1 20;
+    }
+    ToolsScreen Button.tool-readmore,
+    ToolsScreen Button.tool-readmore:hover,
+    ToolsScreen Button.tool-readmore:focus {
+        width: 11;
+        min-width: 11;
+        max-width: 11;
+        height: 1;
+        min-height: 1;
+        max-height: 1;
+        padding: 0;
+        margin: 0 0 0 1;
+        border: none;
+        border-top: none;
+        border-bottom: none;
+        color: white;
+        text-style: bold;
+        content-align: center middle;
+        tint: rgba(0,0,0,0);
+    }
+    ToolsScreen Button.tool-readmore        { background: $surface-lighten-1; }
+    ToolsScreen Button.tool-readmore:hover  { background: $surface-lighten-2; }
+    ToolsScreen Button.tool-readmore:focus  { background: $surface; }
     """
+
+    _TOOL_META: dict[str, Tool] = {tool.key: tool for tool in TOOLS}
+
+    def _tool_meta(self, key: str) -> Tool | None:
+        """Rich metadata for an ENV key when its key matches a TOOLS entry, else None."""
+        return self._TOOL_META.get(key)
 
     @staticmethod
     def _sorted_keys(keys: list[str]) -> list[str]:
@@ -172,6 +206,7 @@ class ToolsScreen(Screen):
                         if meta is None:
                             continue
                         label, _fn = meta
+                        tool = self._tool_meta(key)
                         with Horizontal(classes="tool-row"):
                             yield Static(f"[white]{label}[/]", classes="tool-name")
                             yield Static(
@@ -181,6 +216,18 @@ class ToolsScreen(Screen):
                                 "Install",
                                 id=f"tool-install-{key}",
                                 classes="tool-install",
+                            )
+                            if tool and (tool.repo_url or tool.homepage):
+                                yield Button(
+                                    "Read more",
+                                    id=f"tool-readmore-{key}",
+                                    classes="tool-readmore",
+                                )
+                        if tool and tool.description:
+                            yield Static(
+                                f"[dim]{escape_markup(tool.description)}[/dim]",
+                                classes="tool-desc",
+                                id=f"tool-desc-{key}",
                             )
             yield Static("", id="tools-status", classes="panel")
         yield Footer(show_command_palette=False)
@@ -369,6 +416,11 @@ class ToolsScreen(Screen):
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         bid = event.button.id or ""
+        if bid.startswith("tool-readmore-"):
+            tool = self._tool_meta(bid.removeprefix("tool-readmore-"))
+            if tool and (tool.repo_url or tool.homepage):
+                webbrowser.open(tool.repo_url or tool.homepage)
+            return
         if not bid.startswith("tool-install-"):
             return
         key = bid.removeprefix("tool-install-")

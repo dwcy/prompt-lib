@@ -78,6 +78,15 @@ description: "Task list for 009-headroom-tool implementation"
 
 ---
 
+## Phase 5: Post-ship enhancement — Tools-view descriptions (2026-06-25)
+
+**Status**: ✅ Complete (1/1 — T013)
+**Goal**: Surface a short description + a "Read more" (source link) button for tools in the cabal Tools view that carry `TOOLS` metadata — starting with headroom under the AI CLIs group.
+
+- [X] T013 [US1] In `setup/src/cabal/views/tools.py`, render a dim description `Static` (`#tool-desc-{key}`) under the row and a compact "Read more" `Button` (`#tool-readmore-{key}`, opens `repo_url`/`homepage` via `webbrowser`) for any row whose ENV key matches a `TOOLS` entry (headroom, skills, vercel-plugin). Existing `#tool-state`/`#tool-install` ids preserved. Textual smoke test in `setup/tests/test_tools_descriptions.py`. — Owner: @python-architect
+
+---
+
 ## Dependencies & Execution Order
 
 - **Phase 1 (Spike)**: no dependencies; T001–T002 BLOCK Phases 2–3; T003 blocks nothing (investigate-only, FR-010).
