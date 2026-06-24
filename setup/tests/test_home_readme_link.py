@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
-"""HomeScreen README is a pressable link in the banner row, not a bottom button."""
+"""HomeScreen and start view keep README out of the old subtitle row."""
 
 from __future__ import annotations
 
 import pytest
 from textual.css.query import NoMatches
-from textual.widgets import Static
 
 from cabal.app import CabalApp
+from cabal.banner import SUBTITLE_STYLE, SUBTITLE_TEXT
 from cabal.views.home import HomeScreen
 from cabal.views.readme import ReadmeScreen
+from cabal.widgets.logo import CabalLogo, render_cabal_logo
 
 
 @pytest.fixture(autouse=True)
@@ -27,7 +28,7 @@ def _stub_home_background_probes(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_readme_is_a_link_and_button_is_gone():
+async def test_home_logo_owns_subtitle_and_has_no_old_readme_link_or_button():
     app = CabalApp()
 
     async with app.run_test() as pilot:
@@ -35,7 +36,15 @@ async def test_readme_is_a_link_and_button_is_gone():
         await app.push_screen(screen)
         await pilot.pause()
 
-        assert screen.query_one("#readme-link", Static) is not None
+        banner = screen.query_one("#banner", CabalLogo)
+        assert banner.show_subtitle is True
+        assert SUBTITLE_TEXT in render_cabal_logo(120).plain
+        assert SUBTITLE_STYLE == "italic bold #FF55A5"
+        assert "Local Agent Control Panel" not in SUBTITLE_TEXT
+        with pytest.raises(NoMatches):
+            screen.query_one("#subtitle")
+        with pytest.raises(NoMatches):
+            screen.query_one("#readme-link")
         with pytest.raises(NoMatches):
             screen.query_one("#btn-readme")
 
@@ -55,14 +64,22 @@ async def test_readme_action_opens_readme_screen():
 
 
 @pytest.mark.asyncio
-async def test_start_view_has_readme_link_that_opens_readme():
+async def test_start_view_has_no_old_readme_link_but_action_still_opens_readme():
     app = CabalApp()
 
     async with app.run_test() as pilot:
         await pilot.pause()
         gate = app.screen
 
-        assert gate.query_one("#readme-link", Static) is not None
+        banner = gate.query_one("#banner", CabalLogo)
+        assert banner.show_subtitle is True
+        assert SUBTITLE_TEXT in render_cabal_logo(120).plain
+        assert SUBTITLE_STYLE == "italic bold #FF55A5"
+        assert "Local Agent Control Panel" not in SUBTITLE_TEXT
+        with pytest.raises(NoMatches):
+            gate.query_one("#subtitle")
+        with pytest.raises(NoMatches):
+            gate.query_one("#readme-link")
 
         gate.action_readme()
         await pilot.pause()

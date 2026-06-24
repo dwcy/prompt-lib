@@ -25,6 +25,8 @@ _MIN_TILES = (LOGO_MAX_WIDTH + 2 * (LOGO_GUTTER + _TILE_WIDTH)) // _TILE_WIDTH +
 
 LOGO_GRADIENT = ["#FFB6C1", "#FF85B3", "#FF55A5", "#FF2897", "#FF0080", "#CC006B"]
 MASCOT_GRADIENT = ["#CC006B", "#FF2897", "#FF85B3", "#FFB6C1"]
+SUBTITLE_TEXT = "« Cabal helps you manage your agentic development setup in one place. »"
+SUBTITLE_STYLE = "italic bold #FF55A5"
 
 
 def render_banner(target_width: int | None = None, subtitle: bool = True) -> Text:
@@ -81,7 +83,7 @@ def render_banner(target_width: int | None = None, subtitle: bool = True) -> Tex
             txt.append(base + "\n", style=mascot_style)
 
     if subtitle:
-        txt.append("\n« Local Agent Control Panel »", style="italic bright_cyan")
+        txt.append(f"\n{SUBTITLE_TEXT}", style=SUBTITLE_STYLE)
     return txt
 
 
@@ -103,14 +105,8 @@ class HexBanner(Static):
 
 
 def subtitle_bar() -> Horizontal:
-    """Subtitle line with a README link pushed to the right.
-
-    Shared by the home and start (project-gate) views. Screens that yield this
-    must define `action_readme` (the link fires `screen.readme`).
-    """
+    """Subtitle line shared by the home and start (project-gate) views."""
     return Horizontal(
-        Static("« Local Agent Control Panel »", id="subtitle"),
-        Static("", classes="home-spacer"),
-        Static("[@click=screen.readme]README[/]", id="readme-link"),
+        Static(SUBTITLE_TEXT, id="subtitle"),
         id="banner-row",
     )

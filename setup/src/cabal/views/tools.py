@@ -100,7 +100,7 @@ class ToolsScreen(Screen):
         padding: 1 2;
         margin: 0 2 1 2;
         background: $boost;
-        border: round $accent;
+        border: round #CC006B;
     }
     ToolsScreen .tool-group-title {
         text-style: bold;
@@ -463,7 +463,7 @@ class ToolsScreen(Screen):
             button.label = "Install"
             last_line = lines[-1].strip() if lines else ""
             if ok:
-                # Flag the home "Current setup" panel to re-scan on resume.
+                # Flag the home "Local setup" panel to re-scan on resume.
                 self.app.env_needs_refresh = True
                 self.notify(
                     f"{label} updated",

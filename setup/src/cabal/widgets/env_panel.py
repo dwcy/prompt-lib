@@ -27,6 +27,11 @@ from cabal.tools import ENV_INSTALLERS, _tool_unavailable_reason
 from cabal.widgets.update_panel import UpdatePanel
 
 _CACHE_KEY = "env"
+_INNER_BORDER_TITLE = "[bold #FF85B3]Overview[/]"
+_INNER_BORDER_SUBTITLE = "[bold #CC006B][@click=screen.readme]README[/][/]"
+_LABEL_STYLE = "bold #5FAFFF"
+_VERSION_STATUS_STYLE = "bold #55FFA5"
+_VERSION_METADATA_STYLE = "bold #FF85B3"
 
 
 class EnvPanel(Widget):
@@ -35,7 +40,6 @@ class EnvPanel(Widget):
     DEFAULT_CSS = """
     EnvPanel {
         height: auto;
-        /* outer border/padding/margin come from the global #env-summary rule */
     }
     EnvPanel > Vertical {
         height: auto;
@@ -47,12 +51,20 @@ class EnvPanel(Widget):
         padding: 1 2;
         margin: 1 0 0 0;
         background: $boost;
-        border: round $accent;
+        border: round #CC006B;
     }
-    EnvPanel .env-panel-row {
+    EnvPanel .env-panel-row,
+    EnvPanel #env-row-system,
+    EnvPanel #env-row-runtimes,
+    EnvPanel #env-row-pkg-mgrs,
+    EnvPanel #env-row-infra,
+    EnvPanel #env-row-clis,
+    EnvPanel #env-row-local-ai,
+    EnvPanel #env-row-databases,
+    EnvPanel #env-row-editors {
         layout: horizontal;
         height: 1;
-        margin: 0;
+        margin: 1 0;
         padding: 0;
     }
     EnvPanel .env-cell {
@@ -60,6 +72,37 @@ class EnvPanel(Widget):
         height: 1;
         margin: 0 2 0 0;
         padding: 0;
+    }
+    EnvPanel #env-version-row {
+        layout: horizontal;
+        height: auto;
+        margin: 0 0 1 0;
+        padding: 0;
+        align-vertical: middle;
+    }
+    EnvPanel #env-version-meta {
+        width: 1fr;
+        height: 1;
+        margin: 0;
+        padding: 0;
+        content-align: left middle;
+    }
+    EnvPanel #env-info UpdatePanel {
+        width: auto;
+        height: auto;
+        margin: 0;
+        padding: 0;
+    }
+    EnvPanel #env-info #update-row {
+        width: auto;
+        margin: 0;
+        padding: 0;
+        align-horizontal: right;
+    }
+    EnvPanel #env-info #env-refresh {
+        width: auto;
+        padding: 0;
+        content-align: right middle;
     }
     EnvPanel Button.env-install,
     EnvPanel Button.env-install:hover,
@@ -94,17 +137,26 @@ class EnvPanel(Widget):
     EnvPanel #env-paths {
         height: auto;
         width: 1fr;
-        margin: 1 2 0 0;
-        padding: 0 1 0 0;
+        margin: 1 0 0 0;
+        padding: 0;
         content-align: left middle;
     }
     EnvPanel #btn-github,
     EnvPanel #btn-github:focus {
         background: #8B5CF6;
+        border: none;
+        border-top: tall #A78BFA;
+        border-bottom: tall #5B21B6;
         color: white;
         margin: 0 2 0 0;
     }
-    EnvPanel #btn-github:hover { background: #7C3AED; color: white; }
+    EnvPanel #btn-github:hover {
+        background: #7C3AED;
+        border: none;
+        border-top: tall #8B5CF6;
+        border-bottom: tall #4C1D95;
+        color: white;
+    }
     EnvPanel #btn-env,
     EnvPanel #btn-env:focus {
         background: black;
@@ -124,8 +176,16 @@ class EnvPanel(Widget):
 
     def compose(self) -> ComposeResult:
         with Vertical():
-            yield UpdatePanel()
             with Vertical(id="env-info"):
+                with Horizontal(id="env-version-row"):
+                    yield Static(
+                        self._format_update_metadata({"status": "checking"}),
+                        id="env-version-meta",
+                    )
+                    yield UpdatePanel(
+                        on_result=self._set_update_metadata,
+                        show_status=False,
+                    )
                 yield Horizontal(
                     classes="env-panel-row", id="env-row-system"
                 )  # OS, Pkg, git, github
@@ -148,20 +208,76 @@ class EnvPanel(Widget):
                 yield Horizontal(
                     classes="env-panel-row", id="env-row-editors"
                 )  # AI-augmented editors
+                yield Static("", id="env-paths")
                 with Horizontal(id="env-tools-row"):
                     yield Static("", classes="env-spacer")
                     yield Button("GitHub", id="btn-github")
                     yield Button("Env vars", id="btn-env")
                     yield Button("⌬  Tools", id="btn-op-tools", variant="warning")
-            yield Static("", id="env-paths")
             yield Static("", id="env-status")
 
     def on_mount(self) -> None:
-        self.query_one("#env-info", Vertical).border_title = "Current setup"
+        info = self.query_one("#env-info", Vertical)
+        info.border_title = _INNER_BORDER_TITLE
+        info.border_subtitle = _INNER_BORDER_SUBTITLE
         cached = widget_cache.load_entry(_CACHE_KEY)
         if isinstance(cached, dict):
             self._apply_env(cached)
         self.refresh_env()
+
+    def _set_update_metadata(self, result: dict) -> None:
+        self.query_one("#env-version-meta", Static).update(
+            self._format_update_metadata(result)
+        )
+
+    @staticmethod
+    def _format_update_metadata(result: dict) -> str:
+        status = result.get("status")
+        unknown = "[dim]unknown[/dim]"
+        cabal_label = f"[{_LABEL_STYLE}]Cabal:[/]"
+        hash_label = f"[{_LABEL_STYLE}]hash:[/]"
+        date_label = f"[{_LABEL_STYLE}]date:[/]"
+        if status == "up_to_date":
+            date = result.get("date") or unknown
+            return (
+                f"{cabal_label} [{_VERSION_STATUS_STYLE}]✓ Latest version[/]  "
+                f"{hash_label} "
+                f"[{_VERSION_METADATA_STYLE}]{result.get('hash', 'unknown')}[/]  "
+                f"{date_label} "
+                f"[{_VERSION_METADATA_STYLE}]{date}[/]"
+            )
+        if status == "behind":
+            count = result.get("behind_count")
+            count_str = f" ({count})" if count else ""
+            return (
+                f"{cabal_label} [yellow bold]⬆ Update available{count_str}[/yellow bold]  "
+                f"{hash_label} "
+                f"[{_VERSION_METADATA_STYLE}]{result.get('remote', 'unknown')}[/]  "
+                f"{date_label} {unknown}"
+            )
+        if status == "checking":
+            return (
+                f"{cabal_label} [dim]Checking for updates…[/dim]  "
+                f"{hash_label} [dim]checking[/dim]  "
+                f"{date_label} [dim]checking[/dim]"
+            )
+        if status == "no_upstream":
+            return (
+                f"{cabal_label} [dim]Updates not tracked[/dim]  "
+                f"{hash_label} [dim]no upstream[/dim]  "
+                f"{date_label} {unknown}"
+            )
+        if status == "no_git":
+            return (
+                f"{cabal_label} [dim]Git not found[/dim]  "
+                f"{hash_label} {unknown}  "
+                f"{date_label} {unknown}"
+            )
+        return (
+            f"{cabal_label} [dim]Could not reach remote[/dim]  "
+            f"{hash_label} {unknown}  "
+            f"{date_label} {unknown}"
+        )
 
     def refresh_env(self) -> None:
         """Re-scan the host env in a worker (spinner shown, stale-while-revalidate).
@@ -185,7 +301,7 @@ class EnvPanel(Widget):
     _SPINNER_FRAMES = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
 
     def _start_refresh_status(self) -> None:
-        """Animate a spinner on the 'Latest version' row (right-aligned) while detecting env."""
+        """Animate a spinner on the update row while detecting env."""
         status = self.query_one("#env-refresh", Static)
         status.display = True
         state: dict = {"frame": 0}
@@ -196,6 +312,7 @@ class EnvPanel(Widget):
             status.update(f"[cyan]{frame}[/] [dim italic]refreshing…[/]")
 
         tick()
+        self.query_one(UpdatePanel).sync_visibility()
         state["timer"] = self.set_interval(0.08, tick)
         self._refresh_spinner = state
 
@@ -208,10 +325,11 @@ class EnvPanel(Widget):
             indicator = self.query_one("#env-refresh", Static)
             indicator.update("")
             indicator.display = False
+            self.query_one(UpdatePanel).sync_visibility()
         except Exception:
             pass
 
-    _LABEL = "bold #5FAFFF"  # light blue for every Label:
+    _LABEL = _LABEL_STYLE  # light blue for every Label:
 
     @classmethod
     def _lbl(cls, label: str) -> str:

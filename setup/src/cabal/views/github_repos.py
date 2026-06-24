@@ -100,7 +100,7 @@ class GitHubReposScreen(Screen):
         height: 90%;
         padding: 1 2;
         background: $boost;
-        border: round $primary;
+        border: round #CC006B;
     }
     #gh-repos-status { height: auto; margin: 0 0 1 0; }
     #gh-repos-list { height: 1fr; }

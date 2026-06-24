@@ -1,3 +1,5 @@
+![Cabal header: pink elephant logo beside the Cabal wordmark](../docs/assets/cabal-header.png)
+
 # setup/
 
 Local agent control panel for this machine's Claude Code and Codex environment.

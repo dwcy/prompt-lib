@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+from typing import Callable
+
 from textual.app import ComposeResult
 from textual.containers import Horizontal
 from textual.widget import Widget
@@ -12,6 +14,8 @@ from cabal import widget_cache
 from cabal.updates import check_for_updates, do_git_pull
 
 _CACHE_KEY = "updates"
+_VERSION_STATUS_STYLE = "bold #55FFA5"
+_VERSION_METADATA_STYLE = "bold #FF85B3"
 
 
 class UpdatePanel(Widget):
@@ -53,6 +57,19 @@ class UpdatePanel(Widget):
     }
     """
 
+    def __init__(
+        self,
+        *args,
+        on_summary: Callable[[str], None] | None = None,
+        on_result: Callable[[dict], None] | None = None,
+        show_status: bool = True,
+        **kwargs,
+    ) -> None:
+        super().__init__(*args, **kwargs)
+        self._on_summary = on_summary
+        self._on_result = on_result
+        self._show_status = show_status
+
     def compose(self) -> ComposeResult:
         with Horizontal(id="update-row"):
             yield Static("[dim]Checking for updates…[/dim]", id="update-msg")
@@ -62,7 +79,9 @@ class UpdatePanel(Widget):
 
     def on_mount(self) -> None:
         self.query_one("#btn-pull").display = False
+        self.query_one("#update-msg").display = self._show_status
         self.query_one("#update-branch").display = False
+        self.sync_visibility()
         cached = widget_cache.load_entry(_CACHE_KEY)
         if isinstance(cached, dict):
             self._apply(cached, from_cache=True)
@@ -73,34 +92,55 @@ class UpdatePanel(Widget):
         widget_cache.save_entry(_CACHE_KEY, result)
         self.app.call_from_thread(self._apply, result)
 
+    def _set_message(self, message: str, *, summary: str | None = None) -> None:
+        self.query_one("#update-msg", Static).update(message)
+        if self._on_summary is not None:
+            self._on_summary(summary or message.split("\n", 1)[0])
+
+    def sync_visibility(self) -> None:
+        """Collapse the row when this panel only publishes status to a parent."""
+        if self._show_status:
+            return
+        row = self.query_one("#update-row", Horizontal)
+        btn = self.query_one("#btn-pull", Button)
+        refresh = self.query_one("#env-refresh", Static)
+        row.display = bool(btn.display or refresh.display)
+
     def _apply(self, result: dict, from_cache: bool = False) -> None:
-        msg = self.query_one("#update-msg", Static)
         btn = self.query_one("#btn-pull", Button)
         status = result["status"]
         # Never paint a stale "behind"/branch from cache — the cached entry may
         # reflect a different branch the checkout has since left. Show a neutral
         # placeholder and let the live check confirm.
         if from_cache and status != "up_to_date":
-            msg.update("[dim]Checking for updates…[/dim]")
+            self._set_message("[dim]Checking for updates…[/dim]")
+            self.sync_visibility()
             return
+        if self._on_result is not None:
+            self._on_result(result)
         btn.display = False
         self.query_one("#update-branch").display = False
         if status == "up_to_date":
             date = result.get("date", "")
-            date_suffix = f"  [dim]{date}[/dim]" if date else ""
-            msg.update(
-                f"[green bold]✓ Latest version[/green bold]  "
-                f"[dim]{result['hash']}[/dim]{date_suffix}"
+            date_suffix = f"  [{_VERSION_METADATA_STYLE}]{date}[/]" if date else ""
+            self._set_message(
+                f"[{_VERSION_STATUS_STYLE}]✓ Latest version[/]  "
+                f"[{_VERSION_METADATA_STYLE}]{result['hash']}[/]{date_suffix}"
             )
         elif status == "behind":
             count = result.get("behind_count")
             subject = result.get("subject", "")
             count_str = f" ({count})" if count else ""
             subject_line = f"\n[dim]· {subject}[/dim]" if subject else ""
-            msg.update(
+            summary = (
                 f"[yellow bold]⬆ Update available{count_str}[/yellow bold]  "
                 f"[dim]{result['local']} → {result['remote']}[/dim]"
-                f"{subject_line}"
+            )
+            self._set_message(
+                f"[yellow bold]⬆ Update available{count_str}[/yellow bold]  "
+                f"[dim]{result['local']} → {result['remote']}[/dim]"
+                f"{subject_line}",
+                summary=summary,
             )
             btn.display = True
             branch = result.get("branch")
@@ -111,31 +151,35 @@ class UpdatePanel(Widget):
                 )
                 branch_row.display = True
         elif status == "no_upstream":
-            msg.update("[dim]branch has no upstream — updates not tracked[/dim]")
+            self._set_message("[dim]branch has no upstream — updates not tracked[/dim]")
         elif status == "no_git":
-            msg.update("[dim]git not found — cannot check for updates[/dim]")
+            self._set_message("[dim]git not found — cannot check for updates[/dim]")
         else:
-            msg.update("[dim]⚠ Could not reach remote[/dim]")
+            self._set_message("[dim]⚠ Could not reach remote[/dim]")
+        self.sync_visibility()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "btn-pull":
             event.stop()
             self.query_one("#btn-pull").display = False
             self.query_one("#update-branch").display = False
-            self.query_one("#update-msg", Static).update("[yellow]Pulling…[/yellow]")
+            self._set_message("[yellow]Pulling…[/yellow]")
+            self.sync_visibility()
             self.run_worker(self._pull, thread=True, exclusive=True)
 
     def _pull(self) -> None:
         ok, output = do_git_pull()
 
         def _done() -> None:
-            msg = self.query_one("#update-msg", Static)
             if ok:
-                msg.update(
+                self._set_message(
                     "[green]✓ Pulled — restart the wizard to apply changes[/green]"
                 )
             else:
-                msg.update(f"[red]✗ Pull failed:[/red] [dim]{output[:120]}[/dim]")
+                self._set_message(
+                    f"[red]✗ Pull failed:[/red] [dim]{output[:120]}[/dim]"
+                )
                 self.query_one("#btn-pull").display = True
+            self.sync_visibility()
 
         self.app.call_from_thread(_done)

@@ -26,6 +26,7 @@ _rich_datas, _rich_binaries, _rich_hidden = collect_all("rich")
 
 datas = [
     (str(REPO_ROOT / "global"), "global"),
+    (str(REPO_ROOT / "setup" / "src" / "cabal" / "assets"), "cabal/assets"),
     (str(REPO_ROOT / "setup" / "env"), "setup/env"),
     (str(REPO_ROOT / "setup" / "mcp-templates.json"), "setup"),
     (str(REPO_ROOT / "README.md"), "."),
@@ -77,6 +78,7 @@ hiddenimports = [
     "cabal.widgets.claude_stats_panel",
     "cabal.widgets.disable_scope_modal",
     "cabal.widgets.env_panel",
+    "cabal.widgets.logo",
     "cabal.widgets.update_panel",
     "cabal.views",
     "cabal.views.env",

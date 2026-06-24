@@ -1,6 +1,16 @@
-# cabal
+![Cabal header: pink elephant logo beside the Cabal wordmark](https://raw.githubusercontent.com/dwcy/prompt-lib/main/docs/assets/cabal-header.png)
 
-**Local agent control panel.** Cabal is the control room for a machine's Claude Code and Codex setup: it deploys [prompt-lib](https://github.com/dwcy/prompt-lib)'s `global/` tree into `~/.claude/`, manages MCP servers via `claude mcp`, scaffolds `.claude/` in other projects, and manages curated Codex assets from `global/codex/`.
+# Cabal
+
+**Agentic development configuration in one place.** Cabal is the local control
+panel for a machine's Claude Code and Codex setup. Use it to deploy global agent
+configuration, check setup drift, restore backups, manage MCP connections,
+initialize environment variables, scaffold local project configuration, install
+companion CLIs, and manage curated Codex assets.
+
+Cabal is built for repeated local operations: it opens directly into useful
+controls, keeps version/update state visible, and gives agent-heavy projects one
+place to manage the configuration they depend on.
 
 ## Install
 

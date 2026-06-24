@@ -53,7 +53,7 @@ class FileViewerModal(ModalScreen):
         width: 90%;
         height: 90%;
         background: $surface;
-        border: round $accent;
+        border: round #CC006B;
         padding: 1 2;
     }
     FileViewerModal #fv-title {
