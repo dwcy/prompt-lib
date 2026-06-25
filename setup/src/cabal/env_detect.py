@@ -206,6 +206,11 @@ def _opencode_status() -> str | None:
     return None
 
 
+def _has_copilot_cli() -> bool:
+    """Return True only for the current GitHub Copilot CLI executable."""
+    return shutil.which("copilot") is not None
+
+
 def _has_desktop_command_or_path(command: str, windows_paths: list[str], mac_app: str) -> bool:
     if shutil.which(command):
         return True
@@ -302,8 +307,7 @@ def detect_env() -> dict:
         "skills": shutil.which("skills") is not None,
         "cursor": shutil.which("cursor") is not None,
         "windsurf": shutil.which("windsurf") is not None,
-        "copilot": shutil.which("copilot") is not None
-        or shutil.which("gh-copilot") is not None,
+        "copilot": _has_copilot_cli(),
         "antigravity": shutil.which("antigravity") is not None,
         "vllm": _probe_version("vllm", "--version")
         or (shutil.which("vllm") is not None),

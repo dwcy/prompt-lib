@@ -40,6 +40,18 @@ def test_source_required_tools_disable_automation():
     assert definition.automation_enabled is False
 
 
+def test_copilot_entry_targets_current_github_copilot_cli():
+    definition = get_tool_definition("copilot")
+
+    assert definition is not None
+    assert definition.label == "GitHub Copilot CLI"
+    assert definition.source_url == "https://github.com/github/copilot-cli"
+    assert "gh-copilot" not in definition.description
+    installer = tools._installer_for("copilot")
+    assert installer is not None
+    assert installer[0] == "GitHub Copilot CLI"
+
+
 def test_requested_tools_are_in_expected_categories():
     groups = dict(tools.ENV_TOOL_GROUPS)
 

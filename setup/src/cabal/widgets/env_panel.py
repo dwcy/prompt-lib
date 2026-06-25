@@ -432,7 +432,7 @@ class EnvPanel(Widget):
             ("Codex CLI", "codex"),
             ("OpenCode", "opencode"),
             ("Grok", "grok"),
-            ("Copilot", "copilot"),
+            ("Copilot CLI", "copilot"),
             ("Vercel Skills CLI", "skills"),
         ):
             self._mount_present(clis, label, env.get(key, False))

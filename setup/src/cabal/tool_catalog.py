@@ -218,7 +218,7 @@ TOOL_DEFINITIONS: tuple[ToolDefinition, ...] = (
     _t("gemini", "Gemini CLI", "AI CLIs", "Google Gemini command-line interface for AI-assisted development.", "https://github.com/google-gemini/gemini-cli"),
     _t("codex", "Codex CLI", "AI CLIs", "OpenAI Codex command-line interface for local coding workflows.", "https://github.com/openai/codex"),
     _t("grok", "Grok CLI", "AI CLIs", "xAI/Grok-related CLI entry for terminal AI workflows.", "https://github.com/superagent-ai/vibekit/tree/main/clients/grok-cli"),
-    _t("copilot", "Copilot", "AI CLIs", "GitHub Copilot CLI extension for terminal explanations and suggestions.", "https://github.com/github/gh-copilot"),
+    _t("copilot", "GitHub Copilot CLI", "AI CLIs", "Official GitHub Copilot agentic command-line assistant for coding workflows.", "https://github.com/github/copilot-cli"),
     _t("skills", "Vercel Skills CLI", "AI CLIs", "Agent skills CLI for installing reusable skills across AI agents.", "https://www.skills.sh/"),
     _t("vercel-plugin", "Vercel Plugin", "AI CLIs", "Vercel Claude Code plugin with Vercel-specific skills and agents.", "https://github.com/vercel/vercel-plugin"),
     _t("ollama", "Ollama", "Local AI", "Local model runner for downloading and serving open models on your machine.", "https://ollama.com/"),

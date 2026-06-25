@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""AI CLI installers — Gemini, Codex, OpenCode, Grok, Copilot, Antigravity, Ollama."""
+"""AI CLI installers — Gemini, Codex, OpenCode, Grok, Copilot CLI, Antigravity, Ollama."""
 
 from __future__ import annotations
 
@@ -50,14 +50,19 @@ def grok_install() -> tuple[bool, str]:
 
 
 def copilot_install() -> tuple[bool, str]:
-    # Best path is the `gh` extension — needs gh CLI to be installed and authenticated.
-    if not shutil.which("gh"):
-        return (
-            False,
-            "gh CLI not found - install GitHub CLI first, then run "
-            "`gh extension install github/gh-copilot`",
-        )
-    return _run_install(["gh", "extension", "install", "github/gh-copilot"])
+    """Install the current GitHub Copilot CLI, not the deprecated gh extension."""
+    sysname = platform.system()
+    if sysname == "Windows" and shutil.which("winget"):
+        return _run_install(["winget", "install", "--id", "GitHub.Copilot", *_WINGET_FLAGS])
+    if sysname in {"Darwin", "Linux"} and shutil.which("brew"):
+        return _run_install(["brew", "install", "copilot-cli"])
+    if shutil.which("npm"):
+        return _npm_global_install("@github/copilot")
+    return (
+        False,
+        "Install GitHub Copilot CLI manually from https://github.com/github/copilot-cli "
+        "or install winget, brew, or npm first.",
+    )
 
 
 def antigravity_install() -> tuple[bool, str]:

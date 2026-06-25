@@ -24,6 +24,7 @@ from typing import Callable
 
 from cabal.env_detect import (
     _kubectl_version,
+    _has_copilot_cli,
     _has_lm_studio,
     _opencode_status,
     _probe_version,
@@ -138,6 +139,7 @@ WINGET_IDS: dict[str, str] = {
     "dbeaver": "dbeaver.dbeaver",
     "postman": "Postman.Postman",
     "hugo": "Hugo.Hugo.Extended",
+    "copilot": "GitHub.Copilot",
 }
 
 
@@ -215,10 +217,7 @@ def _probe_key(key: str) -> object:
     if key == "uvicorn":
         return _probe_version("uvicorn", "--version")
     if key == "copilot":
-        return (
-            shutil.which("copilot") is not None
-            or shutil.which("gh-copilot") is not None
-        )
+        return _has_copilot_cli()
     if key == "vscode":
         return shutil.which("code") is not None
     if key == "vercel-plugin":
@@ -303,6 +302,7 @@ def _npm_latest_version(package: str, timeout: float = 5.0) -> str | None:
 
 
 CLAUDE_CLI_PACKAGE = "@anthropic-ai/claude-code"
+COPILOT_CLI_PACKAGE = "@github/copilot"
 SKILLS_PACKAGE = "skills"
 
 
@@ -383,6 +383,8 @@ def _outdated_packages() -> set[str]:
         result.add("claude")
     if _npm_cli_outdated("skills", SKILLS_PACKAGE):
         result.add("skills")
+    if _npm_cli_outdated("copilot", COPILOT_CLI_PACKAGE):
+        result.add("copilot")
     return result
 
 
