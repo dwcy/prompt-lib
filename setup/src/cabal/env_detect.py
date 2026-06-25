@@ -154,6 +154,69 @@ def _has_visual_studio() -> bool:
     return r.returncode == 0 and bool(r.stdout.strip())
 
 
+def _path_exists_any(paths: list[Path]) -> bool:
+    return any(path.exists() for path in paths)
+
+
+def _has_lm_studio() -> bool:
+    if shutil.which("lms"):
+        return True
+    sysname = platform.system()
+    home = Path.home()
+    if sysname == "Windows":
+        return _path_exists_any(
+            [
+                home / "AppData/Local/Programs/LM Studio/LM Studio.exe",
+                Path("C:/Program Files/LM Studio/LM Studio.exe"),
+            ]
+        )
+    if sysname == "Darwin":
+        return Path("/Applications/LM Studio.app").exists()
+    if sysname == "Linux":
+        return shutil.which("lm-studio") is not None
+    return False
+
+
+def _has_opencode_desktop() -> bool:
+    sysname = platform.system()
+    home = Path.home()
+    if sysname == "Windows":
+        return _path_exists_any(
+            [
+                home / "AppData/Local/Programs/OpenCode/OpenCode.exe",
+                Path("C:/Program Files/OpenCode/OpenCode.exe"),
+            ]
+        )
+    if sysname == "Darwin":
+        return Path("/Applications/OpenCode.app").exists()
+    if sysname == "Linux":
+        return shutil.which("opencode-desktop") is not None
+    return False
+
+
+def _opencode_status() -> str | None:
+    cli = shutil.which("opencode") is not None
+    app = _has_opencode_desktop()
+    if cli and app:
+        return "CLI and desktop app"
+    if cli:
+        return "CLI installed; desktop app not detected"
+    if app:
+        return "desktop app installed; CLI missing"
+    return None
+
+
+def _has_desktop_command_or_path(command: str, windows_paths: list[str], mac_app: str) -> bool:
+    if shutil.which(command):
+        return True
+    sysname = platform.system()
+    if sysname == "Windows":
+        return _path_exists_any([Path(path) for path in windows_paths])
+    if sysname == "Darwin":
+        return Path(f"/Applications/{mac_app}.app").exists()
+    return False
+
+
 def _ollama_models() -> list[str]:
     """Return locally installed Ollama model names (empty list if none or unavailable)."""
     ollama = shutil.which("ollama")
@@ -232,7 +295,9 @@ def detect_env() -> dict:
         "aws": _probe_version("aws", "--version"),
         "gemini": shutil.which("gemini") is not None,
         "codex": shutil.which("codex") is not None,
-        "opencode": shutil.which("opencode") is not None,
+        "opencode": _opencode_status() is not None,
+        "opencode_cli": shutil.which("opencode") is not None,
+        "opencode_app": _has_opencode_desktop(),
         "grok": shutil.which("grok") is not None,
         "skills": shutil.which("skills") is not None,
         "cursor": shutil.which("cursor") is not None,
@@ -246,11 +311,29 @@ def detect_env() -> dict:
         "rider": _has_rider(),
         "visualstudio": _has_visual_studio(),
         "ollama": shutil.which("ollama") is not None,
+        "lm-studio": _has_lm_studio(),
+        "hermes-agent": False,
         "ollama_models": _ollama_models(),
         "sqlcmd": shutil.which("sqlcmd") is not None,
         "psql": shutil.which("psql") is not None,
         "supabase": shutil.which("supabase") is not None,
         "neonctl": shutil.which("neonctl") is not None,
+        "sqlite": shutil.which("sqlite3") is not None,
+        "duckdb": shutil.which("duckdb") is not None,
+        "zed": shutil.which("zed") is not None,
+        "postman": _has_desktop_command_or_path(
+            "postman",
+            [
+                "C:/Users/Public/AppData/Local/Postman/Postman.exe",
+                str(Path.home() / "AppData/Local/Postman/Postman.exe"),
+            ],
+            "Postman",
+        ),
+        "hugo": _probe_version("hugo", "version"),
+        "uvicorn": _probe_version("uvicorn", "--version"),
+        "dbeaver": shutil.which("dbeaver") is not None,
+        "ssms": platform.system() == "Windows"
+        and Path("C:/Program Files (x86)/Microsoft SQL Server Management Studio").exists(),
         "target_exists": TARGET.exists(),
     }
 

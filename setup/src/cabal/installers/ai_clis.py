@@ -21,6 +21,29 @@ def opencode_install() -> tuple[bool, str]:
     return _npm_global_install("opencode-ai")
 
 
+def lm_studio_install() -> tuple[bool, str]:
+    sysname = platform.system()
+    if sysname == "Windows":
+        if shutil.which("winget"):
+            return _run_install(["winget", "install", "--id", "LMStudio.LMStudio", *_WINGET_FLAGS])
+        return False, "Install manually from https://lmstudio.ai/"
+    if sysname == "Darwin":
+        if shutil.which("brew"):
+            return _run_install(["brew", "install", "--cask", "lm-studio"])
+        return False, "Install manually from https://lmstudio.ai/"
+    if sysname == "Linux":
+        return False, "Download the Linux AppImage or package from https://lmstudio.ai/"
+    return False, f"Unsupported platform: {sysname}"
+
+
+def hermes_agent_install() -> tuple[bool, str]:
+    return (
+        False,
+        "Hermes Agent install is source-gated. Configure a trusted official "
+        "source URL and install channel before enabling automation.",
+    )
+
+
 def grok_install() -> tuple[bool, str]:
     # xAI's Grok CLI ships via npm.
     return _npm_global_install("@vibe-kit/grok-cli")
