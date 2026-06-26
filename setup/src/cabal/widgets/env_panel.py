@@ -411,6 +411,7 @@ class EnvPanel(Widget):
         self._mount_installed(pkg_mgrs, "npm", env["npm"])
         self._mount_installed(pkg_mgrs, "pnpm", env["pnpm"])
         self._mount_installed(pkg_mgrs, "bun", env["bun"])
+        self._mount_installed(pkg_mgrs, "uv", env["uv"])
 
         # Row 3 — containers, orchestration, IaC, cloud CLIs (only installed)
         self._mount_installed(infra, "Docker", _short_docker_version(env["docker"]))

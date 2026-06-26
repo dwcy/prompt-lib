@@ -106,6 +106,7 @@ _FAKE_ENV: dict = {
     "npm": "10.0.0",
     "pnpm": None,
     "bun": None,
+    "uv": None,
     "dotnet": None,
     "dotnet_sdks": [],
     "docker": None,

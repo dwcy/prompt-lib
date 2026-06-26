@@ -217,9 +217,10 @@ class ToolsScreen(Screen):
                         label, _fn = meta
                         definition = get_tool_definition(key)
                         unavailable = _tool_unavailable_reason(key) is not None
+                        display_label = self._display_label(label, definition)
                         with Vertical(classes="tool-row", id=f"tool-row-{key}"):
                             with Horizontal(classes="tool-row-head"):
-                                yield Static(f"[white]{label}[/]", classes="tool-name", id=f"tool-name-{key}")
+                                yield Static(display_label, classes="tool-name", id=f"tool-name-{key}")
                                 yield Static(
                                     "", classes="tool-state", id=f"tool-state-{key}"
                                 )
@@ -265,6 +266,16 @@ class ToolsScreen(Screen):
 
     def on_mount(self) -> None:
         self._refresh()
+
+    @staticmethod
+    def _display_label(label: str, definition: object | None) -> str:
+        badges = getattr(definition, "badges", ()) if definition is not None else ()
+        if not badges:
+            return f"[white]{escape_markup(label)}[/]"
+        rendered = " ".join(
+            f"[bright_green]{escape_markup(f'[{badge}]')}[/]" for badge in badges
+        )
+        return f"[white]{escape_markup(label)}[/] {rendered}"
 
     def action_refresh(self) -> None:
         self._refresh()

@@ -64,6 +64,18 @@ def test_huggingface_entry_targets_current_hf_cli():
     assert installer[0] == "Hugging Face CLI"
 
 
+def test_uv_entry_is_recommended_package_manager():
+    definition = get_tool_definition("uv")
+
+    assert definition is not None
+    assert definition.label == "uv"
+    assert definition.badges == ("recommended",)
+    assert definition.source_url == "https://docs.astral.sh/uv/"
+    installer = tools._installer_for("uv")
+    assert installer is not None
+    assert installer[0] == "uv"
+
+
 def test_requested_tools_are_in_expected_categories():
     groups = dict(tools.ENV_TOOL_GROUPS)
 
@@ -73,6 +85,7 @@ def test_requested_tools_are_in_expected_categories():
     assert {"ssms", "dbeaver"} <= set(groups["Database Clients"])
     assert {"azure-sql-local", "cosmos-db-emulator", "azurite"} <= set(groups["Azure Local Tools"])
     assert {"postman", "hugo", "uvicorn"} <= set(groups["Developer Tools"])
+    assert "uv" in set(groups["Package Managers"])
 
 
 def test_existing_tools_are_not_dropped():
@@ -85,6 +98,7 @@ def test_existing_tools_are_not_dropped():
         "npm",
         "pnpm",
         "bun",
+        "uv",
         "docker",
         "podman",
         "kubectl",

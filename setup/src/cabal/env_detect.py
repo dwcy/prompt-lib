@@ -294,6 +294,7 @@ def detect_env() -> dict:
         "npm": _probe_version("npm", "--version"),
         "pnpm": _probe_version("pnpm", "--version"),
         "bun": _probe_version("bun", "--version"),
+        "uv": _probe_version("uv", "--version"),
         "dotnet": _probe_version("dotnet", "--version"),
         "dotnet_sdks": _dotnet_sdks(),
         "docker": _probe_version("docker", "--version"),

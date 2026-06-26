@@ -99,6 +99,7 @@ from cabal.installers.runtimes import (
 )
 from cabal.installers.skills import skills_install, skills_status
 from cabal.installers.specify import specify_install, specify_status
+from cabal.installers.uv import uv_install
 from cabal.installers.vcs import git_install
 from cabal.installers.vercel_plugin import vercel_plugin_install, vercel_plugin_status
 from cabal.tool_catalog import (
@@ -119,6 +120,7 @@ WINGET_IDS: dict[str, str] = {
     "node": "OpenJS.NodeJS.LTS",
     "pnpm": "pnpm.pnpm",
     "bun": "Oven-sh.Bun",
+    "uv": "astral-sh.uv",
     "docker": "Docker.DockerDesktop",
     "podman": "RedHat.Podman",
     "kubectl": "Kubernetes.kubectl",
@@ -161,6 +163,8 @@ def _probe_key(key: str) -> object:
         return _probe_version("pnpm", "--version")
     if key == "bun":
         return _probe_version("bun", "--version")
+    if key == "uv":
+        return _probe_version("uv", "--version")
     if key == "docker":
         return _probe_version("docker", "--version")
     if key == "podman":
@@ -402,6 +406,7 @@ INSTALLER_FUNCTIONS: dict[str, Callable[[], tuple[bool, str]]] = {
     "npm": npm_install,
     "pnpm": pnpm_install,
     "bun": bun_install,
+    "uv": uv_install,
     "docker": docker_install,
     "podman": podman_install,
     "kubectl": kubectl_install,

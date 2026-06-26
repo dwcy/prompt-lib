@@ -61,6 +61,7 @@ class ToolDefinition:
     platforms: tuple[str, ...] = (PlatformSupport.ALL.value,)
     version_provider: str | None = None
     backup_policy: str | None = None
+    badges: tuple[str, ...] = ()
     secret_policy: str = "redact"
 
     @property
@@ -113,6 +114,7 @@ def _t(
     platforms: tuple[str, ...] = (PlatformSupport.ALL.value,),
     version_provider: str | None = None,
     backup_policy: str | None = None,
+    badges: tuple[str, ...] = (),
     source_label: str = "Read more",
 ) -> ToolDefinition:
     return ToolDefinition(
@@ -129,13 +131,14 @@ def _t(
         platforms=platforms,
         version_provider=version_provider,
         backup_policy=backup_policy,
+        badges=badges,
     )
 
 
 TOOL_CATEGORIES: tuple[ToolCategory, ...] = (
     ToolCategory("System & VCS", "system-vcs", ("git", "gh")),
     ToolCategory("Runtimes", "runtimes", ("python", "dotnet", "node")),
-    ToolCategory("Package Managers", "package-managers", ("npm", "pnpm", "bun")),
+    ToolCategory("Package Managers", "package-managers", ("npm", "pnpm", "bun", "uv")),
     ToolCategory(
         "Container & Cloud",
         "container-cloud",
@@ -189,6 +192,7 @@ TOOL_DEFINITIONS: tuple[ToolDefinition, ...] = (
     _t("npm", "npm", "Package Managers", "Node package manager used to install global JavaScript CLIs.", "https://www.npmjs.com/", version_provider="npm", backup_policy="npm"),
     _t("pnpm", "pnpm", "Package Managers", "Fast disk-efficient package manager for Node projects.", "https://pnpm.io/", version_provider="pnpm", backup_policy="pnpm"),
     _t("bun", "bun", "Package Managers", "Fast JavaScript runtime, test runner, bundler, and package manager.", "https://bun.sh/", version_provider="bun", backup_policy="bun"),
+    _t("uv", "uv", "Package Managers", "Fast Python package manager, project manager, and tool runner recommended for Python CLIs.", "https://docs.astral.sh/uv/", badges=("recommended",)),
     _t("docker", "Docker", "Container & Cloud", "Container runtime used for local database and service installs.", "https://www.docker.com/products/docker-desktop/"),
     _t("podman", "Podman", "Container & Cloud", "Daemonless container engine alternative used for local service installs.", "https://podman.io/"),
     _t("kubectl", "kubectl", "Container & Cloud", "Kubernetes CLI for managing clusters and local kube contexts.", "https://kubernetes.io/docs/tasks/tools/"),
