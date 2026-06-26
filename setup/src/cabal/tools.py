@@ -24,6 +24,10 @@ from typing import Callable
 
 from cabal.env_detect import (
     _kubectl_version,
+    _has_copilot_cli,
+    _has_huggingface_cli,
+    _has_lm_studio,
+    _opencode_status,
     _probe_version,
     _has_rider,
     _has_visual_studio,
@@ -34,6 +38,9 @@ from cabal.installers.ai_clis import (
     copilot_install,
     gemini_install,
     grok_install,
+    hermes_agent_install,
+    huggingface_install,
+    lm_studio_install,
     ollama_install,
     opencode_install,
     vllm_install,
@@ -42,15 +49,29 @@ from cabal.installers.cdt import cdt_install, cdt_status
 from cabal.installers.claude_cli import claude_cli_install, claude_cli_status
 from cabal.installers.cloud import (
     aws_install,
+    azure_sql_local_install,
+    azurite_install,
     az_install,
+    cosmos_db_emulator_install,
     gcloud_install,
     terraform_install,
 )
 from cabal.installers.databases import (
+    container_database_status,
+    dbeaver_install,
+    duckdb_install,
+    mariadb_install,
     neon_install,
     postgres_install,
+    qdrant_install,
+    redis_install,
+    sqlite_install,
+    ssms_install,
     sqlcmd_install,
     supabase_install,
+    turso_libsql_install,
+    weaviate_install,
+    milvus_install,
 )
 from cabal.installers.containers import (
     docker_install,
@@ -58,7 +79,15 @@ from cabal.installers.containers import (
     openshift_install,
     podman_install,
 )
-from cabal.installers.editors import cursor_install, vscode_install, windsurf_install
+from cabal.installers.devtools import hugo_install, postman_install, uvicorn_install
+from cabal.installers.editors import (
+    cursor_install,
+    rider_install,
+    visualstudio_install,
+    vscode_install,
+    windsurf_install,
+    zed_install,
+)
 from cabal.installers.gh import gh_install, gh_status
 from cabal.installers.runtimes import (
     bun_install,
@@ -70,8 +99,16 @@ from cabal.installers.runtimes import (
 )
 from cabal.installers.skills import skills_install, skills_status
 from cabal.installers.specify import specify_install, specify_status
+from cabal.installers.uv import uv_install
 from cabal.installers.vcs import git_install
 from cabal.installers.vercel_plugin import vercel_plugin_install, vercel_plugin_status
+from cabal.tool_catalog import (
+    InstallChannel,
+    SourceStatus,
+    all_tool_definitions,
+    category_groups,
+    get_tool_definition,
+)
 
 # Maps env keys → winget package IDs (mirrors the install fns above). Used to spot
 # upgrade availability via `winget upgrade`. macOS/Linux outdated-checks are best-effort
@@ -83,6 +120,7 @@ WINGET_IDS: dict[str, str] = {
     "node": "OpenJS.NodeJS.LTS",
     "pnpm": "pnpm.pnpm",
     "bun": "Oven-sh.Bun",
+    "uv": "astral-sh.uv",
     "docker": "Docker.DockerDesktop",
     "podman": "RedHat.Podman",
     "kubectl": "Kubernetes.kubectl",
@@ -97,6 +135,15 @@ WINGET_IDS: dict[str, str] = {
     "vscode": "Microsoft.VisualStudioCode",
     "gh": "GitHub.cli",
     "sqlcmd": "Microsoft.Sqlcmd",
+    "lm-studio": "LMStudio.LMStudio",
+    "zed": "Zed.Zed",
+    "rider": "JetBrains.Rider",
+    "visualstudio": "Microsoft.VisualStudio.2022.Community",
+    "ssms": "Microsoft.SQLServerManagementStudio",
+    "dbeaver": "dbeaver.dbeaver",
+    "postman": "Postman.Postman",
+    "hugo": "Hugo.Hugo.Extended",
+    "copilot": "GitHub.Copilot",
 }
 
 
@@ -116,6 +163,8 @@ def _probe_key(key: str) -> object:
         return _probe_version("pnpm", "--version")
     if key == "bun":
         return _probe_version("bun", "--version")
+    if key == "uv":
+        return _probe_version("uv", "--version")
     if key == "docker":
         return _probe_version("docker", "--version")
     if key == "podman":
@@ -132,15 +181,51 @@ def _probe_key(key: str) -> object:
         return _probe_version("gcloud", "--version")
     if key == "aws":
         return _probe_version("aws", "--version")
+    if key == "huggingface":
+        return _probe_version("hf", "version") or _has_huggingface_cli()
+    if key == "lm-studio":
+        return _has_lm_studio()
+    if key == "opencode":
+        return _opencode_status()
+    if key == "hermes-agent":
+        return False
+    if key == "zed":
+        return shutil.which("zed") is not None
     if key == "rider":
         return _has_rider()
     if key == "visualstudio":
         return _has_visual_studio()
+    if key == "ssms":
+        if platform.system() != "Windows":
+            return False
+        return shutil.which("ssms") is not None or shutil.which("Ssms") is not None
+    if key == "dbeaver":
+        return shutil.which("dbeaver") is not None
+    if key == "sqlite":
+        return _probe_version("sqlite3", "--version")
+    if key == "duckdb":
+        return _probe_version("duckdb", "--version")
+    if key in {
+        "redis",
+        "mariadb",
+        "turso-libsql",
+        "qdrant",
+        "weaviate",
+        "milvus",
+        "azure-sql-local",
+        "azurite",
+    }:
+        return container_database_status(key)
+    if key == "cosmos-db-emulator":
+        return platform.system() == "Windows" and shutil.which("Microsoft.Azure.Cosmos.Emulator") is not None
+    if key == "postman":
+        return shutil.which("postman") is not None
+    if key == "hugo":
+        return _probe_version("hugo", "version")
+    if key == "uvicorn":
+        return _probe_version("uvicorn", "--version")
     if key == "copilot":
-        return (
-            shutil.which("copilot") is not None
-            or shutil.which("gh-copilot") is not None
-        )
+        return _has_copilot_cli()
     if key == "vscode":
         return shutil.which("code") is not None
     if key == "vercel-plugin":
@@ -156,6 +241,20 @@ def _tool_unavailable_reason(key: str) -> str | None:
     """Return why a tool is visible but intentionally not installable here."""
     if key == "vllm" and platform.system() != "Linux":
         return "Linux only - use WSL2 or a Linux Docker host for vLLM."
+    definition = get_tool_definition(key)
+    if definition is not None:
+        if not definition.supports_current_platform:
+            platforms = ", ".join(definition.platforms)
+            return f"Supported on {platforms}; current platform is {platform.system()}."
+        if definition.source_status == SourceStatus.MANUAL_REQUIRED:
+            return "Source confirmation required before automated install can be enabled."
+        if definition.source_status == SourceStatus.UNAVAILABLE:
+            return "Source link unavailable; install automation is disabled."
+        if not definition.automation_enabled and definition.install_channel in {
+            InstallChannel.MANUAL,
+            InstallChannel.NONE,
+        }:
+            return "Manual setup required; use Read more for official guidance."
     return None
 
 
@@ -211,6 +310,7 @@ def _npm_latest_version(package: str, timeout: float = 5.0) -> str | None:
 
 
 CLAUDE_CLI_PACKAGE = "@anthropic-ai/claude-code"
+COPILOT_CLI_PACKAGE = "@github/copilot"
 SKILLS_PACKAGE = "skills"
 
 
@@ -291,74 +391,82 @@ def _outdated_packages() -> set[str]:
         result.add("claude")
     if _npm_cli_outdated("skills", SKILLS_PACKAGE):
         result.add("skills")
+    if _npm_cli_outdated("copilot", COPILOT_CLI_PACKAGE):
+        result.add("copilot")
     return result
 
 
-# Maps env-panel keys to (install fn, button label). Order here determines button order.
+# Maps catalog installer keys to callables. Labels and grouping come from
+# cabal.tool_catalog so descriptions/source metadata stay in one place.
+INSTALLER_FUNCTIONS: dict[str, Callable[[], tuple[bool, str]]] = {
+    "git": git_install,
+    "python": python_install,
+    "dotnet": dotnet_install,
+    "node": node_install,
+    "npm": npm_install,
+    "pnpm": pnpm_install,
+    "bun": bun_install,
+    "uv": uv_install,
+    "docker": docker_install,
+    "podman": podman_install,
+    "kubectl": kubectl_install,
+    "oc": openshift_install,
+    "terraform": terraform_install,
+    "az": az_install,
+    "gcloud": gcloud_install,
+    "aws": aws_install,
+    "claude": claude_cli_install,
+    "gemini": gemini_install,
+    "huggingface": huggingface_install,
+    "codex": codex_install,
+    "opencode": opencode_install,
+    "grok": grok_install,
+    "skills": skills_install,
+    "vercel-plugin": vercel_plugin_install,
+    "cursor": cursor_install,
+    "windsurf": windsurf_install,
+    "copilot": copilot_install,
+    "antigravity": antigravity_install,
+    "vscode": vscode_install,
+    "ollama": ollama_install,
+    "vllm": vllm_install,
+    "gh": gh_install,
+    "sqlcmd": sqlcmd_install,
+    "psql": postgres_install,
+    "supabase": supabase_install,
+    "neonctl": neon_install,
+    "lm-studio": lm_studio_install,
+    "hermes-agent": hermes_agent_install,
+    "zed": zed_install,
+    "rider": rider_install,
+    "visualstudio": visualstudio_install,
+    "ssms": ssms_install,
+    "dbeaver": dbeaver_install,
+    "postman": postman_install,
+    "hugo": hugo_install,
+    "uvicorn": uvicorn_install,
+    "sqlite": sqlite_install,
+    "duckdb": duckdb_install,
+    "redis": redis_install,
+    "mariadb": mariadb_install,
+    "turso-libsql": turso_libsql_install,
+    "qdrant": qdrant_install,
+    "weaviate": weaviate_install,
+    "milvus": milvus_install,
+    "azure-sql-local": azure_sql_local_install,
+    "cosmos-db-emulator": cosmos_db_emulator_install,
+    "azurite": azurite_install,
+}
+
+
 ENV_INSTALLERS: list[tuple[str, str, Callable[[], tuple[bool, str]]]] = [
-    ("git", "Git", git_install),
-    ("python", "Python", python_install),
-    ("dotnet", ".NET SDK", dotnet_install),
-    ("node", "Node", node_install),
-    ("npm", "npm", npm_install),
-    ("pnpm", "pnpm", pnpm_install),
-    ("bun", "bun", bun_install),
-    ("docker", "Docker", docker_install),
-    ("podman", "Podman", podman_install),
-    ("kubectl", "kubectl", kubectl_install),
-    ("oc", "OpenShift CLI", openshift_install),
-    ("terraform", "Terraform", terraform_install),
-    ("az", "Azure CLI", az_install),
-    ("gcloud", "Google Cloud", gcloud_install),
-    ("aws", "AWS CLI", aws_install),
-    ("claude", "Claude CLI", claude_cli_install),
-    ("gemini", "Gemini CLI", gemini_install),
-    ("codex", "Codex CLI", codex_install),
-    ("opencode", "OpenCode", opencode_install),
-    ("grok", "Grok", grok_install),
-    ("skills", "Vercel Skills CLI", skills_install),
-    ("vercel-plugin", "Vercel Plugin", vercel_plugin_install),
-    ("cursor", "Cursor", cursor_install),
-    ("windsurf", "Windsurf", windsurf_install),
-    ("copilot", "Copilot", copilot_install),
-    ("antigravity", "Antigravity", antigravity_install),
-    ("vscode", "VS Code", vscode_install),
-    ("ollama", "Ollama", ollama_install),
-    ("vllm", "vLLM", vllm_install),
-    ("gh", "GitHub", gh_install),
-    ("sqlcmd", "MSSQL", sqlcmd_install),
-    ("psql", "Postgres", postgres_install),
-    ("supabase", "Supabase", supabase_install),
-    ("neonctl", "Neon", neon_install),
+    (tool.key, tool.label, INSTALLER_FUNCTIONS[tool.key])
+    for tool in all_tool_definitions()
+    if tool.key in INSTALLER_FUNCTIONS
 ]
 
 
-# Groups used by ToolsScreen — order = display order, keys reference ENV_INSTALLERS.
-ENV_TOOL_GROUPS: list[tuple[str, list[str]]] = [
-    ("System & VCS", ["git", "gh"]),
-    ("Runtimes", ["python", "dotnet", "node"]),
-    ("Package Managers", ["npm", "pnpm", "bun"]),
-    (
-        "Container & Cloud",
-        ["docker", "podman", "kubectl", "oc", "terraform", "az", "gcloud", "aws"],
-    ),
-    ("Databases", ["sqlcmd", "psql", "supabase", "neonctl"]),
-    (
-        "AI CLIs",
-        [
-            "claude",
-            "gemini",
-            "codex",
-            "opencode",
-            "grok",
-            "copilot",
-            "skills",
-            "vercel-plugin",
-        ],
-    ),
-    ("Local AI", ["ollama", "vllm"]),
-    ("AI Editors", ["cursor", "windsurf", "antigravity", "vscode"]),
-]
+ENV_TOOL_GROUPS: list[tuple[str, list[str]]] = category_groups()
 
 
 def _installer_for(key: str) -> tuple[str, Callable[[], tuple[bool, str]]] | None:

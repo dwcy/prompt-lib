@@ -52,3 +52,52 @@ def vscode_install() -> tuple[bool, str]:
             return _run_install(["sudo", "dnf", "install", "-y", "code"])
         return False, "Install manually from https://code.visualstudio.com"
     return False, f"Unsupported platform: {sysname}"
+
+
+def zed_install() -> tuple[bool, str]:
+    sysname = platform.system()
+    if sysname == "Windows":
+        if shutil.which("winget"):
+            return _run_install(["winget", "install", "--id", "Zed.Zed", *_WINGET_FLAGS])
+        return False, "Install manually from https://zed.dev/"
+    if sysname == "Darwin":
+        if shutil.which("brew"):
+            return _run_install(["brew", "install", "--cask", "zed"])
+        return False, "Install manually from https://zed.dev/"
+    if sysname == "Linux":
+        return False, "Install manually from https://zed.dev/linux"
+    return False, f"Unsupported platform: {sysname}"
+
+
+def rider_install() -> tuple[bool, str]:
+    sysname = platform.system()
+    if sysname == "Windows":
+        if shutil.which("winget"):
+            return _run_install(["winget", "install", "--id", "JetBrains.Rider", *_WINGET_FLAGS])
+        return False, "Install manually from https://www.jetbrains.com/rider/download/"
+    if sysname == "Darwin":
+        if shutil.which("brew"):
+            return _run_install(["brew", "install", "--cask", "rider"])
+        return False, "Install manually from https://www.jetbrains.com/rider/download/"
+    if sysname == "Linux":
+        if shutil.which("snap"):
+            return _run_install(["snap", "install", "rider", "--classic"])
+        return False, "Install manually from https://www.jetbrains.com/rider/download/"
+    return False, f"Unsupported platform: {sysname}"
+
+
+def visualstudio_install() -> tuple[bool, str]:
+    sysname = platform.system()
+    if sysname != "Windows":
+        return False, "Visual Studio is Windows-only. Use Rider or VS Code on this platform."
+    if shutil.which("winget"):
+        return _run_install(
+            [
+                "winget",
+                "install",
+                "--id",
+                "Microsoft.VisualStudio.2022.Community",
+                *_WINGET_FLAGS,
+            ]
+        )
+    return False, "Install manually from https://visualstudio.microsoft.com/"

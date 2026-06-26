@@ -7,6 +7,7 @@ import platform
 import shutil
 
 from cabal.installers._common import _run_install, _WINGET_FLAGS
+from cabal.installers.container_services import install_container_service
 
 
 def terraform_install() -> tuple[bool, str]:
@@ -84,3 +85,32 @@ def aws_install() -> tuple[bool, str]:
             return _run_install(["sudo", "dnf", "install", "-y", "awscli"])
         return False, "See https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-linux.html"
     return False, f"Unsupported platform: {sysname}"
+
+
+def azure_sql_local_install() -> tuple[bool, str]:
+    from cabal.installers.databases import DATABASE_CONTAINER_SPECS
+
+    return install_container_service(DATABASE_CONTAINER_SPECS["azure-sql-local"])
+
+
+def cosmos_db_emulator_install() -> tuple[bool, str]:
+    sysname = platform.system()
+    if sysname == "Windows":
+        if shutil.which("winget"):
+            return _run_install(["winget", "install", "--id", "Microsoft.Azure.CosmosEmulator", *_WINGET_FLAGS])
+        return False, "Install manually from https://learn.microsoft.com/azure/cosmos-db/emulator"
+    return (
+        False,
+        "Cosmos DB Emulator desktop install is Windows-focused. Use the Linux "
+        "container preview or Microsoft emulator docs for this platform.",
+    )
+
+
+def azurite_install() -> tuple[bool, str]:
+    from cabal.installers.databases import DATABASE_CONTAINER_SPECS
+
+    if shutil.which("docker") or shutil.which("podman"):
+        return install_container_service(DATABASE_CONTAINER_SPECS["azurite"])
+    if shutil.which("npm"):
+        return _run_install(["npm", "install", "-g", "azurite"])
+    return False, "Install Docker, Podman, or npm first, then install Azurite."

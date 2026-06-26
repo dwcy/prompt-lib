@@ -15,7 +15,7 @@ def uv_install() -> tuple[bool, str]:
     sysname = platform.system()
     if sysname == "Windows":
         if shutil.which("winget"):
-            return _run_install(["winget", "install", "--id", "astral-sh.uv", *_WINGET_FLAGS])
+            return _run_install(["winget", "install", "--id=astral-sh.uv", *_WINGET_FLAGS])
         return False, "Install uv manually from https://docs.astral.sh/uv/"
     if sysname == "Darwin":
         if shutil.which("brew"):
