@@ -25,6 +25,7 @@ from typing import Callable
 from cabal.env_detect import (
     _kubectl_version,
     _has_copilot_cli,
+    _has_huggingface_cli,
     _has_lm_studio,
     _opencode_status,
     _probe_version,
@@ -38,6 +39,7 @@ from cabal.installers.ai_clis import (
     gemini_install,
     grok_install,
     hermes_agent_install,
+    huggingface_install,
     lm_studio_install,
     ollama_install,
     opencode_install,
@@ -175,6 +177,8 @@ def _probe_key(key: str) -> object:
         return _probe_version("gcloud", "--version")
     if key == "aws":
         return _probe_version("aws", "--version")
+    if key == "huggingface":
+        return _probe_version("hf", "version") or _has_huggingface_cli()
     if key == "lm-studio":
         return _has_lm_studio()
     if key == "opencode":
@@ -408,6 +412,7 @@ INSTALLER_FUNCTIONS: dict[str, Callable[[], tuple[bool, str]]] = {
     "aws": aws_install,
     "claude": claude_cli_install,
     "gemini": gemini_install,
+    "huggingface": huggingface_install,
     "codex": codex_install,
     "opencode": opencode_install,
     "grok": grok_install,

@@ -429,6 +429,7 @@ class EnvPanel(Widget):
         for label, key in (
             ("Claude CLI", "claude"),
             ("Gemini CLI", "gemini"),
+            ("Hugging Face CLI", "huggingface"),
             ("Codex CLI", "codex"),
             ("OpenCode", "opencode"),
             ("Grok", "grok"),

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""AI CLI installers — Gemini, Codex, OpenCode, Grok, Copilot CLI, Antigravity, Ollama."""
+"""AI CLI installers — Gemini, Codex, OpenCode, Grok, Hugging Face, Copilot, Ollama."""
 
 from __future__ import annotations
 
@@ -11,6 +11,24 @@ from cabal.installers._common import _npm_global_install, _run_install, _WINGET_
 
 def gemini_install() -> tuple[bool, str]:
     return _npm_global_install("@google/gemini-cli")
+
+
+def huggingface_install() -> tuple[bool, str]:
+    """Install Hugging Face's current `hf` CLI."""
+    sysname = platform.system()
+    if sysname in {"Darwin", "Linux"} and shutil.which("brew"):
+        return _run_install(["brew", "install", "hf"])
+    if shutil.which("uv"):
+        return _run_install(["uv", "tool", "install", "hf"])
+    if shutil.which("pipx"):
+        return _run_install(["pipx", "install", "hf"])
+    if shutil.which("python"):
+        return _run_install(["python", "-m", "pip", "install", "--user", "huggingface_hub"])
+    return (
+        False,
+        "Install Python, uv, pipx, or Homebrew first, then install the Hugging Face CLI "
+        "from https://huggingface.co/docs/huggingface_hub/en/guides/cli.",
+    )
 
 
 def codex_install() -> tuple[bool, str]:

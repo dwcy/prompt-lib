@@ -52,6 +52,18 @@ def test_copilot_entry_targets_current_github_copilot_cli():
     assert installer[0] == "GitHub Copilot CLI"
 
 
+def test_huggingface_entry_targets_current_hf_cli():
+    definition = get_tool_definition("huggingface")
+
+    assert definition is not None
+    assert definition.label == "Hugging Face CLI"
+    assert definition.source_url == "https://huggingface.co/docs/huggingface_hub/en/guides/cli"
+    assert "`hf` CLI" in definition.description
+    installer = tools._installer_for("huggingface")
+    assert installer is not None
+    assert installer[0] == "Hugging Face CLI"
+
+
 def test_requested_tools_are_in_expected_categories():
     groups = dict(tools.ENV_TOOL_GROUPS)
 
@@ -83,6 +95,7 @@ def test_existing_tools_are_not_dropped():
         "aws",
         "claude",
         "gemini",
+        "huggingface",
         "codex",
         "opencode",
         "grok",

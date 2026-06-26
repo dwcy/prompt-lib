@@ -211,6 +211,11 @@ def _has_copilot_cli() -> bool:
     return shutil.which("copilot") is not None
 
 
+def _has_huggingface_cli() -> bool:
+    """Return True for Hugging Face's current `hf` CLI executable."""
+    return shutil.which("hf") is not None
+
+
 def _has_desktop_command_or_path(command: str, windows_paths: list[str], mac_app: str) -> bool:
     if shutil.which(command):
         return True
@@ -299,6 +304,7 @@ def detect_env() -> dict:
         "gcloud": _probe_version("gcloud", "--version"),
         "aws": _probe_version("aws", "--version"),
         "gemini": shutil.which("gemini") is not None,
+        "huggingface": _has_huggingface_cli(),
         "codex": shutil.which("codex") is not None,
         "opencode": _opencode_status() is not None,
         "opencode_cli": shutil.which("opencode") is not None,

@@ -116,6 +116,7 @@ _FAKE_ENV: dict = {
     "gcloud": None,
     "aws": None,
     "gemini": False,
+    "huggingface": False,
     "codex": False,
     "opencode": False,
     "grok": False,

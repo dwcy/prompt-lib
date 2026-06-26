@@ -168,7 +168,7 @@ TOOL_CATEGORIES: tuple[ToolCategory, ...] = (
     ToolCategory(
         "AI CLIs",
         "ai-clis",
-        ("claude", "gemini", "codex", "grok", "copilot", "skills", "vercel-plugin"),
+        ("claude", "gemini", "huggingface", "codex", "grok", "copilot", "skills", "vercel-plugin"),
     ),
     ToolCategory("Local AI", "local-ai", ("ollama", "vllm", "lm-studio", "opencode", "hermes-agent")),
     ToolCategory(
@@ -216,6 +216,7 @@ TOOL_DEFINITIONS: tuple[ToolDefinition, ...] = (
     _t("azurite", "Azurite", "Azure Local Tools", "Local Azure Storage emulator for Blob, Queue, and Table development.", "https://learn.microsoft.com/azure/storage/common/storage-use-azurite", install_channel=InstallChannel.CONTAINER_SERVICE),
     _t("claude", "Claude CLI", "AI CLIs", "Anthropic Claude Code CLI for agentic coding sessions.", "https://docs.anthropic.com/en/docs/claude-code/overview"),
     _t("gemini", "Gemini CLI", "AI CLIs", "Google Gemini command-line interface for AI-assisted development.", "https://github.com/google-gemini/gemini-cli"),
+    _t("huggingface", "Hugging Face CLI", "AI CLIs", "Official `hf` CLI for Hugging Face Hub auth, uploads, downloads, repos, cache, and skills.", "https://huggingface.co/docs/huggingface_hub/en/guides/cli"),
     _t("codex", "Codex CLI", "AI CLIs", "OpenAI Codex command-line interface for local coding workflows.", "https://github.com/openai/codex"),
     _t("grok", "Grok CLI", "AI CLIs", "xAI/Grok-related CLI entry for terminal AI workflows.", "https://github.com/superagent-ai/vibekit/tree/main/clients/grok-cli"),
     _t("copilot", "GitHub Copilot CLI", "AI CLIs", "Official GitHub Copilot agentic command-line assistant for coding workflows.", "https://github.com/github/copilot-cli"),
