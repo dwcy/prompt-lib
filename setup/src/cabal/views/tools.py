@@ -84,6 +84,7 @@ from cabal.tools import (
 )
 from cabal.tool_catalog import (
     SourceStatus,
+    clean_console_output,
     get_tool_definition,
     redact_secret_text,
 )
@@ -322,7 +323,8 @@ class ToolsScreen(Screen):
                     outdated.add(k)
         except Exception:
             outdated = set()
-        self.app.call_from_thread(self._apply_outdated, outdated)
+        # Refresh only the installed row's update badge, not every installed tool.
+        self.app.call_from_thread(self._apply_outdated_one, key, outdated)
 
     def _apply_one_row(self, key: str, env_subset: dict) -> None:
         try:
@@ -432,22 +434,30 @@ class ToolsScreen(Screen):
 
     def _apply_outdated(self, outdated: set[str]) -> None:
         for key in list(self._installed_keys):
+            self._apply_outdated_one(key, outdated)
+
+    def _apply_outdated_one(self, key: str, outdated: set[str]) -> None:
+        if key not in self._installed_keys:
+            return
+        try:
             state_w = self.query_one(f"#tool-state-{key}", Static)
             btn = self.query_one(f"#tool-install-{key}", Button)
-            detail = self._installed_details.get(key, "")
-            suffix = f" [dim]{escape_markup(redact_secret_text(detail))}[/dim]" if detail else ""
-            if key in outdated:
-                state_w.update(
-                    f"[bright_yellow]⬇ update available[/bright_yellow]{suffix}"
-                )
-                btn.display = True
-                btn.disabled = False
-                btn.label = "Update"
-                btn.add_class("-update")
-            else:
-                state_w.update(f"[bright_green]✓ Latest[/bright_green]{suffix}")
-                btn.display = False
-                btn.remove_class("-update")
+        except Exception:
+            return
+        detail = self._installed_details.get(key, "")
+        suffix = f" [dim]{escape_markup(redact_secret_text(detail))}[/dim]" if detail else ""
+        if key in outdated:
+            state_w.update(
+                f"[bright_yellow]⬇ update available[/bright_yellow]{suffix}"
+            )
+            btn.display = True
+            btn.disabled = False
+            btn.label = "Update"
+            btn.add_class("-update")
+        else:
+            state_w.update(f"[bright_green]✓ Latest[/bright_green]{suffix}")
+            btn.display = False
+            btn.remove_class("-update")
 
     def _tool_state(self, key: str, env: dict) -> tuple[bool, str]:
         """Return (installed, detail) — detail is the version string when known."""
@@ -569,7 +579,7 @@ class ToolsScreen(Screen):
         def _done() -> None:
             self._stop_spinner(button.id)
             mark = "[green bold]✓[/green bold]" if ok else "[red bold]✗[/red bold]"
-            lines = msg.splitlines() if msg else []
+            lines = clean_console_output(msg).splitlines()
             snippet = (
                 escape_markup(redact_secret_text("\n".join(lines[-8:])))
                 if lines

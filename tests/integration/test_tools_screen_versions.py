@@ -2,11 +2,19 @@
 
 from __future__ import annotations
 
+import inspect
+
 import pytest
 from textual.app import App
 from textual.widgets import Select
 
 from cabal.views.tools import ToolsScreen
+
+
+def test_post_install_reload_refreshes_only_the_installed_row():
+    src = inspect.getsource(ToolsScreen._reload_one_worker)
+
+    assert "_apply_outdated_one" in src
 
 
 @pytest.fixture(autouse=True)
