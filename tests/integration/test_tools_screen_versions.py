@@ -37,15 +37,22 @@ async def test_version_selector_renders_for_runtime_tools():
 
 
 @pytest.mark.asyncio
-async def test_version_row_is_a_single_line():
+async def test_version_row_value_is_visible_on_centered_line():
+    from textual.widgets._select import SelectCurrent
+
     app = App()
 
     async with app.run_test() as pilot:
         screen = ToolsScreen()
         await app.push_screen(screen)
         await pilot.pause()
+        row = screen.query_one("#tool-row-node")
+        value = screen.query_one("#tool-version-node", Select).query_one(SelectCurrent)
 
-        assert screen.query_one("#tool-row-node").size.height == 1
+        # Versioned rows are 3 tall; the Select value renders on the middle line,
+        # where the centered name/buttons also sit — visible, not clipped away.
+        assert row.region.height == 3
+        assert value.region.y == row.region.y + 1
 
 
 @pytest.mark.asyncio

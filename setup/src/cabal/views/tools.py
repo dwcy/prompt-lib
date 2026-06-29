@@ -127,10 +127,11 @@ class ToolsScreen(Screen):
     ToolsScreen Select.tool-version {
         width: 28;
         max-width: 28;
-        height: 1;
+        height: 3;
+        align-vertical: middle;
         margin: 0 1 0 0;
     }
-    /* Compact Select drops the border; a background keeps it visible on one line. */
+    /* Compact Select drops the border; a background keeps it visible. */
     ToolsScreen Select.tool-version > SelectCurrent {
         background: #2E3250;
         padding: 0 1;
@@ -140,6 +141,20 @@ class ToolsScreen(Screen):
     }
     ToolsScreen Select.tool-version > SelectCurrent #label {
         color: white;
+    }
+    /* The Select renders its value on its middle row, so versioned rows are 3
+       tall; center every control's content on that middle line so they align. */
+    ToolsScreen .tool-row-versioned { height: 3; }
+    ToolsScreen .tool-row-versioned .tool-name,
+    ToolsScreen .tool-row-versioned .tool-state {
+        height: 3;
+        content-align-vertical: middle;
+    }
+    ToolsScreen .tool-row-versioned Button.tool-install,
+    ToolsScreen .tool-row-versioned Button.tool-source {
+        height: 3;
+        min-height: 3;
+        max-height: 3;
     }
     ToolsScreen Button.tool-source,
     ToolsScreen Button.tool-source:hover,
@@ -220,7 +235,10 @@ class ToolsScreen(Screen):
                         definition = get_tool_definition(key)
                         unavailable = _tool_unavailable_reason(key) is not None
                         display_label = self._display_label(label, definition)
-                        with Horizontal(classes="tool-row", id=f"tool-row-{key}"):
+                        row_classes = "tool-row"
+                        if definition is not None and definition.version_provider:
+                            row_classes += " tool-row-versioned"
+                        with Horizontal(classes=row_classes, id=f"tool-row-{key}"):
                             name = Static(
                                 display_label, classes="tool-name", id=f"tool-name-{key}"
                             )
