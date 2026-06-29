@@ -14,6 +14,7 @@ from cabal.web.api import WebApi
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8765
 ASSET_ROOT = Path(__file__).resolve().parent / "assets"
+BRAND_ASSET_ROOT = Path(__file__).resolve().parents[1] / "assets"
 
 
 class CabalWebServer(ThreadingHTTPServer):
@@ -76,6 +77,12 @@ class CabalWebHandler(BaseHTTPRequestHandler):
         path = self.path.split("?", 1)[0]
         if path in ("", "/"):
             asset = ASSET_ROOT / "index.html"
+        elif path.startswith("/brand/"):
+            requested = path.removeprefix("/brand/")
+            asset = (BRAND_ASSET_ROOT / requested).resolve()
+            if not _is_relative_to(asset, BRAND_ASSET_ROOT):
+                self.send_error(HTTPStatus.NOT_FOUND)
+                return
         else:
             requested = path.lstrip("/")
             asset = (ASSET_ROOT / requested).resolve()
@@ -89,8 +96,10 @@ class CabalWebHandler(BaseHTTPRequestHandler):
         ctype = mimetypes.guess_type(asset.name)[0] or "application/octet-stream"
         if asset.suffix == ".js":
             ctype = "application/javascript"
+        if ctype.startswith("text/") or asset.suffix in {".js", ".json", ".svg"}:
+            ctype = f"{ctype}; charset=utf-8"
         self.send_response(HTTPStatus.OK)
-        self.send_header("Content-Type", f"{ctype}; charset=utf-8")
+        self.send_header("Content-Type", ctype)
         self.send_header("Cache-Control", "no-store")
         self.send_header("Content-Length", str(len(payload)))
         self.end_headers()

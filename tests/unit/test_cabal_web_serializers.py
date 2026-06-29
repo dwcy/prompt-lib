@@ -163,3 +163,29 @@ def test_overview_serializer_degrades_failed_project_health(monkeypatch, tmp_pat
 
     assert any(section["state"] == "error" for section in overview["sections"])
     assert _token() not in json.dumps(overview)
+
+
+def test_overview_serializer_includes_terminal_setup_groups(monkeypatch, tmp_path) -> None:
+    def project_health(_root):
+        return {
+            "git": {"state": AvailabilityState.OK.value},
+            "github": {"state": AvailabilityState.NOT_AUTHED.value},
+            "supabase": {"state": AvailabilityState.NOT_LINKED.value},
+            "vercel": {"state": AvailabilityState.NOT_LINKED.value},
+        }
+
+    monkeypatch.setattr(serializers, "serialize_project_health", project_health)
+    monkeypatch.setattr(serializers, "_tool_unavailable_reason", lambda _key: None)
+
+    overview = serializers.serialize_overview(tmp_path)
+    groups = overview["setup_groups"]
+
+    assert [group["title"] for group in groups] == ["Dev setup", "Repo setup", "Agent setup"]
+    assert all(group["items"] for group in groups)
+    assert any(item["label"] == "Agents" for item in groups[2]["items"])
+    assert [section["title"] for section in overview["terminal_sections"]] == [
+        "Project Dashboard",
+        "Claude Settings (~/.claude)",
+        "OKF Analytics (docs/okf)",
+        "Codex Settings (~/.codex)",
+    ]

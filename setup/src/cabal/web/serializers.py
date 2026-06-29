@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from cabal._paths import CODEX_DIR, GLOBAL_DIR, MCP_TEMPLATES_FILE, TARGET
 from cabal.models.dashboard import (
     AvailabilityState,
     GitHubSection,
@@ -375,6 +376,16 @@ def serialize_overview(project_root: Path, diagnostics: list[dict[str, Any]] | N
             "knowledge_counts": knowledge["counts"],
             "project_health_counts": dict(health_counts),
             "diagnostic_count": len(diagnostics),
+            "setup_groups": _setup_groups(
+                tools=tools,
+                knowledge=knowledge,
+                project_health=project_health,
+                diagnostics=diagnostics,
+            ),
+            "terminal_sections": _terminal_sections(
+                knowledge=knowledge,
+                project_health=project_health,
+            ),
             "sections": sections,
             "diagnostics": diagnostics,
         }
@@ -473,6 +484,256 @@ def _section_summary(title: str, state: str, facts: list[dict[str, str]], hint: 
     if hint:
         return redact_text(hint)
     return f"{title} state: {state}"
+
+
+def _setup_groups(
+    *,
+    tools: dict[str, Any],
+    knowledge: dict[str, Any],
+    project_health: dict[str, Any],
+    diagnostics: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Mirror the terminal home overview as three web menu groups."""
+    categories = tools.get("categories") or []
+    tool_items = tools.get("items") or []
+    project_sections = [
+        project_health.get("git", {}),
+        project_health.get("github", {}),
+        project_health.get("supabase", {}),
+        project_health.get("vercel", {}),
+    ]
+    project_ready = sum(
+        1
+        for section in project_sections
+        if section.get("state") == AvailabilityState.OK.value
+    )
+    agent_counts = _agent_asset_counts()
+    agent_total = sum(agent_counts.values())
+
+    return [
+        {
+            "id": "dev_setup",
+            "title": "Dev setup",
+            "summary": f"{len(tool_items)} tools across {len(categories)} categories",
+            "items": [
+                _setup_item("Tools", len(tool_items), "catalog entries", "ready"),
+                _setup_item("Categories", len(categories), "tool groups", "ready"),
+                _setup_item(
+                    "Diagnostics",
+                    len(diagnostics),
+                    "events",
+                    "ready" if not diagnostics else "warning",
+                ),
+            ],
+        },
+        {
+            "id": "repo_setup",
+            "title": "Repo setup",
+            "summary": f"{project_ready}/4 project services ready",
+            "items": [
+                _setup_item(
+                    "Project dashboard",
+                    f"{project_ready}/4",
+                    "sections ready",
+                    "ready" if project_ready else "unavailable",
+                ),
+                _setup_item(
+                    "Knowledge graph",
+                    "Ready" if knowledge.get("available") else "Missing",
+                    f"{(knowledge.get('counts') or {}).get('nodes', 0)} nodes",
+                    "ready" if knowledge.get("available") else "unavailable",
+                ),
+                _setup_item(
+                    "Relations",
+                    (knowledge.get("counts") or {}).get("edges", 0),
+                    "OKF edges",
+                    "ready" if knowledge.get("available") else "unavailable",
+                ),
+            ],
+        },
+        {
+            "id": "agent_setup",
+            "title": "Agent setup",
+            "summary": f"{agent_total} Claude/Codex assets indexed",
+            "items": [
+                _setup_item(
+                    "Claude config",
+                    "Present" if TARGET.exists() else "Missing",
+                    "~/.claude",
+                    _path_state(TARGET),
+                ),
+                _setup_item("Agents", agent_counts["agents"], "global definitions", "ready"),
+                _setup_item("Skills", agent_counts["skills"], "slash commands", "ready"),
+                _setup_item("Hooks", agent_counts["hooks"], "automation scripts", "ready"),
+                _setup_item("Rules", agent_counts["rules"], "conditional rules", "ready"),
+                _setup_item(
+                    "Codex assets",
+                    agent_counts["codex"],
+                    "~/.codex compatible",
+                    _path_state(GLOBAL_DIR / "codex"),
+                ),
+            ],
+        },
+    ]
+
+
+def _terminal_sections(
+    *,
+    knowledge: dict[str, Any],
+    project_health: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """Expose the same high-level sections shown by the Cabal terminal home."""
+    agent_counts = _agent_asset_counts()
+    knowledge_counts = knowledge.get("counts") or {}
+    project_items = [
+        _section_state_item("Git", project_health.get("git", {})),
+        _section_state_item("GitHub", project_health.get("github", {})),
+        _section_state_item("Supabase", project_health.get("supabase", {})),
+        _section_state_item("Vercel", project_health.get("vercel", {})),
+    ]
+    project_ready = sum(1 for item in project_items if item["state"] == "ready")
+
+    return [
+        {
+            "id": "project_dashboard",
+            "title": "Project Dashboard",
+            "summary": f"{project_ready}/4 services ready",
+            "items": project_items,
+        },
+        {
+            "id": "claude_settings",
+            "title": "Claude Settings (~/.claude)",
+            "summary": f"{agent_counts['agents']} agents, {agent_counts['skills']} skills",
+            "items": [
+                _setup_item(
+                    "Global File Configuration",
+                    "Present" if (GLOBAL_DIR / "CLAUDE.md").exists() else "Missing",
+                    "repo global/CLAUDE.md",
+                    _path_state(GLOBAL_DIR / "CLAUDE.md"),
+                ),
+                _setup_item(
+                    "StatusLine",
+                    "Present" if (GLOBAL_DIR / "statusline.py").exists() else "Missing",
+                    "statusline.py",
+                    _path_state(GLOBAL_DIR / "statusline.py"),
+                ),
+                _setup_item(
+                    "Settings",
+                    "Present" if (GLOBAL_DIR / "settings.json").exists() else "Missing",
+                    "settings.json",
+                    _path_state(GLOBAL_DIR / "settings.json"),
+                ),
+                _setup_item(
+                    "MCP Connectors",
+                    _mcp_template_count(),
+                    "templates",
+                    _path_state(MCP_TEMPLATES_FILE),
+                ),
+                _setup_item(
+                    "Local Config",
+                    "Present" if TARGET.exists() else "Missing",
+                    "~/.claude",
+                    _path_state(TARGET),
+                ),
+            ],
+        },
+        {
+            "id": "okf_analytics",
+            "title": "OKF Analytics (docs/okf)",
+            "summary": "Graph bundle present" if knowledge.get("available") else "Graph bundle missing",
+            "items": [
+                _setup_item(
+                    "Knowledge Graph",
+                    "Ready" if knowledge.get("available") else "Missing",
+                    "graph.json",
+                    "ready" if knowledge.get("available") else "unavailable",
+                ),
+                _setup_item(
+                    "Nodes",
+                    knowledge_counts.get("nodes", 0),
+                    "OKF nodes",
+                    "ready" if knowledge.get("available") else "unavailable",
+                ),
+                _setup_item(
+                    "Relations",
+                    knowledge_counts.get("edges", 0),
+                    "OKF edges",
+                    "ready" if knowledge.get("available") else "unavailable",
+                ),
+            ],
+        },
+        {
+            "id": "codex_settings",
+            "title": "Codex Settings (~/.codex)",
+            "summary": f"{agent_counts['codex']} Codex-compatible assets",
+            "items": [
+                _setup_item(
+                    "Global Codex Config",
+                    "Present" if (GLOBAL_DIR / "codex").exists() else "Missing",
+                    "global/codex",
+                    _path_state(GLOBAL_DIR / "codex"),
+                ),
+                _setup_item(
+                    "Local Codex Config",
+                    "Present" if CODEX_DIR.exists() else "Missing",
+                    "~/.codex",
+                    _path_state(CODEX_DIR),
+                ),
+                _setup_item("Conversion Diff", "Available", "manifest and source assets", "ready"),
+                _setup_item("Codex assets", agent_counts["codex"], "files indexed", "ready"),
+            ],
+        },
+    ]
+
+
+def _setup_item(label: str, value: object, hint: str, state: str) -> dict[str, str]:
+    return {
+        "label": label,
+        "value": redact_text(value),
+        "hint": redact_text(hint),
+        "state": state,
+    }
+
+
+def _agent_asset_counts() -> dict[str, int]:
+    return {
+        "agents": _file_count(GLOBAL_DIR / "agents"),
+        "skills": _file_count(GLOBAL_DIR / "skills"),
+        "hooks": _file_count(GLOBAL_DIR / "hooks"),
+        "rules": _file_count(GLOBAL_DIR / "rules"),
+        "codex": _file_count(GLOBAL_DIR / "codex"),
+    }
+
+
+def _file_count(path: Path) -> int:
+    if not path.exists():
+        return 0
+    return sum(1 for item in path.rglob("*") if item.is_file())
+
+
+def _section_state_item(label: str, section: dict[str, Any]) -> dict[str, str]:
+    state = section.get("state")
+    value = state or "missing"
+    web_state = "ready" if state == AvailabilityState.OK.value else "unavailable"
+    return _setup_item(
+        label,
+        value,
+        section.get("summary") or "dashboard section",
+        web_state,
+    )
+
+
+def _mcp_template_count() -> int:
+    try:
+        data = json.loads(MCP_TEMPLATES_FILE.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return 0
+    templates = data.get("templates")
+    return len(templates) if isinstance(templates, dict) else 0
+
+
+def _path_state(path: Path) -> str:
+    return "ready" if path.exists() else "unavailable"
 
 
 def _repo_relative(root: Path, path: Path) -> str:

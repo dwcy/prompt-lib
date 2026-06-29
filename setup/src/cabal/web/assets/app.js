@@ -88,6 +88,7 @@
       tools: "Tools",
       knowledge: "Knowledge",
       project: "Project health",
+      agent: "Agent setup",
       diagnostics: "Diagnostics"
     }[key] || key;
   }
@@ -110,6 +111,7 @@
 
   function render() {
     renderOverview();
+    renderAgentSetup();
     renderTools();
     renderKnowledge();
     renderProject();
@@ -125,6 +127,9 @@
       metric("Project", Object.entries(data.project_health_counts || {}).map(([k, v]) => `${k}: ${v}`).join(" / ") || "No data", "section states"),
       metric("Diagnostics", data.diagnostic_count, "events")
     ].join("");
+    $("#overview-terminal").innerHTML = (data.terminal_sections || data.setup_groups || [])
+      .map((group) => setupGroupCard(group))
+      .join("");
     $("#overview-sections").innerHTML = (data.sections || []).map((section) => `
       <article class="section-card" data-state="${safeText(section.state)}">
         <strong>${safeText(section.section.replace("_", " "))}</strong>
@@ -139,6 +144,35 @@
         <span>${safeText(label)}</span>
         <strong>${safeText(value)}</strong>
         <small>${safeText(hint)}</small>
+      </article>
+    `;
+  }
+
+  function renderAgentSetup() {
+    const group = (state.overview?.data?.setup_groups || []).find((item) => item.id === "agent_setup");
+    if (!group) return;
+    const status = $("#agent-status");
+    status.dataset.state = "ok";
+    status.textContent = `${group.title} loaded from overview`;
+    $("#agent-summary").innerHTML = setupGroupCard(group, true);
+  }
+
+  function setupGroupCard(group, expanded = false) {
+    return `
+      <article class="setup-card" data-group="${safeText(group.id)}">
+        <div class="setup-card-head">
+          <span>${safeText(group.title)}</span>
+          <strong>${safeText(group.summary)}</strong>
+        </div>
+        <div class="setup-items ${expanded ? "is-expanded" : ""}">
+          ${(group.items || []).map((item) => `
+            <div class="setup-item" data-state="${safeText(item.state)}">
+              <span>${safeText(item.label)}</span>
+              <strong>${safeText(item.value)}</strong>
+              <small>${safeText(item.hint)}</small>
+            </div>
+          `).join("")}
+        </div>
       </article>
     `;
   }
@@ -351,7 +385,7 @@
   }
 
   function refreshCurrent() {
-    const map = { overview: "overview", tools: "tools", knowledge: "knowledge", project: "project", diagnostics: "diagnostics" };
+    const map = { overview: "overview", tools: "tools", knowledge: "knowledge", project: "project", agent: "overview", diagnostics: "diagnostics" };
     fetchEnvelope(map[state.view] || "overview");
   }
 

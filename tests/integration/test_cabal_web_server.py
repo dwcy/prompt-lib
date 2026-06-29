@@ -38,6 +38,11 @@ def _get_text(url: str) -> tuple[str, str]:
         return response.headers["Content-Type"], response.read().decode("utf-8")
 
 
+def _get_bytes(url: str) -> tuple[str, bytes]:
+    with urlopen(url, timeout=5) as response:
+        return response.headers["Content-Type"], response.read()
+
+
 def _token() -> str:
     return "github_pat_" + ("q" * 30)
 
@@ -56,10 +61,13 @@ def test_static_shell_and_assets_are_served(web_server) -> None:
     html_type, html = _get_text(base_url + "/")
     css_type, css = _get_text(base_url + "/styles.css")
     js_type, js = _get_text(base_url + "/app.js")
+    logo_type, logo = _get_bytes(base_url + "/brand/cabal-logo.png")
 
     assert html_type.startswith("text/html")
     assert css_type.startswith("text/css")
     assert js_type.startswith("application/javascript")
+    assert logo_type.startswith("image/png")
+    assert logo.startswith(b"\x89PNG")
     assert "Cabal" in html
     assert ":root" in css
     assert "/api/overview" in js

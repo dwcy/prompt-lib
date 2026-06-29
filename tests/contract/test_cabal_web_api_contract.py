@@ -162,6 +162,21 @@ def test_overview_endpoint_reports_partial_section_failures(
     assert _token() not in json.dumps(body)
 
 
+def test_overview_endpoint_includes_setup_groups(tmp_path, deterministic_sources) -> None:
+    status, body = WebApi(tmp_path).handle("/api/overview")
+
+    assert status == 200
+    groups = body["data"]["setup_groups"]
+    assert [group["id"] for group in groups] == ["dev_setup", "repo_setup", "agent_setup"]
+    assert all({"label", "value", "hint", "state"} <= set(group["items"][0]) for group in groups)
+    assert [section["id"] for section in body["data"]["terminal_sections"]] == [
+        "project_dashboard",
+        "claude_settings",
+        "okf_analytics",
+        "codex_settings",
+    ]
+
+
 def test_api_responses_do_not_contain_raw_token_fixture(tmp_path, deterministic_sources) -> None:
     token = _token()
     api = WebApi(tmp_path)

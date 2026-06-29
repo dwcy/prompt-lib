@@ -11,18 +11,34 @@
   <div class="app-shell" data-app-shell>
     <aside class="sidebar" aria-label="Primary">
       <div class="brand">
-        <span class="brand-mark" aria-hidden="true">CB</span>
+        <img class="brand-logo" src="/brand/cabal-logo.png" width="56" height="56" alt="" aria-hidden="true">
         <div>
           <strong>Cabal</strong>
           <span>local control surface</span>
         </div>
       </div>
       <nav class="nav-list">
-        <button class="nav-link is-active" type="button" data-view-target="overview" aria-label="Overview">Overview</button>
-        <button class="nav-link" type="button" data-view-target="tools" aria-label="Tools">Tools</button>
-        <button class="nav-link" type="button" data-view-target="knowledge" aria-label="Knowledge">Knowledge</button>
-        <button class="nav-link" type="button" data-view-target="project" aria-label="Project Health">Project Health</button>
-        <button class="nav-link" type="button" data-view-target="diagnostics" aria-label="Diagnostics">Diagnostics</button>
+        <details class="menu-group" open>
+          <summary>Dev setup</summary>
+          <div class="submenu">
+            <button class="nav-link is-active" type="button" data-view-target="overview" aria-label="Overview">Overview</button>
+            <button class="nav-link" type="button" data-view-target="tools" aria-label="Tools">Tools</button>
+            <button class="nav-link" type="button" data-view-target="diagnostics" aria-label="Diagnostics">Diagnostics</button>
+          </div>
+        </details>
+        <details class="menu-group" open>
+          <summary>Repo setup</summary>
+          <div class="submenu">
+            <button class="nav-link" type="button" data-view-target="project" aria-label="Project Health">Project Health</button>
+            <button class="nav-link" type="button" data-view-target="knowledge" aria-label="Knowledge">Knowledge</button>
+          </div>
+        </details>
+        <details class="menu-group" open>
+          <summary>Agent setup</summary>
+          <div class="submenu">
+            <button class="nav-link" type="button" data-view-target="agent" aria-label="Agent Setup">Agent Overview</button>
+          </div>
+        </details>
       </nav>
       <div class="backend-pill" id="backend-url">127.0.0.1</div>
     </aside>
@@ -43,7 +59,19 @@
         <h2 id="overview-heading" class="sr-only">Overview</h2>
         <div class="status-strip" id="overview-status" data-state="loading">Loading overview...</div>
         <div class="metrics-grid" id="overview-metrics"></div>
+        <div class="terminal-overview" id="overview-terminal"></div>
         <div class="section-grid" id="overview-sections"></div>
+      </section>
+
+      <section class="view" id="view-agent" data-view="agent" aria-labelledby="agent-heading">
+        <div class="view-head">
+          <div>
+            <h2 id="agent-heading">Agent Setup</h2>
+          </div>
+          <button type="button" data-retry="overview">Retry</button>
+        </div>
+        <div class="status-strip" id="agent-status" data-state="loading">Loading agent setup...</div>
+        <div class="agent-summary" id="agent-summary"></div>
       </section>
 
       <section class="view" id="view-tools" data-view="tools" aria-labelledby="tools-heading">

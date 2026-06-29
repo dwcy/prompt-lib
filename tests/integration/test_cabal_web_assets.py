@@ -16,9 +16,19 @@ def test_overview_markup_contains_metrics_status_and_retry_targets() -> None:
     html = _read("index.html")
 
     assert 'id="overview-metrics"' in html
+    assert 'id="overview-terminal"' in html
     assert 'id="overview-sections"' in html
     assert 'id="refresh-current"' in html
     assert 'id="schema-badge"' in html
+    assert 'src="/brand/cabal-logo.png"' in html
+
+
+def test_sidebar_groups_match_terminal_setup_sections() -> None:
+    html = _read("index.html")
+
+    assert html.index("Dev setup") < html.index("Repo setup") < html.index("Agent setup")
+    assert 'data-view-target="agent"' in html
+    assert 'id="agent-summary"' in html
 
 
 def test_tools_view_contains_search_filters_empty_state_and_detail_hooks() -> None:
