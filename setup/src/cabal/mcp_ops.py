@@ -241,6 +241,73 @@ def enumerate_mcp_servers(project_dir: Path | None = None) -> dict[str, dict]:
     return aggregated
 
 
+def _claude_mcp_get_status(name: str) -> tuple[bool, bool]:
+    """(active, pending) for one server via `claude mcp get` — a single health check."""
+    rc, out, _ = _run_claude_cli(["mcp", "get", name], timeout=60)
+    if rc != 0:
+        return False, False
+    low = out.lower()
+    pending = "pending approval" in low
+    return ("connected" in low and not pending), pending
+
+
+def enumerate_one_server(name: str, project_dir: Path | None = None) -> dict | None:
+    """Re-derive one server's aggregated info without health-checking every server.
+
+    Uses `claude mcp get <name>` instead of the full `claude mcp list`, so the UI can
+    refresh a single row after an action. Plugin servers fall back to full enumeration
+    (their state depends on the plugin list, which spans multiple servers).
+    """
+    if name.startswith("plugin:"):
+        return enumerate_mcp_servers(project_dir).get(name)
+
+    info = {
+        "scopes": [],
+        "active": False,
+        "pending": False,
+        "command_line": "",
+        "env_required": [],
+        "is_plugin": False,
+        "definitions": {},
+        "plugin_id": None,
+        "plugin_enabled": None,
+        "plugin_scope": None,
+    }
+
+    user_servers = _claude_dot_json().get("mcpServers") or {}
+    if name in user_servers:
+        info["scopes"].append("user")
+        info["definitions"]["user"] = user_servers[name]
+
+    proj_entries = read_project_mcp(project_dir or Path.cwd())
+    if name in proj_entries:
+        info["scopes"].append("project")
+        info["definitions"]["project"] = proj_entries[name]
+
+    tmpl = _load_mcp_templates().get(name)
+    if tmpl:
+        info["env_required"] = list(tmpl.get("env_required") or [])
+        info["definitions"]["template"] = tmpl
+        if not info["scopes"]:
+            info["scopes"].append("template")
+
+    info["active"], info["pending"] = _claude_mcp_get_status(name)
+
+    cfg = info["definitions"].get("user") or info["definitions"].get("project")
+    if cfg:
+        cmd = cfg.get("command") or ""
+        info["command_line"] = (
+            " ".join([cmd, *(cfg.get("args") or [])]).strip()
+            if cmd
+            else (cfg.get("url") or "")
+        )
+    elif tmpl:
+        info["command_line"] = " ".join(
+            [tmpl.get("command", "")] + list(tmpl.get("args") or [])
+        )
+    return info
+
+
 def claude_mcp_add_from_template(name: str, template: dict) -> tuple[bool, str]:
     """Register a server via `claude mcp add -s user`, wrapping pnpm/npx/bunx on Windows."""
     cmd = template.get("command", "")

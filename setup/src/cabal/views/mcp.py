@@ -69,6 +69,7 @@ from cabal.mcp_ops import (
     claude_mcp_remove,
     claude_plugin_set_enabled,
     enumerate_mcp_servers,
+    enumerate_one_server,
     remove_from_project_mcp,
 )
 from cabal.mcp_view_logic import (
@@ -130,7 +131,6 @@ class McpScreen(Screen):
                 yield Button("Activate Locally", id="mcp-act-local", variant="primary")
                 yield Button("Disable", id="mcp-disable", variant="error")
                 yield Button("Refresh (Ctrl+R)", id="mcp-refresh")
-                yield Button("Back (Esc)", id="mcp-back")
             yield Static("", id="mcp-status", classes="panel")
         yield Footer(show_command_palette=False)
 
@@ -138,7 +138,7 @@ class McpScreen(Screen):
         self._servers: dict[str, dict] = {}
         self._project_dir = self._resolve_project_dir()
         tbl = self.query_one("#mcp-table", DataTable)
-        tbl.add_columns("Name", "Scope(s)", "Status", "Env", "Command")
+        self._cols = tbl.add_columns("Name", "Scope(s)", "Status", "Env", "Command")
         self._set_action_buttons(False, False, False)
         self._refresh()
 
@@ -182,6 +182,45 @@ class McpScreen(Screen):
             f"[dim]{tbl.row_count} servers shown. Local activation writes to {local / '.mcp.json'}.[/dim]"
         )
         tbl.loading = False
+        self._sync_action_buttons()
+
+    def _refresh_row(self, name: str | None) -> None:
+        """Re-check a single server (via `claude mcp get`) instead of every row."""
+        if not name:
+            self._refresh()
+            return
+        self.run_worker(lambda: self._load_row(name), thread=True)
+
+    def _load_row(self, name: str) -> None:
+        try:
+            info = enumerate_one_server(name, project_dir=self._project_dir)
+        except Exception as e:
+            self.app.call_from_thread(
+                self._status, f"[red]Re-check failed for {name}: {e}[/red]"
+            )
+            return
+        self.app.call_from_thread(self._apply_row, name, info)
+
+    def _apply_row(self, name: str, info: dict | None) -> None:
+        tbl = self.query_one("#mcp-table", DataTable)
+        gone = not info or (
+            not info["scopes"] and not info["active"] and not info.get("pending")
+        )
+        if gone:
+            try:
+                tbl.remove_row(name)
+            except Exception:
+                pass
+            self._servers.pop(name, None)
+            self._sync_action_buttons()
+            return
+        self._servers[name] = info
+        try:
+            for col, value in zip(self._cols[1:], server_row_cells(info)):
+                tbl.update_cell(name, col, value)
+        except Exception:
+            self._refresh()
+            return
         self._sync_action_buttons()
 
     def action_refresh(self) -> None:
@@ -257,7 +296,7 @@ class McpScreen(Screen):
         self._status(
             f"[{'green' if ok else 'red'}]{'✓ added (user)' if ok else '✗ add failed'} {name}: {msg}[/]"
         )
-        self._refresh()
+        self._refresh_row(name)
 
     def _activate_local(self) -> None:
         name = self._current_name()
@@ -278,7 +317,7 @@ class McpScreen(Screen):
         if "project" in info["scopes"] and info.get("pending"):
             ok, msg = approve_project_mcp(name, self._project_dir)
             self._status(f"[{'green' if ok else 'red'}]{'✓' if ok else '✗'} {msg}[/]")
-            self._refresh()
+            self._refresh_row(name)
             return
         tmpl = (info.get("definitions") or {}).get("template")
         if not tmpl:
@@ -288,7 +327,7 @@ class McpScreen(Screen):
             return
         ok, msg = add_template_to_project_mcp(name, tmpl, self._project_dir)
         self._status(f"[{'green' if ok else 'red'}]{'✓' if ok else '✗'} {msg}[/]")
-        self._refresh()
+        self._refresh_row(name)
 
     def _disable(self) -> None:
         name = self._current_name()
@@ -330,13 +369,11 @@ class McpScreen(Screen):
         self._status(
             f"[{'green' if ok else 'red'}]{'✓ disabled' if ok else '✗ failed'} {name} ({scope}): {msg}[/]"
         )
-        self._refresh()
+        self._refresh_row(name)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         bid = event.button.id or ""
-        if bid == "mcp-back":
-            self.app.pop_screen()
-        elif bid == "mcp-refresh":
+        if bid == "mcp-refresh":
             self._refresh()
         elif bid == "mcp-act-global":
             self._activate_global()

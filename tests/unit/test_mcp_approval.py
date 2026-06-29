@@ -7,11 +7,13 @@ writing enabledMcpjsonServers / disabledMcpjsonServers under the project key in
 
 from __future__ import annotations
 
+import inspect
 import json
 from pathlib import Path
 
 import cabal.mcp_ops as m
 from cabal.mcp_view_logic import action_button_states, server_row_cells
+from cabal.views.mcp import McpScreen
 
 
 def _home(monkeypatch, tmp_path: Path, initial: dict | None = None) -> Path:
@@ -107,3 +109,83 @@ def test_pending_status_cell_is_distinct_from_not_connected():
     _, status, _, _ = server_row_cells(info)
 
     assert "pending approval" in status
+
+
+def test_get_status_parses_connected(monkeypatch):
+    monkeypatch.setattr(
+        m, "_run_claude_cli", lambda *a, **k: (0, "context7:\n  Status: ✔ Connected", "")
+    )
+
+    assert m._claude_mcp_get_status("context7") == (True, False)
+
+
+def test_get_status_parses_pending(monkeypatch):
+    monkeypatch.setattr(
+        m, "_run_claude_cli", lambda *a, **k: (0, "x:\n  Status: ⏸ Pending approval", "")
+    )
+
+    assert m._claude_mcp_get_status("x") == (False, True)
+
+
+def test_enumerate_one_server_template_only(monkeypatch):
+    monkeypatch.setattr(m, "_claude_dot_json", lambda: {})
+    monkeypatch.setattr(m, "read_project_mcp", lambda d: {})
+    monkeypatch.setattr(
+        m,
+        "_load_mcp_templates",
+        lambda: {"context7": {"command": "pnpm", "args": ["dlx", "x"]}},
+    )
+    monkeypatch.setattr(m, "_claude_mcp_get_status", lambda n: (False, False))
+
+    info = m.enumerate_one_server("context7", project_dir=None)
+
+    assert info["scopes"] == ["template"]
+    assert info["active"] is False
+    assert info["command_line"] == "pnpm dlx x"
+
+
+def test_enumerate_one_server_project_connected(monkeypatch):
+    monkeypatch.setattr(m, "_claude_dot_json", lambda: {})
+    monkeypatch.setattr(
+        m,
+        "read_project_mcp",
+        lambda d: {"playwright": {"command": "cmd", "args": ["/c", "x"]}},
+    )
+    monkeypatch.setattr(m, "_load_mcp_templates", lambda: {})
+    monkeypatch.setattr(m, "_claude_mcp_get_status", lambda n: (True, False))
+
+    info = m.enumerate_one_server("playwright", project_dir=None)
+
+    assert "project" in info["scopes"]
+    assert info["active"] is True
+
+
+def test_enumerate_one_server_plugin_falls_back(monkeypatch):
+    monkeypatch.setattr(
+        m,
+        "enumerate_mcp_servers",
+        lambda project_dir=None: {"plugin:azure:azure": {"sentinel": True}},
+    )
+
+    info = m.enumerate_one_server("plugin:azure:azure")
+
+    assert info == {"sentinel": True}
+
+
+def test_mcp_screen_has_no_back_button():
+    assert "mcp-back" not in inspect.getsource(McpScreen.compose)
+
+
+def test_mcp_screen_keeps_escape_binding():
+    keys = {b.key for b in McpScreen.BINDINGS}
+
+    assert "escape" in keys
+
+
+def test_activate_and_disable_paths_refresh_single_row():
+    for method in (
+        McpScreen._activate_global,
+        McpScreen._activate_local,
+        McpScreen._remove_scope,
+    ):
+        assert "_refresh_row" in inspect.getsource(method)
