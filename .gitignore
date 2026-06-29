@@ -35,6 +35,9 @@ setup/build/build/
 *.swp
 *.swo
 
+# Obsidian local workspace state
+.obsidian/workspace.json
+
 # OS
 .DS_Store
 Thumbs.db
