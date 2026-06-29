@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cabal Web</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="app-shell" data-app-shell>
+    <aside class="sidebar" aria-label="Primary">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">CB</span>
+        <div>
+          <strong>Cabal</strong>
+          <span>local control surface</span>
+        </div>
+      </div>
+      <nav class="nav-list">
+        <button class="nav-link is-active" type="button" data-view-target="overview" aria-label="Overview">Overview</button>
+        <button class="nav-link" type="button" data-view-target="tools" aria-label="Tools">Tools</button>
+        <button class="nav-link" type="button" data-view-target="knowledge" aria-label="Knowledge">Knowledge</button>
+        <button class="nav-link" type="button" data-view-target="project" aria-label="Project Health">Project Health</button>
+        <button class="nav-link" type="button" data-view-target="diagnostics" aria-label="Diagnostics">Diagnostics</button>
+      </nav>
+      <div class="backend-pill" id="backend-url">127.0.0.1</div>
+    </aside>
+
+    <main class="workspace">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Read-only local UI</p>
+          <h1 id="view-title">Overview</h1>
+        </div>
+        <div class="topbar-actions">
+          <button type="button" id="refresh-current" class="icon-button" aria-label="Refresh current view" title="Refresh current view">Refresh</button>
+          <span class="schema-badge" id="schema-badge">schema pending</span>
+        </div>
+      </header>
+
+      <section class="view is-active" id="view-overview" data-view="overview" aria-labelledby="overview-heading">
+        <h2 id="overview-heading" class="sr-only">Overview</h2>
+        <div class="status-strip" id="overview-status" data-state="loading">Loading overview...</div>
+        <div class="metrics-grid" id="overview-metrics"></div>
+        <div class="section-grid" id="overview-sections"></div>
+      </section>
+
+      <section class="view" id="view-tools" data-view="tools" aria-labelledby="tools-heading">
+        <div class="view-head">
+          <div>
+            <h2 id="tools-heading">Tools</h2>
+          </div>
+          <button type="button" data-retry="tools">Retry</button>
+        </div>
+        <div class="filters" aria-label="Tool filters">
+          <input id="tool-search" type="search" placeholder="Search tools, categories, badges" autocomplete="off">
+          <select id="tool-category" aria-label="Tool category"></select>
+          <select id="tool-status" aria-label="Tool status"></select>
+          <select id="tool-channel" aria-label="Install channel"></select>
+        </div>
+        <div class="status-strip" id="tools-status" data-state="loading">Loading tools...</div>
+        <div class="tools-layout">
+          <div class="category-rail" id="tool-categories"></div>
+          <div class="tool-results" id="tool-results" role="list"></div>
+          <aside class="detail-drawer" id="tool-detail" aria-live="polite"></aside>
+        </div>
+      </section>
+
+      <section class="view" id="view-knowledge" data-view="knowledge" aria-labelledby="knowledge-heading">
+        <div class="view-head">
+          <div>
+            <h2 id="knowledge-heading">Knowledge</h2>
+          </div>
+          <button type="button" data-retry="knowledge">Retry</button>
+        </div>
+        <div class="filters" aria-label="Knowledge filters">
+          <input id="knowledge-search" type="search" placeholder="Search concepts, routes, evidence" autocomplete="off">
+          <select id="knowledge-type" aria-label="Node type"></select>
+          <select id="knowledge-relation" aria-label="Relation kind"></select>
+        </div>
+        <div class="status-strip" id="knowledge-status" data-state="loading">Loading knowledge...</div>
+        <div class="knowledge-layout">
+          <div class="route-lanes" id="knowledge-routes"></div>
+          <aside class="detail-drawer" id="knowledge-detail"></aside>
+        </div>
+      </section>
+
+      <section class="view" id="view-project" data-view="project" aria-labelledby="project-heading">
+        <div class="view-head">
+          <div>
+            <h2 id="project-heading">Project Health</h2>
+          </div>
+          <button type="button" data-retry="project">Retry</button>
+        </div>
+        <div class="status-strip" id="project-status" data-state="loading">Loading project health...</div>
+        <div class="project-grid" id="project-sections"></div>
+      </section>
+
+      <section class="view" id="view-diagnostics" data-view="diagnostics" aria-labelledby="diagnostics-heading">
+        <div class="view-head">
+          <div>
+            <h2 id="diagnostics-heading">Diagnostics</h2>
+          </div>
+          <button type="button" data-retry="diagnostics">Retry</button>
+        </div>
+        <div class="status-strip" id="diagnostics-status" data-state="loading">Loading diagnostics...</div>
+        <div class="diagnostics-list" id="diagnostics-list"></div>
+      </section>
+    </main>
+  </div>
+  <script src="/app.js" defer></script>
+</body>
+</html>
