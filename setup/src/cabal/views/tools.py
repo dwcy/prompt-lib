@@ -129,6 +129,17 @@ class ToolsScreen(Screen):
         height: 1;
         margin: 0 1 0 0;
     }
+    /* Compact Select drops the border; a background keeps it visible on one line. */
+    ToolsScreen Select.tool-version > SelectCurrent {
+        background: #2E3250;
+        padding: 0 1;
+    }
+    ToolsScreen Select.tool-version:focus > SelectCurrent {
+        background: #3C4170;
+    }
+    ToolsScreen Select.tool-version > SelectCurrent #label {
+        color: white;
+    }
     ToolsScreen Button.tool-source,
     ToolsScreen Button.tool-source:hover,
     ToolsScreen Button.tool-source:focus {
