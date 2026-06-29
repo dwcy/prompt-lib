@@ -126,6 +126,8 @@ class ToolsScreen(Screen):
     ToolsScreen Select.tool-version {
         width: 28;
         max-width: 28;
+        height: 1;
+        margin: 0 1 0 0;
     }
     ToolsScreen Button.tool-source,
     ToolsScreen Button.tool-source:hover,
@@ -230,6 +232,7 @@ class ToolsScreen(Screen):
                                     id=f"tool-version-{key}",
                                     classes="tool-version",
                                     prompt="Version...",
+                                    compact=True,
                                 )
                             yield Button(
                                 "N/A" if unavailable else "Install",
