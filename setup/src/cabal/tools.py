@@ -61,6 +61,7 @@ from cabal.installers.containers import (
 from cabal.installers.editors import cursor_install, vscode_install, windsurf_install
 from cabal.installers.gh import gh_install, gh_status
 from cabal.installers.headroom import headroom_install, headroom_status
+from cabal.installers.mcp_bus import mcp_bus_install, mcp_bus_status
 from cabal.installers.runtimes import (
     bun_install,
     dotnet_install,
@@ -147,9 +148,7 @@ def _probe_key(key: str) -> object:
     if key == "vercel-plugin":
         return vercel_plugin_status() == "installed"
     if key == "vllm":
-        return _probe_version("vllm", "--version") or (
-            shutil.which("vllm") is not None
-        )
+        return _probe_version("vllm", "--version") or (shutil.which("vllm") is not None)
     return shutil.which(key) is not None
 
 
@@ -318,6 +317,7 @@ ENV_INSTALLERS: list[tuple[str, str, Callable[[], tuple[bool, str]]]] = [
     ("opencode", "OpenCode", opencode_install),
     ("grok", "Grok", grok_install),
     ("headroom", "Headroom", headroom_install),
+    ("mcp-bus", "MCP Bus", mcp_bus_install),
     ("skills", "Vercel Skills CLI", skills_install),
     ("vercel-plugin", "Vercel Plugin", vercel_plugin_install),
     ("cursor", "Cursor", cursor_install),
@@ -353,12 +353,12 @@ ENV_TOOL_GROUPS: list[tuple[str, list[str]]] = [
             "codex",
             "opencode",
             "grok",
-            "headroom",
             "copilot",
             "skills",
             "vercel-plugin",
         ],
     ),
+    ("MCP", ["headroom", "mcp-bus"]),
     ("Local AI", ["ollama", "vllm"]),
     ("AI Editors", ["cursor", "windsurf", "antigravity", "vscode"]),
 ]
@@ -473,5 +473,18 @@ TOOLS: list[Tool] = [
         repo_url="https://github.com/chopratejas/headroom",
         install=headroom_install,
         status=headroom_status,
+    ),
+    Tool(
+        key="mcp-bus",
+        name="MCP Bus (agent message bus)",
+        description=(
+            "Local message bus + shared key-value memory + agent registry for "
+            "inter-agent communication; used by /orchestrate subagents. "
+            "Localhost-only, no auth. Repo-local MCP service (spec 007)."
+        ),
+        homepage="https://github.com/dwcy/prompt-lib/tree/main/services/mcp-bus",
+        repo_url="https://github.com/dwcy/prompt-lib/tree/main/services/mcp-bus",
+        install=mcp_bus_install,
+        status=mcp_bus_status,
     ),
 ]

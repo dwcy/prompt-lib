@@ -56,6 +56,15 @@
       "args": ["mcp", "serve"],
       "env_required": [],
       "default_enabled": false
+    },
+    "mcp-bus": {
+      "transport": "stdio",
+      "command": "mcp-bus",
+      "args": [],
+      "env_required": [],
+      "default_enabled": false,
+      "description": "Local agent message bus + shared memory + registry (11 tools) for inter-agent comms.",
+      "source": "https://github.com/dwcy/prompt-lib/tree/main/services/mcp-bus"
     }
   }
 }

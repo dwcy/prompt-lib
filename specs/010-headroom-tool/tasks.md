@@ -40,13 +40,13 @@ description: "Task list for 010-headroom-tool implementation"
 ## Phase 2: User Story 1 — Install Headroom from the Tools view (Priority: P1) 🎯 MVP
 
 **Status**: ✅ Complete (3/3 — T004–T006)
-**Goal**: Headroom appears in the cabal Tools view and the AI-CLIs group, and installs/upgrades in one action.
+**Goal**: Headroom appears in the cabal Tools view and the MCP group, and installs/upgrades in one action.
 
 **Independent Test**: Launch the cabal TUI → Tools view shows the Headroom row → Install → status flips to `installed {version}`; `headroom --version` works in a fresh shell.
 
 - [X] T004 [US1] Create `setup/src/cabal/installers/headroom.py` mirroring `setup/src/cabal/installers/specify.py`: module docstring; `headroom_status() -> str` (via `shutil.which("headroom")` + `headroom --version`); `headroom_install() -> tuple[bool, str]` (ensure `uv` via `cabal.installers.uv.uv_install`; `uv tool upgrade` if present else `uv tool install` with the spec confirmed in T001). Keep well under the python.md script soft cap — Owner: @python-architect
-- [X] T005 [US1] Wire Headroom into `setup/src/cabal/tools.py`: import `headroom_install`/`headroom_status`; append a `Tool(key="headroom", name="Headroom (context compression)", …)` to `TOOLS`; add `("headroom", "Headroom", headroom_install)` to `ENV_INSTALLERS`; add `"headroom"` to the `"AI CLIs"` group in `ENV_TOOL_GROUPS`. No `WINGET_IDS` entry — Owner: @python-architect
-- [X] T006 [US1] Add a pytest smoke check under `setup/` (e.g. `tests/`) asserting `import cabal.tools` succeeds, `"headroom"` is present in `TOOLS`/`ENV_INSTALLERS` and in the `"AI CLIs"` group, and `headroom_status()` returns a `str` — Owner: @python-tester
+- [X] T005 [US1] Wire Headroom into `setup/src/cabal/tools.py`: import `headroom_install`/`headroom_status`; append a `Tool(key="headroom", name="Headroom (context compression)", …)` to `TOOLS`; add `("headroom", "Headroom", headroom_install)` to `ENV_INSTALLERS`; add `"headroom"` to the `"MCP"` group in `ENV_TOOL_GROUPS`. No `WINGET_IDS` entry — Owner: @python-architect
+- [X] T006 [US1] Add a pytest smoke check under `setup/` (e.g. `tests/`) asserting `import cabal.tools` succeeds, `"headroom"` is present in `TOOLS`/`ENV_INSTALLERS` and in the `"MCP"` group, and `headroom_status()` returns a `str` — Owner: @python-tester
 
 **Checkpoint**: US1 fully functional and independently testable in the Tools view.
 
@@ -81,7 +81,7 @@ description: "Task list for 010-headroom-tool implementation"
 ## Phase 5: Post-ship enhancement — Tools-view descriptions (2026-06-25)
 
 **Status**: ✅ Complete (1/1 — T013)
-**Goal**: Surface a short description + a "Read more" (source link) button for tools in the cabal Tools view that carry `TOOLS` metadata — starting with headroom under the AI CLIs group.
+**Goal**: Surface a short description + a "Read more" (source link) button for tools in the cabal Tools view that carry `TOOLS` metadata — starting with headroom under the MCP group.
 
 - [X] T013 [US1] In `setup/src/cabal/views/tools.py`, render a dim description `Static` (`#tool-desc-{key}`) under the row and a compact "Read more" `Button` (`#tool-readmore-{key}`, opens `repo_url`/`homepage` via `webbrowser`) for any row whose ENV key matches a `TOOLS` entry (headroom, skills, vercel-plugin). Existing `#tool-state`/`#tool-install` ids preserved. Textual smoke test in `setup/tests/test_tools_descriptions.py`. — Owner: @python-architect
 

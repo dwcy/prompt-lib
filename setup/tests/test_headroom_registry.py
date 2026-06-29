@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Registry smoke test — headroom is wired into TOOLS, ENV_INSTALLERS, and the AI CLIs group."""
+"""Registry smoke test — headroom is wired into TOOLS, ENV_INSTALLERS, and the MCP group."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from cabal.installers.headroom import headroom_status
 from cabal.tools import ENV_INSTALLERS, ENV_TOOL_GROUPS, TOOLS
 
 HEADROOM_KEY = "headroom"
-AI_CLIS_GROUP = "AI CLIs"
+MCP_GROUP = "MCP"
 
 
 def test_headroom_is_a_tool_entry():
@@ -23,10 +23,10 @@ def test_headroom_is_an_env_installer():
     assert HEADROOM_KEY in keys
 
 
-def test_headroom_is_in_ai_clis_group():
+def test_headroom_is_in_mcp_group():
     groups = dict(ENV_TOOL_GROUPS)
 
-    assert HEADROOM_KEY in groups[AI_CLIS_GROUP]
+    assert HEADROOM_KEY in groups[MCP_GROUP]
 
 
 def test_headroom_status_returns_a_string():

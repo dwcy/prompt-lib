@@ -111,7 +111,9 @@ Read and write Azure DevOps work items, repos, pipelines, pull requests, and spr
 ### mcp-bus
 Local message bus, shared key-value memory, and agent registry for inter-agent communication. Lets subagents dispatched by `/orchestrate` post to channels, read shared state, and discover each other. State is durable in SQLite at `~/.claude/mcp-bus/bus.db`. Localhost only, no auth, no network.
 
-**Setup:**
+**Setup (cabal):** Install it from the cabal **Tools view → MCP group** ("MCP Bus (agent message bus)"), then register it from the cabal **MCP manager** (the `mcp-bus` template). This is the recommended path.
+
+**Setup (manual):**
 1. Install the server (from the prompt-lib repo):
    ```bash
    uv tool install --from /path/to/prompt-lib/services/mcp-bus mcp-bus

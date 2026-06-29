@@ -18,14 +18,14 @@ Added as one element of the `TOOLS` list in `setup/src/cabal/tools.py` (existing
 | `status` | `headroom_status` | from `installers/headroom.py` |
 
 ## Entity: Environment installer entry
-Added to `ENV_INSTALLERS` and referenced from `ENV_TOOL_GROUPS["AI CLIs"]` in `tools.py`.
+Added to `ENV_INSTALLERS` and referenced from `ENV_TOOL_GROUPS["MCP"]` in `tools.py`.
 
 | Field | Value |
 |---|---|
 | key | `"headroom"` |
 | label | `"Headroom"` |
 | install fn | `headroom_install` |
-| group | `"AI CLIs"` (alongside `claude`, `gemini`, `codex`, `opencode`, `grok`, `copilot`, `skills`, `vercel-plugin`) |
+| group | `"MCP"` (dedicated group for tools that are MCP servers) |
 
 No `WINGET_IDS` entry (not a winget package).
 
