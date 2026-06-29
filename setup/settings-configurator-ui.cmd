@@ -27,7 +27,7 @@ if not %ERRORLEVEL%==0 (
     exit /b 1
 )
 
-echo Checking latest Python version available from winget...
+echo Checking supported Python version available from winget...
 call :find_winget_python
 if not defined PYTHON_WINGET_ID (
     echo Could not find a supported Python package in winget.
@@ -37,7 +37,7 @@ if not defined PYTHON_WINGET_ID (
     exit /b 1
 )
 
-echo Latest Python available from winget: %PYTHON_WINGET_VERSION% [%PYTHON_WINGET_ID%]
+echo Python available from winget: %PYTHON_WINGET_VERSION% [%PYTHON_WINGET_ID%]
 
 choice /C YN /M "Install Python now with winget"
 if errorlevel 2 (
@@ -66,14 +66,14 @@ if not defined PYTHON_EXE (
 goto :end
 
 :find_python
-py -3 -c "import sys; raise SystemExit(sys.version_info < (3, 11))" >nul 2>nul
+py -3 -c "import sys; raise SystemExit(sys.version_info < (3, 14))" >nul 2>nul
 if %ERRORLEVEL%==0 (
     set "PYTHON_EXE=py"
     set "PYTHON_ARGS=-3"
     exit /b 0
 )
 
-python -c "import sys; raise SystemExit(sys.version_info < (3, 11))" >nul 2>nul
+python -c "import sys; raise SystemExit(sys.version_info < (3, 14))" >nul 2>nul
 if %ERRORLEVEL%==0 (
     set "PYTHON_EXE=python"
     set "PYTHON_ARGS="
@@ -82,7 +82,7 @@ if %ERRORLEVEL%==0 (
 
 for /f "delims=" %%P in ('dir /b /ad "%LOCALAPPDATA%\Programs\Python\Python*" 2^>nul') do (
     if exist "%LOCALAPPDATA%\Programs\Python\%%P\python.exe" (
-        "%LOCALAPPDATA%\Programs\Python\%%P\python.exe" -c "import sys; raise SystemExit(sys.version_info < (3, 11))" >nul 2>nul
+        "%LOCALAPPDATA%\Programs\Python\%%P\python.exe" -c "import sys; raise SystemExit(sys.version_info < (3, 14))" >nul 2>nul
         if not errorlevel 1 (
             set "PYTHON_EXE=%LOCALAPPDATA%\Programs\Python\%%P\python.exe"
             set "PYTHON_ARGS="
@@ -93,7 +93,7 @@ for /f "delims=" %%P in ('dir /b /ad "%LOCALAPPDATA%\Programs\Python\Python*" 2^
 
 for /f "delims=" %%P in ('dir /b /ad "%ProgramFiles%\Python*" 2^>nul') do (
     if exist "%ProgramFiles%\%%P\python.exe" (
-        "%ProgramFiles%\%%P\python.exe" -c "import sys; raise SystemExit(sys.version_info < (3, 11))" >nul 2>nul
+        "%ProgramFiles%\%%P\python.exe" -c "import sys; raise SystemExit(sys.version_info < (3, 14))" >nul 2>nul
         if not errorlevel 1 (
             set "PYTHON_EXE=%ProgramFiles%\%%P\python.exe"
             set "PYTHON_ARGS="
@@ -105,7 +105,7 @@ for /f "delims=" %%P in ('dir /b /ad "%ProgramFiles%\Python*" 2^>nul') do (
 exit /b 1
 
 :find_winget_python
-for %%I in (Python.Python.3.15 Python.Python.3.14 Python.Python.3.13 Python.Python.3.12 Python.Python.3.11) do (
+for %%I in (Python.Python.3.14) do (
     for /f "tokens=2,*" %%A in ('winget show --id %%I --exact --source winget 2^>nul ^| findstr /B /C:"Version:"') do (
         set "PYTHON_WINGET_ID=%%I"
         set "PYTHON_WINGET_VERSION=%%A"

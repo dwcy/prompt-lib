@@ -235,3 +235,13 @@ The evaluation questions:
 - **To remember**:
   - L-20260629-01 (persisted cache schemas need legacy fixtures)
 - **To unlearn**: nothing.
+
+### E-20260629-02 — Default Cabal Python support to 3.14
+- **Task**: Replace multi-version/lower Python defaults with Python 3.14 across CI, package metadata, Cabal runtime installers, launchers, docs, and fast fake test envs.
+- **Constraints followed?** Yes — kept launcher prompts plain-language while enforcing the version internally, and preserved intentional legacy cache fixtures.
+- **Unverified assumptions?** Minimal — treated active defaults/build surfaces as in scope and historical/spec-only version mentions as out of scope.
+- **Verified current facts?** Yes — searched active files for Python version drift and ran focused Cabal/tool tests under Python 3.14.6.
+- **Requested format?** Yes — implemented the correction directly.
+- **To remember**:
+  - P-20260629-01 (default Python support baseline is 3.14)
+- **To unlearn**: nothing.

@@ -114,7 +114,7 @@ def vllm_install() -> tuple[bool, str]:
     return (
         False,
         "Install vLLM in a dedicated Linux Python environment. Recommended: "
-        "`uv venv --python 3.12 --seed --managed-python`, activate it, then "
+        "`uv venv --python 3.14 --seed --managed-python`, activate it, then "
         "`uv pip install -U vllm --torch-backend=auto`. Docker users can run "
         "`vllm/vllm-openai:latest` with GPU access.",
     )

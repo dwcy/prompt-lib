@@ -23,7 +23,7 @@ if str(CABAL_SRC) not in sys.path:
 _FAST_ENV = {
     "os": "TestOS",
     "release": "1",
-    "python": "3.11.0",
+    "python": "3.14.0",
 }
 
 

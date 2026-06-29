@@ -27,7 +27,7 @@ def test_dotnet_versions_mark_lts_and_sts():
 
 
 def test_python_versions_do_not_fake_lts():
-    result = version_options_for("python", installed_version="3.13.0")
+    result = version_options_for("python", installed_version="3.14.0")
 
     assert not any(option.is_lts for option in result.options)
     assert {"stable", "installed"} <= {option.channel for option in result.options}

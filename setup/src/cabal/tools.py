@@ -115,7 +115,7 @@ from cabal.tool_catalog import (
 # and currently no-op (return empty set), so those platforms always render "Latest".
 WINGET_IDS: dict[str, str] = {
     "git": "Git.Git",
-    "python": "Python.Python.3.13",
+    "python": "Python.Python.3.14",
     "dotnet": "Microsoft.DotNet.SDK.9",
     "node": "OpenJS.NodeJS.LTS",
     "pnpm": "pnpm.pnpm",
@@ -260,11 +260,11 @@ def _tool_unavailable_reason(key: str) -> str | None:
 
 # Minimum major.minor we consider "current" for keys where our install target is a
 # specific versioned package. The winget upgrade check can't catch these because
-# the user's older version is a *different* package ID — e.g. Python.Python.3.11
-# vs Python.Python.3.13. If the detected version is below the floor, we flag the
+# the user's older version is a *different* package ID — e.g. Python.Python.3.13
+# vs Python.Python.3.14. If the detected version is below the floor, we flag the
 # key as outdated even if winget says nothing.
 VERSION_FLOORS: dict[str, tuple[int, int]] = {
-    "python": (3, 13),
+    "python": (3, 14),
     "dotnet": (9, 0),
     "node": (22, 0),  # current LTS line
 }

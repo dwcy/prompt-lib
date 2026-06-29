@@ -83,13 +83,13 @@ def python_install() -> tuple[bool, str]:
     sysname = platform.system()
     if sysname == "Windows":
         if shutil.which("winget"):
-            return _run_install(["winget", "install", "--id", "Python.Python.3.13", *_WINGET_FLAGS])
+            return _run_install(["winget", "install", "--id", "Python.Python.3.14", *_WINGET_FLAGS])
         if shutil.which("scoop"):
             return _run_install(["scoop", "install", "python"])
         return False, "Install manually from https://www.python.org/downloads/"
     if sysname == "Darwin":
         if shutil.which("brew"):
-            return _run_install(["brew", "install", "python@3.13"])
+            return _run_install(["brew", "install", "python@3.14"])
         return False, "Install Homebrew or download from https://www.python.org/downloads/"
     if sysname == "Linux":
         if shutil.which("apt-get"):
