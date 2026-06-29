@@ -88,6 +88,8 @@
       tools: "Tools",
       knowledge: "Knowledge",
       project: "Project health",
+      infrastructure: "Infrastructure overview",
+      github: "GitHub",
       agent: "Agent setup",
       diagnostics: "Diagnostics"
     }[key] || key;
@@ -115,6 +117,8 @@
     renderTools();
     renderKnowledge();
     renderProject();
+    renderInfrastructure();
+    renderGithub();
     renderDiagnostics();
   }
 
@@ -296,7 +300,40 @@
     const data = state.project?.data;
     if (!data) return;
     const sections = ["git", "github", "supabase", "vercel"].map((key) => data[key]).filter(Boolean);
-    $("#project-sections").innerHTML = sections.map((section) => `
+    $("#project-sections").innerHTML = sections.map(projectSectionCard).join("");
+  }
+
+  function renderInfrastructure() {
+    const data = state.project?.data;
+    if (!data) return;
+    setProjectBackedStatus("infrastructure", "Infrastructure overview", state.project, data);
+    const sections = ["git", "github", "supabase", "vercel"].map((key) => data[key]).filter(Boolean);
+    $("#infrastructure-sections").innerHTML = sections.map(projectSectionCard).join("");
+  }
+
+  function renderGithub() {
+    const data = state.project?.data;
+    if (!data) return;
+    const section = data.github;
+    const status = $("#github-status");
+    if (status) {
+      status.dataset.state = section?.state || state.project?.status || "loading";
+      status.textContent = section?.summary || "GitHub data unavailable";
+    }
+    $("#github-sections").innerHTML = section
+      ? projectSectionCard(section)
+      : emptyState("No GitHub project data available.");
+  }
+
+  function setProjectBackedStatus(key, label, envelope, data) {
+    const status = $(`#${key}-status`);
+    if (!status) return;
+    status.dataset.state = envelope?.status || "ok";
+    status.textContent = `${label} loaded ${formatTime(envelope?.captured_at || data?.captured_at)}`;
+  }
+
+  function projectSectionCard(section) {
+    return `
       <article class="project-card" data-state="${safeText(section.state)}">
         <h3>${safeText(section.title)}</h3>
         <p>${safeText(section.summary)}</p>
@@ -304,7 +341,7 @@
         ${(section.links || []).map((link) => link.url ? `<a class="safe-link" href="${safeText(link.url)}" target="_blank" rel="noreferrer">${safeText(link.label)}</a>` : "").join("")}
         ${section.hint ? `<p class="note">${safeText(section.hint)}</p>` : ""}
       </article>
-    `).join("");
+    `;
   }
 
   function renderDiagnostics() {
@@ -346,7 +383,7 @@
         state.view = button.dataset.viewTarget;
         $$(".nav-link").forEach((item) => item.classList.toggle("is-active", item === button));
         $$(".view").forEach((view) => view.classList.toggle("is-active", view.dataset.view === state.view));
-        $("#view-title").textContent = button.textContent;
+        $("#view-title").textContent = button.dataset.viewTitle || button.textContent;
       });
     });
     $("#refresh-current").addEventListener("click", () => refreshCurrent());
@@ -385,7 +422,7 @@
   }
 
   function refreshCurrent() {
-    const map = { overview: "overview", tools: "tools", knowledge: "knowledge", project: "project", agent: "overview", diagnostics: "diagnostics" };
+    const map = { overview: "overview", tools: "tools", knowledge: "knowledge", project: "project", infrastructure: "project", github: "project", agent: "overview", diagnostics: "diagnostics" };
     fetchEnvelope(map[state.view] || "overview");
   }
 

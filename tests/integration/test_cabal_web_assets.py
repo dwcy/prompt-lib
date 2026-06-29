@@ -26,8 +26,17 @@ def test_overview_markup_contains_metrics_status_and_retry_targets() -> None:
 def test_sidebar_groups_match_terminal_setup_sections() -> None:
     html = _read("index.html")
 
-    assert html.index("Dev setup") < html.index("Repo setup") < html.index("Agent setup")
+    assert (
+        html.index("Dev setup")
+        < html.index("Repo setup")
+        < html.index("Infrastructure setup")
+        < html.index("Agent setup")
+    )
+    assert 'data-view-target="infrastructure"' in html
+    assert 'data-view-target="github"' in html
     assert 'data-view-target="agent"' in html
+    assert 'id="infrastructure-sections"' in html
+    assert 'id="github-sections"' in html
     assert 'id="agent-summary"' in html
 
 
@@ -45,9 +54,19 @@ def test_knowledge_and_project_views_have_filter_and_section_hooks() -> None:
     html = _read("index.html")
     js = _read("app.js")
 
-    for marker in ("knowledge-search", "knowledge-type", "knowledge-relation", "knowledge-detail", "project-sections"):
+    for marker in (
+        "knowledge-search",
+        "knowledge-type",
+        "knowledge-relation",
+        "knowledge-detail",
+        "project-sections",
+        "infrastructure-sections",
+        "github-sections",
+    ):
         assert marker in html
     assert "No graph bundle exists" in js
+    assert "renderInfrastructure" in js
+    assert "renderGithub" in js
     assert "git" in js and "github" in js and "supabase" in js and "vercel" in js
 
 

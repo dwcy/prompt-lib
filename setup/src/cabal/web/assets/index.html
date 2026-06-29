@@ -34,6 +34,13 @@
           </div>
         </details>
         <details class="menu-group" open>
+          <summary>Infrastructure setup</summary>
+          <div class="submenu">
+            <button class="nav-link" type="button" data-view-target="infrastructure" data-view-title="Infrastructure Overview" aria-label="Infrastructure Overview">Overview</button>
+            <button class="nav-link" type="button" data-view-target="github" aria-label="GitHub">GitHub</button>
+          </div>
+        </details>
+        <details class="menu-group" open>
           <summary>Agent setup</summary>
           <div class="submenu">
             <button class="nav-link" type="button" data-view-target="agent" aria-label="Agent Setup">Agent Overview</button>
@@ -72,6 +79,28 @@
         </div>
         <div class="status-strip" id="agent-status" data-state="loading">Loading agent setup...</div>
         <div class="agent-summary" id="agent-summary"></div>
+      </section>
+
+      <section class="view" id="view-infrastructure" data-view="infrastructure" aria-labelledby="infrastructure-heading">
+        <div class="view-head">
+          <div>
+            <h2 id="infrastructure-heading">Infrastructure Overview</h2>
+          </div>
+          <button type="button" data-retry="project">Retry</button>
+        </div>
+        <div class="status-strip" id="infrastructure-status" data-state="loading">Loading infrastructure overview...</div>
+        <div class="project-grid" id="infrastructure-sections"></div>
+      </section>
+
+      <section class="view" id="view-github" data-view="github" aria-labelledby="github-heading">
+        <div class="view-head">
+          <div>
+            <h2 id="github-heading">GitHub</h2>
+          </div>
+          <button type="button" data-retry="project">Retry</button>
+        </div>
+        <div class="status-strip" id="github-status" data-state="loading">Loading GitHub...</div>
+        <div class="project-grid" id="github-sections"></div>
       </section>
 
       <section class="view" id="view-tools" data-view="tools" aria-labelledby="tools-heading">

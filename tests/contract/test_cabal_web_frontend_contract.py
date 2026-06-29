@@ -38,6 +38,8 @@ def test_required_view_containers_exist() -> None:
     for view_id in (
         "view-overview",
         "view-agent",
+        "view-infrastructure",
+        "view-github",
         "view-tools",
         "view-knowledge",
         "view-project",
@@ -66,6 +68,8 @@ def test_static_assets_contain_required_state_labels() -> None:
     for text in (
         "Loading overview",
         "Loading agent setup",
+        "Loading infrastructure overview",
+        "Loading GitHub",
         "Loading tools",
         "Loading knowledge",
         "Loading project health",
@@ -92,6 +96,7 @@ def test_primary_controls_are_keyboard_focusable_and_labelled() -> None:
     assert 'aria-label="Overview"' in html
     assert "Dev setup" in html
     assert "Repo setup" in html
+    assert "Infrastructure setup" in html
     assert "Agent setup" in html
     assert 'aria-label="Refresh current view"' in html
     assert 'type="button"' in html
