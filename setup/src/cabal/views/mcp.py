@@ -184,12 +184,47 @@ class McpScreen(Screen):
         tbl.loading = False
         self._sync_action_buttons()
 
+    _SPINNER_FRAMES = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+
+    def _start_row_spinner(self, name: str) -> None:
+        """Animate a rotating spinner in this row's Status cell while it re-checks."""
+        tbl = self.query_one("#mcp-table", DataTable)
+        status_col = self._cols[2]
+        state = {"frame": 0}
+
+        def tick() -> None:
+            state["frame"] = (state["frame"] + 1) % len(self._SPINNER_FRAMES)
+            try:
+                tbl.update_cell(
+                    name,
+                    status_col,
+                    f"[yellow]{self._SPINNER_FRAMES[state['frame']]} checking…[/yellow]",
+                )
+            except Exception:
+                pass
+
+        try:
+            tbl.update_cell(
+                name, status_col, f"[yellow]{self._SPINNER_FRAMES[0]} checking…[/yellow]"
+            )
+        except Exception:
+            return
+        state["timer"] = self.set_interval(0.08, tick)
+        if not hasattr(self, "_row_spinners"):
+            self._row_spinners = {}
+        self._row_spinners[name] = state
+
+    def _stop_row_spinner(self, name: str) -> None:
+        state = getattr(self, "_row_spinners", {}).pop(name, None)
+        if state and "timer" in state:
+            state["timer"].stop()
+
     def _refresh_row(self, name: str | None) -> None:
         """Re-check a single server (via `claude mcp get`) instead of every row."""
         if not name:
             self._refresh()
             return
-        self.query_one("#mcp-table", DataTable).loading = True
+        self._start_row_spinner(name)
         self.run_worker(lambda: self._load_row(name), thread=True)
 
     def _load_row(self, name: str) -> None:
@@ -201,12 +236,20 @@ class McpScreen(Screen):
         self.app.call_from_thread(self._apply_row, name, info)
 
     def _row_failed(self, name: str, msg: str) -> None:
-        self.query_one("#mcp-table", DataTable).loading = False
+        self._stop_row_spinner(name)
+        info = self._servers.get(name)
+        if info:
+            try:
+                self.query_one("#mcp-table", DataTable).update_cell(
+                    name, self._cols[2], server_row_cells(info)[1]
+                )
+            except Exception:
+                pass
         self._status(f"[red]Re-check failed for {name}: {msg}[/red]")
 
     def _apply_row(self, name: str, info: dict | None) -> None:
+        self._stop_row_spinner(name)
         tbl = self.query_one("#mcp-table", DataTable)
-        tbl.loading = False
         gone = not info or (
             not info["scopes"] and not info["active"] and not info.get("pending")
         )
