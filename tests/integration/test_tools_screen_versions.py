@@ -38,4 +38,4 @@ async def test_long_running_version_check_does_not_block_initial_render(monkeypa
         await app.push_screen(screen)
         await pilot.pause()
 
-        assert screen.query_one("#tool-description-node") is not None
+        assert screen.query_one("#tool-name-node") is not None

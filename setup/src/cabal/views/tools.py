@@ -116,25 +116,13 @@ class ToolsScreen(Screen):
         margin: 0 0 1 0;
     }
     ToolsScreen .tool-row {
+        layout: horizontal;
         height: auto;
+        align: left middle;
         margin: 0 0 1 0;
     }
-    ToolsScreen .tool-row-head {
-        layout: horizontal;
-        height: 1;
-    }
-    ToolsScreen .tool-name { width: 18; }
+    ToolsScreen .tool-name { width: 22; }
     ToolsScreen .tool-state { width: 1fr; }
-    ToolsScreen .tool-description {
-        margin: 0 0 0 2;
-        color: $text-muted;
-        height: auto;
-    }
-    ToolsScreen .tool-meta {
-        layout: horizontal;
-        height: 3;
-        margin: 0 0 0 2;
-    }
     ToolsScreen Select.tool-version {
         width: 28;
         max-width: 28;
@@ -218,49 +206,51 @@ class ToolsScreen(Screen):
                         definition = get_tool_definition(key)
                         unavailable = _tool_unavailable_reason(key) is not None
                         display_label = self._display_label(label, definition)
-                        with Vertical(classes="tool-row", id=f"tool-row-{key}"):
-                            with Horizontal(classes="tool-row-head"):
-                                yield Static(display_label, classes="tool-name", id=f"tool-name-{key}")
-                                yield Static(
-                                    "", classes="tool-state", id=f"tool-state-{key}"
+                        with Horizontal(classes="tool-row", id=f"tool-row-{key}"):
+                            name = Static(
+                                display_label, classes="tool-name", id=f"tool-name-{key}"
+                            )
+                            if definition is not None and definition.description:
+                                name.tooltip = redact_secret_text(definition.description)
+                            yield name
+                            yield Static(
+                                "", classes="tool-state", id=f"tool-state-{key}"
+                            )
+                            if definition is not None and definition.version_provider:
+                                version_result = version_options_for(
+                                    definition.version_provider
+                                )
+                                options = [
+                                    (option.label, option.version)
+                                    for option in version_result.options
+                                ]
+                                yield Select(
+                                    options
+                                    or [("Version metadata unavailable", "unavailable")],
+                                    id=f"tool-version-{key}",
+                                    classes="tool-version",
+                                    prompt="Version...",
+                                )
+                            yield Button(
+                                "N/A" if unavailable else "Install",
+                                id=f"tool-install-{key}",
+                                classes="tool-install",
+                                disabled=unavailable,
+                            )
+                            # "Read more" / Source always last, after install/update.
+                            if definition is not None:
+                                source_disabled = not bool(definition.source_url)
+                                source_label = (
+                                    "Read more"
+                                    if definition.source_status == SourceStatus.VERIFIED
+                                    else "Source req"
                                 )
                                 yield Button(
-                                    "N/A" if unavailable else "Install",
-                                    id=f"tool-install-{key}",
-                                    classes="tool-install",
-                                    disabled=unavailable,
+                                    source_label,
+                                    id=f"tool-source-{key}",
+                                    classes="tool-source",
+                                    disabled=source_disabled,
                                 )
-                            if definition is not None:
-                                yield Static(
-                                    redact_secret_text(definition.description),
-                                    classes="tool-description",
-                                    id=f"tool-description-{key}",
-                                )
-                                with Horizontal(classes="tool-meta"):
-                                    source_disabled = not bool(definition.source_url)
-                                    source_label = (
-                                        "Read more"
-                                        if definition.source_status == SourceStatus.VERIFIED
-                                        else "Source req"
-                                    )
-                                    yield Button(
-                                        source_label,
-                                        id=f"tool-source-{key}",
-                                        classes="tool-source",
-                                        disabled=source_disabled,
-                                    )
-                                    if definition.version_provider:
-                                        version_result = version_options_for(definition.version_provider)
-                                        options = [
-                                            (option.label, option.version)
-                                            for option in version_result.options
-                                        ]
-                                        yield Select(
-                                            options or [("Version metadata unavailable", "unavailable")],
-                                            id=f"tool-version-{key}",
-                                            classes="tool-version",
-                                            prompt="Version...",
-                                        )
             yield Static("", id="tools-status", classes="panel")
         yield Footer(show_command_palette=False)
 
