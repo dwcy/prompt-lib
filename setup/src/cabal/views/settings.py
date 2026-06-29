@@ -50,7 +50,6 @@ class SettingsScreen(Screen):
             with Horizontal():
                 yield Button("Reset local overrides", id="set-reset", variant="error")
                 yield Button("Refresh (Ctrl+R)", id="set-refresh")
-                yield Button("Back (Esc)", id="set-back")
             yield Static("", id="set-status", classes="panel")
         yield Footer(show_command_palette=False)
 
@@ -102,9 +101,7 @@ class SettingsScreen(Screen):
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         bid = event.button.id or ""
-        if bid == "set-back":
-            self.app.pop_screen()
-        elif bid == "set-refresh":
+        if bid == "set-refresh":
             self._refresh_rows()
         elif bid == "set-reset":
             count = reset_local(self._project())

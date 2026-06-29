@@ -194,7 +194,6 @@ class LocalScreen(Screen):
                 yield Button("Refresh preview", id="loc-refresh")
                 yield Button("View (v)", id="loc-view", variant="primary")
                 yield Button("Apply (Ctrl+A)", id="loc-apply", variant="success")
-                yield Button("Back (Esc)", id="loc-back")
             yield Static("", id="loc-status", classes="panel")
         yield Footer(show_command_palette=False)
 
@@ -412,9 +411,7 @@ class LocalScreen(Screen):
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         bid = event.button.id or ""
-        if bid == "loc-back":
-            self.app.pop_screen()
-        elif bid == "loc-view":
+        if bid == "loc-view":
             self.action_view_file()
         elif bid == "loc-refresh":
             self._refresh()
