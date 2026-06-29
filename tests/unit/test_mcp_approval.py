@@ -189,3 +189,9 @@ def test_activate_and_disable_paths_refresh_single_row():
         McpScreen._remove_scope,
     ):
         assert "_refresh_row" in inspect.getsource(method)
+
+
+def test_per_row_refresh_shows_and_clears_loading_spinner():
+    assert "loading = True" in inspect.getsource(McpScreen._refresh_row)
+    assert "loading = False" in inspect.getsource(McpScreen._apply_row)
+    assert "loading = False" in inspect.getsource(McpScreen._row_failed)

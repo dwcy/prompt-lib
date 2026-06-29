@@ -189,20 +189,24 @@ class McpScreen(Screen):
         if not name:
             self._refresh()
             return
+        self.query_one("#mcp-table", DataTable).loading = True
         self.run_worker(lambda: self._load_row(name), thread=True)
 
     def _load_row(self, name: str) -> None:
         try:
             info = enumerate_one_server(name, project_dir=self._project_dir)
         except Exception as e:
-            self.app.call_from_thread(
-                self._status, f"[red]Re-check failed for {name}: {e}[/red]"
-            )
+            self.app.call_from_thread(self._row_failed, name, str(e))
             return
         self.app.call_from_thread(self._apply_row, name, info)
 
+    def _row_failed(self, name: str, msg: str) -> None:
+        self.query_one("#mcp-table", DataTable).loading = False
+        self._status(f"[red]Re-check failed for {name}: {msg}[/red]")
+
     def _apply_row(self, name: str, info: dict | None) -> None:
         tbl = self.query_one("#mcp-table", DataTable)
+        tbl.loading = False
         gone = not info or (
             not info["scopes"] and not info["active"] and not info.get("pending")
         )
