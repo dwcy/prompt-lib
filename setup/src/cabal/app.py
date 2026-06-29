@@ -37,7 +37,6 @@ from cabal.views.init_project_prompt import build_init_prompt, write_init_prompt
 from cabal.views.knowledge import KnowledgeScreen  # noqa: F401
 from cabal.views.local import LocalScreen  # noqa: F401
 from cabal.views.mcp import McpScreen  # noqa: F401
-from cabal.views.operations import OperationsScreen  # noqa: F401
 from cabal.views.project_gate import ProjectGateScreen
 from cabal.views.project_mcp import ProjectMcpScreen  # noqa: F401
 from cabal.views.readme import ReadmeScreen  # noqa: F401
@@ -305,7 +304,9 @@ class CabalApp(App):
 
     def on_mount(self) -> None:
         self.title = "CABAL"
-        self.sub_title = "Cabal helps you manage your agentic development setup in one place."
+        self.sub_title = (
+            "Cabal helps you manage your agentic development setup in one place."
+        )
         self.push_screen(ProjectGateScreen())
 
     async def action_copy(self) -> None:

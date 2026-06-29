@@ -105,7 +105,6 @@ hiddenimports = [
     "cabal.views.init_project_prompt",
     "cabal.views.local",
     "cabal.views.mcp",
-    "cabal.views.operations",
     "cabal.views.project_mcp",
     "cabal.views.readme",
     "cabal.views.restore",
