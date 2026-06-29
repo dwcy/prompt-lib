@@ -1,11 +1,11 @@
 ---
 
-description: "Task list for 010-headroom-tool implementation"
+description: "Task list for 012-headroom-tool implementation"
 ---
 
 # Tasks: Headroom as a Managed Tool
 
-**Input**: Design documents from `/specs/010-headroom-tool/`
+**Input**: Design documents from `/specs/012-headroom-tool/`
 **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/mcp-template.md, quickstart.md
 
 **Tests**: Light pytest smoke/visibility checks only (no protocol contract tests — Constitution Gate 3 = N/A; we register an existing third-party MCP server, we do not author one).
@@ -29,8 +29,8 @@ description: "Task list for 010-headroom-tool implementation"
 
 > **Spike outcome (2026-06-22→24)**: install spec `headroom-ai[mcp]`; no Windows wheel + the sdist needs a Rust+MSVC toolchain → user chose **auto-provision**. **Now VERIFIED working**: the real installer auto-provisioned the toolchain and built from source → `headroom 0.27.0` on PATH; MCP serve command `headroom mcp serve` **verified** (`claude mcp list` → Connected). Proxy verdict **revised from SHELVE → VIABLE/PILOT-LATER**: headroom's CLI help explicitly documents subscription CCR + `ANTHROPIC_BASE_URL` for subscription `claude`, so it's not "undocumented" — but the full proxy remains unmeasured and out of scope for 010. Full detail in `research.md`.
 
-- [X] T001 Install Headroom locally and confirm the exact `uv tool install` package spec/extra that yields a working `headroom` CLI **with** the MCP server present (`headroom-ai[mcp]` vs `[all]`); verify `headroom --version`; record the confirmed spec in `specs/010-headroom-tool/research.md` §A2 — Owner: main *(outcome: spec = `headroom-ai[mcp]`; install BLOCKED on Windows — no wheel + missing Rust/MSVC toolchain; resolution = auto-provision)*
-- [X] T002 Confirm the exact stdio invocation the Headroom MCP server runs (inspect what `headroom mcp install` writes to `~/.claude.json`, and/or `headroom mcp --help`); record the confirmed `command`/`args` in `specs/010-headroom-tool/research.md` §A3 — Owner: main *(outcome: `headroom mcp serve`, docs-confirmed, unverified locally)*
+- [X] T001 Install Headroom locally and confirm the exact `uv tool install` package spec/extra that yields a working `headroom` CLI **with** the MCP server present (`headroom-ai[mcp]` vs `[all]`); verify `headroom --version`; record the confirmed spec in `specs/012-headroom-tool/research.md` §A2 — Owner: main *(outcome: spec = `headroom-ai[mcp]`; install BLOCKED on Windows — no wheel + missing Rust/MSVC toolchain; resolution = auto-provision)*
+- [X] T002 Confirm the exact stdio invocation the Headroom MCP server runs (inspect what `headroom mcp install` writes to `~/.claude.json`, and/or `headroom mcp --help`); record the confirmed `command`/`args` in `specs/012-headroom-tool/research.md` §A3 — Owner: main *(outcome: `headroom mcp serve`, docs-confirmed, unverified locally)*
 - [X] T003 [US3] Run the proxy/subscription-auth investigation per `research.md` §B steps (does `headroom wrap claude`/proxy work with subscription/OAuth Claude Code without an API key; risks; measured savings if any) and fill §B **Findings / Risks / Measured savings / Verdict** (pursue/shelve/reject) — Owner: main *(outcome: SHELVE, docs-based unverified)*
 
 **Checkpoint**: research.md §A2, §A3 confirmed and §B verdict recorded. Implementation can begin.
@@ -121,4 +121,4 @@ description: "Task list for 010-headroom-tool implementation"
 - Owner field maps each task to a subagent from `.specify/memory/agents.md`.
 - No protocol contract tests: Headroom owns its MCP tool schemas; we register the server via existing machinery (Gate 3 = N/A).
 - Recompute each phase `**Status**:` line whenever `[X]` checkboxes change during `/speckit-implement`.
-- Commit at plan-completion checkpoint per the repo's git rules (one feature commit for the 010 spec-kit artifacts; per-task commits during implement).
+- Commit at plan-completion checkpoint per the repo's git rules (one feature commit for the 012 spec-kit artifacts; per-task commits during implement).

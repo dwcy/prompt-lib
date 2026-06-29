@@ -1,6 +1,6 @@
 # Config Contract: Headroom `mcp-templates.json` entry
 
-**Feature**: 010-headroom-tool | **Type**: internal config contract (not an external protocol)
+**Feature**: 012-headroom-tool | **Type**: internal config contract (not an external protocol)
 
 This is the only "contract" the feature owns. It is the shape of a `setup/mcp-templates.json` template entry, already enforced by the existing consumers `_load_mcp_templates`, `enumerate_mcp_servers`, and `claude_mcp_add_from_template` in `setup/src/cabal/mcp_ops.py`. No wire/protocol contract tests are required (Constitution Gate 3 = N/A — Headroom owns its MCP tool schemas; we only register the server).
 

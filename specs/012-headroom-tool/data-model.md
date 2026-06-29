@@ -1,6 +1,6 @@
 # Data Model: Headroom as a Managed Tool
 
-**Feature**: 010-headroom-tool | **Date**: 2026-06-21
+**Feature**: 012-headroom-tool | **Date**: 2026-06-21
 
 No persistent/runtime data store. The "entities" here are static catalog/config records the feature adds to existing structures. Field shapes mirror what already exists in `setup/src/cabal/tools.py` and `setup/mcp-templates.json`.
 
@@ -50,4 +50,4 @@ Added under `templates` in `setup/mcp-templates.json`; consumed by `enumerate_mc
 State: appears as scope `"template"` until registered; becomes scope `"user"` + `active` after `claude mcp add -s user`.
 
 ## Entity: Research findings document
-`specs/010-headroom-tool/research.md` §B — the investigate-only proxy verdict (FR-009). Required terminal field: **Verdict ∈ {pursue, shelve, reject}**, filled during the implementation spike.
+`specs/012-headroom-tool/research.md` §B — the investigate-only proxy verdict (FR-009). Required terminal field: **Verdict ∈ {pursue, shelve, reject}**, filled during the implementation spike.

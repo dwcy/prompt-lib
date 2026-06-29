@@ -1,6 +1,6 @@
 # Research: Headroom as a Managed Tool
 
-**Feature**: 010-headroom-tool | **Date**: 2026-06-21
+**Feature**: 012-headroom-tool | **Date**: 2026-06-21
 
 This document holds (A) the resolved technical decisions for the managed-tool integration and (B) the investigate-only verdict on the transparent-proxy path (FR-009). Section B is the spec's research deliverable; its **Verdict** is filled empirically during the implementation Phase-0 spike and must not gate any shipped code (FR-010).
 
@@ -51,7 +51,7 @@ This is heavyweight (multi-GB VS Build Tools download + a Rust compile) and the 
 
 ### A5. Scope boundaries
 - **Decision**: No auto-compression nudge (hook/skill) and no `headroom learn` adoption in this feature.
-- **Rationale**: Keeps 010 shippable and low-risk; both are larger design questions (the nudge changes session behavior; `headroom learn` overlaps the existing `self-improvement` skill and would trip Constitution Gate 5). Flagged for separate future specs.
+- **Rationale**: Keeps 012 shippable and low-risk; both are larger design questions (the nudge changes session behavior; `headroom learn` overlaps the existing `self-improvement` skill and would trip Constitution Gate 5). Flagged for separate future specs.
 
 ---
 
@@ -81,4 +81,4 @@ This is heavyweight (multi-GB VS Build Tools download + a Rust compile) and the 
 
 > **🔄 CORRECTION (2026-06-24, after install succeeded)**: the earlier "undocumented for subscription / SHELVE" framing was based on the public web docs, which omit it. Headroom's **CLI help is explicit**: `headroom mcp` describes CCR as *"enables ... subscription users who don't have API access"*, and the documented setup is `ANTHROPIC_BASE_URL=http://127.0.0.1:8787 claude` — i.e. point the **subscription** `claude` at the local proxy. So Headroom *does* target subscription auth, via two layers: (1) the **MCP CCR tools** (on-demand retrieve — now shipped + verified Connected in Stories 1–2), and (2) the **proxy** (`ANTHROPIC_BASE_URL`) for automatic compression of all traffic. The proxy is therefore documented for subscription use, not undocumented.
 
-**Verdict — VIABLE; PILOT LATER as a separate opt-in (revised from SHELVE)**: The supported, low-risk subscription integration — the MCP CCR tools — is delivered by this feature (Stories 1–2, verified Connected). The full `ANTHROPIC_BASE_URL` proxy (auto-compress everything) is now technically available (headroom installed) and is *documented* to work with subscription `claude`, but remains **unmeasured here** — auth-survival through the redirect, actual token reduction, and ToS/attribution comfort are not yet validated end-to-end. Recommendation: do **not** wire the proxy into prompt-lib in 010 (out of scope = managed-tool only), but it is a reasonable **future pilot** (own feature: stand up `headroom proxy`, set `ANTHROPIC_BASE_URL`, measure savings on a real session, confirm OAuth survives). The earlier blanket caution that the "4× usage" headline "does not apply on subscription auth" is **withdrawn** — it may apply; it's just not yet measured.
+**Verdict — VIABLE; PILOT LATER as a separate opt-in (revised from SHELVE)**: The supported, low-risk subscription integration — the MCP CCR tools — is delivered by this feature (Stories 1–2, verified Connected). The full `ANTHROPIC_BASE_URL` proxy (auto-compress everything) is now technically available (headroom installed) and is *documented* to work with subscription `claude`, but remains **unmeasured here** — auth-survival through the redirect, actual token reduction, and ToS/attribution comfort are not yet validated end-to-end. Recommendation: do **not** wire the proxy into prompt-lib in 012 (out of scope = managed-tool only), but it is a reasonable **future pilot** (own feature: stand up `headroom proxy`, set `ANTHROPIC_BASE_URL`, measure savings on a real session, confirm OAuth survives). The earlier blanket caution that the "4× usage" headline "does not apply on subscription auth" is **withdrawn** — it may apply; it's just not yet measured.

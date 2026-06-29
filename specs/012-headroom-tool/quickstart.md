@@ -1,6 +1,6 @@
 # Quickstart / Verification: Headroom as a Managed Tool
 
-**Feature**: 010-headroom-tool | **Date**: 2026-06-21
+**Feature**: 012-headroom-tool | **Date**: 2026-06-21
 
 End-to-end manual verification. Maps to the spec's Success Criteria (SC-00x). Run from the repo root after implementing the feature and deploying with `python setup/settings-configurator-ui.py`.
 
@@ -40,7 +40,7 @@ End-to-end manual verification. Maps to the spec's Success Criteria (SC-00x). Ru
 - [ ] `setup/README.md` mentions Headroom where it enumerates featured tools/MCP coverage.
 
 ## Rollback (Constitution Gate 4)
-- Source edits: `git checkout` / revert on `010-headroom-tool`.
+- Source edits: `git checkout` / revert on `012-headroom-tool`.
 - Deployed `global/MCP.md`: re-run the configurator (restore flow) or revert + re-apply.
 - Registered server: cabal MCP manager remove, or `claude mcp remove -s user headroom`.
 - Tool: `uv tool uninstall headroom-ai`.
