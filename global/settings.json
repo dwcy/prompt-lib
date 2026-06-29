@@ -267,10 +267,6 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python \"$USERPROFILE/.claude/hooks/session_end.py\""
-          },
-          {
-            "type": "command",
             "command": "python \"$USERPROFILE/.claude/hooks/session_end_release_lock.py\""
           }
         ]
