@@ -25,7 +25,6 @@ ALL_HOOKS = [
     "format_on_write",
     "post_tool_use",
     "pretool_task_isolation",
-    "session_end",
     "session_end_release_lock",
     "session_start",
     "stop_session",
