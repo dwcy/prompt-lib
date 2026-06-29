@@ -137,7 +137,8 @@ class HomeScreen(Screen):
                     "[dim]OKF (Open Knowledge Format) turns agents, skills, hooks, "
                     "rules, and specs into a portable knowledge map for AI tools. "
                     "Use it to inspect how prompt-lib pieces connect, spot routing "
-                    "overlap, export the OKF bundle, and run Doctor checks.[/dim]",
+                    "overlap, export the OKF bundle, run Doctor checks, and open "
+                    "the interactive graph viewer.[/dim]",
                     id="okf-analytics-desc",
                     classes="home-section-desc",
                 )
