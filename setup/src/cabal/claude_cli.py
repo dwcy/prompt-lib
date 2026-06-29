@@ -4,8 +4,10 @@
 from __future__ import annotations
 
 import os
+import shutil
 import subprocess
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
 from typing import Callable
 
@@ -18,11 +20,22 @@ class ClaudeRunResult:
     cancelled: bool = False
 
 
+@lru_cache(maxsize=1)
+def _claude_exe() -> str:
+    """Resolve the `claude` launcher to a full path.
+
+    On Windows `claude` is a `.cmd`/`.ps1` shim; `subprocess` (shell=False) calls
+    CreateProcess, which does NOT search PATHEXT, so a bare "claude" raises
+    FileNotFoundError. `shutil.which` honours PATHEXT and returns the real file.
+    """
+    return shutil.which("claude") or "claude"
+
+
 def _run_claude_cli(args: list[str], timeout: int = 30) -> tuple[int, str, str]:
     """Run a `claude` CLI command with MSYS path conversion disabled (Git Bash safety)."""
     env = {**os.environ, "MSYS_NO_PATHCONV": "1"}
     try:
-        r = subprocess.run(["claude", *args], capture_output=True, text=True, timeout=timeout, env=env)
+        r = subprocess.run([_claude_exe(), *args], capture_output=True, text=True, timeout=timeout, env=env)
         return r.returncode, r.stdout, r.stderr
     except FileNotFoundError:
         return 127, "", "claude CLI not found in PATH"
@@ -41,7 +54,7 @@ def spawn_claude(
     if env_extra:
         env.update(env_extra)
     return subprocess.Popen(
-        ["claude", *args],
+        [_claude_exe(), *args],
         cwd=str(cwd),
         env=env,
         stdin=subprocess.DEVNULL,
@@ -61,7 +74,7 @@ def claude_print(
     env = {**os.environ, "MSYS_NO_PATHCONV": "1"}
     try:
         proc = subprocess.Popen(
-            ["claude", "-p", prompt],
+            [_claude_exe(), "-p", prompt],
             cwd=str(cwd),
             env=env,
             stdin=subprocess.DEVNULL,
