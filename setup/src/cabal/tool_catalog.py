@@ -230,7 +230,11 @@ TOOL_CATEGORIES: tuple[ToolCategory, ...] = (
         "ai-editors-ides",
         ("cursor", "windsurf", "antigravity", "vscode", "zed", "rider", "visualstudio"),
     ),
-    ToolCategory("Developer Tools", "developer-tools", ("postman", "hugo", "uvicorn")),
+    ToolCategory(
+        "Developer Tools",
+        "developer-tools",
+        ("postman", "hugo", "uvicorn", "specify", "claude-devtools"),
+    ),
 )
 
 
@@ -691,6 +695,23 @@ TOOL_DEFINITIONS: tuple[ToolDefinition, ...] = (
         "Developer Tools",
         "ASGI web server used to run FastAPI and other Python async apps.",
         "https://www.uvicorn.org/",
+    ),
+    _t(
+        "specify",
+        "Specify CLI",
+        "Developer Tools",
+        "GitHub Spec Kit CLI - `specify init` scaffolds spec-driven `.specify/` workflows. Installed via uv tool from the upstream git repo.",
+        "https://github.com/github/spec-kit",
+        source_status=SourceStatus.VERIFIED,
+    ),
+    _t(
+        "claude-devtools",
+        "claude-devtools",
+        "Developer Tools",
+        "Desktop GUI that visualizes Claude Code session activity from local ~/.claude logs (file paths, tool calls, tokens). Runs locally, no API keys.",
+        "https://github.com/matt1398/claude-devtools",
+        source_status=SourceStatus.VERIFIED,
+        install_channel=InstallChannel.DESKTOP_APP,
     ),
 )
 

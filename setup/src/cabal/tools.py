@@ -235,6 +235,9 @@ def _probe_key(key: str) -> object:
         return shutil.which("code") is not None
     if key == "vercel-plugin":
         return vercel_plugin_status() == "installed"
+    if key == "claude-devtools":
+        # Desktop GUI — not a PATH binary; cdt_status() stats install locations.
+        return cdt_status().startswith("installed")
     if key == "vllm":
         return _probe_version("vllm", "--version") or (shutil.which("vllm") is not None)
     return shutil.which(key) is not None
@@ -452,6 +455,8 @@ INSTALLER_FUNCTIONS: dict[str, Callable[[], tuple[bool, str]]] = {
     "postman": postman_install,
     "hugo": hugo_install,
     "uvicorn": uvicorn_install,
+    "specify": specify_install,
+    "claude-devtools": cdt_install,
     "sqlite": sqlite_install,
     "duckdb": duckdb_install,
     "redis": redis_install,

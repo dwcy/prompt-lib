@@ -109,7 +109,13 @@ def test_requested_tools_are_in_expected_categories():
     assert {"azure-sql-local", "cosmos-db-emulator", "azurite"} <= set(
         groups["Azure Local Tools"]
     )
-    assert {"postman", "hugo", "uvicorn"} <= set(groups["Developer Tools"])
+    assert {
+        "postman",
+        "hugo",
+        "uvicorn",
+        "specify",
+        "claude-devtools",
+    } <= set(groups["Developer Tools"])
     assert "uv" in set(groups["Package Managers"])
 
 
