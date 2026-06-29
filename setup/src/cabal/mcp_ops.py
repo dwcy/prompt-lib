@@ -41,6 +41,70 @@ def _claude_dot_json() -> dict:
         return {}
 
 
+def _write_claude_dot_json(data: dict) -> None:
+    p = Path.home() / ".claude.json"
+    text = json.dumps(data, indent=2, ensure_ascii=False) + "\n"
+    json.loads(text)
+    with tempfile.NamedTemporaryFile(
+        "w",
+        encoding="utf-8",
+        dir=str(p.parent),
+        prefix=".claude.",
+        suffix=".tmp",
+        delete=False,
+    ) as f:
+        f.write(text)
+        tmp_path = f.name
+    os.replace(tmp_path, p)
+
+
+def _project_key(project_dir: Path) -> str:
+    """Project path as Claude Code keys it in ~/.claude.json (posix, drive-lettered)."""
+    return Path(project_dir).resolve().as_posix()
+
+
+def _set_project_mcp_approval(name: str, project_dir: Path, approved: bool) -> None:
+    """Approve or reject a project-scoped (.mcp.json) server in ~/.claude.json.
+
+    Claude Code gates servers declared in a project .mcp.json behind a per-project
+    trust choice stored as enabledMcpjsonServers / disabledMcpjsonServers. Writing
+    these is the non-interactive equivalent of the startup approval prompt.
+    """
+    cj = _claude_dot_json() or {}
+    proj = cj.setdefault("projects", {}).setdefault(_project_key(project_dir), {})
+    enabled = [s for s in (proj.get("enabledMcpjsonServers") or []) if s != name]
+    disabled = [s for s in (proj.get("disabledMcpjsonServers") or []) if s != name]
+    (enabled if approved else disabled).append(name)
+    proj["enabledMcpjsonServers"] = enabled
+    proj["disabledMcpjsonServers"] = disabled
+    _write_claude_dot_json(cj)
+
+
+def _clear_project_mcp_approval(name: str, project_dir: Path) -> None:
+    """Drop a server from both approval lists (used when removing it entirely)."""
+    cj = _claude_dot_json()
+    proj = (cj.get("projects") or {}).get(_project_key(project_dir))
+    if not proj:
+        return
+    changed = False
+    for key in ("enabledMcpjsonServers", "disabledMcpjsonServers"):
+        lst = proj.get(key)
+        if lst and name in lst:
+            proj[key] = [s for s in lst if s != name]
+            changed = True
+    if changed:
+        _write_claude_dot_json(cj)
+
+
+def approve_project_mcp(name: str, project_dir: Path) -> tuple[bool, str]:
+    """Trust a pending project-scoped server so Claude Code will connect to it."""
+    try:
+        _set_project_mcp_approval(name, project_dir, approved=True)
+    except Exception as e:
+        return False, str(e)
+    return True, f"approved {name} (project)"
+
+
 def _claude_mcp_list() -> list[dict]:
     """Parse `claude mcp list` output. Returns [{name, command_line, connected, status_text}].
 
@@ -85,6 +149,7 @@ def enumerate_mcp_servers(project_dir: Path | None = None) -> dict[str, dict]:
             {
                 "scopes": [],
                 "active": False,
+                "pending": False,
                 "command_line": "",
                 "env_required": [],
                 "is_plugin": name.startswith("plugin:"),
@@ -125,6 +190,7 @@ def enumerate_mcp_servers(project_dir: Path | None = None) -> dict[str, dict]:
         name = entry["name"]
         e = _ensure(name)
         e["active"] = entry["connected"]
+        e["pending"] = "pending approval" in entry["status_text"].lower()
         e["command_line"] = entry["command_line"]
         if e["is_plugin"] and "plugin" not in e["scopes"]:
             e["scopes"].insert(0, "plugin")
@@ -173,6 +239,73 @@ def enumerate_mcp_servers(project_dir: Path | None = None) -> dict[str, dict]:
             info["scopes"].append("connector")
 
     return aggregated
+
+
+def _claude_mcp_get_status(name: str) -> tuple[bool, bool]:
+    """(active, pending) for one server via `claude mcp get` — a single health check."""
+    rc, out, _ = _run_claude_cli(["mcp", "get", name], timeout=60)
+    if rc != 0:
+        return False, False
+    low = out.lower()
+    pending = "pending approval" in low
+    return ("connected" in low and not pending), pending
+
+
+def enumerate_one_server(name: str, project_dir: Path | None = None) -> dict | None:
+    """Re-derive one server's aggregated info without health-checking every server.
+
+    Uses `claude mcp get <name>` instead of the full `claude mcp list`, so the UI can
+    refresh a single row after an action. Plugin servers fall back to full enumeration
+    (their state depends on the plugin list, which spans multiple servers).
+    """
+    if name.startswith("plugin:"):
+        return enumerate_mcp_servers(project_dir).get(name)
+
+    info = {
+        "scopes": [],
+        "active": False,
+        "pending": False,
+        "command_line": "",
+        "env_required": [],
+        "is_plugin": False,
+        "definitions": {},
+        "plugin_id": None,
+        "plugin_enabled": None,
+        "plugin_scope": None,
+    }
+
+    user_servers = _claude_dot_json().get("mcpServers") or {}
+    if name in user_servers:
+        info["scopes"].append("user")
+        info["definitions"]["user"] = user_servers[name]
+
+    proj_entries = read_project_mcp(project_dir or Path.cwd())
+    if name in proj_entries:
+        info["scopes"].append("project")
+        info["definitions"]["project"] = proj_entries[name]
+
+    tmpl = _load_mcp_templates().get(name)
+    if tmpl:
+        info["env_required"] = list(tmpl.get("env_required") or [])
+        info["definitions"]["template"] = tmpl
+        if not info["scopes"]:
+            info["scopes"].append("template")
+
+    info["active"], info["pending"] = _claude_mcp_get_status(name)
+
+    cfg = info["definitions"].get("user") or info["definitions"].get("project")
+    if cfg:
+        cmd = cfg.get("command") or ""
+        info["command_line"] = (
+            " ".join([cmd, *(cfg.get("args") or [])]).strip()
+            if cmd
+            else (cfg.get("url") or "")
+        )
+    elif tmpl:
+        info["command_line"] = " ".join(
+            [tmpl.get("command", "")] + list(tmpl.get("args") or [])
+        )
+    return info
 
 
 def claude_mcp_add_from_template(name: str, template: dict) -> tuple[bool, str]:
@@ -265,9 +398,10 @@ def add_template_to_project_mcp(
     entries[name] = _template_to_project_entry(template)
     try:
         _write_project_mcp(project_dir, entries)
+        _set_project_mcp_approval(name, project_dir, approved=True)
     except Exception as e:
         return False, str(e)
-    return True, f"added {name} (project) → {project_dir / '.mcp.json'}"
+    return True, f"added + approved {name} (project) → {project_dir / '.mcp.json'}"
 
 
 def remove_from_project_mcp(name: str, project_dir: Path) -> tuple[bool, str]:
@@ -278,6 +412,7 @@ def remove_from_project_mcp(name: str, project_dir: Path) -> tuple[bool, str]:
     del entries[name]
     try:
         _write_project_mcp(project_dir, entries)
+        _clear_project_mcp_approval(name, project_dir)
     except Exception as e:
         return False, str(e)
     return True, f"removed {name} from {project_dir / '.mcp.json'}"

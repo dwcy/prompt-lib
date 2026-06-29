@@ -17,24 +17,33 @@ def _disable_tools_workers(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_tools_screen_copies_selected_description_text(monkeypatch):
+async def test_tool_name_carries_description_tooltip(monkeypatch):
     monkeypatch.setattr(project_gate, "load_recents", lambda: [])
-    monkeypatch.setattr(app_module, "read_clipboard", lambda: "")
-    copied: list[str] = []
-    monkeypatch.setattr(app_module, "write_clipboard", lambda text: copied.append(text))
     app = CabalApp()
 
     async with app.run_test(size=(120, 80)) as pilot:
         await pilot.pause()
         await app.push_screen(ToolsScreen())
         await pilot.pause()
-        description = app.screen.query_one("#tool-description-git", Static)
-        description.text_select_all()
-        await pilot.press("ctrl+c")
-        await pilot.pause()
+        name = app.screen.query_one("#tool-name-git", Static)
 
-        assert "version control" in app._clipboard.lower()
-        assert copied
+        assert name.tooltip is not None
+        assert "version control" in name.tooltip.lower()
+
+
+@pytest.mark.asyncio
+async def test_read_more_button_comes_after_install(monkeypatch):
+    monkeypatch.setattr(project_gate, "load_recents", lambda: [])
+    app = CabalApp()
+
+    async with app.run_test(size=(120, 80)) as pilot:
+        await pilot.pause()
+        await app.push_screen(ToolsScreen())
+        await pilot.pause()
+        row = app.screen.query_one("#tool-row-git")
+        ids = [child.id for child in row.children]
+
+        assert ids.index("tool-install-git") < ids.index("tool-source-git")
 
 
 @pytest.mark.asyncio

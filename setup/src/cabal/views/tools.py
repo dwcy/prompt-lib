@@ -84,6 +84,7 @@ from cabal.tools import (
 )
 from cabal.tool_catalog import (
     SourceStatus,
+    clean_console_output,
     get_tool_definition,
     redact_secret_text,
 )
@@ -116,28 +117,44 @@ class ToolsScreen(Screen):
         margin: 0 0 1 0;
     }
     ToolsScreen .tool-row {
+        layout: horizontal;
         height: auto;
+        align: left middle;
         margin: 0 0 1 0;
     }
-    ToolsScreen .tool-row-head {
-        layout: horizontal;
-        height: 1;
-    }
-    ToolsScreen .tool-name { width: 18; }
+    ToolsScreen .tool-name { width: 22; }
     ToolsScreen .tool-state { width: 1fr; }
-    ToolsScreen .tool-description {
-        margin: 0 0 0 2;
-        color: $text-muted;
-        height: auto;
-    }
-    ToolsScreen .tool-meta {
-        layout: horizontal;
-        height: 3;
-        margin: 0 0 0 2;
-    }
     ToolsScreen Select.tool-version {
         width: 28;
         max-width: 28;
+        height: 3;
+        align-vertical: middle;
+        margin: 0 1 0 0;
+    }
+    /* Compact Select drops the border; a background keeps it visible. */
+    ToolsScreen Select.tool-version > SelectCurrent {
+        background: #2E3250;
+        padding: 0 1;
+    }
+    ToolsScreen Select.tool-version:focus > SelectCurrent {
+        background: #3C4170;
+    }
+    ToolsScreen Select.tool-version > SelectCurrent #label {
+        color: white;
+    }
+    /* The Select renders its value on its middle row, so versioned rows are 3
+       tall; center every control's content on that middle line so they align. */
+    ToolsScreen .tool-row-versioned { height: 3; }
+    ToolsScreen .tool-row-versioned .tool-name,
+    ToolsScreen .tool-row-versioned .tool-state {
+        height: 3;
+        content-align-vertical: middle;
+    }
+    ToolsScreen .tool-row-versioned Button.tool-install,
+    ToolsScreen .tool-row-versioned Button.tool-source {
+        height: 3;
+        min-height: 3;
+        max-height: 3;
     }
     ToolsScreen Button.tool-source,
     ToolsScreen Button.tool-source:hover,
@@ -218,49 +235,55 @@ class ToolsScreen(Screen):
                         definition = get_tool_definition(key)
                         unavailable = _tool_unavailable_reason(key) is not None
                         display_label = self._display_label(label, definition)
-                        with Vertical(classes="tool-row", id=f"tool-row-{key}"):
-                            with Horizontal(classes="tool-row-head"):
-                                yield Static(display_label, classes="tool-name", id=f"tool-name-{key}")
-                                yield Static(
-                                    "", classes="tool-state", id=f"tool-state-{key}"
+                        row_classes = "tool-row"
+                        if definition is not None and definition.version_provider:
+                            row_classes += " tool-row-versioned"
+                        with Horizontal(classes=row_classes, id=f"tool-row-{key}"):
+                            name = Static(
+                                display_label, classes="tool-name", id=f"tool-name-{key}"
+                            )
+                            if definition is not None and definition.description:
+                                name.tooltip = redact_secret_text(definition.description)
+                            yield name
+                            yield Static(
+                                "", classes="tool-state", id=f"tool-state-{key}"
+                            )
+                            if definition is not None and definition.version_provider:
+                                version_result = version_options_for(
+                                    definition.version_provider
+                                )
+                                options = [
+                                    (option.label, option.version)
+                                    for option in version_result.options
+                                ]
+                                yield Select(
+                                    options
+                                    or [("Version metadata unavailable", "unavailable")],
+                                    id=f"tool-version-{key}",
+                                    classes="tool-version",
+                                    prompt="Version...",
+                                    compact=True,
+                                )
+                            yield Button(
+                                "N/A" if unavailable else "Install",
+                                id=f"tool-install-{key}",
+                                classes="tool-install",
+                                disabled=unavailable,
+                            )
+                            # "Read more" / Source always last, after install/update.
+                            if definition is not None:
+                                source_disabled = not bool(definition.source_url)
+                                source_label = (
+                                    "Read more"
+                                    if definition.source_status == SourceStatus.VERIFIED
+                                    else "Source req"
                                 )
                                 yield Button(
-                                    "N/A" if unavailable else "Install",
-                                    id=f"tool-install-{key}",
-                                    classes="tool-install",
-                                    disabled=unavailable,
+                                    source_label,
+                                    id=f"tool-source-{key}",
+                                    classes="tool-source",
+                                    disabled=source_disabled,
                                 )
-                            if definition is not None:
-                                yield Static(
-                                    redact_secret_text(definition.description),
-                                    classes="tool-description",
-                                    id=f"tool-description-{key}",
-                                )
-                                with Horizontal(classes="tool-meta"):
-                                    source_disabled = not bool(definition.source_url)
-                                    source_label = (
-                                        "Read more"
-                                        if definition.source_status == SourceStatus.VERIFIED
-                                        else "Source req"
-                                    )
-                                    yield Button(
-                                        source_label,
-                                        id=f"tool-source-{key}",
-                                        classes="tool-source",
-                                        disabled=source_disabled,
-                                    )
-                                    if definition.version_provider:
-                                        version_result = version_options_for(definition.version_provider)
-                                        options = [
-                                            (option.label, option.version)
-                                            for option in version_result.options
-                                        ]
-                                        yield Select(
-                                            options or [("Version metadata unavailable", "unavailable")],
-                                            id=f"tool-version-{key}",
-                                            classes="tool-version",
-                                            prompt="Version...",
-                                        )
             yield Static("", id="tools-status", classes="panel")
         yield Footer(show_command_palette=False)
 
@@ -318,7 +341,8 @@ class ToolsScreen(Screen):
                     outdated.add(k)
         except Exception:
             outdated = set()
-        self.app.call_from_thread(self._apply_outdated, outdated)
+        # Refresh only the installed row's update badge, not every installed tool.
+        self.app.call_from_thread(self._apply_outdated_one, key, outdated)
 
     def _apply_one_row(self, key: str, env_subset: dict) -> None:
         try:
@@ -428,22 +452,30 @@ class ToolsScreen(Screen):
 
     def _apply_outdated(self, outdated: set[str]) -> None:
         for key in list(self._installed_keys):
+            self._apply_outdated_one(key, outdated)
+
+    def _apply_outdated_one(self, key: str, outdated: set[str]) -> None:
+        if key not in self._installed_keys:
+            return
+        try:
             state_w = self.query_one(f"#tool-state-{key}", Static)
             btn = self.query_one(f"#tool-install-{key}", Button)
-            detail = self._installed_details.get(key, "")
-            suffix = f" [dim]{escape_markup(redact_secret_text(detail))}[/dim]" if detail else ""
-            if key in outdated:
-                state_w.update(
-                    f"[bright_yellow]⬇ update available[/bright_yellow]{suffix}"
-                )
-                btn.display = True
-                btn.disabled = False
-                btn.label = "Update"
-                btn.add_class("-update")
-            else:
-                state_w.update(f"[bright_green]✓ Latest[/bright_green]{suffix}")
-                btn.display = False
-                btn.remove_class("-update")
+        except Exception:
+            return
+        detail = self._installed_details.get(key, "")
+        suffix = f" [dim]{escape_markup(redact_secret_text(detail))}[/dim]" if detail else ""
+        if key in outdated:
+            state_w.update(
+                f"[bright_yellow]⬇ update available[/bright_yellow]{suffix}"
+            )
+            btn.display = True
+            btn.disabled = False
+            btn.label = "Update"
+            btn.add_class("-update")
+        else:
+            state_w.update(f"[bright_green]✓ Latest[/bright_green]{suffix}")
+            btn.display = False
+            btn.remove_class("-update")
 
     def _tool_state(self, key: str, env: dict) -> tuple[bool, str]:
         """Return (installed, detail) — detail is the version string when known."""
@@ -565,7 +597,7 @@ class ToolsScreen(Screen):
         def _done() -> None:
             self._stop_spinner(button.id)
             mark = "[green bold]✓[/green bold]" if ok else "[red bold]✗[/red bold]"
-            lines = msg.splitlines() if msg else []
+            lines = clean_console_output(msg).splitlines()
             snippet = (
                 escape_markup(redact_secret_text("\n".join(lines[-8:])))
                 if lines

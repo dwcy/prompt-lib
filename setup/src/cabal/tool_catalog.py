@@ -95,6 +95,43 @@ def redact_secret_text(text: object) -> str:
     return value
 
 
+_ANSI_RE = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]")
+
+
+def _is_progress_glyph(ch: str) -> bool:
+    code = ord(ch)
+    return (
+        0x2800 <= code <= 0x28FF  # braille spinner frames
+        or 0x2580 <= code <= 0x259F  # block-element progress bars
+        or ch in "|/-\\"  # ascii spinners
+    )
+
+
+def clean_console_output(text: object) -> str:
+    """Strip CLI progress/spinner noise from captured installer output.
+
+    Installers (npm/pnpm/winget) render progress with carriage-return overwrites
+    and spinner glyphs; a naive splitlines() turns every frame into its own row.
+    Keep only the final segment per line, drop ANSI codes, and remove rows that
+    are nothing but spinner/progress glyphs.
+    """
+    if not text:
+        return ""
+    value = _ANSI_RE.sub("", str(text))
+    cleaned: list[str] = []
+    for raw_line in value.split("\n"):
+        segment = raw_line.split("\r")[-1].rstrip()
+        if not segment:
+            continue
+        stripped = segment.strip()
+        if stripped and all(
+            _is_progress_glyph(ch) or ch.isspace() for ch in stripped
+        ):
+            continue
+        cleaned.append(segment)
+    return "\n".join(cleaned)
+
+
 def supports_platform(platforms: Iterable[str]) -> bool:
     values = tuple(platforms)
     return PlatformSupport.ALL.value in values or platform.system() in values

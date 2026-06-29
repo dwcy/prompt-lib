@@ -101,7 +101,7 @@ Consider committing or stashing before closing.
 
 ## SessionEnd — `session_end_release_lock.py`
 
-**Fires**: once, when the session terminates (alongside `session_end.py` which prints a farewell).
+**Fires**: once, when the session terminates.
 
 **What it does**: looks up the per-branch lock file at `<git-common-dir>/claude-session-locks/<branch>.json` (the same path the SessionStart hook writes). If the lock's `cwd` matches the current session's cwd, deletes it.
 
