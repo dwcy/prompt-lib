@@ -7,6 +7,18 @@ This feature is a local read-only browser UI for Cabal.
 Run from the repository root or the `011-cabal-web-ui` worktree:
 
 ```powershell
+.\run-web-ui.cmd
+```
+
+POSIX shells can use:
+
+```bash
+./run-web-ui
+```
+
+Direct module fallback:
+
+```powershell
 python -m cabal.web --host 127.0.0.1 --port 8765 --project .
 ```
 
