@@ -128,10 +128,13 @@ _VIEWER_TEMPLATE = """<!doctype html>
     }
     svg {
       display: block;
-      min-width: 72rem;
       width: 100%;
       height: auto;
+      max-height: calc(100vh - 7rem);
+      cursor: grab;
+      touch-action: none;
     }
+    svg.panning { cursor: grabbing; }
     .edge {
       fill: none;
       stroke: var(--edge);
@@ -427,15 +430,15 @@ _VIEWER_TEMPLATE = """<!doctype html>
       const keys = state.mode === "routes"
         ? ["skill", "agent", "other"].filter(key => grouped.has(key))
         : typeOrder.filter(key => grouped.has(key));
-      const width = Math.max(1180, keys.length * 220 + 160);
+      const width = Math.max(760, keys.length * 200 + 120);
       const maxRows = Math.max(1, ...keys.map(key => grouped.get(key).length));
-      const height = Math.max(620, maxRows * 58 + 160);
+      const height = Math.max(360, maxRows * 34 + 120);
       const positions = new Map();
       keys.forEach((key, column) => {
         const list = grouped.get(key).sort((a, b) => a.label.localeCompare(b.label));
         const x = keys.length === 1 ? width / 2 : 90 + column * ((width - 180) / Math.max(1, keys.length - 1));
         list.forEach((node, row) => {
-          const y = 82 + row * 58;
+          const y = 64 + row * 34;
           positions.set(node.id, { x, y });
         });
       });
@@ -466,7 +469,7 @@ _VIEWER_TEMPLATE = """<!doctype html>
       const { nodes, edges } = filteredGraph();
       const { width, height, positions } = layout(nodes);
       const degree = nodeDegree(edges);
-      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      fitView(width, height);
       svg.innerHTML = `
         <defs>
           <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
@@ -627,6 +630,47 @@ _VIEWER_TEMPLATE = """<!doctype html>
       render();
     });
 
+    // --- pan + zoom via viewBox; render() calls fitView() to refit on every redraw ---
+    let viewBox = { x: 0, y: 0, w: 0, h: 0 };
+    function applyView() {
+      svg.setAttribute("viewBox", `${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`);
+    }
+    function fitView(w, h) {
+      svg.dataset.baseW = w;
+      viewBox = { x: 0, y: 0, w: w, h: h };
+      applyView();
+    }
+    svg.addEventListener("wheel", event => {
+      event.preventDefault();
+      if (!viewBox.w) return;
+      const rect = svg.getBoundingClientRect();
+      const px = viewBox.x + (event.clientX - rect.left) / rect.width * viewBox.w;
+      const py = viewBox.y + (event.clientY - rect.top) / rect.height * viewBox.h;
+      const baseW = Number(svg.dataset.baseW) || viewBox.w;
+      let nw = viewBox.w * (event.deltaY < 0 ? 0.85 : 1.18);
+      nw = Math.min(Math.max(nw, baseW * 0.2), baseW * 3);
+      const ratio = nw / viewBox.w;
+      viewBox = { x: px - (px - viewBox.x) * ratio, y: py - (py - viewBox.y) * ratio, w: nw, h: viewBox.h * ratio };
+      applyView();
+    }, { passive: false });
+    let drag = null;
+    svg.addEventListener("pointerdown", event => {
+      drag = { x: event.clientX, y: event.clientY };
+      svg.classList.add("panning");
+      svg.setPointerCapture(event.pointerId);
+    });
+    svg.addEventListener("pointermove", event => {
+      if (!drag || !viewBox.w) return;
+      const rect = svg.getBoundingClientRect();
+      viewBox.x -= (event.clientX - drag.x) / rect.width * viewBox.w;
+      viewBox.y -= (event.clientY - drag.y) / rect.height * viewBox.h;
+      drag = { x: event.clientX, y: event.clientY };
+      applyView();
+    });
+    function endDrag() { drag = null; svg.classList.remove("panning"); }
+    svg.addEventListener("pointerup", endDrag);
+    svg.addEventListener("pointercancel", endDrag);
+
     populateControls();
     render();
   </script>
@@ -640,7 +684,9 @@ def generate_viewer(graph_path: Path, out_path: Path | None = None) -> Path:
     graph = json.loads(graph_path.read_text(encoding="utf-8"))
     out_path = Path(out_path or graph_path.with_name("graph.html"))
     graph_json = json.dumps(graph, indent=2, sort_keys=True)
-    script_json = graph_json.replace("<", "\\u003c").replace("</script", "\\u003c/script")
+    script_json = graph_json.replace("<", "\\u003c").replace(
+        "</script", "\\u003c/script"
+    )
     html_text = (
         _VIEWER_TEMPLATE.replace("__GRAPH_JSON__", script_json)
         .replace("__NODE_COUNT__", str(len(graph.get("nodes", []))))
