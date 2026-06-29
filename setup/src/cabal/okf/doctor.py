@@ -11,7 +11,15 @@ from cabal.okf.paths import normalize_resource
 
 
 REQUIRED_FILES = ("index.md", "log.md", "manifest.json", "graph.json")
-REQUIRED_FIELDS = ("type", "title", "description", "resource", "tags", "timestamp", "id")
+REQUIRED_FIELDS = (
+    "type",
+    "title",
+    "description",
+    "resource",
+    "tags",
+    "timestamp",
+    "id",
+)
 
 
 def _finding(
@@ -35,12 +43,28 @@ def _finding(
     )
 
 
+def find_isolated_nodes(node_ids: set[str], edges) -> list[str]:
+    """Return sorted node ids that are neither the source nor target of any edge."""
+    linked: set[str] = set()
+    for edge in edges:
+        if edge.get("source"):
+            linked.add(edge["source"])
+        if edge.get("target"):
+            linked.add(edge["target"])
+    return sorted(node_ids - linked)
+
+
 def _load_json(path: Path, findings: list[DoctorFinding]) -> dict:
     try:
         return json.loads(path.read_text(encoding="utf-8"))
     except Exception as exc:
         findings.append(
-            _finding("error", "OKF001", f"Could not read JSON file: {exc}", resource=path.name)
+            _finding(
+                "error",
+                "OKF001",
+                f"Could not read JSON file: {exc}",
+                resource=path.name,
+            )
         )
         return {}
 
@@ -57,7 +81,13 @@ def doctor_bundle(bundle_root: Path, repo_root: Path) -> DoctorReport:
         return DoctorReport(
             ok=False,
             bundle_root=str(bundle_root),
-            summary={"documents": 0, "relations": 0, "errors": 1, "warnings": 0, "infos": 0},
+            summary={
+                "documents": 0,
+                "relations": 0,
+                "errors": 1,
+                "warnings": 0,
+                "infos": 0,
+            },
             findings=(
                 _finding(
                     "error",
@@ -72,13 +102,34 @@ def doctor_bundle(bundle_root: Path, repo_root: Path) -> DoctorReport:
     for required in REQUIRED_FILES:
         if not (bundle_root / required).exists():
             findings.append(
-                _finding("error", "OKF001", f"Required generated file missing: {required}", resource=required)
+                _finding(
+                    "error",
+                    "OKF001",
+                    f"Required generated file missing: {required}",
+                    resource=required,
+                )
             )
 
-    manifest = _load_json(bundle_root / "manifest.json", findings) if (bundle_root / "manifest.json").exists() else {}
-    graph = _load_json(bundle_root / "graph.json", findings) if (bundle_root / "graph.json").exists() else {}
-    graph_nodes = {node.get("id"): node for node in graph.get("nodes", []) if isinstance(node, dict)}
-    graph_edges = {edge.get("id"): edge for edge in graph.get("edges", []) if isinstance(edge, dict)}
+    manifest = (
+        _load_json(bundle_root / "manifest.json", findings)
+        if (bundle_root / "manifest.json").exists()
+        else {}
+    )
+    graph = (
+        _load_json(bundle_root / "graph.json", findings)
+        if (bundle_root / "graph.json").exists()
+        else {}
+    )
+    graph_nodes = {
+        node.get("id"): node
+        for node in graph.get("nodes", [])
+        if isinstance(node, dict)
+    }
+    graph_edges = {
+        edge.get("id"): edge
+        for edge in graph.get("edges", [])
+        if isinstance(edge, dict)
+    }
 
     concept_ids: set[str] = set()
     doc_paths: set[str] = set()
@@ -88,20 +139,36 @@ def doctor_bundle(bundle_root: Path, repo_root: Path) -> DoctorReport:
         raw_frontmatter, _ = extract_frontmatter(text)
         if not raw_frontmatter:
             findings.append(
-                _finding("error", "OKF002", "Required frontmatter missing.", resource=rel_path)
+                _finding(
+                    "error",
+                    "OKF002",
+                    "Required frontmatter missing.",
+                    resource=rel_path,
+                )
             )
             continue
         frontmatter = parse_frontmatter(raw_frontmatter)
         missing = [field for field in REQUIRED_FIELDS if not frontmatter.get(field)]
         for field in missing:
             findings.append(
-                _finding("error", "OKF002", f"Required frontmatter field missing: {field}", resource=rel_path)
+                _finding(
+                    "error",
+                    "OKF002",
+                    f"Required frontmatter field missing: {field}",
+                    resource=rel_path,
+                )
             )
         concept_id = str(frontmatter.get("id") or "")
         if concept_id:
             if concept_id in concept_ids:
                 findings.append(
-                    _finding("error", "OKF004", f"Duplicate concept id: {concept_id}", resource=rel_path, concept_id=concept_id)
+                    _finding(
+                        "error",
+                        "OKF004",
+                        f"Duplicate concept id: {concept_id}",
+                        resource=rel_path,
+                        concept_id=concept_id,
+                    )
                 )
             concept_ids.add(concept_id)
         resource = str(frontmatter.get("resource") or "")
@@ -112,7 +179,13 @@ def doctor_bundle(bundle_root: Path, repo_root: Path) -> DoctorReport:
             normalized = normalize_resource(resource)
         except ValueError:
             findings.append(
-                _finding("error", "OKF003", f"Unsafe resource path: {resource}", resource=rel_path, concept_id=concept_id)
+                _finding(
+                    "error",
+                    "OKF003",
+                    f"Unsafe resource path: {resource}",
+                    resource=rel_path,
+                    concept_id=concept_id,
+                )
             )
             continue
         if normalized and not (repo_root / normalized).exists():
@@ -136,29 +209,69 @@ def doctor_bundle(bundle_root: Path, repo_root: Path) -> DoctorReport:
     }
     if manifest_files and manifest_files != actual_files:
         findings.append(
-            _finding("error", "OKF001", "Manifest file list does not match generated files.", resource="manifest.json")
+            _finding(
+                "error",
+                "OKF001",
+                "Manifest file list does not match generated files.",
+                resource="manifest.json",
+            )
         )
 
     graph_node_ids = {node_id for node_id in graph_nodes if node_id}
     reserved_ids = {"index:prompt-lib", "log:prompt-lib"}
     if graph_node_ids != (concept_ids - reserved_ids):
         findings.append(
-            _finding("error", "OKF005", "Graph nodes do not match concept documents.", resource="graph.json")
+            _finding(
+                "error",
+                "OKF005",
+                "Graph nodes do not match concept documents.",
+                resource="graph.json",
+            )
+        )
+
+    for node_id in find_isolated_nodes(graph_node_ids, graph_edges.values()):
+        findings.append(
+            _finding(
+                "warning",
+                "OKF102",
+                f"Graph node has no relations: {node_id}",
+                resource="graph.json",
+                concept_id=node_id,
+                remediation="Add an ownership or reference relation, or remove the orphaned source.",
+            )
         )
 
     for edge_id, edge in graph_edges.items():
         if edge.get("source") not in graph_node_ids:
             findings.append(
-                _finding("error", "OKF006", f"Graph edge source is missing: {edge.get('source')}", resource="graph.json", relation_id=edge_id)
+                _finding(
+                    "error",
+                    "OKF006",
+                    f"Graph edge source is missing: {edge.get('source')}",
+                    resource="graph.json",
+                    relation_id=edge_id,
+                )
             )
         target = edge.get("target")
         if target is None:
             findings.append(
-                _finding("warning", "OKF101", f"Relation target unresolved: {edge.get('target_ref')}", resource="graph.json", relation_id=edge_id)
+                _finding(
+                    "warning",
+                    "OKF101",
+                    f"Relation target unresolved: {edge.get('target_ref')}",
+                    resource="graph.json",
+                    relation_id=edge_id,
+                )
             )
         elif target not in graph_node_ids:
             findings.append(
-                _finding("error", "OKF006", f"Graph edge target is missing: {target}", resource="graph.json", relation_id=edge_id)
+                _finding(
+                    "error",
+                    "OKF006",
+                    f"Graph edge target is missing: {target}",
+                    resource="graph.json",
+                    relation_id=edge_id,
+                )
             )
 
     errors = sum(1 for finding in findings if finding.severity == "error")
@@ -175,7 +288,17 @@ def doctor_bundle(bundle_root: Path, repo_root: Path) -> DoctorReport:
         ok=errors == 0,
         bundle_root=str(bundle_root),
         summary=summary,
-        findings=tuple(sorted(findings, key=lambda item: (item.severity, item.code, item.resource or "", item.message))),
+        findings=tuple(
+            sorted(
+                findings,
+                key=lambda item: (
+                    item.severity,
+                    item.code,
+                    item.resource or "",
+                    item.message,
+                ),
+            )
+        ),
         exit_code=0 if errors == 0 else 1,
     )
 
@@ -195,5 +318,7 @@ def render_human(report: DoctorReport) -> str:
     ]
     for finding in report.findings:
         where = f" {finding.resource}" if finding.resource else ""
-        lines.append(f"{finding.severity.upper()} {finding.code}{where}: {finding.message}")
+        lines.append(
+            f"{finding.severity.upper()} {finding.code}{where}: {finding.message}"
+        )
     return "\n".join(lines) + "\n"

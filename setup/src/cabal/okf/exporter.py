@@ -14,6 +14,7 @@ from cabal.okf.models import ConceptDocument, ExportResult, SourceArtifact
 from cabal.okf.paths import has_secret_value, safe_excerpt
 from cabal.okf.relations import attach_relations, extract_relations, resolve_relations
 from cabal.okf.sources import count_by_category, discover_sources
+from cabal.okf.structure import build_root_concepts, extract_structural_relations
 
 
 CATEGORY_DOC_DIRS = {
@@ -54,6 +55,28 @@ def document_path(source: SourceArtifact) -> str:
     return f"{folder}/{name}.md"
 
 
+def _slug(value: str) -> str:
+    return (
+        value.lower()
+        .replace("\\", "-")
+        .replace("/", "-")
+        .replace(" ", "-")
+        .replace("_", "-")
+    )
+
+
+def _unique(base: str, used: set[str], hint: str) -> str:
+    candidate = base
+    if candidate in used and hint:
+        candidate = f"{base}-{hint}"
+    suffix = 2
+    while candidate in used:
+        candidate = f"{base}-{hint}-{suffix}" if hint else f"{base}-{suffix}"
+        suffix += 1
+    used.add(candidate)
+    return candidate
+
+
 def _read_source(repo_root: Path, resource: str) -> str:
     path = repo_root / Path(resource)
     if not path.exists() or path.is_dir():
@@ -64,7 +87,10 @@ def _read_source(repo_root: Path, resource: str) -> str:
 def _description_for(source: SourceArtifact, text: str) -> str:
     if has_secret_value(text):
         return f"{source.category.replace('_', ' ').title()} metadata from {source.resource}."
-    return safe_excerpt(text, fallback=f"{source.category.replace('_', ' ').title()} from {source.resource}.")
+    return safe_excerpt(
+        text,
+        fallback=f"{source.category.replace('_', ' ').title()} from {source.resource}.",
+    )
 
 
 def _body_for(source: SourceArtifact, description: str) -> str:
@@ -87,22 +113,30 @@ def build_concepts(
 ) -> tuple[ConceptDocument, ...]:
     repo_root = repo_root or Path.cwd()
     concepts: list[ConceptDocument] = []
+    used_ids: set[str] = set()
+    used_paths: set[str] = set()
     for source in sources:
         text = _read_source(repo_root, source.resource)
         description = _description_for(source, text)
         tags = ("prompt-lib", source.category.replace("_", "-"))
         if source.resource.startswith("global/"):
             tags = tags + ("claude-code",)
+        hint = _slug(Path(source.resource).parent.name)
+        base_id = concept_id(source.category, source.name)
+        unique_id = _unique(base_id, used_ids, hint)
+        base_path = document_path(source)
+        stem, _, ext = base_path.rpartition(".")
+        unique_path = _unique(stem, used_paths, hint) + (f".{ext}" if ext else "")
         concepts.append(
             ConceptDocument(
-                id=concept_id(source.category, source.name),
+                id=unique_id,
                 type=source.category,
                 title=source.name,
                 description=description,
                 resource=source.resource,
                 tags=tags,
                 timestamp=generated_at,
-                path=document_path(source),
+                path=unique_path,
                 body=_body_for(source, description),
             )
         )
@@ -164,7 +198,14 @@ def _write_reserved_docs(
     ]
     for category, count in sorted(counts.items()):
         index_body.append(f"- `{category}`: {count}")
-    index_body.extend(["", f"- Relations: `{relations_count}`", "- Graph: [graph.json](./graph.json)", ""])
+    index_body.extend(
+        [
+            "",
+            f"- Relations: `{relations_count}`",
+            "- Graph: [graph.json](./graph.json)",
+            "",
+        ]
+    )
     (out_root / "index.md").write_text(
         dump_document(
             _reserved_doc_metadata(
@@ -217,7 +258,15 @@ def export_okf(
 
     sources = discover_sources(repo_root)
     concepts = build_concepts(sources, generated_at, repo_root=repo_root)
-    relations = resolve_relations(extract_relations(repo_root, concepts), concepts)
+    concepts = tuple(
+        sorted(
+            concepts + build_root_concepts(generated_at),
+            key=lambda item: (item.type, item.id),
+        )
+    )
+    semantic = resolve_relations(extract_relations(repo_root, concepts), concepts)
+    structural = extract_structural_relations(repo_root, concepts)
+    relations = tuple(semantic) + structural
     concepts = attach_relations(concepts, relations)
     graph = build_graph(concepts, relations, generated_at=generated_at)
 
