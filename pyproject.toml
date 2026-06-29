@@ -7,7 +7,7 @@ name = "cabal"
 version = "0.1.0"
 description = "Local agent control panel for Claude Code and Codex — deploy skills, agents, hooks, MCP servers, Codex assets, and project scaffolding from one TUI."
 readme = "setup/src/cabal/README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.14"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Dawid" }]
@@ -17,9 +17,7 @@ classifiers = [
   "Environment :: Console :: Curses",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Topic :: Software Development",
   "Topic :: System :: Installation/Setup",
 ]

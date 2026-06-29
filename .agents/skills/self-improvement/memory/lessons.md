@@ -27,3 +27,11 @@ Reusable rules learned from successes or general patterns in this project. Each 
 - **Root cause**: Two writers on a shared working tree silently overwrite each other — git never sees the conflict because both writes are valid filesystem operations.
 - **Future rule**: When dispatching ≥2 writing subagents concurrently, every concurrent writer gets `isolation: "worktree"`. Read-only auditors are exempt. Codified as Constitution Gate 6.
 - **Example**: See [`docs/parallel-isolation.md`](../../../../docs/parallel-isolation.md) and ADR 0001.
+
+### L-20260629-01 — Persisted cache schemas need legacy fixtures
+- **Date**: 2026-06-29
+- **Situation**: Added new env/tool metadata keys, then found the UI could crash when applying an older cached env snapshot before refresh.
+- **Success**: Merge safe defaults into cached dictionaries before rendering and add a regression test with missing new keys.
+- **Root cause**: Stale persisted cache data outlives code changes; fresh detection tests do not cover first-paint cache paths.
+- **Future rule**: When adding keys to persisted cache payloads, test a legacy cache missing those keys.
+- **Example**: `EnvPanel._apply_env()` tolerates cached env data without `uv` and database/editor keys.

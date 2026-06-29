@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import pytest
 from textual.app import App
-from textual.widgets import Button
+from textual.widgets import Button, Static
 
 from cabal.tools import ENV_INSTALLERS, ENV_TOOL_GROUPS, _installer_for
 from cabal.views.tools import ToolsScreen
@@ -26,3 +26,14 @@ async def test_tools_screen_renders_vercel_plugin_row():
         await app.push_screen(screen)
         await pilot.pause()
         assert screen.query_one("#tool-install-vercel-plugin", Button) is not None
+
+
+@pytest.mark.asyncio
+async def test_tools_screen_renders_uv_recommended_badge():
+    app = App()
+    async with app.run_test() as pilot:
+        screen = ToolsScreen()
+        await app.push_screen(screen)
+        await pilot.pause()
+        label = screen.query_one("#tool-name-uv", Static)
+        assert "[recommended]" in str(label.render())

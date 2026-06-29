@@ -7,6 +7,17 @@ import platform
 import shutil
 
 from cabal.installers._common import _run_install, _WINGET_FLAGS
+from cabal.installers.container_services import (
+    detect_container_engine,
+    preflight_container_service,
+)
+
+
+def container_engine_ready() -> tuple[bool, str]:
+    engine = detect_container_engine()
+    if engine:
+        return True, f"Container engine ready: {engine}"
+    return False, "Container engine missing or stopped. Install and start Docker or Podman first."
 
 
 def docker_install() -> tuple[bool, str]:

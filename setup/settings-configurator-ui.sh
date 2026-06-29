@@ -20,7 +20,7 @@ detect_arch() {
 }
 
 python_is_supported() {
-  "$1" -c 'import sys; raise SystemExit(sys.version_info < (3, 11))' >/dev/null 2>&1
+  "$1" -c 'import sys; raise SystemExit(sys.version_info < (3, 14))' >/dev/null 2>&1
 }
 
 find_python() {

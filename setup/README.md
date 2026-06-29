@@ -9,7 +9,7 @@ The control panel is published to PyPI as **`cabal`** and bundled into a standal
 | Path | Command | Notes |
 |---|---|---|
 | Repo root (source checkout) | `./run` on POSIX, `.\run.cmd` on Windows | Convenience entry point that delegates to the platform-specific source launcher below. |
-| Install from PyPI (recommended) | `uv tool install cabal` then `cabal` | Single command. Needs only a Python ≥ 3.11. Works on any OS that `uv` / `pipx` support. |
+| Install from PyPI (recommended) | `uv tool install cabal` then `cabal` | Single command. Needs only a Python >= 3.14. Works on any OS that `uv` / `pipx` support. |
 | Terminal (source) | `python setup/settings-configurator-ui.py` | Dev mode when Python is already installed. First run asks before installing `textual` + `rich` via pip. |
 | Terminal (Windows convenience) | `setup\settings-configurator-ui.cmd` | Finds Python or asks to install the latest Python via `winget`, then launches the wizard. |
 | Terminal (Linux convenience) | `sh setup/settings-configurator-ui.sh` | Finds Python or asks to install Python via the system package manager (`apt`, `dnf`, `yum`, `zypper`, `pacman`, or `apk`), then launches the wizard. |
