@@ -225,3 +225,13 @@ The evaluation questions:
 - **To remember**:
   - M-20260624-14 (logo spacing needs padding checks, not just region checks)
 - **To unlearn**: nothing.
+
+### E-20260629-01 — Check PR readiness for Cabal tools branch
+- **Task**: Audit `010-cabal-tools-polish-part2` readiness, fix the env cache crash found during targeted tests, and classify full-suite failures.
+- **Constraints followed?** Yes — used current git/test state, avoided committing without confirmation, and kept generated temp files out of the tree.
+- **Unverified assumptions?** Some full-suite failures remain classified as outside this branch because they reproduce in untouched files; CI currently runs pylint only.
+- **Verified current facts?** Yes — fetched/pruned origin, checked branch divergence, ran CI-style pylint, ran branch-relevant pytest, and inspected failing full-suite commands.
+- **Requested format?** Mostly — continued the readiness pass; commit/push remains blocked on explicit confirmation.
+- **To remember**:
+  - L-20260629-01 (persisted cache schemas need legacy fixtures)
+- **To unlearn**: nothing.

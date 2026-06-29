@@ -156,6 +156,38 @@ async def test_env_panel_uses_cached_env_on_mount(isolated_cache, monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_env_panel_accepts_legacy_cached_env(isolated_cache, monkeypatch):
+    legacy_env = dict(_FAKE_ENV)
+    for key in (
+        "uv",
+        "sqlcmd",
+        "psql",
+        "supabase",
+        "neonctl",
+        "cursor",
+        "windsurf",
+        "antigravity",
+        "vscode",
+        "rider",
+        "visualstudio",
+    ):
+        legacy_env.pop(key, None)
+    widget_cache.save_entry("env", legacy_env)
+    from cabal.widgets import env_panel, update_panel
+
+    monkeypatch.setattr(env_panel, "detect_env", lambda: _FAKE_ENV)
+    monkeypatch.setattr(update_panel, "check_for_updates", lambda: {"status": "no_git"})
+
+    app = _EnvHost()
+    async with app.run_test() as pilot:
+        await pilot.pause()
+
+        os_cells = [str(s.render()) for s in app.query("#env-row-system Static")]
+
+        assert any("Linux" in t for t in os_cells)
+
+
+@pytest.mark.asyncio
 async def test_env_panel_worker_writes_cache(isolated_cache, monkeypatch):
     from cabal.widgets import env_panel, update_panel
 

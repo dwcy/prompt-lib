@@ -32,6 +32,37 @@ _INNER_BORDER_SUBTITLE = "[bold #CC006B][@click=screen.readme]README[/][/]"
 _LABEL_STYLE = "bold #5FAFFF"
 _VERSION_STATUS_STYLE = "bold #55FFA5"
 _VERSION_METADATA_STYLE = "bold #FF85B3"
+_ENV_DEFAULTS = {
+    "os": "Unknown",
+    "release": "",
+    "python": "unknown",
+    "pkg_manager": None,
+    "git": False,
+    "gh": False,
+    "node": None,
+    "npm": None,
+    "pnpm": None,
+    "bun": None,
+    "uv": None,
+    "dotnet_sdks": [],
+    "docker": None,
+    "podman": None,
+    "kubectl": None,
+    "terraform": None,
+    "az": None,
+    "gcloud": None,
+    "aws": None,
+    "sqlcmd": False,
+    "psql": False,
+    "supabase": False,
+    "neonctl": False,
+    "cursor": False,
+    "windsurf": False,
+    "antigravity": False,
+    "vscode": False,
+    "rider": False,
+    "visualstudio": False,
+}
 
 
 class EnvPanel(Widget):
@@ -336,6 +367,7 @@ class EnvPanel(Widget):
         return f"[{cls._LABEL}]{label}:[/]"
 
     def _apply_env(self, env: dict) -> None:
+        env = {**_ENV_DEFAULTS, **env}
         system = self.query_one("#env-row-system", Horizontal)
         runtimes = self.query_one("#env-row-runtimes", Horizontal)
         pkg_mgrs = self.query_one("#env-row-pkg-mgrs", Horizontal)

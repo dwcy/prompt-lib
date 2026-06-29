@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/ops/Learning/Active Projects.md",
+                "file": "docs/ops/Home.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Active Projects"
+              "title": "Home"
             }
           }
         ]
@@ -185,18 +185,18 @@
   },
   "active": "0c6536604a1d3a06",
   "lastOpenFiles": [
-    "setup/tests/__pycache__/test_gate_footer.cpython-314.pyc",
-    "docs/ops/Learning/Learning Map.md",
-    "docs/ops/Templates/Daily Note.md",
-    "docs/ops/Templates/Project Note.md",
-    "docs/ops/Templates/Weekly Review.md",
     "docs/ops/Weekly/2026-W26.md",
+    "docs/ops/Templates/Weekly Review.md",
+    "docs/ops/Templates/Project Note.md",
+    "docs/ops/Templates/Learning Note.md",
+    "docs/ops/Templates/Daily Note.md",
+    "docs/ops/Learning/Learning Map.md",
+    "docs/ops/Learning/Active Projects.md",
+    "docs/ops/Daily/2026-06-23.md",
+    "setup/tests/__pycache__/test_gate_footer.cpython-314.pyc",
     "docs/ops/Home.md",
     "docs/ops/Inbox.md",
     "docs/ops/Planning Board.canvas",
-    "docs/ops/Learning/Active Projects.md",
-    "docs/ops/Templates/Learning Note.md",
-    "docs/ops/Daily/2026-06-23.md",
     "docs/ops/Areas/Areas.md",
     "docs/okf/prompt-lib/agents/frontend-css.md",
     "docs/okf/prompt-lib/agents/frontend-architect.md",
