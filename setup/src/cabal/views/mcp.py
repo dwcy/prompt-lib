@@ -64,6 +64,7 @@ from cabal.git_config import apply_git_line_endings, recommended_autocrlf
 from cabal.installers.gh import gh_device_init, gh_device_poll, gh_fetch_token
 from cabal.mcp_ops import (
     add_template_to_project_mcp,
+    approve_project_mcp,
     claude_mcp_add_from_template,
     claude_mcp_remove,
     claude_plugin_set_enabled,
@@ -114,7 +115,7 @@ class McpScreen(Screen):
             yield Static(
                 "[bold bright_magenta]✦ MCP Connectors ✦[/bold bright_magenta]\n"
                 "[dim]Every known MCP server across scopes. Activate globally = `claude mcp add -s user` · "
-                "Activate Locally = write into this project's .mcp.json · Disable = remove / disable plugin.[/dim]\n"
+                "Activate Locally = write into this project's .mcp.json + approve it (also approves a pending one) · Disable = remove / disable plugin.[/dim]\n"
                 "[dim]Scopes: plugin (marketplace) · user (~/.claude.json, all projects) · local (this project only) · "
                 "project (.mcp.json) · template (defined here, not registered) · connector (claude.ai / remote, server-side).[/dim]",
                 classes="panel",
@@ -272,6 +273,12 @@ class McpScreen(Screen):
             self._status(
                 "[yellow]No project directory to write .mcp.json into.[/yellow]"
             )
+            return
+        # Already in .mcp.json but pending the trust prompt → just approve it.
+        if "project" in info["scopes"] and info.get("pending"):
+            ok, msg = approve_project_mcp(name, self._project_dir)
+            self._status(f"[{'green' if ok else 'red'}]{'✓' if ok else '✗'} {msg}[/]")
+            self._refresh()
             return
         tmpl = (info.get("definitions") or {}).get("template")
         if not tmpl:

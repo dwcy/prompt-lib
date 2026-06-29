@@ -49,6 +49,8 @@ def server_row_cells(info: dict) -> tuple[str, str, str, str]:
             status = "[dim]○ disabled[/dim]"
     elif info["active"]:
         status = "[green]✓ connected[/green]"
+    elif info.get("pending"):
+        status = "[yellow]⏸ pending approval[/yellow]"
     elif info["scopes"] == ["template"]:
         status = "[dim]○ available[/dim]"
     else:
@@ -83,9 +85,15 @@ def action_button_states(
     scopes = info["scopes"]
     registered_global = "user" in scopes
     registered_project = "project" in scopes
+    pending = bool(info.get("pending"))
+    # Activate locally writes (+approves) a template, OR approves a project server
+    # that is already in .mcp.json but still pending the trust prompt.
+    activate_local = project_dir is not None and (
+        (has_template and not registered_project) or (registered_project and pending)
+    )
     return (
         has_template and not registered_global,
-        project_dir is not None and has_template and not registered_project,
+        activate_local,
         bool(removable_scopes(info)),
         "Activate globally",
     )
