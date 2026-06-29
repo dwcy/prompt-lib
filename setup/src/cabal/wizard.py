@@ -175,7 +175,6 @@ from cabal.views.global_env import GlobalEnvScreen
 from cabal.views.home import HomeScreen
 from cabal.views.readme import ReadmeScreen
 from cabal.views.env import EnvScreen
-from cabal.views.operations import OperationsScreen
 from cabal.views.update import UpdateScreen
 from cabal.views.restore import RestoreScreen
 from cabal.views.mcp import McpScreen

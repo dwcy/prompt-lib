@@ -111,7 +111,9 @@ Read and write Azure DevOps work items, repos, pipelines, pull requests, and spr
 ### mcp-bus
 Local message bus, shared key-value memory, and agent registry for inter-agent communication. Lets subagents dispatched by `/orchestrate` post to channels, read shared state, and discover each other. State is durable in SQLite at `~/.claude/mcp-bus/bus.db`. Localhost only, no auth, no network.
 
-**Setup:**
+**Setup (cabal):** Install it from the cabal **Tools view → MCP group** ("MCP Bus (agent message bus)"), then register it from the cabal **MCP manager** (the `mcp-bus` template). This is the recommended path.
+
+**Setup (manual):**
 1. Install the server (from the prompt-lib repo):
    ```bash
    uv tool install --from /path/to/prompt-lib/services/mcp-bus mcp-bus
@@ -124,6 +126,25 @@ Local message bus, shared key-value memory, and agent registry for inter-agent c
 
 **Tools:** `bus_post`, `bus_read`, `bus_channels`, `bus_prune`, `mem_set`, `mem_get`, `mem_list`, `mem_delete`, `agent_register`, `agent_list`, `agent_heartbeat`
 **Source:** `services/mcp-bus/` (in this repo) — see [`docs/orchestration.md`](docs/orchestration.md) and `specs/007-mcp-bus/`
+
+---
+
+### headroom (opt-in)
+
+[Headroom](https://github.com/chopratejas/headroom) is a context-compression layer for AI agents. Its MCP server exposes three **on-demand** tools — compression is **not automatic**; Claude only compresses when it explicitly calls `headroom_compress`. Registered **opt-in** (`default_enabled: false`), so it does not load in every session — add it from the cabal MCP manager when you want it.
+
+**Install the CLI:** cabal Tools view → **Headroom**, or `uv tool install "headroom-ai[mcp]"`.
+> ⚠️ **Windows:** there is no prebuilt wheel, so the first install builds a Rust native extension from source. The cabal installer auto-provisions the prerequisites (Rust via `rustup` + Visual Studio Build Tools "Desktop development with C++") before building — a multi-GB, several-minute first run. macOS/Linux install instantly from wheels.
+
+**Register the server:** cabal MCP manager → enable `headroom`, or:
+```bash
+claude mcp add -s user headroom -- headroom mcp serve
+```
+
+**Tools:** `headroom_compress`, `headroom_retrieve`, `headroom_stats`
+**Source:** PyPI `headroom-ai` — see `specs/012-headroom-tool/`
+
+> **Proxy/wrap mode is intentionally NOT used here.** Headroom's transparent "4× usage" proxy (`headroom wrap claude` / `ANTHROPIC_BASE_URL`) targets API-key traffic; its behavior on subscription/OAuth Claude Code is undocumented and unverified, and carries auth/ToS risk. Shelved — see the verdict in `specs/012-headroom-tool/research.md` §B. (The MCP-serve command above is docs-confirmed but not yet empirically verified on Windows, since the tool would not build on the dev machine.)
 
 ---
 

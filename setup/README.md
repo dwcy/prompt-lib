@@ -38,7 +38,7 @@ test are all complete.
 | Restore | Roll back `~/.claude/settings.json` from a timestamped backup. |
 | Local project setup | In the current cwd: scaffold `.claude/`, pick a `CLAUDE.md` template, apply git repo-init template, run `specify init` to bootstrap Spec Kit (`.specify/`). |
 | Codex setup | Deploy Codex skills to `~/.codex/skills`, scaffold project `.agents/skills`, apply an `AGENTS.md` template, and inspect conversion diffs. |
-| Tools | Install / update optional companion tools (Claude CLI, GitHub CLI, **Specify CLI** for GitHub Spec Kit, `claude-devtools`). Spec Kit's `specify` is installed via `uv tool install` from the upstream git repo and offers an OS-package `uv` install if missing. |
+| Tools | Install / update optional companion tools (Claude CLI, GitHub CLI, **Specify CLI** for GitHub Spec Kit, `claude-devtools`, **Headroom** context-compression CLI). Spec Kit's `specify` is installed via `uv tool install` from the upstream git repo and offers an OS-package `uv` install if missing. Headroom installs via `uv tool install "headroom-ai[mcp]"`; on Windows it builds from source and auto-provisions Rust + VS Build Tools (multi-GB first run). It also registers as an opt-in `headroom` MCP server — see [`../global/MCP.md`](../global/MCP.md). |
 
 ## Structure
 

@@ -72,8 +72,6 @@ from cabal.mcp_ops import (
 from cabal.tools import (
     ENV_INSTALLERS,
     ENV_TOOL_GROUPS,
-    TOOLS,
-    Tool,
     VERSION_FLOORS,
     WINGET_IDS,
     _below_floor,
@@ -240,10 +238,14 @@ class ToolsScreen(Screen):
                             row_classes += " tool-row-versioned"
                         with Horizontal(classes=row_classes, id=f"tool-row-{key}"):
                             name = Static(
-                                display_label, classes="tool-name", id=f"tool-name-{key}"
+                                display_label,
+                                classes="tool-name",
+                                id=f"tool-name-{key}",
                             )
                             if definition is not None and definition.description:
-                                name.tooltip = redact_secret_text(definition.description)
+                                name.tooltip = redact_secret_text(
+                                    definition.description
+                                )
                             yield name
                             yield Static(
                                 "", classes="tool-state", id=f"tool-state-{key}"
@@ -258,7 +260,9 @@ class ToolsScreen(Screen):
                                 ]
                                 yield Select(
                                     options
-                                    or [("Version metadata unavailable", "unavailable")],
+                                    or [
+                                        ("Version metadata unavailable", "unavailable")
+                                    ],
                                     id=f"tool-version-{key}",
                                     classes="tool-version",
                                     prompt="Version...",
@@ -367,7 +371,11 @@ class ToolsScreen(Screen):
         elif installed:
             self._installed_keys.add(key)
             self._installed_details[key] = detail
-            suffix = f" [dim]{escape_markup(redact_secret_text(detail))}[/dim]" if detail else ""
+            suffix = (
+                f" [dim]{escape_markup(redact_secret_text(detail))}[/dim]"
+                if detail
+                else ""
+            )
             state_w.update(
                 f"[bright_green]✓ installed[/bright_green]{suffix}  "
                 f"[dim](checking for updates…)[/dim]"
@@ -463,11 +471,11 @@ class ToolsScreen(Screen):
         except Exception:
             return
         detail = self._installed_details.get(key, "")
-        suffix = f" [dim]{escape_markup(redact_secret_text(detail))}[/dim]" if detail else ""
+        suffix = (
+            f" [dim]{escape_markup(redact_secret_text(detail))}[/dim]" if detail else ""
+        )
         if key in outdated:
-            state_w.update(
-                f"[bright_yellow]⬇ update available[/bright_yellow]{suffix}"
-            )
+            state_w.update(f"[bright_yellow]⬇ update available[/bright_yellow]{suffix}")
             btn.display = True
             btn.disabled = False
             btn.label = "Update"
@@ -497,7 +505,11 @@ class ToolsScreen(Screen):
         btn.display = True
         btn.disabled = True
         definition = get_tool_definition(key)
-        btn.label = "Source" if definition and definition.source_status == SourceStatus.MANUAL_REQUIRED else "N/A"
+        btn.label = (
+            "Source"
+            if definition and definition.source_status == SourceStatus.MANUAL_REQUIRED
+            else "N/A"
+        )
         btn.remove_class("-update")
 
     _SPINNER_FRAMES = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
@@ -634,7 +646,11 @@ class ToolsScreen(Screen):
                 try:
                     state_w = self.query_one(f"#tool-state-{key}", Static)
                     detail = self._installed_details.get(key, "")
-                    suffix = f" [dim]{escape_markup(redact_secret_text(detail))}[/dim]" if detail else ""
+                    suffix = (
+                        f" [dim]{escape_markup(redact_secret_text(detail))}[/dim]"
+                        if detail
+                        else ""
+                    )
                     state_w.update(
                         f"[bright_yellow]⬇ update available[/bright_yellow]{suffix} "
                         f"[bold red]· last attempt failed[/bold red]"

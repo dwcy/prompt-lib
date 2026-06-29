@@ -89,6 +89,8 @@ from cabal.installers.editors import (
     zed_install,
 )
 from cabal.installers.gh import gh_install, gh_status
+from cabal.installers.headroom import headroom_install
+from cabal.installers.mcp_bus import mcp_bus_install
 from cabal.installers.runtimes import (
     bun_install,
     dotnet_install,
@@ -217,7 +219,10 @@ def _probe_key(key: str) -> object:
     }:
         return container_database_status(key)
     if key == "cosmos-db-emulator":
-        return platform.system() == "Windows" and shutil.which("Microsoft.Azure.Cosmos.Emulator") is not None
+        return (
+            platform.system() == "Windows"
+            and shutil.which("Microsoft.Azure.Cosmos.Emulator") is not None
+        )
     if key == "postman":
         return shutil.which("postman") is not None
     if key == "hugo":
@@ -230,10 +235,11 @@ def _probe_key(key: str) -> object:
         return shutil.which("code") is not None
     if key == "vercel-plugin":
         return vercel_plugin_status() == "installed"
+    if key == "claude-devtools":
+        # Desktop GUI — not a PATH binary; cdt_status() stats install locations.
+        return cdt_status().startswith("installed")
     if key == "vllm":
-        return _probe_version("vllm", "--version") or (
-            shutil.which("vllm") is not None
-        )
+        return _probe_version("vllm", "--version") or (shutil.which("vllm") is not None)
     return shutil.which(key) is not None
 
 
@@ -247,7 +253,9 @@ def _tool_unavailable_reason(key: str) -> str | None:
             platforms = ", ".join(definition.platforms)
             return f"Supported on {platforms}; current platform is {platform.system()}."
         if definition.source_status == SourceStatus.MANUAL_REQUIRED:
-            return "Source confirmation required before automated install can be enabled."
+            return (
+                "Source confirmation required before automated install can be enabled."
+            )
         if definition.source_status == SourceStatus.UNAVAILABLE:
             return "Source link unavailable; install automation is disabled."
         if not definition.automation_enabled and definition.install_channel in {
@@ -421,6 +429,8 @@ INSTALLER_FUNCTIONS: dict[str, Callable[[], tuple[bool, str]]] = {
     "codex": codex_install,
     "opencode": opencode_install,
     "grok": grok_install,
+    "headroom": headroom_install,
+    "mcp-bus": mcp_bus_install,
     "skills": skills_install,
     "vercel-plugin": vercel_plugin_install,
     "cursor": cursor_install,
@@ -445,6 +455,8 @@ INSTALLER_FUNCTIONS: dict[str, Callable[[], tuple[bool, str]]] = {
     "postman": postman_install,
     "hugo": hugo_install,
     "uvicorn": uvicorn_install,
+    "specify": specify_install,
+    "claude-devtools": cdt_install,
     "sqlite": sqlite_install,
     "duckdb": duckdb_install,
     "redis": redis_install,

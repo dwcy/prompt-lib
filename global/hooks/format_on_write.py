@@ -11,6 +11,7 @@ the file, the path is inside a build/vendor directory, or the file is missing
 or too large. Never blocks: exits 0 on every path.
 """
 
+import ast
 import json
 import shutil
 import subprocess
@@ -97,13 +98,37 @@ def _run(cmd: list[str], cwd: Path) -> None:
         pass
 
 
+def _parses(text: str) -> bool:
+    try:
+        ast.parse(text)
+        return True
+    except (SyntaxError, ValueError):
+        return False
+
+
 def _format_python(path: Path) -> None:
     if not shutil.which("ruff"):
         return
     config = _find_upwards(path, ("pyproject.toml", "ruff.toml", ".ruff.toml"))
     if config is None:
         return
+    # Snapshot first: some ruff versions emit invalid syntax (e.g. 0.15.x strips
+    # the parens from `except (A, B):`). If the formatter corrupts a file that
+    # parsed before, revert — a buggy formatter must never break valid code.
+    try:
+        before = path.read_bytes()
+    except OSError:
+        return
+    was_valid = _parses(before.decode("utf-8", "replace"))
     _run(["ruff", "format", str(path)], cwd=config.parent)
+    if not was_valid:
+        return
+    try:
+        after = path.read_text(encoding="utf-8")
+    except OSError:
+        return
+    if not _parses(after):
+        path.write_bytes(before)
 
 
 def _format_biome(path: Path) -> None:

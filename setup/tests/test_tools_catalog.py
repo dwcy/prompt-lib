@@ -57,7 +57,10 @@ def test_huggingface_entry_targets_current_hf_cli():
 
     assert definition is not None
     assert definition.label == "Hugging Face CLI"
-    assert definition.source_url == "https://huggingface.co/docs/huggingface_hub/en/guides/cli"
+    assert (
+        definition.source_url
+        == "https://huggingface.co/docs/huggingface_hub/en/guides/cli"
+    )
     assert "`hf` CLI" in definition.description
     installer = tools._installer_for("huggingface")
     assert installer is not None
@@ -79,12 +82,40 @@ def test_uv_entry_is_recommended_package_manager():
 def test_requested_tools_are_in_expected_categories():
     groups = dict(tools.ENV_TOOL_GROUPS)
 
-    assert {"lm-studio", "hermes-agent", "opencode", "ollama", "vllm"} <= set(groups["Local AI"])
-    assert {"zed", "rider", "visualstudio", "cursor", "windsurf", "antigravity", "vscode"} <= set(groups["AI Editors / IDEs"])
-    assert {"turso-libsql", "duckdb", "sqlite", "redis", "mariadb", "qdrant", "weaviate", "milvus"} <= set(groups["Databases"])
+    assert {"headroom", "mcp-bus"} <= set(groups["MCP"])
+    assert {"lm-studio", "hermes-agent", "opencode", "ollama", "vllm"} <= set(
+        groups["Local AI"]
+    )
+    assert {
+        "zed",
+        "rider",
+        "visualstudio",
+        "cursor",
+        "windsurf",
+        "antigravity",
+        "vscode",
+    } <= set(groups["AI Editors / IDEs"])
+    assert {
+        "turso-libsql",
+        "duckdb",
+        "sqlite",
+        "redis",
+        "mariadb",
+        "qdrant",
+        "weaviate",
+        "milvus",
+    } <= set(groups["Databases"])
     assert {"ssms", "dbeaver"} <= set(groups["Database Clients"])
-    assert {"azure-sql-local", "cosmos-db-emulator", "azurite"} <= set(groups["Azure Local Tools"])
-    assert {"postman", "hugo", "uvicorn"} <= set(groups["Developer Tools"])
+    assert {"azure-sql-local", "cosmos-db-emulator", "azurite"} <= set(
+        groups["Azure Local Tools"]
+    )
+    assert {
+        "postman",
+        "hugo",
+        "uvicorn",
+        "specify",
+        "claude-devtools",
+    } <= set(groups["Developer Tools"])
     assert "uv" in set(groups["Package Managers"])
 
 
@@ -148,4 +179,6 @@ def test_unsupported_platform_rows_remain_visible_and_disabled(monkeypatch):
     assert definition is not None
     assert definition.supports_current_platform is False
     assert "visualstudio" in dict(tools.ENV_TOOL_GROUPS)["AI Editors / IDEs"]
-    assert "Supported on Windows" in (tools._tool_unavailable_reason("visualstudio") or "")
+    assert "Supported on Windows" in (
+        tools._tool_unavailable_reason("visualstudio") or ""
+    )

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import webbrowser
 from pathlib import Path
 
 from textual.app import ComposeResult
@@ -14,6 +15,7 @@ from cabal.app_widgets import AppHeader
 from cabal.okf.doctor import doctor_bundle, render_human
 from cabal.okf.exporter import export_okf
 from cabal.okf.recommendations import recommend_from_graph
+from cabal.okf.viewer import generate_viewer
 
 
 class KnowledgeScreen(Screen):
@@ -21,6 +23,7 @@ class KnowledgeScreen(Screen):
         Binding("escape", "app.pop_screen", "Back"),
         Binding("e", "export", "Export"),
         Binding("d", "doctor", "Doctor"),
+        Binding("v", "view_graph", "Graph"),
     ]
 
     def compose(self) -> ComposeResult:
@@ -44,6 +47,7 @@ class KnowledgeScreen(Screen):
             with Horizontal(id="okf-actions"):
                 yield Button("[E] Export", id="okf-export", variant="primary")
                 yield Button("[D] Doctor", id="okf-doctor", variant="primary")
+                yield Button("[V] Graph", id="okf-viewer", variant="primary")
                 yield Button("Back (Esc)", id="okf-back")
             yield Static("", id="okf-recommendations", classes="panel")
         yield Footer(show_command_palette=False)
@@ -62,7 +66,9 @@ class KnowledgeScreen(Screen):
         if graph.exists():
             recs = recommend_from_graph(graph, "Python service architecture")
             first = recs[0]["target"] if recs else "no route recommendation"
-            return f"[green]OKF graph present.[/green]\nRecommendation sample: `{first}`"
+            return (
+                f"[green]OKF graph present.[/green]\nRecommendation sample: `{first}`"
+            )
         return "[yellow]No OKF graph generated yet.[/yellow]"
 
     def action_export(self) -> None:
@@ -80,11 +86,32 @@ class KnowledgeScreen(Screen):
         report = doctor_bundle(self._bundle_root(), self._repo_root())
         self.query_one("#okf-status", Static).update(render_human(report))
 
+    def action_view_graph(self) -> None:
+        graph_path = self._bundle_root() / "graph.json"
+        status = self.query_one("#okf-status", Static)
+        if not graph_path.exists():
+            status.update(
+                "[yellow]No OKF graph to view yet — run [E] Export first to "
+                "generate the bundle.[/yellow]"
+            )
+            return
+        try:
+            html_path = generate_viewer(graph_path, self._bundle_root() / "graph.html")
+            webbrowser.open(html_path.as_uri())
+        except Exception as exc:
+            status.update(f"[red]Could not open graph viewer: {exc}[/red]")
+            return
+        status.update(
+            f"[green]Opened graph viewer in your browser: `{html_path}`.[/green]"
+        )
+
     def on_button_pressed(self, event: Button.Pressed) -> None:
         bid = event.button.id or ""
         if bid == "okf-export":
             self.action_export()
         elif bid == "okf-doctor":
             self.action_doctor()
+        elif bid == "okf-viewer":
+            self.action_view_graph()
         elif bid == "okf-back":
             self.app.pop_screen()
