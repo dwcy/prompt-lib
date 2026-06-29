@@ -42,7 +42,7 @@ def _iter_files(path: Path) -> list[Path]:
 
 def _name_for(category: str, resource: str) -> str:
     path = Path(resource)
-    if path.name.upper() == "SKILL.md":
+    if path.name.lower() == "skill.md":
         return path.parent.name
     if category == "spec":
         return resource.removesuffix(".md").replace("/", "-")
@@ -74,7 +74,9 @@ def discover_sources(repo_root: Path) -> tuple[SourceArtifact, ...]:
             resource = to_resource(repo_root, path)
             if resource not in seen:
                 seen.add(resource)
-                sources.append(SourceArtifact(resource=resource, category="tool", name=path.stem))
+                sources.append(
+                    SourceArtifact(resource=resource, category="tool", name=path.stem)
+                )
 
     for rel_dir in TOOL_DIRS:
         for path in _iter_files(repo_root / rel_dir):
@@ -82,9 +84,13 @@ def discover_sources(repo_root: Path) -> tuple[SourceArtifact, ...]:
             if resource in seen:
                 continue
             seen.add(resource)
-            sources.append(SourceArtifact(resource=resource, category="tool", name=path.stem))
+            sources.append(
+                SourceArtifact(resource=resource, category="tool", name=path.stem)
+            )
 
-    return tuple(sorted(sources, key=lambda item: (item.category, item.resource.lower())))
+    return tuple(
+        sorted(sources, key=lambda item: (item.category, item.resource.lower()))
+    )
 
 
 def count_by_category(sources: tuple[SourceArtifact, ...]) -> dict[str, int]:
