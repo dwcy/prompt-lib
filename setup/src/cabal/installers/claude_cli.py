@@ -10,9 +10,13 @@ from cabal.installers._common import _npm_global_install, _run_install
 
 
 def claude_cli_status() -> str:
-    if not shutil.which("claude"):
+    exe = shutil.which("claude")
+    if not exe:
         return "not installed"
-    r = subprocess.run(["claude", "--version"], capture_output=True, text=True)
+    try:
+        r = subprocess.run([exe, "--version"], capture_output=True, text=True)
+    except (OSError, subprocess.SubprocessError):
+        return "installed"
     v = (
         (r.stdout or r.stderr or "").strip().splitlines()[0]
         if r.returncode == 0

@@ -1,0 +1,21 @@
+#!/usr/bin/env sh
+# Root launcher for the Cabal read-only web UI.
+
+set -u
+
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+HOST=${CABAL_WEB_HOST:-127.0.0.1}
+PORT=${CABAL_WEB_PORT:-8765}
+PROJECT=${CABAL_WEB_PROJECT:-.}
+
+cd "$SCRIPT_DIR"
+
+if command -v uv >/dev/null 2>&1; then
+  exec uv run python -m cabal.web --host "$HOST" --port "$PORT" --project "$PROJECT" "$@"
+fi
+
+if command -v python3 >/dev/null 2>&1; then
+  exec python3 -m cabal.web --host "$HOST" --port "$PORT" --project "$PROJECT" "$@"
+fi
+
+exec python -m cabal.web --host "$HOST" --port "$PORT" --project "$PROJECT" "$@"

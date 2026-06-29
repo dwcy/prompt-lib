@@ -8,6 +8,26 @@ text-only fallback used by screens that don't need interactivity.
 
 from __future__ import annotations
 
+import re
+
+_SEMVER_RE = re.compile(r"\d+\.\d+(?:\.\d+)?")
+
+
+def _short_git_version(raw: str | None) -> str | None:
+    # "git version 2.43.0.windows.1" → "2.43.0"
+    if not raw:
+        return None
+    match = _SEMVER_RE.search(raw)
+    return match.group(0) if match else raw
+
+
+def _short_uv_version(raw: str | None) -> str | None:
+    # "uv 0.5.1 (abc1234 2024-01-01)" → "0.5.1"
+    if not raw:
+        return None
+    match = _SEMVER_RE.search(raw)
+    return match.group(0) if match else raw
+
 
 def _short_docker_version(raw: str | None) -> str | None:
     # "Docker version 24.0.7, build afdd53b" → "24.0.7"

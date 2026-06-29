@@ -20,8 +20,10 @@ from cabal.env_summary import (
     _short_az_version,
     _short_docker_version,
     _short_gcloud_version,
+    _short_git_version,
     _short_podman_version,
     _short_terraform_version,
+    _short_uv_version,
 )
 from cabal.tools import ENV_INSTALLERS, _tool_unavailable_reason
 from cabal.widgets.update_panel import UpdatePanel
@@ -32,6 +34,37 @@ _INNER_BORDER_SUBTITLE = "[bold #CC006B][@click=screen.readme]README[/][/]"
 _LABEL_STYLE = "bold #5FAFFF"
 _VERSION_STATUS_STYLE = "bold #55FFA5"
 _VERSION_METADATA_STYLE = "bold #FF85B3"
+_ENV_DEFAULTS = {
+    "os": "Unknown",
+    "release": "",
+    "python": "unknown",
+    "pkg_manager": None,
+    "git": False,
+    "gh": False,
+    "node": None,
+    "npm": None,
+    "pnpm": None,
+    "bun": None,
+    "uv": None,
+    "dotnet_sdks": [],
+    "docker": None,
+    "podman": None,
+    "kubectl": None,
+    "terraform": None,
+    "az": None,
+    "gcloud": None,
+    "aws": None,
+    "sqlcmd": False,
+    "psql": False,
+    "supabase": False,
+    "neonctl": False,
+    "cursor": False,
+    "windsurf": False,
+    "antigravity": False,
+    "vscode": False,
+    "rider": False,
+    "visualstudio": False,
+}
 
 
 class EnvPanel(Widget):
@@ -336,6 +369,7 @@ class EnvPanel(Widget):
         return f"[{cls._LABEL}]{label}:[/]"
 
     def _apply_env(self, env: dict) -> None:
+        env = {**_ENV_DEFAULTS, **env}
         system = self.query_one("#env-row-system", Horizontal)
         runtimes = self.query_one("#env-row-runtimes", Horizontal)
         pkg_mgrs = self.query_one("#env-row-pkg-mgrs", Horizontal)
@@ -372,13 +406,7 @@ class EnvPanel(Widget):
                 )
             )
         if env["git"]:
-            raw = env.get("git_version") or ""
-            parts = raw.split()
-            ver = (
-                parts[2]
-                if len(parts) >= 3 and parts[0].lower() == "git"
-                else (raw or "installed")
-            )
+            ver = _short_git_version(env.get("git_version")) or "installed"
             system.mount(Static(f"{self._lbl('git')} {ver}", classes="env-cell"))
         if env["gh"]:
             login = env.get("gh_login")
@@ -411,6 +439,7 @@ class EnvPanel(Widget):
         self._mount_installed(pkg_mgrs, "npm", env["npm"])
         self._mount_installed(pkg_mgrs, "pnpm", env["pnpm"])
         self._mount_installed(pkg_mgrs, "bun", env["bun"])
+        self._mount_installed(pkg_mgrs, "uv", _short_uv_version(env["uv"]))
 
         # Row 3 — containers, orchestration, IaC, cloud CLIs (only installed)
         self._mount_installed(infra, "Docker", _short_docker_version(env["docker"]))
@@ -429,10 +458,11 @@ class EnvPanel(Widget):
         for label, key in (
             ("Claude CLI", "claude"),
             ("Gemini CLI", "gemini"),
+            ("Hugging Face CLI", "huggingface"),
             ("Codex CLI", "codex"),
             ("OpenCode", "opencode"),
             ("Grok", "grok"),
-            ("Copilot", "copilot"),
+            ("Copilot CLI", "copilot"),
             ("Vercel Skills CLI", "skills"),
         ):
             self._mount_present(clis, label, env.get(key, False))

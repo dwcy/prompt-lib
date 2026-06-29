@@ -52,3 +52,10 @@ Durable user / project preferences not visible from the code itself. Each entry 
 - **Why**: The user corrected the Python bootstrap copy as too technical/noisy.
 - **Scope**: Setup launchers, install prompts, and user-facing setup docs.
 - **Stale signal**: User asks to show explicit version requirements again.
+
+### P-20260629-01 — Default Python support baseline is 3.14
+- **Date**: 2026-06-29
+- **Preference**: Treat Python 3.14 as the default supported Python line for new Cabal/package metadata, CI builds, runtime installer targets, and fast fake test environments.
+- **Why**: User corrected "latest 3.x" to the explicit project baseline "3.14 from now on".
+- **Scope**: Prompt-lib active package/runtime/build surfaces. Historical specs and unrelated compatibility examples can stay unchanged unless they drive behavior.
+- **Stale signal**: User names a newer default baseline or asks to restore multi-version support.

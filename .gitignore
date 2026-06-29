@@ -35,6 +35,9 @@ setup/build/build/
 *.swp
 *.swo
 
+# Obsidian local workspace state
+.obsidian/workspace.json
+
 # OS
 .DS_Store
 Thumbs.db
@@ -44,3 +47,9 @@ Thumbs.db
 
 # Spec-kit local install state (declared config in .specify/extensions.yml IS committed)
 .specify/extensions/.registry
+
+# Generated OKF catalog — regenerate on demand with `python -m cabal.okf export`.
+# The hand-written docs/okf/README.md stays tracked; only the generated bundle is ignored.
+docs/okf/prompt-lib/
+
+.mcp.json

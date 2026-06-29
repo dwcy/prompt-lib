@@ -140,6 +140,7 @@ from cabal.installers.cloud import (
 from cabal.installers.vcs import git_install
 from cabal.installers.ai_clis import (
     gemini_install,
+    huggingface_install,
     codex_install,
     opencode_install,
     grok_install,

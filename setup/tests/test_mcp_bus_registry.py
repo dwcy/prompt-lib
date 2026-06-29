@@ -1,22 +1,22 @@
 # -*- coding: utf-8 -*-
-"""Registry + template smoke test — mcp-bus is wired into TOOLS, ENV_INSTALLERS, the MCP group, and templates."""
+"""Registry + template smoke test — mcp-bus is wired into the tool catalog, ENV_INSTALLERS, the MCP group, and templates."""
 
 from __future__ import annotations
 
 import cabal.tools
 from cabal import mcp_ops
 from cabal.installers.mcp_bus import mcp_bus_status
-from cabal.tools import ENV_INSTALLERS, ENV_TOOL_GROUPS, TOOLS
+from cabal.tool_catalog import CATALOG_BY_KEY, get_tool_definition
+from cabal.tools import ENV_INSTALLERS, ENV_TOOL_GROUPS
 
 MCP_BUS_KEY = "mcp-bus"
 HEADROOM_KEY = "headroom"
 MCP_GROUP = "MCP"
 
 
-def test_mcp_bus_is_a_tool_entry():
-    keys = {tool.key for tool in TOOLS}
-
-    assert MCP_BUS_KEY in keys
+def test_mcp_bus_is_in_catalog():
+    assert MCP_BUS_KEY in CATALOG_BY_KEY
+    assert get_tool_definition(MCP_BUS_KEY) is not None
 
 
 def test_mcp_bus_is_an_env_installer():
