@@ -64,10 +64,12 @@ from cabal.git_config import apply_git_line_endings, recommended_autocrlf
 from cabal.installers.gh import gh_device_init, gh_device_poll, gh_fetch_token
 from cabal.mcp_ops import (
     add_template_to_project_mcp,
+    approve_project_mcp,
     claude_mcp_add_from_template,
     claude_mcp_remove,
     claude_plugin_set_enabled,
     enumerate_mcp_servers,
+    enumerate_one_server,
     remove_from_project_mcp,
 )
 from cabal.mcp_view_logic import (
@@ -114,7 +116,7 @@ class McpScreen(Screen):
             yield Static(
                 "[bold bright_magenta]✦ MCP Connectors ✦[/bold bright_magenta]\n"
                 "[dim]Every known MCP server across scopes. Activate globally = `claude mcp add -s user` · "
-                "Activate Locally = write into this project's .mcp.json · Disable = remove / disable plugin.[/dim]\n"
+                "Activate Locally = write into this project's .mcp.json + approve it (also approves a pending one) · Disable = remove / disable plugin.[/dim]\n"
                 "[dim]Scopes: plugin (marketplace) · user (~/.claude.json, all projects) · local (this project only) · "
                 "project (.mcp.json) · template (defined here, not registered) · connector (claude.ai / remote, server-side).[/dim]",
                 classes="panel",
@@ -129,7 +131,6 @@ class McpScreen(Screen):
                 yield Button("Activate Locally", id="mcp-act-local", variant="primary")
                 yield Button("Disable", id="mcp-disable", variant="error")
                 yield Button("Refresh (Ctrl+R)", id="mcp-refresh")
-                yield Button("Back (Esc)", id="mcp-back")
             yield Static("", id="mcp-status", classes="panel")
         yield Footer(show_command_palette=False)
 
@@ -137,7 +138,7 @@ class McpScreen(Screen):
         self._servers: dict[str, dict] = {}
         self._project_dir = self._resolve_project_dir()
         tbl = self.query_one("#mcp-table", DataTable)
-        tbl.add_columns("Name", "Scope(s)", "Status", "Env", "Command")
+        self._cols = tbl.add_columns("Name", "Scope(s)", "Status", "Env", "Command")
         self._set_action_buttons(False, False, False)
         self._refresh()
 
@@ -181,6 +182,92 @@ class McpScreen(Screen):
             f"[dim]{tbl.row_count} servers shown. Local activation writes to {local / '.mcp.json'}.[/dim]"
         )
         tbl.loading = False
+        self._sync_action_buttons()
+
+    _SPINNER_FRAMES = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+
+    def _start_row_spinner(self, name: str) -> None:
+        """Animate a rotating spinner in this row's Status cell while it re-checks."""
+        tbl = self.query_one("#mcp-table", DataTable)
+        status_col = self._cols[2]
+        state = {"frame": 0}
+
+        def tick() -> None:
+            state["frame"] = (state["frame"] + 1) % len(self._SPINNER_FRAMES)
+            try:
+                tbl.update_cell(
+                    name,
+                    status_col,
+                    f"[yellow]{self._SPINNER_FRAMES[state['frame']]} checking…[/yellow]",
+                )
+            except Exception:
+                pass
+
+        try:
+            tbl.update_cell(
+                name, status_col, f"[yellow]{self._SPINNER_FRAMES[0]} checking…[/yellow]"
+            )
+        except Exception:
+            return
+        state["timer"] = self.set_interval(0.08, tick)
+        if not hasattr(self, "_row_spinners"):
+            self._row_spinners = {}
+        self._row_spinners[name] = state
+
+    def _stop_row_spinner(self, name: str) -> None:
+        state = getattr(self, "_row_spinners", {}).pop(name, None)
+        if state and "timer" in state:
+            state["timer"].stop()
+
+    def _refresh_row(self, name: str | None) -> None:
+        """Re-check a single server (via `claude mcp get`) instead of every row."""
+        if not name:
+            self._refresh()
+            return
+        self._start_row_spinner(name)
+        self.run_worker(lambda: self._load_row(name), thread=True)
+
+    def _load_row(self, name: str) -> None:
+        try:
+            info = enumerate_one_server(name, project_dir=self._project_dir)
+        except Exception as e:
+            self.app.call_from_thread(self._row_failed, name, str(e))
+            return
+        self.app.call_from_thread(self._apply_row, name, info)
+
+    def _row_failed(self, name: str, msg: str) -> None:
+        self._stop_row_spinner(name)
+        info = self._servers.get(name)
+        if info:
+            try:
+                self.query_one("#mcp-table", DataTable).update_cell(
+                    name, self._cols[2], server_row_cells(info)[1]
+                )
+            except Exception:
+                pass
+        self._status(f"[red]Re-check failed for {name}: {msg}[/red]")
+
+    def _apply_row(self, name: str, info: dict | None) -> None:
+        self._stop_row_spinner(name)
+        tbl = self.query_one("#mcp-table", DataTable)
+        gone = not info or (
+            not info["scopes"] and not info["active"] and not info.get("pending")
+        )
+        if gone:
+            try:
+                tbl.remove_row(name)
+            except Exception:
+                pass
+            self._servers.pop(name, None)
+            self._sync_action_buttons()
+            return
+        self._servers[name] = info
+        try:
+            for col, value in zip(self._cols[1:], server_row_cells(info)):
+                tbl.update_cell(name, col, value)
+        except Exception:
+            self._refresh()
+            return
         self._sync_action_buttons()
 
     def action_refresh(self) -> None:
@@ -256,7 +343,7 @@ class McpScreen(Screen):
         self._status(
             f"[{'green' if ok else 'red'}]{'✓ added (user)' if ok else '✗ add failed'} {name}: {msg}[/]"
         )
-        self._refresh()
+        self._refresh_row(name)
 
     def _activate_local(self) -> None:
         name = self._current_name()
@@ -273,6 +360,12 @@ class McpScreen(Screen):
                 "[yellow]No project directory to write .mcp.json into.[/yellow]"
             )
             return
+        # Already in .mcp.json but pending the trust prompt → just approve it.
+        if "project" in info["scopes"] and info.get("pending"):
+            ok, msg = approve_project_mcp(name, self._project_dir)
+            self._status(f"[{'green' if ok else 'red'}]{'✓' if ok else '✗'} {msg}[/]")
+            self._refresh_row(name)
+            return
         tmpl = (info.get("definitions") or {}).get("template")
         if not tmpl:
             self._status(
@@ -281,7 +374,7 @@ class McpScreen(Screen):
             return
         ok, msg = add_template_to_project_mcp(name, tmpl, self._project_dir)
         self._status(f"[{'green' if ok else 'red'}]{'✓' if ok else '✗'} {msg}[/]")
-        self._refresh()
+        self._refresh_row(name)
 
     def _disable(self) -> None:
         name = self._current_name()
@@ -323,13 +416,11 @@ class McpScreen(Screen):
         self._status(
             f"[{'green' if ok else 'red'}]{'✓ disabled' if ok else '✗ failed'} {name} ({scope}): {msg}[/]"
         )
-        self._refresh()
+        self._refresh_row(name)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         bid = event.button.id or ""
-        if bid == "mcp-back":
-            self.app.pop_screen()
-        elif bid == "mcp-refresh":
+        if bid == "mcp-refresh":
             self._refresh()
         elif bid == "mcp-act-global":
             self._activate_global()

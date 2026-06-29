@@ -20,8 +20,10 @@ from cabal.env_summary import (
     _short_az_version,
     _short_docker_version,
     _short_gcloud_version,
+    _short_git_version,
     _short_podman_version,
     _short_terraform_version,
+    _short_uv_version,
 )
 from cabal.tools import ENV_INSTALLERS, _tool_unavailable_reason
 from cabal.widgets.update_panel import UpdatePanel
@@ -404,13 +406,7 @@ class EnvPanel(Widget):
                 )
             )
         if env["git"]:
-            raw = env.get("git_version") or ""
-            parts = raw.split()
-            ver = (
-                parts[2]
-                if len(parts) >= 3 and parts[0].lower() == "git"
-                else (raw or "installed")
-            )
+            ver = _short_git_version(env.get("git_version")) or "installed"
             system.mount(Static(f"{self._lbl('git')} {ver}", classes="env-cell"))
         if env["gh"]:
             login = env.get("gh_login")
@@ -443,7 +439,7 @@ class EnvPanel(Widget):
         self._mount_installed(pkg_mgrs, "npm", env["npm"])
         self._mount_installed(pkg_mgrs, "pnpm", env["pnpm"])
         self._mount_installed(pkg_mgrs, "bun", env["bun"])
-        self._mount_installed(pkg_mgrs, "uv", env["uv"])
+        self._mount_installed(pkg_mgrs, "uv", _short_uv_version(env["uv"]))
 
         # Row 3 — containers, orchestration, IaC, cloud CLIs (only installed)
         self._mount_installed(infra, "Docker", _short_docker_version(env["docker"]))

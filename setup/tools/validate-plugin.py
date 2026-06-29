@@ -39,11 +39,12 @@ def load_json(p: Path) -> dict:
 
 
 def step_claude_validate() -> tuple[bool, str]:
-    if shutil.which("claude") is None:
+    claude = shutil.which("claude")
+    if claude is None:
         return (True, "SKIP   claude CLI not on PATH (install Claude Code to run schema validation)")
     try:
         proc = subprocess.run(
-            ["claude", "plugin", "validate", "."],
+            [claude, "plugin", "validate", "."],
             cwd=REPO_ROOT,
             capture_output=True,
             text=True,
