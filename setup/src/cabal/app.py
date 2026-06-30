@@ -41,6 +41,7 @@ from cabal.views.project_gate import ProjectGateScreen
 from cabal.views.project_mcp import ProjectMcpScreen  # noqa: F401
 from cabal.views.readme import ReadmeScreen  # noqa: F401
 from cabal.views.restore import RestoreScreen  # noqa: F401
+from cabal.views.sessions import SessionsScreen  # noqa: F401
 from cabal.views.statusline import StatuslineScreen  # noqa: F401
 from cabal.views.tools import ToolsScreen  # noqa: F401
 from cabal.views.update import UpdateScreen  # noqa: F401
