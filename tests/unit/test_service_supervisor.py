@@ -15,7 +15,9 @@ from typing import Iterator
 import pytest
 
 from cabal import service_prereqs, service_supervisor
-from cabal.service_catalog import PrereqResult, ServiceStatus
+from cabal.service_catalog import PrereqResult, ServiceStatus, get_service
+
+_A2A_TOKEN_ENV = "A2A_BEARER_TOKEN"
 
 _SLEEPER_ARGS = ("-c", "import time; time.sleep(30)")
 _POLL_TIMEOUT = 5.0
@@ -174,3 +176,36 @@ def test_stop_untracked_service_is_a_noop(monkeypatch):
 
     assert state.status is ServiceStatus.STOPPED
     assert "a2a-bridge" not in service_supervisor._PROCS
+
+
+# ------------------------------------------------------------------
+# 7. A2A bearer token: cabal auto-provisions one shared session token
+# ------------------------------------------------------------------
+
+
+def test_child_env_injects_session_token_when_unset(monkeypatch):
+    monkeypatch.delenv(_A2A_TOKEN_ENV, raising=False)
+    monkeypatch.setattr(service_supervisor, "_SESSION_BEARER_TOKEN", None)
+
+    env = service_supervisor._child_env(get_service("a2a-bridge"))
+
+    assert env is not None
+    assert env[_A2A_TOKEN_ENV]
+
+
+def test_child_env_shares_one_token_across_token_services(monkeypatch):
+    monkeypatch.delenv(_A2A_TOKEN_ENV, raising=False)
+    monkeypatch.setattr(service_supervisor, "_SESSION_BEARER_TOKEN", None)
+
+    bridge_env = service_supervisor._child_env(get_service("a2a-bridge"))
+    orch_env = service_supervisor._child_env(get_service("orchestrator"))
+
+    assert bridge_env[_A2A_TOKEN_ENV] == orch_env[_A2A_TOKEN_ENV]
+
+
+def test_child_env_respects_a_user_supplied_token(monkeypatch):
+    monkeypatch.setenv(_A2A_TOKEN_ENV, "user-secret")
+
+    env = service_supervisor._child_env(get_service("a2a-bridge"))
+
+    assert env[_A2A_TOKEN_ENV] == "user-secret"

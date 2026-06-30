@@ -22,28 +22,29 @@ def _by_name(results, name):
 
 
 # ------------------------------------------------------------------
-# a2a-bridge: A2A_BEARER_TOKEN env prerequisite
+# a2a-bridge: A2A_BEARER_TOKEN is non-blocking — cabal provisions one
 # ------------------------------------------------------------------
 
 
-def test_a2a_bridge_missing_token_is_blocking_with_message(monkeypatch):
+def test_a2a_bridge_missing_token_is_non_blocking_with_note(monkeypatch):
     monkeypatch.delenv(_A2A_TOKEN_ENV, raising=False)
 
     results = check("a2a-bridge")
     token = _by_name(results, _A2A_TOKEN_ENV)
 
-    assert token.ok is False
+    assert token.ok is True
     assert token.message.strip()
-    assert any(r.name == _A2A_TOKEN_ENV for r in blocking(results))
+    assert all(r.name != _A2A_TOKEN_ENV for r in blocking(results))
 
 
-def test_a2a_bridge_present_token_is_satisfied(monkeypatch):
+def test_a2a_bridge_present_token_is_satisfied_silently(monkeypatch):
     monkeypatch.setenv(_A2A_TOKEN_ENV, "secret-token")
 
     results = check("a2a-bridge")
     token = _by_name(results, _A2A_TOKEN_ENV)
 
     assert token.ok is True
+    assert token.message == ""
     assert all(r.name != _A2A_TOKEN_ENV for r in blocking(results))
 
 

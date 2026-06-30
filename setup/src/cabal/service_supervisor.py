@@ -3,7 +3,9 @@
 
 from __future__ import annotations
 
+import os
 import platform
+import secrets
 import shutil
 import socket
 import subprocess
@@ -26,6 +28,10 @@ _INFO_DETAIL = "client-launched MCP server"
 _DEFAULT_AGENT = "claude"
 _STOP_GRACE_SECONDS = 3.0
 
+_A2A_TOKEN_ENV = "A2A_BEARER_TOKEN"
+# Services that speak the A2A bearer-token handshake (bridge auth + orchestrator delegation).
+_TOKEN_SERVICES = ("a2a-bridge", "orchestrator")
+
 # Per-service spawn command tail appended to the resolved console executable.
 _RUN_ARGS: dict[str, tuple[str, ...]] = {
     "a2a-bridge": ("serve", _DEFAULT_AGENT),
@@ -36,6 +42,37 @@ _RUN_ARGS: dict[str, tuple[str, ...]] = {
 # liveness reconciles a tracked PID's exit and falls back to a port probe.
 _STATES: dict[str, ServiceState] = {}
 _PROCS: dict[str, subprocess.Popen] = {}
+
+# One ephemeral A2A bearer token shared by every service cabal starts this session.
+_SESSION_BEARER_TOKEN: str | None = None
+
+
+def _session_bearer_token() -> str:
+    """Return one strong ephemeral A2A bearer token per cabal session.
+
+    Lets cabal start a2a-bridge + orchestrator on loopback with no manual
+    A2A_BEARER_TOKEN: both children share this secret, so the bridge's auth stays
+    enforced and the orchestrator still authenticates when it delegates.
+    """
+    global _SESSION_BEARER_TOKEN
+    if _SESSION_BEARER_TOKEN is None:
+        _SESSION_BEARER_TOKEN = secrets.token_hex(32)
+    return _SESSION_BEARER_TOKEN
+
+
+def _child_env(definition: ServiceDefinition) -> dict[str, str] | None:
+    """Child environment for a spawned service, auto-provisioning the shared A2A token.
+
+    For the token-speaking services, when A2A_BEARER_TOKEN is unset cabal injects
+    the session token so auth works without setup; a value the user already set is
+    respected. Other services inherit the parent environment unchanged (None).
+    """
+    if definition.key not in _TOKEN_SERVICES:
+        return None
+    env = dict(os.environ)
+    if not env.get(_A2A_TOKEN_ENV):
+        env[_A2A_TOKEN_ENV] = _session_bearer_token()
+    return env
 
 
 def status(key: str) -> ServiceState:
@@ -163,6 +200,7 @@ def _spawn(definition: ServiceDefinition, state: ServiceState) -> ServiceState:
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             stdin=subprocess.DEVNULL,
+            env=_child_env(definition),
             **_detach_kwargs(),
         )
     except OSError as exc:

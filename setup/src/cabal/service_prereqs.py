@@ -42,15 +42,19 @@ def blocking(results: list[PrereqResult]) -> list[PrereqResult]:
 
 
 def _a2a_bridge_prereqs() -> list[PrereqResult]:
+    # The token is non-blocking: cabal injects an ephemeral session token when
+    # one is not set (see service_supervisor._child_env), so start never blocks
+    # on it. Setting A2A_BEARER_TOKEN yourself gives a stable / networked secret.
     token = os.environ.get(_A2A_TOKEN_ENV)
-    results = [
+    return [
         PrereqResult(
             name=_A2A_TOKEN_ENV,
-            ok=bool(token),
+            ok=True,
             message=(
                 ""
                 if token
-                else "Set A2A_BEARER_TOKEN in your environment before starting a2a-bridge."
+                else "No A2A_BEARER_TOKEN set — cabal will use an ephemeral session token "
+                "(set one yourself for a stable or network-exposed secret)."
             ),
         ),
         PrereqResult(
@@ -59,7 +63,6 @@ def _a2a_bridge_prereqs() -> list[PrereqResult]:
             message="",
         ),
     ]
-    return results
 
 
 def _orchestrator_prereqs(a2a_port: int | None) -> list[PrereqResult]:
