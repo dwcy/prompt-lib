@@ -129,3 +129,6 @@ class SessionSummary:
     git_branch: str | None = None
     cwd: str | None = None
     claude_version: str | None = None
+    # Inferred tree links (populated by infer_session_tree after all summaries are built)
+    parent_session_id: str | None = None
+    child_session_ids: list[str] = field(default_factory=list)

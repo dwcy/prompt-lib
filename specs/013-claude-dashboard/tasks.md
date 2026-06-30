@@ -137,6 +137,19 @@ description: "Task list for Claude Session Dashboard implementation"
 
 ---
 
+## Phase 9: Subagent Session Linking
+
+**Status**: ✅ Complete (3/3 — T033–T035)
+**Goal**: Show full subagent process tree — infer parent-child session relationships using time containment, display children indented under parents in the list, and show child session summaries in the Activity tab.
+
+**Why time-based heuristics**: Claude Code stores subagent sessions as separate JSONL files with no explicit `parentSessionId` field. `isSidechain` is always `false`. The only available signal is that a child session's time range falls within the parent's time range in the same project directory.
+
+- [X] T033 Implement `infer_session_tree(summaries: list[SessionSummary]) -> None` in `setup/src/cabal/session_reader.py` — assigns `parent_session_id` and `child_session_ids` by time containment; picks tightest (shortest) container as parent for correct nesting — Owner: main
+- [X] T034 Update `_load_sessions` in `setup/src/cabal/views/sessions.py` to call `infer_session_tree` after computing summaries; update `_render_list` to show children indented under parents with `↳` prefix using `_build_tree_order` helper; add "Subagent sessions (inferred)" section to Activity tab with per-child stats and agent list — Owner: main
+- [X] T035 Add 7 pytest tests for `infer_session_tree` in `setup/tests/test_session_reader.py` covering: child linked to parent, parent gets child_id, non-overlapping not linked, longer not child of shorter, different projects not linked, tightest parent wins, no-timestamp skipped — Owner: main
+
+---
+
 ## Phase 8: Polish & Cross-Cutting Concerns
 
 **Status**: ✅ Complete (3/3 — T030–T032)

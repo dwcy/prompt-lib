@@ -27,6 +27,7 @@ from cabal.session_pricing import load_pricing
 from cabal.session_reader import (
     compute_summary,
     delete_session,
+    infer_session_tree,
     read_session,
     read_write_audit,
     scan_projects_dir,
@@ -35,6 +36,32 @@ from cabal.session_reader import (
 _PROJECTS_DIR = Path.home() / ".claude" / "projects"
 _AUDIT_PATH = Path.home() / ".claude" / "write_audit.jsonl"
 _SORT_KEYS = ("date", "cost", "tokens")
+
+
+def _build_tree_order(
+    summaries: list[SessionSummary],
+    lookup: dict[str, SessionSummary],
+) -> list[tuple[SessionSummary, int]]:
+    """Return (summary, depth) pairs: root sessions in sort order, each followed by children."""
+    roots = [s for s in summaries if not s.parent_session_id]
+    result: list[tuple[SessionSummary, int]] = []
+    for root in roots:
+        result.append((root, 0))
+        _collect_children(root, lookup, result, 1)
+    return result
+
+
+def _collect_children(
+    parent: SessionSummary,
+    lookup: dict[str, SessionSummary],
+    result: list[tuple[SessionSummary, int]],
+    depth: int,
+) -> None:
+    for child_id in parent.child_session_ids:
+        child = lookup.get(child_id)
+        if child:
+            result.append((child, depth))
+            _collect_children(child, lookup, result, depth + 1)
 
 
 class DeleteConfirmModal(ModalScreen[bool]):
@@ -136,6 +163,7 @@ class SessionsScreen(Screen):
         for sess in self._sessions:
             entries = read_session(sess)
             self._summaries.append(compute_summary(sess, entries, self._pricing))
+        infer_session_tree(self._summaries)
         self._sort_summaries()
         self._render_list()
         self._render_totals()
@@ -154,9 +182,12 @@ class SessionsScreen(Screen):
         tbl.clear()
         if not self._summaries:
             return
-        for s in self._summaries:
+        lookup = {s.session_id: s for s in self._summaries}
+        ordered = _build_tree_order(self._summaries, lookup)
+        for s, depth in ordered:
             date_str = s.start_time.strftime("%Y-%m-%d %H:%M") if s.start_time else "—"
-            label = s.title or s.project_path
+            prefix = "  ↳ " * depth
+            label = prefix + (s.title or s.project_path)
             tbl.add_row(
                 label[:36],
                 s.git_branch or "—",
@@ -297,6 +328,33 @@ class SessionsScreen(Screen):
                 )
         else:
             lines.append("  [dim]none[/dim]")
+
+        # ── Subagent Sessions (inferred by time containment) ──────────────────
+        if s.child_session_ids:
+            lines.append("")
+            lines.append(f"[bold]Subagent sessions — inferred ({len(s.child_session_ids)}):[/bold]")
+            lookup = {c.session_id: c for c in self._summaries}
+            for child_id in s.child_session_ids:
+                child = lookup.get(child_id)
+                if not child:
+                    continue
+                title = child.title or child.session_id[:12]
+                dur = f"{child.duration_seconds:.0f}s"
+                lines.append(
+                    f"  [cyan]{title}[/cyan]"
+                    f"  {dur}"
+                    f"  {len(child.tool_calls)} tools"
+                    f"  {child.agent_count} agents"
+                    f"  {child.total_input_tokens:,} in / {child.total_output_tokens:,} out"
+                    f"  [bold]${child.estimated_cost_usd:.4f}[/bold]"
+                )
+                for a in child.agents:
+                    ts = a.timestamp.strftime("%H:%M:%S") if a.timestamp else "—"
+                    model_tag = f"  [dim]{a.model}[/dim]" if a.model else ""
+                    lines.append(
+                        f"    [{ts}] [cyan]{a.agent_type}[/cyan]{model_tag}"
+                        f"  {a.description[:70]}"
+                    )
 
         self.query_one("#agents-body", Static).update(Text.from_markup("\n".join(lines)))
 

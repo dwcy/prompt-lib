@@ -1,10 +1,11 @@
+# > 400 LoC justified: single I/O service module — scan → read → parse → aggregate → link tree; splitting would fragment one pipeline across multiple files.
 # -*- coding: utf-8 -*-
 """Session reader — scan ~/.claude/projects/, parse JSONL transcripts, compute summaries."""
 
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import unquote
 
@@ -359,6 +360,46 @@ def infer_trigger(entry_index: int, entries: list[LogEntry]) -> str:
                 return text.split(None, 1)[0].lstrip("/")
             return text[:60] if text else "user message"
     return "direct"
+
+
+def infer_session_tree(summaries: list[SessionSummary]) -> None:
+    """Assign parent_session_id / child_session_ids using time-containment heuristics.
+
+    Claude Code stores subagent sessions as separate JSONL files with no explicit
+    parentSessionId link.  The only available signal is time: if session B started
+    and ended while session A was running in the same project, B was likely spawned
+    by A.  The tightest (shortest) container is chosen as the parent so that nested
+    subagent chains resolve correctly.
+    """
+    by_project: dict[str, list[SessionSummary]] = {}
+    for s in summaries:
+        by_project.setdefault(s.project_path, []).append(s)
+
+    for group in by_project.values():
+        for child in group:
+            if not child.start_time or child.duration_seconds <= 0:
+                continue
+            child_end = child.start_time + timedelta(seconds=child.duration_seconds)
+            best: SessionSummary | None = None
+            for candidate in group:
+                if candidate.session_id == child.session_id:
+                    continue
+                if not candidate.start_time or candidate.duration_seconds <= 0:
+                    continue
+                cand_end = candidate.start_time + timedelta(seconds=candidate.duration_seconds)
+                # Candidate must contain the child's time range (with 5-min grace for
+                # subagents that finish slightly after the parent's last recorded entry).
+                if (
+                    candidate.start_time <= child.start_time
+                    and child_end <= cand_end + timedelta(minutes=5)
+                    and candidate.duration_seconds > child.duration_seconds
+                ):
+                    if best is None or candidate.duration_seconds < best.duration_seconds:
+                        best = candidate
+            if best is not None and child.parent_session_id is None:
+                child.parent_session_id = best.session_id
+                if child.session_id not in best.child_session_ids:
+                    best.child_session_ids.append(child.session_id)
 
 
 def delete_session(session: Session) -> None:

@@ -14,6 +14,7 @@ from cabal.session_pricing import load_pricing
 from cabal.session_reader import (
     compute_summary,
     delete_session,
+    infer_session_tree,
     infer_trigger,
     read_session,
     read_write_audit,
@@ -328,6 +329,110 @@ class TestInferTrigger:
         result = infer_trigger(3, entries)
 
         assert result == "code-review"
+
+
+# ── infer_session_tree ───────────────────────────────────────────────────────
+
+class TestInferSessionTree:
+    def _summary(
+        self,
+        session_id: str,
+        project: str,
+        start: datetime,
+        duration: float,
+    ) -> "SessionSummary":
+        from cabal.models.session import SessionSummary
+        return SessionSummary(
+            session_id=session_id,
+            project_path=project,
+            start_time=start,
+            duration_seconds=duration,
+            total_input_tokens=0,
+            total_output_tokens=0,
+            total_cache_read_tokens=0,
+            total_cache_write_tokens=0,
+            estimated_cost_usd=0.0,
+        )
+
+    def _dt(self, hour: int, minute: int = 0) -> datetime:
+        return datetime(2026, 6, 30, hour, minute, tzinfo=timezone.utc)
+
+    def test_child_within_parent_time_range_is_linked(self):
+        parent = self._summary("parent", "proj", self._dt(9), 3600.0)
+        child = self._summary("child", "proj", self._dt(9, 30), 600.0)
+
+        infer_session_tree([parent, child])
+
+        assert child.parent_session_id == "parent"
+        assert "child" in parent.child_session_ids
+
+    def test_parent_gets_child_in_child_list(self):
+        parent = self._summary("parent", "proj", self._dt(9), 3600.0)
+        child = self._summary("child", "proj", self._dt(9, 10), 300.0)
+
+        infer_session_tree([parent, child])
+
+        assert "child" in parent.child_session_ids
+
+    def test_non_overlapping_sessions_are_not_linked(self):
+        first = self._summary("first", "proj", self._dt(9), 1800.0)
+        second = self._summary("second", "proj", self._dt(12), 1800.0)
+
+        infer_session_tree([first, second])
+
+        assert first.parent_session_id is None
+        assert second.parent_session_id is None
+        assert first.child_session_ids == []
+        assert second.child_session_ids == []
+
+    def test_longer_session_is_not_child_of_shorter(self):
+        short = self._summary("short", "proj", self._dt(9), 600.0)
+        long = self._summary("long", "proj", self._dt(9, 5), 3600.0)
+
+        infer_session_tree([short, long])
+
+        assert long.parent_session_id is None
+        assert short.parent_session_id is None
+
+    def test_different_project_sessions_are_not_linked(self):
+        session_a = self._summary("a", "project-alpha", self._dt(9), 3600.0)
+        session_b = self._summary("b", "project-beta", self._dt(9, 10), 300.0)
+
+        infer_session_tree([session_a, session_b])
+
+        assert session_b.parent_session_id is None
+        assert session_a.child_session_ids == []
+
+    def test_tightest_parent_wins(self):
+        outer = self._summary("outer", "proj", self._dt(8), 7200.0)
+        inner = self._summary("inner", "proj", self._dt(9), 3600.0)
+        child = self._summary("child", "proj", self._dt(9, 30), 600.0)
+
+        infer_session_tree([outer, inner, child])
+
+        assert child.parent_session_id == "inner"
+        assert "child" in inner.child_session_ids
+        assert "child" not in outer.child_session_ids
+
+    def test_session_without_timestamps_is_skipped(self):
+        from cabal.models.session import SessionSummary
+        parent = self._summary("parent", "proj", self._dt(9), 3600.0)
+        no_ts = SessionSummary(
+            session_id="no-ts",
+            project_path="proj",
+            start_time=None,
+            duration_seconds=0.0,
+            total_input_tokens=0,
+            total_output_tokens=0,
+            total_cache_read_tokens=0,
+            total_cache_write_tokens=0,
+            estimated_cost_usd=0.0,
+        )
+
+        infer_session_tree([parent, no_ts])
+
+        assert no_ts.parent_session_id is None
+        assert parent.child_session_ids == []
 
 
 # ── read_write_audit ──────────────────────────────────────────────────────────
