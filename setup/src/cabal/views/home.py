@@ -149,6 +149,25 @@ class HomeScreen(Screen):
                         variant="default",
                     )
                 yield OkfPanel(id="okf-summary")
+            with Vertical(id="services-panel", classes="home-section"):
+                yield Static(
+                    "[bold]Local Agent Services[/bold]",
+                    id="services-title",
+                    classes="home-section-title",
+                )
+                yield Static(
+                    "[dim]See and run the local agent services — orchestrator, "
+                    "a2a-bridge, and mcp-bus — from one place instead of "
+                    "remembering CLI commands.[/dim]",
+                    id="services-desc",
+                    classes="home-section-desc",
+                )
+                with Horizontal(classes="ops-row"):
+                    yield Button(
+                        "Local Agent Services",
+                        id="btn-op-services",
+                        variant="default",
+                    )
             with Vertical(id="codex-settings-panel", classes="home-section"):
                 yield Static(
                     "[bold]Codex Settings (~/.codex)[/bold]",
@@ -261,6 +280,7 @@ class HomeScreen(Screen):
         from cabal.views.local import LocalScreen
         from cabal.views.statusline import StatuslineScreen
         from cabal.views.knowledge import KnowledgeScreen
+        from cabal.views.services import ServicesScreen
         from cabal.views.settings import SettingsScreen
         from cabal.views.codex_update import CodexUpdateScreen
         from cabal.views.codex_local import CodexLocalScreen
@@ -273,6 +293,7 @@ class HomeScreen(Screen):
             "btn-op-local": LocalScreen,
             "btn-op-statusline": StatuslineScreen,
             "btn-op-knowledge": KnowledgeScreen,
+            "btn-op-services": ServicesScreen,
             "btn-op-settings": SettingsScreen,
             "btn-op-codex-update": CodexUpdateScreen,
             "btn-op-codex-local": CodexLocalScreen,
