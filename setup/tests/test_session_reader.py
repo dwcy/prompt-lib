@@ -136,6 +136,56 @@ class TestReadSession:
         assert entries[0].tool_name == "Task"
         assert entries[0].tool_input["subagent_type"] == "python-architect"
 
+    def test_parses_real_nested_format(self, tmp_path: Path):
+        """Real Claude Code transcripts nest data under a 'message' key."""
+        content = (
+            '{"type":"user","message":{"role":"user","content":"/speckit-plan build it"},'
+            '"timestamp":"2026-06-30T10:00:00.000Z","requestId":null}\n'
+            '{"type":"assistant","message":{"model":"claude-sonnet-4-6",'
+            '"content":[{"type":"text","text":"sure"}],'
+            '"usage":{"input_tokens":50,"output_tokens":20,'
+            '"cache_read_input_tokens":100,"cache_creation_input_tokens":0}},'
+            '"timestamp":"2026-06-30T10:00:03.000Z","requestId":"req_abc"}\n'
+            '{"type":"assistant","message":{"model":"claude-sonnet-4-6",'
+            '"content":[{"type":"tool_use","name":"Agent",'
+            '"input":{"subagent_type":"python-architect","description":"do it","prompt":"..."}}],'
+            '"usage":{"input_tokens":50,"output_tokens":20,'
+            '"cache_read_input_tokens":100,"cache_creation_input_tokens":0}},'
+            '"timestamp":"2026-06-30T10:00:04.000Z","requestId":"req_abc"}\n'
+        )
+        sess = _session(tmp_path, content)
+
+        entries = read_session(sess)
+
+        assert len(entries) == 3
+        assert entries[0].content == "/speckit-plan build it"
+        assert entries[1].usage is not None
+        assert entries[1].usage.input_tokens == 50
+        assert entries[1].model == "claude-sonnet-4-6"
+        assert entries[2].tool_name == "Agent"
+        assert entries[1].request_id == "req_abc"
+
+    def test_deduplicates_usage_by_request_id(self, tmp_path: Path):
+        """Entries sharing a requestId count tokens only once."""
+        shared = (
+            '"model":"claude-sonnet-4-6",'
+            '"usage":{"input_tokens":100,"output_tokens":40,'
+            '"cache_read_input_tokens":0,"cache_creation_input_tokens":0}'
+        )
+        content = (
+            f'{{"type":"assistant","message":{{{shared},"content":[]}},'
+            f'"requestId":"req_1","timestamp":"2026-06-30T10:00:01.000Z"}}\n'
+            f'{{"type":"assistant","message":{{{shared},"content":[]}},'
+            f'"requestId":"req_1","timestamp":"2026-06-30T10:00:02.000Z"}}\n'
+        )
+        sess = _session(tmp_path, content)
+        entries = read_session(sess)
+
+        summary = compute_summary(sess, entries, load_pricing())
+
+        assert summary.total_input_tokens == 100
+        assert summary.total_output_tokens == 40
+
 
 # ── compute_summary ──────────────────────────────────────────────────────────
 

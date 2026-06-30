@@ -70,8 +70,16 @@ def read_session(session: Session) -> list[LogEntry]:
 
 
 def _parse_entry(raw: dict) -> LogEntry:
+    # Real Claude Code transcripts wrap message data under a "message" key.
+    # Fall back to top-level keys to stay compatible with test fixtures.
+    msg = raw.get("message") if isinstance(raw.get("message"), dict) else {}
+
     ts = _parse_ts(raw.get("timestamp"))
-    usage_raw = raw.get("usage")
+    role = msg.get("role") or raw.get("role")
+    model = msg.get("model") or raw.get("model")
+    request_id = raw.get("requestId")
+
+    usage_raw = msg.get("usage") or raw.get("usage")
     usage = (
         TokenUsage(
             input_tokens=int(usage_raw.get("input_tokens", 0)),
@@ -82,7 +90,25 @@ def _parse_entry(raw: dict) -> LogEntry:
         if isinstance(usage_raw, dict)
         else None
     )
-    content = raw.get("content")
+
+    # content: real format has it in message.content; fixture format at top level
+    content = msg.get("content") if msg else None
+    if content is None:
+        content = raw.get("content")
+
+    # Extract first tool_use block from content array (real format)
+    # Also accept legacy flat-format name/input fields
+    tool_name: str | None = raw.get("name")
+    tool_input: dict | None = raw.get("input") if isinstance(raw.get("input"), dict) else None
+    if isinstance(content, list):
+        for block in content:
+            if isinstance(block, dict) and block.get("type") == "tool_use":
+                tool_name = tool_name or block.get("name")
+                if tool_input is None and isinstance(block.get("input"), dict):
+                    tool_input = block["input"]
+                break
+
+    # Flatten content list to plain text
     if isinstance(content, list):
         parts = []
         for block in content:
@@ -91,16 +117,18 @@ def _parse_entry(raw: dict) -> LogEntry:
             elif isinstance(block, str):
                 parts.append(block)
         content = "\n".join(parts) if parts else None
+
     return LogEntry(
         type=str(raw.get("type", "")),
         timestamp=ts,
-        role=raw.get("role"),
+        role=role,
         content=content,
-        model=raw.get("model"),
+        model=model,
         usage=usage,
-        tool_name=raw.get("name"),
-        tool_input=raw.get("input") if isinstance(raw.get("input"), dict) else None,
+        tool_name=tool_name,
+        tool_input=tool_input,
         is_error=bool(raw.get("is_error", False)),
+        request_id=request_id,
     )
 
 
@@ -127,15 +155,22 @@ def compute_summary(
     message_count = 0
     timestamps: list[datetime] = []
 
+    seen_request_ids: set[str] = set()
+
     for idx, entry in enumerate(entries):
         if entry.timestamp:
             timestamps.append(entry.timestamp)
 
+        # Deduplicate by requestId: real transcripts repeat the same usage block
+        # across multiple entries that share a request (one per content block).
         if entry.type == "assistant" and entry.usage:
-            total = total + entry.usage
-            model_key = entry.model or "unknown"
-            existing = model_breakdown.get(model_key, TokenUsage())
-            model_breakdown[model_key] = existing + entry.usage
+            if not entry.request_id or entry.request_id not in seen_request_ids:
+                total = total + entry.usage
+                model_key = entry.model or "unknown"
+                existing = model_breakdown.get(model_key, TokenUsage())
+                model_breakdown[model_key] = existing + entry.usage
+                if entry.request_id:
+                    seen_request_ids.add(entry.request_id)
 
         if entry.type in ("user", "assistant"):
             message_count += 1
@@ -154,7 +189,9 @@ def compute_summary(
                     )
                 )
 
-        if entry.type == "tool_use" and entry.tool_name in _AGENT_TOOL_NAMES:
+        # Agent detection: tool_use blocks now live inside assistant entries in real format.
+        # Also handle legacy flat format where type=="tool_use".
+        if entry.tool_name in _AGENT_TOOL_NAMES:
             inp = entry.tool_input or {}
             agents.append(
                 AgentInvocation(

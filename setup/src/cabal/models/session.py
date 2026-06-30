@@ -47,6 +47,7 @@ class LogEntry:
     tool_name: str | None = None
     tool_input: dict | None = None
     is_error: bool = False
+    request_id: str | None = None
 
 
 @dataclass
