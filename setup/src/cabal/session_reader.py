@@ -10,6 +10,7 @@ from urllib.parse import unquote
 
 from cabal.models.session import (
     AgentInvocation,
+    HookEvent,
     LogEntry,
     Session,
     SessionSummary,
@@ -97,10 +98,16 @@ def _parse_entry(raw: dict) -> LogEntry:
     # Fall back to top-level keys to stay compatible with test fixtures.
     msg = raw.get("message") if isinstance(raw.get("message"), dict) else {}
 
+    entry_type = str(raw.get("type", ""))
     ts = _parse_ts(raw.get("timestamp"))
     role = msg.get("role") or raw.get("role")
     model = msg.get("model") or raw.get("model")
     request_id = raw.get("requestId")
+
+    # Session-level metadata on every entry
+    git_branch = raw.get("gitBranch") or None
+    cwd = raw.get("cwd") or None
+    claude_version = raw.get("version") or None
 
     usage_raw = msg.get("usage") or raw.get("usage")
     usage = (
@@ -123,13 +130,17 @@ def _parse_entry(raw: dict) -> LogEntry:
     # Also accept legacy flat-format name/input fields
     tool_name: str | None = raw.get("name")
     tool_input: dict | None = raw.get("input") if isinstance(raw.get("input"), dict) else None
+    tool_error_count = 0
     if isinstance(content, list):
         for block in content:
-            if isinstance(block, dict) and block.get("type") == "tool_use":
+            if not isinstance(block, dict):
+                continue
+            if block.get("type") == "tool_use":
                 tool_name = tool_name or block.get("name")
                 if tool_input is None and isinstance(block.get("input"), dict):
                     tool_input = block["input"]
-                break
+            elif block.get("type") == "tool_result" and block.get("is_error"):
+                tool_error_count += 1
 
     # Flatten content list to plain text
     if isinstance(content, list):
@@ -141,8 +152,23 @@ def _parse_entry(raw: dict) -> LogEntry:
                 parts.append(block)
         content = "\n".join(parts) if parts else None
 
+    # custom-title entry
+    custom_title: str | None = raw.get("customTitle") or None
+
+    # attachment entry (hook event)
+    hook_event: HookEvent | None = None
+    att = raw.get("attachment")
+    if isinstance(att, dict) and att.get("hookEvent"):
+        hook_event = HookEvent(
+            hook_name=str(att.get("hookName", "")),
+            hook_event_type=str(att.get("hookEvent", "")),
+            exit_code=int(att.get("exitCode", 0)),
+            duration_ms=int(att.get("durationMs", 0)),
+            timestamp=ts,
+        )
+
     return LogEntry(
-        type=str(raw.get("type", "")),
+        type=entry_type,
         timestamp=ts,
         role=role,
         content=content,
@@ -152,6 +178,12 @@ def _parse_entry(raw: dict) -> LogEntry:
         tool_input=tool_input,
         is_error=bool(raw.get("is_error", False)),
         request_id=request_id,
+        git_branch=git_branch,
+        cwd=cwd,
+        claude_version=claude_version,
+        custom_title=custom_title,
+        hook_event=hook_event,
+        tool_error_count=tool_error_count,
     )
 
 
@@ -176,8 +208,14 @@ def compute_summary(
     agents: list[AgentInvocation] = []
     skills: list[SkillInvocation] = []
     tool_calls: list[ToolInvocation] = []
+    hook_events: list[HookEvent] = []
     message_count = 0
+    tool_error_total = 0
     timestamps: list[datetime] = []
+    title: str | None = None
+    git_branch: str | None = None
+    cwd: str | None = None
+    claude_version: str | None = None
 
     seen_request_ids: set[str] = set()
 
@@ -213,16 +251,33 @@ def compute_summary(
                     )
                 )
 
+        # Collect session-level metadata from first entry that has each field
+        if not title and entry.custom_title:
+            title = entry.custom_title
+        if not git_branch and entry.git_branch:
+            git_branch = entry.git_branch
+        if not cwd and entry.cwd:
+            cwd = entry.cwd
+        if not claude_version and entry.claude_version:
+            claude_version = entry.claude_version
+
+        # Hook events
+        if entry.hook_event:
+            hook_events.append(entry.hook_event)
+
+        # Tool errors from tool_result blocks
+        tool_error_total += entry.tool_error_count
+
         # Collect all tool invocations; agent dispatches also go into agents list.
         if entry.tool_name:
             inp = entry.tool_input or {}
-            caller_type = "direct"
             tool_calls.append(
                 ToolInvocation(
                     tool_name=entry.tool_name,
                     input_preview=_tool_preview(entry.tool_name, inp),
                     timestamp=entry.timestamp,
-                    caller_type=caller_type,
+                    caller_type="direct",
+                    is_error=bool(entry.is_error),
                 )
             )
             if entry.tool_name in _AGENT_TOOL_NAMES:
@@ -234,6 +289,7 @@ def compute_summary(
                         timestamp=entry.timestamp,
                         isolation=inp.get("isolation"),
                         triggered_by=infer_trigger(idx, entries),
+                        model=entry.model,
                     )
                 )
 
@@ -251,6 +307,9 @@ def compute_summary(
     end_time = max(timestamps) if timestamps else None
     duration = (end_time - start_time).total_seconds() if start_time and end_time else 0.0
 
+    files_written = sum(
+        1 for t in tool_calls if t.tool_name in ("Write", "Edit", "NotebookEdit")
+    )
     return SessionSummary(
         session_id=session.session_id,
         project_path=session.project_path,
@@ -266,7 +325,14 @@ def compute_summary(
         agents=agents,
         skills=skills,
         tool_calls=tool_calls,
+        hook_events=hook_events,
         message_count=message_count,
+        tool_error_count=tool_error_total,
+        files_written=files_written,
+        title=title,
+        git_branch=git_branch,
+        cwd=cwd,
+        claude_version=claude_version,
     )
 
 

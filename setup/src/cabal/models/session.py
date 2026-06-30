@@ -48,6 +48,16 @@ class LogEntry:
     tool_input: dict | None = None
     is_error: bool = False
     request_id: str | None = None
+    # Session-level metadata carried on most entries
+    git_branch: str | None = None
+    cwd: str | None = None
+    claude_version: str | None = None
+    # Custom-title entry
+    custom_title: str | None = None
+    # Hook event (attachment entries)
+    hook_event: HookEvent | None = None
+    # Count of is_error tool_result blocks inside this entry
+    tool_error_count: int = 0
 
 
 @dataclass
@@ -56,6 +66,16 @@ class ToolInvocation:
     input_preview: str
     timestamp: datetime | None = None
     caller_type: str = "direct"
+    is_error: bool = False
+
+
+@dataclass
+class HookEvent:
+    hook_name: str
+    hook_event_type: str
+    exit_code: int
+    duration_ms: int
+    timestamp: datetime | None = None
 
 
 @dataclass
@@ -66,6 +86,7 @@ class AgentInvocation:
     timestamp: datetime | None = None
     isolation: str | None = None
     triggered_by: str = "direct"
+    model: str | None = None
 
 
 @dataclass
@@ -100,4 +121,11 @@ class SessionSummary:
     agents: list[AgentInvocation] = field(default_factory=list)
     skills: list[SkillInvocation] = field(default_factory=list)
     tool_calls: list[ToolInvocation] = field(default_factory=list)
+    hook_events: list[HookEvent] = field(default_factory=list)
     message_count: int = 0
+    tool_error_count: int = 0
+    files_written: int = 0
+    title: str | None = None
+    git_branch: str | None = None
+    cwd: str | None = None
+    claude_version: str | None = None

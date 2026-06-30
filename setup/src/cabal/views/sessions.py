@@ -110,7 +110,7 @@ class SessionsScreen(Screen):
         yield AppHeader(show_clock=False)
         yield Static("", id="totals-bar")
         tbl = DataTable(id="sessions-list", cursor_type="row")
-        tbl.add_columns("Project", "Date", "In Tok", "Out Tok", "Cost USD", "Agents", "Tools", "Skills")
+        tbl.add_columns("Title / Project", "Branch", "Date", "Cost USD", "Tools", "Errs", "Agents")
         yield tbl
         with TabbedContent(id="detail-area"):
             with TabPane("Overview", id="tab-overview"):
@@ -156,15 +156,15 @@ class SessionsScreen(Screen):
             return
         for s in self._summaries:
             date_str = s.start_time.strftime("%Y-%m-%d %H:%M") if s.start_time else "—"
+            label = s.title or s.project_path
             tbl.add_row(
-                s.project_path[:28],
+                label[:36],
+                s.git_branch or "—",
                 date_str,
-                f"{s.total_input_tokens:,}",
-                f"{s.total_output_tokens:,}",
                 f"${s.estimated_cost_usd:.4f}",
-                str(s.agent_count),
                 str(len(s.tool_calls)),
-                str(len(s.skills)),
+                str(s.tool_error_count) if s.tool_error_count else "—",
+                str(s.agent_count),
                 key=s.session_id,
             )
 
@@ -198,12 +198,31 @@ class SessionsScreen(Screen):
             self._render_triggers_tab(summary)
 
     def _render_overview(self, s: SessionSummary) -> None:
-        lines = [
+        lines = []
+        if s.title:
+            lines.append(f"[bold]Title:[/bold]   {s.title}")
+        lines += [
             f"[bold]Session:[/bold] {s.session_id}",
             f"[bold]Project:[/bold] {s.project_path}",
-            f"[bold]Date:[/bold] {s.start_time.strftime('%Y-%m-%d %H:%M:%S UTC') if s.start_time else '—'}",
+        ]
+        if s.cwd:
+            lines.append(f"[bold]Dir:[/bold]     {s.cwd}")
+        if s.git_branch:
+            lines.append(f"[bold]Branch:[/bold]  {s.git_branch}")
+        if s.claude_version:
+            lines.append(f"[bold]Version:[/bold] Claude Code {s.claude_version}")
+        lines += [
+            f"[bold]Date:[/bold]    {s.start_time.strftime('%Y-%m-%d %H:%M:%S UTC') if s.start_time else '—'}",
             f"[bold]Duration:[/bold] {s.duration_seconds:.0f}s",
             f"[bold]Messages:[/bold] {s.message_count}",
+            "",
+            "[bold]Activity summary:[/bold]",
+            f"  Tool calls:    {len(s.tool_calls)}",
+            f"  Files written: {s.files_written}",
+            f"  Tool errors:   {s.tool_error_count}",
+            f"  Agents:        {s.agent_count}",
+            f"  Skills:        {len(s.skills)}",
+            f"  Hook events:   {len(s.hook_events)}",
             "",
             "[bold]Token breakdown:[/bold]",
             f"  Input:       {s.total_input_tokens:,}",
@@ -215,7 +234,10 @@ class SessionsScreen(Screen):
             "[bold]Per-model breakdown:[/bold]",
         ]
         for model, usage in s.model_breakdown.items():
-            lines.append(f"  {model}: {usage.input_tokens:,} in / {usage.output_tokens:,} out")
+            lines.append(
+                f"  [cyan]{model}[/cyan]"
+                f"  {usage.input_tokens:,} in / {usage.output_tokens:,} out"
+            )
         self.query_one("#overview-body", Static).update(Text.from_markup("\n".join(lines)))
 
     def _render_agents_tab(self, s: SessionSummary) -> None:
@@ -237,8 +259,9 @@ class SessionsScreen(Screen):
         if s.agents:
             for a in s.agents:
                 ts = a.timestamp.strftime("%H:%M:%S") if a.timestamp else "—"
+                model_tag = f"  [dim]{a.model}[/dim]" if a.model else ""
                 lines.append(
-                    f"  [{ts}] [cyan]{a.agent_type}[/cyan]"
+                    f"  [{ts}] [cyan]{a.agent_type}[/cyan]{model_tag}"
                     f"  ← [yellow]{a.triggered_by}[/yellow]"
                 )
                 if a.description:
@@ -260,6 +283,20 @@ class SessionsScreen(Screen):
                 lines.append(f"  [{ts}] [green]{t.tool_name}[/green]  {preview}")
         else:
             lines.append("  [dim]none detected[/dim]")
+
+        # ── Hook Events ───────────────────────────────────────────────────────
+        lines.append("")
+        lines.append(f"[bold]Hook events ({len(s.hook_events)}):[/bold]")
+        if s.hook_events:
+            for h in s.hook_events:
+                ts = h.timestamp.strftime("%H:%M:%S") if h.timestamp else "—"
+                status = "[green]ok[/green]" if h.exit_code == 0 else f"[red]exit {h.exit_code}[/red]"
+                lines.append(
+                    f"  [{ts}] [magenta]{h.hook_event_type}[/magenta]:{h.hook_name}"
+                    f"  {status}  ({h.duration_ms}ms)"
+                )
+        else:
+            lines.append("  [dim]none[/dim]")
 
         self.query_one("#agents-body", Static).update(Text.from_markup("\n".join(lines)))
 
