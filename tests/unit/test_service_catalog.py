@@ -54,22 +54,14 @@ def test_validate_catalog_passes_on_real_seed():
     assert validate_catalog() is None
 
 
-def test_catalog_has_exactly_three_services():
-    assert len(all_services()) == 3
+def test_catalog_has_the_two_runnable_services():
+    assert len(all_services()) == 2
 
 
-def test_catalog_keys_are_the_three_expected():
+def test_catalog_keys_are_the_two_expected():
     keys = {service.key for service in all_services()}
 
-    assert keys == {"a2a-bridge", "orchestrator", "mcp-bus"}
-
-
-def test_mcp_bus_is_not_runnable():
-    assert get_service("mcp-bus").runnable is False
-
-
-def test_mcp_bus_has_no_dashboard_command():
-    assert get_service("mcp-bus").dashboard_command is None
+    assert keys == {"a2a-bridge", "orchestrator"}
 
 
 def test_info_only_status_is_a_distinct_status():
@@ -90,8 +82,8 @@ def test_get_service_unknown_key_raises_keyerror():
 # ------------------------------------------------------------------
 
 
-def test_validate_catalog_rejects_wrong_count(monkeypatch):
-    _replace_seed(monkeypatch, (_definition(),))
+def test_validate_catalog_rejects_empty_catalog(monkeypatch):
+    _replace_seed(monkeypatch, ())
 
     with pytest.raises(ValueError):
         validate_catalog()

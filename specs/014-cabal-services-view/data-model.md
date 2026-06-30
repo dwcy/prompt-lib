@@ -19,7 +19,7 @@ The state a service is shown in. Reconciled on every refresh (FR-008).
 | `STOPPED` | Set up, not currently running | runnable (orchestrator, a2a-bridge) |
 | `RUNNING` | Process alive (PID live and/or port open) | runnable |
 | `BLOCKED` | Cannot start — a required prerequisite is unmet | runnable |
-| `INFO_ONLY` | Presented for visibility; no lifecycle control | mcp-bus |
+| `INFO_ONLY` | Presented for visibility; no lifecycle control | info-only services (none currently registered) |
 
 State transitions (runnable services):
 
@@ -36,7 +36,7 @@ RUNNING   --(process exits/killed externally; reconcile)--> STOPPED
 
 ### `InstallKind`
 
-`UV_TOOL` (orchestrator, a2a-bridge, mcp-bus) — install via `uv tool install` from the in-repo path.
+`UV_TOOL` (orchestrator, a2a-bridge) — install via `uv tool install` from the in-repo path.
 
 ---
 
@@ -46,7 +46,7 @@ RUNNING   --(process exits/killed externally; reconcile)--> STOPPED
 
 | Field | Type | Notes |
 |---|---|---|
-| `key` | `str` | Stable id: `orchestrator` / `a2a-bridge` / `mcp-bus` |
+| `key` | `str` | Stable id: `orchestrator` / `a2a-bridge` |
 | `label` | `str` | Display name |
 | `description` | `str` | One-line "what it does" (FR-002) |
 | `run_command` | `str` | Human-facing command, e.g. `orchestrator serve` (FR-002) |
@@ -54,7 +54,7 @@ RUNNING   --(process exits/killed externally; reconcile)--> STOPPED
 | `runnable` | `bool` | True for orchestrator/a2a-bridge; False for mcp-bus (FR-011) |
 | `depends_on` | `tuple[str, ...]` | Other service keys this needs running, e.g. orchestrator → `("a2a-bridge",)` (FR-004) |
 | `install_path` | `str` | In-repo dir for `uv tool install`, e.g. `services/orchestrator` (FR-009) |
-| `console_name` | `str` | Executable name on PATH for set-up/status probe (`orchestrator`, `a2a-bridge`, `mcp-bus`) |
+| `console_name` | `str` | Executable name on PATH for set-up/status probe (`orchestrator`, `a2a-bridge`) |
 | `prereq_keys` | `tuple[str, ...]` | Names of required prerequisites the prereq module checks (e.g. `A2A_BEARER_TOKEN`, `gh-auth`, `ntfy`, `a2a-peer`) |
 | `dashboard_command` | `str \| None` | e.g. `orchestrator dash`; `None` when no native dashboard (FR-010) |
 | `log_hint` | `str \| None` | Where to observe recent activity when no dashboard (a2a-bridge) (FR-010) |
@@ -114,4 +114,3 @@ ServiceDefinition 1 ──< PrereqResult (0..n, computed per check)
 |---|---|---|---|---|---|---|
 | `a2a-bridge` | yes | — | `a2a-bridge` | — (log hint) | 8765 | `A2A_BEARER_TOKEN`, agent target |
 | `orchestrator` | yes | `a2a-bridge` | `orchestrator` | `orchestrator dash` | — | `gh-auth`, `ntfy`, `a2a-peer`, config |
-| `mcp-bus` | no (info-only) | — | `mcp-bus` | — | — | — |

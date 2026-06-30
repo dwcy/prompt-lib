@@ -90,21 +90,6 @@ SERVICE_DEFINITIONS: tuple[ServiceDefinition, ...] = (
         log_hint=None,
         default_port=None,
     ),
-    ServiceDefinition(
-        key="mcp-bus",
-        label="MCP Bus",
-        description="Client-launched stdio MCP server: agent message bus, shared memory, and registry. Started on demand by its MCP clients, not as a standalone daemon.",
-        run_command="mcp-bus",
-        source_url=f"{REPO_URL}/tree/main/services/mcp-bus",
-        runnable=False,
-        depends_on=(),
-        install_path="services/mcp-bus",
-        console_name="mcp-bus",
-        prereq_keys=(),
-        dashboard_command=None,
-        log_hint=None,
-        default_port=None,
-    ),
 )
 
 
@@ -123,10 +108,10 @@ def get_service(key: str) -> ServiceDefinition:
 
 def validate_catalog() -> None:
     """Enforce the data-model validation rules; raise ValueError on any breach."""
-    if len(SERVICE_DEFINITIONS) != 3:
-        raise ValueError(
-            f"expected exactly 3 services, found {len(SERVICE_DEFINITIONS)}"
-        )
+    if not SERVICE_DEFINITIONS:
+        raise ValueError("service catalog must define at least one service")
+    if len(SERVICE_BY_KEY) != len(SERVICE_DEFINITIONS):
+        raise ValueError("service catalog has duplicate keys")
 
     required_fields = (
         "key",

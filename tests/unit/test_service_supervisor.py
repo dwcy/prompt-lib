@@ -162,22 +162,6 @@ def test_not_set_up_returns_not_set_up_without_spawning(monkeypatch):
 
 
 # ------------------------------------------------------------------
-# 5. mcp-bus -> INFO_ONLY, never spawns or kills
-# ------------------------------------------------------------------
-
-
-def test_start_mcp_bus_is_info_only_and_never_spawns():
-    state = service_supervisor.start("mcp-bus")
-
-    assert state.status is ServiceStatus.INFO_ONLY
-    assert "mcp-bus" not in service_supervisor._PROCS
-
-
-def test_stop_mcp_bus_is_info_only():
-    assert service_supervisor.stop("mcp-bus").status is ServiceStatus.INFO_ONLY
-
-
-# ------------------------------------------------------------------
 # 6. stop when nothing running -> reconciled no-op, never raises
 # ------------------------------------------------------------------
 

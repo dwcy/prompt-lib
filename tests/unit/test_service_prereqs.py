@@ -48,15 +48,6 @@ def test_a2a_bridge_present_token_is_satisfied(monkeypatch):
 
 
 # ------------------------------------------------------------------
-# mcp-bus: no prerequisites
-# ------------------------------------------------------------------
-
-
-def test_mcp_bus_has_no_prerequisites():
-    assert check("mcp-bus") == []
-
-
-# ------------------------------------------------------------------
 # orchestrator: a2a-peer port probe + gh-auth (both kept hermetic)
 # ------------------------------------------------------------------
 

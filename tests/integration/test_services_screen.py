@@ -1,7 +1,7 @@
 """Smoke tests for ServicesScreen — mounts via compose() and renders one row per service (T008).
 
 Mount through Textual's run_test() pipeline so framework-shadow bugs surface, and
-assert FR-011: the info-only mcp-bus row carries no Start control.
+assert each runnable service row exposes a Start control.
 """
 
 from __future__ import annotations
@@ -47,23 +47,6 @@ async def test_services_screen_labels_each_service():
         names = {str(static.render()) for static in screen.query(".svc-name")}
         for service in all_services():
             assert any(service.label in name for name in names)
-
-
-@pytest.mark.asyncio
-async def test_mcp_bus_row_has_no_start_button():
-    app = CabalApp()
-    async with app.run_test() as pilot:
-        screen = ServicesScreen()
-        app.push_screen(screen)
-        await pilot.pause()
-
-        row = screen.query_one("#svc-row-mcp-bus")
-        buttons = list(row.query(Button))
-
-        assert not any(
-            "start" in (btn.id or "").lower() or "start" in str(btn.label).lower()
-            for btn in buttons
-        )
 
 
 @pytest.mark.asyncio

@@ -60,6 +60,8 @@ This feature surfaces and controls three existing local services from the cabal 
 
 ## D4 — mcp-bus is presented but not start/stop-controlled (FR-011)
 
+> **Update 2026-06-30**: Superseded — mcp-bus is **removed from the Local Agent Services view** entirely (it is already in the Tools **MCP** group, so showing it twice was redundant). The original decision below is kept as design record. The `runnable`/`INFO_ONLY` machinery remains in the supervisor as a general capability.
+
 **Decision**: mcp-bus appears in the Services screen as an **info/visibility row** (description, command, source, availability status) with **no start/stop control**. Its existing place in the Tools **MCP** group (`tool_catalog.py:222`) and its installer (`installers/mcp_bus.py`) are left untouched.
 
 **Rationale**: mcp-bus is a **stdio MCP server** (`mcp.run(transport="stdio")`, no port, no subcommands) launched on demand by its MCP clients (Claude Code), not a standalone daemon. A "start" button would spawn an orphan stdio server with no client attached — misleading. Availability status = installed/resolvable (reuse `mcp_bus_status()` semantics, adjusted since the entry point has no `--version`: detect via `shutil.which("mcp-bus")`). This satisfies FR-011 and the spec's explicit carve-out.

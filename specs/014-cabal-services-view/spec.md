@@ -5,6 +5,8 @@
 **Status**: Draft
 **Input**: User description: "Surface the three local agent services (orchestrator, a2a-bridge, mcp-bus) as first-class apps in the cabal TUI so a maintainer can see and run them from the wizard instead of remembering CLI commands."
 
+> **Update 2026-06-30 (supersedes parts of FR-001/FR-011 below)**: mcp-bus is **no longer shown in the Local Agent Services view** — it is already surfaced in the Tools **MCP** group, so duplicating it here was redundant. Only the two runnable services (orchestrator, a2a-bridge) appear in this view. References to mcp-bus in the requirements below are retained as original-design record; the `info-only` status machinery remains in the code as a general capability but no service currently uses it.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - See the local agent services in one place (Priority: P1)
