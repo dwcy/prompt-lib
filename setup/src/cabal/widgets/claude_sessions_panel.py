@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -13,6 +14,15 @@ from textual.widget import Widget
 from textual.widgets import Button, DataTable, Static
 
 _PROJECTS_DIR = Path.home() / ".claude" / "projects"
+
+
+def _project_dir_name(path: Path) -> str:
+    """Return the directory name Claude Code would use for `path` in ~/.claude/projects/.
+
+    Claude Code encodes a project path by replacing every ':', '/', and '\\' with '-'.
+    E.g. C:\\projects\\prompt-lib → C--projects-prompt-lib.
+    """
+    return re.sub(r"[:/\\]", "-", str(path)).lower()
 
 
 class ClaudeSessionsPanel(Widget):
@@ -56,17 +66,15 @@ class ClaudeSessionsPanel(Widget):
             self.app.push_screen(SessionsScreen())
 
     def refresh_sessions(self) -> None:
-        project = self._current_project()
-        if project is None:
-            self._paint_no_project()
-            return
         self.run_worker(
             self._load_sessions, thread=True, exclusive=True, group="csp-load"
         )
 
-    def _current_project(self) -> Path | None:
-        selected = getattr(self.app, "selected_project", None)
-        return Path(selected) if selected else None
+    def _current_project(self) -> Path:
+        try:
+            return self.app.project_path()
+        except Exception:
+            return Path.cwd()
 
     def _load_sessions(self) -> None:
         from cabal.models.session import SessionSummary
@@ -79,15 +87,13 @@ class ClaudeSessionsPanel(Widget):
         )
 
         project = self._current_project()
-        if project is None:
-            self.app.call_from_thread(self._paint_no_project)
-            return
-
         all_sessions = scan_projects_dir(_PROJECTS_DIR)
-        project_posix = project.as_posix().lower()
+        # Claude Code encodes project paths as dash-separated names (e.g. C--projects-foo).
+        # Match by encoding both sides the same way.
+        encoded = _project_dir_name(project)
         matched = [
             s for s in all_sessions
-            if Path(s.project_path).as_posix().lower() == project_posix
+            if _project_dir_name(Path(s.project_path)) == encoded
         ]
 
         if not matched:
@@ -102,12 +108,6 @@ class ClaudeSessionsPanel(Widget):
         infer_session_tree(summaries)
 
         self.app.call_from_thread(self._paint_sessions, summaries)
-
-    def _paint_no_project(self) -> None:
-        self.query_one("#csp-status", Static).update(
-            "[dim]No project selected — choose a project directory first.[/dim]"
-        )
-        self.query_one("#csp-table", DataTable).clear()
 
     def _paint_empty(self, project_str: str) -> None:
         self.query_one("#csp-status", Static).update(
