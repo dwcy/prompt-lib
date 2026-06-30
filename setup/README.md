@@ -1,4 +1,4 @@
-![Cabal header: pink elephant logo beside the Cabal wordmark](../docs/assets/cabal-header.png)
+![Cabal header: pink elephant logo beside the Cabal wordmark](../docs/assets/cabal-logo.png)
 
 # setup/
 

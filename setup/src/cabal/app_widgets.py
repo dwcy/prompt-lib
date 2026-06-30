@@ -49,6 +49,13 @@ class AppCommandsProvider(Provider):
             lambda: app.push_screen(GlobalEnvScreen()),
             help="Browse every environment variable on this machine",
         )
+        from cabal.views.sessions import SessionsScreen
+
+        yield DiscoveryHit(
+            "Sessions",
+            lambda: app.push_screen(SessionsScreen()),
+            help="Browse Claude Code sessions — usage, cost, agents, skills",
+        )
         yield DiscoveryHit(
             "Quit",
             app.action_quit,

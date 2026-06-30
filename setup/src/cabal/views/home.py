@@ -78,6 +78,7 @@ from cabal.tools import (
     _probe_key,
 )
 from cabal.updates import check_for_updates, do_git_pull
+from cabal.widgets.claude_sessions_panel import ClaudeSessionsPanel
 from cabal.widgets.claude_stats_panel import ClaudeStatsPanel
 from cabal.widgets.dashboard_panel import DashboardPanel
 from cabal.widgets.logo import CabalLogo
@@ -99,6 +100,7 @@ class HomeScreen(Screen):
         with VerticalScroll(id="home-scroll"):
             yield CabalLogo(id="banner", classes="centered")
             yield DashboardPanel(id="dashboard")
+            yield ClaudeSessionsPanel(id="claude-sessions")
             with Vertical(id="claude-settings-panel", classes="home-section"):
                 yield Static(
                     "[bold]Claude Settings (~/.claude)[/bold]",
@@ -270,6 +272,10 @@ class HomeScreen(Screen):
     def on_screen_resume(self) -> None:
         try:
             self.query_one("#dashboard", DashboardPanel).refresh_dashboard()
+        except Exception:
+            pass
+        try:
+            self.query_one("#claude-sessions", ClaudeSessionsPanel).refresh_sessions()
         except Exception:
             pass
         self._apply_drift_markers()
