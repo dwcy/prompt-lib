@@ -1,0 +1,93 @@
+# -*- coding: utf-8 -*-
+"""Pure dataclasses for Claude session data — no I/O, no Textual, no tokens."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
+
+
+@dataclass
+class TokenUsage:
+    input_tokens: int = 0
+    output_tokens: int = 0
+    cache_read_input_tokens: int = 0
+    cache_creation_input_tokens: int = 0
+
+    def __add__(self, other: TokenUsage) -> TokenUsage:
+        return TokenUsage(
+            input_tokens=self.input_tokens + other.input_tokens,
+            output_tokens=self.output_tokens + other.output_tokens,
+            cache_read_input_tokens=self.cache_read_input_tokens + other.cache_read_input_tokens,
+            cache_creation_input_tokens=self.cache_creation_input_tokens + other.cache_creation_input_tokens,
+        )
+
+    @property
+    def total_tokens(self) -> int:
+        return self.input_tokens + self.output_tokens
+
+
+@dataclass
+class Session:
+    session_id: str
+    project_path: str
+    log_path: Path
+    file_size_bytes: int = 0
+
+
+@dataclass
+class LogEntry:
+    type: str
+    timestamp: datetime | None = None
+    role: str | None = None
+    content: str | list | None = None
+    model: str | None = None
+    usage: TokenUsage | None = None
+    tool_name: str | None = None
+    tool_input: dict | None = None
+    is_error: bool = False
+
+
+@dataclass
+class AgentInvocation:
+    agent_type: str
+    description: str
+    prompt_preview: str
+    timestamp: datetime | None = None
+    isolation: str | None = None
+    triggered_by: str = "direct"
+
+
+@dataclass
+class SkillInvocation:
+    skill_name: str
+    args: str
+    timestamp: datetime | None = None
+    agents_dispatched: list[str] = field(default_factory=list)
+
+
+@dataclass
+class TriggerEvent:
+    timestamp: datetime
+    tool: str
+    path: str
+    session_id: str | None = None
+
+
+@dataclass
+class SessionSummary:
+    session_id: str
+    project_path: str
+    start_time: datetime | None
+    duration_seconds: float
+    total_input_tokens: int
+    total_output_tokens: int
+    total_cache_read_tokens: int
+    total_cache_write_tokens: int
+    estimated_cost_usd: float
+    model_breakdown: dict[str, TokenUsage] = field(default_factory=dict)
+    agent_count: int = 0
+    agents: list[AgentInvocation] = field(default_factory=list)
+    skills: list[SkillInvocation] = field(default_factory=list)
+    message_count: int = 0
