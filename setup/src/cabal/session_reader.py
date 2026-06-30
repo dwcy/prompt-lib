@@ -15,6 +15,7 @@ from cabal.models.session import (
     SessionSummary,
     SkillInvocation,
     TokenUsage,
+    ToolInvocation,
     TriggerEvent,
 )
 from cabal.session_pricing import PricingEntry, lookup
@@ -22,6 +23,28 @@ from cabal.session_pricing import PricingEntry, lookup
 _AGENT_TOOL_NAMES = frozenset({"Task", "Agent"})
 _PROJECTS_DIR = Path.home() / ".claude" / "projects"
 _WRITE_AUDIT_PATH = Path.home() / ".claude" / "write_audit.jsonl"
+
+
+def _tool_preview(name: str, inp: dict) -> str:
+    """Return a short human-readable summary of a tool call's input."""
+    if name in ("Read", "Write", "Edit", "NotebookEdit"):
+        return inp.get("file_path", inp.get("notebook_path", ""))[:80]
+    if name == "Bash":
+        cmd = inp.get("command", "")
+        desc = inp.get("description", "")
+        return (desc or cmd)[:80]
+    if name in ("Glob", "Grep"):
+        return inp.get("pattern", "")[:80]
+    if name in ("Agent", "Task"):
+        return inp.get("subagent_type", inp.get("description", ""))[:80]
+    if name == "WebFetch":
+        return inp.get("url", "")[:80]
+    if name == "WebSearch":
+        return inp.get("query", "")[:80]
+    # generic fallback: first key=value
+    for k, v in inp.items():
+        return f"{k}={str(v)[:60]}"
+    return ""
 
 
 def scan_projects_dir(projects_dir: Path | None = None) -> list[Session]:
@@ -152,6 +175,7 @@ def compute_summary(
     model_breakdown: dict[str, TokenUsage] = {}
     agents: list[AgentInvocation] = []
     skills: list[SkillInvocation] = []
+    tool_calls: list[ToolInvocation] = []
     message_count = 0
     timestamps: list[datetime] = []
 
@@ -189,20 +213,29 @@ def compute_summary(
                     )
                 )
 
-        # Agent detection: tool_use blocks now live inside assistant entries in real format.
-        # Also handle legacy flat format where type=="tool_use".
-        if entry.tool_name in _AGENT_TOOL_NAMES:
+        # Collect all tool invocations; agent dispatches also go into agents list.
+        if entry.tool_name:
             inp = entry.tool_input or {}
-            agents.append(
-                AgentInvocation(
-                    agent_type=str(inp.get("subagent_type", inp.get("description", "unknown"))),
-                    description=str(inp.get("description", "")),
-                    prompt_preview=str(inp.get("prompt", ""))[:200],
+            caller_type = "direct"
+            tool_calls.append(
+                ToolInvocation(
+                    tool_name=entry.tool_name,
+                    input_preview=_tool_preview(entry.tool_name, inp),
                     timestamp=entry.timestamp,
-                    isolation=inp.get("isolation"),
-                    triggered_by=infer_trigger(idx, entries),
+                    caller_type=caller_type,
                 )
             )
+            if entry.tool_name in _AGENT_TOOL_NAMES:
+                agents.append(
+                    AgentInvocation(
+                        agent_type=str(inp.get("subagent_type", inp.get("description", "unknown"))),
+                        description=str(inp.get("description", "")),
+                        prompt_preview=str(inp.get("prompt", ""))[:200],
+                        timestamp=entry.timestamp,
+                        isolation=inp.get("isolation"),
+                        triggered_by=infer_trigger(idx, entries),
+                    )
+                )
 
     # Assign agents_dispatched to each skill
     for skill in skills:
@@ -232,6 +265,7 @@ def compute_summary(
         agent_count=len(agents),
         agents=agents,
         skills=skills,
+        tool_calls=tool_calls,
         message_count=message_count,
     )
 

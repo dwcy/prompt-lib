@@ -51,6 +51,14 @@ class LogEntry:
 
 
 @dataclass
+class ToolInvocation:
+    tool_name: str
+    input_preview: str
+    timestamp: datetime | None = None
+    caller_type: str = "direct"
+
+
+@dataclass
 class AgentInvocation:
     agent_type: str
     description: str
@@ -91,4 +99,5 @@ class SessionSummary:
     agent_count: int = 0
     agents: list[AgentInvocation] = field(default_factory=list)
     skills: list[SkillInvocation] = field(default_factory=list)
+    tool_calls: list[ToolInvocation] = field(default_factory=list)
     message_count: int = 0

@@ -22,7 +22,7 @@ from textual.widgets import (
 )
 
 from cabal.app_widgets import AppHeader
-from cabal.models.session import AgentInvocation, Session, SessionSummary, SkillInvocation
+from cabal.models.session import AgentInvocation, Session, SessionSummary, SkillInvocation, ToolInvocation
 from cabal.session_pricing import load_pricing
 from cabal.session_reader import (
     compute_summary,
@@ -110,12 +110,12 @@ class SessionsScreen(Screen):
         yield AppHeader(show_clock=False)
         yield Static("", id="totals-bar")
         tbl = DataTable(id="sessions-list", cursor_type="row")
-        tbl.add_columns("Project", "Date", "In Tok", "Out Tok", "Cost USD", "Agents", "Skills")
+        tbl.add_columns("Project", "Date", "In Tok", "Out Tok", "Cost USD", "Agents", "Tools", "Skills")
         yield tbl
         with TabbedContent(id="detail-area"):
             with TabPane("Overview", id="tab-overview"):
                 yield VerticalScroll(Static("[dim]Select a session.[/dim]", id="overview-body"))
-            with TabPane("Agents & Skills", id="tab-agents"):
+            with TabPane("Activity", id="tab-agents"):
                 yield VerticalScroll(Static("[dim]Select a session.[/dim]", id="agents-body"))
             with TabPane("Raw Logs", id="tab-raw"):
                 raw = DataTable(id="raw-table", cursor_type="row")
@@ -163,6 +163,7 @@ class SessionsScreen(Screen):
                 f"{s.total_output_tokens:,}",
                 f"${s.estimated_cost_usd:.4f}",
                 str(s.agent_count),
+                str(len(s.tool_calls)),
                 str(len(s.skills)),
                 key=s.session_id,
             )
@@ -218,24 +219,48 @@ class SessionsScreen(Screen):
         self.query_one("#overview-body", Static).update(Text.from_markup("\n".join(lines)))
 
     def _render_agents_tab(self, s: SessionSummary) -> None:
+        from collections import Counter
         lines: list[str] = []
-        if s.agents:
-            lines.append("[bold]Agents dispatched:[/bold]")
-            for a in s.agents:
-                ts = a.timestamp.strftime("%H:%M:%S") if a.timestamp else "—"
-                lines.append(f"  [{ts}] [cyan]{a.agent_type}[/cyan] ← triggered by [yellow]{a.triggered_by}[/yellow]")
-                if a.description:
-                    lines.append(f"    {a.description[:80]}")
-        else:
-            lines.append("[dim]No agent dispatches in this session.[/dim]")
-        lines.append("")
+
+        # ── Skills ───────────────────────────────────────────────────────────
+        lines.append(f"[bold]Skills invoked ({len(s.skills)}):[/bold]")
         if s.skills:
-            lines.append("[bold]Skills invoked:[/bold]")
             for sk in s.skills:
                 ts = sk.timestamp.strftime("%H:%M:%S") if sk.timestamp else "—"
                 lines.append(f"  [{ts}] [magenta]/{sk.skill_name}[/magenta] {sk.args[:60]}")
         else:
-            lines.append("[dim]No skill invocations detected.[/dim]")
+            lines.append("  [dim]none detected[/dim]")
+
+        # ── Agents ───────────────────────────────────────────────────────────
+        lines.append("")
+        lines.append(f"[bold]Agents dispatched ({s.agent_count}):[/bold]")
+        if s.agents:
+            for a in s.agents:
+                ts = a.timestamp.strftime("%H:%M:%S") if a.timestamp else "—"
+                lines.append(
+                    f"  [{ts}] [cyan]{a.agent_type}[/cyan]"
+                    f"  ← [yellow]{a.triggered_by}[/yellow]"
+                )
+                if a.description:
+                    lines.append(f"    {a.description[:90]}")
+        else:
+            lines.append("  [dim]none detected[/dim]")
+
+        # ── Tools ─────────────────────────────────────────────────────────────
+        lines.append("")
+        lines.append(f"[bold]Tool calls ({len(s.tool_calls)}):[/bold]")
+        if s.tool_calls:
+            counts: Counter[str] = Counter(t.tool_name for t in s.tool_calls)
+            summary_parts = [f"[green]{name}[/green]×{n}" for name, n in counts.most_common()]
+            lines.append("  " + "  ".join(summary_parts))
+            lines.append("")
+            for t in s.tool_calls[:200]:
+                ts = t.timestamp.strftime("%H:%M:%S") if t.timestamp else "—"
+                preview = t.input_preview[:70] if t.input_preview else ""
+                lines.append(f"  [{ts}] [green]{t.tool_name}[/green]  {preview}")
+        else:
+            lines.append("  [dim]none detected[/dim]")
+
         self.query_one("#agents-body", Static).update(Text.from_markup("\n".join(lines)))
 
     def _render_raw_tab(self, session: Session) -> None:
