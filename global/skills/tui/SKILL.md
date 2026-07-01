@@ -10,7 +10,7 @@ Hard-won rules from the cabal TUI in prompt-lib. Every one of these caused a rea
 
 ## Rule 1 — Ctrl+C is copy. Everywhere. Always.
 
-The user must be able to press Ctrl+C on ANY view to copy selected text, and it must never terminate or interrupt the app. This has two independent halves — implementing only one still loses the app or the copy:
+The user must be able to press Ctrl+C on ANY view to copy selected text, and it must never terminate or interrupt the app. This has two independent halves — implementing only one still loses the app or the copy. (Enforced in prompt-lib by `.githooks/pre-commit`'s ctrl+c guard — any `"ctrl+c"` string in cabal source outside `app.py` blocks the commit; bypass a legitimate line with `# noqa: ctrl-c-binding`. Runtime guards live in `tests/integration/test_ctrl_c_copy_guard.py`.)
 
 **Key level** — never bind `ctrl+c` to quit/exit. Textual ≥ 8 routes it to native copy; binding it to quit kills the app on every copy attempt. Quit is `ctrl+q` (shown in footer) plus `q`:
 
