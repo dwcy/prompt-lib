@@ -68,13 +68,15 @@ class DeleteConfirmModal(ModalScreen[bool]):
     """Confirmation dialog before deleting a session."""
 
     DEFAULT_CSS = """
+    DeleteConfirmModal {
+        align: center middle;
+    }
     DeleteConfirmModal > Vertical {
         width: 60;
         height: auto;
         padding: 2 4;
         background: $surface;
         border: round $error;
-        margin: 4 auto;
     }
     DeleteConfirmModal Label { margin-bottom: 1; }
     DeleteConfirmModal Horizontal { height: auto; align: center middle; margin-top: 1; }
