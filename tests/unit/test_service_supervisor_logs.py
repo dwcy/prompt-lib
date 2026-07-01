@@ -188,3 +188,33 @@ def test_posix_detach_kwargs_start_a_new_session(monkeypatch: pytest.MonkeyPatch
     kwargs = service_supervisor._detach_kwargs()
 
     assert kwargs == {"start_new_session": True}
+
+
+# ------------------------------------------------------------------
+# 5. shutdown_all — terminate every tracked child + close every log
+# ------------------------------------------------------------------
+
+
+def test_shutdown_all_terminates_children_and_closes_logs(log_dir, printer_spawn):
+    service_supervisor.start("a2a-bridge")
+    service_supervisor.start("orchestrator")
+    procs = [
+        service_supervisor._PROCS["a2a-bridge"],
+        service_supervisor._PROCS["orchestrator"],
+    ]
+    assert all(proc.poll() is None for proc in procs)
+
+    service_supervisor.shutdown_all()
+
+    for proc in procs:
+        assert _wait_until(lambda p=proc: p.poll() is not None)
+    assert service_supervisor._PROCS == {}
+    assert service_supervisor._LOGS == {}
+    assert service_supervisor._STATES["a2a-bridge"].status is ServiceStatus.STOPPED
+
+
+def test_shutdown_all_is_safe_when_nothing_started():
+    service_supervisor.shutdown_all()
+    service_supervisor.shutdown_all()
+
+    assert service_supervisor._PROCS == {}

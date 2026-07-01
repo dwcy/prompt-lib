@@ -211,6 +211,30 @@ def stop(key: str) -> ServiceState:
     return state
 
 
+def shutdown_all() -> None:
+    """Terminate every service this session started and close its log handle.
+
+    Called on app exit so cabal never leaves an orphaned background process
+    behind. Idempotent and exception-safe — safe to call from both the app's
+    unmount hook and an atexit handler.
+    """
+    for key, proc in list(_PROCS.items()):
+        try:
+            if proc.poll() is None:
+                _terminate(proc)
+        except Exception:
+            pass
+        _PROCS.pop(key, None)
+    for key in list(_LOGS):
+        _close_log(key)
+    for state in _STATES.values():
+        if state.status == ServiceStatus.RUNNING:
+            state.status = ServiceStatus.STOPPED
+            state.pid = None
+            state.started_by_cabal = False
+            state.detail = ""
+
+
 def _spawn(definition: ServiceDefinition, state: ServiceState) -> ServiceState:
     executable = shutil.which(definition.console_name) or definition.console_name
     command = [executable, *_RUN_ARGS.get(definition.key, ())]

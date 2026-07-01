@@ -10,6 +10,7 @@ analyzer follows the graph and bundles them (per research.md R6).
 
 from __future__ import annotations
 
+import atexit
 import signal
 from pathlib import Path
 
@@ -17,6 +18,7 @@ from textual.actions import SkipAction
 from textual.app import App
 from textual.binding import Binding
 
+from cabal import service_supervisor
 from cabal.clipboard import read_clipboard, write_clipboard
 from cabal.app_widgets import AppCommandsProvider, AppHeader  # noqa: F401  (re-export)
 from cabal.views.claude_info import ClaudeInfoScreen  # noqa: F401
@@ -314,6 +316,12 @@ class CabalApp(App):
             "Cabal helps you manage your agentic development setup in one place."
         )
         self.push_screen(ProjectGateScreen())
+        # Never leave a cabal-started background service orphaned. on_unmount
+        # handles a clean Textual shutdown; atexit is the safety net for hard exits.
+        atexit.register(service_supervisor.shutdown_all)
+
+    def on_unmount(self) -> None:
+        service_supervisor.shutdown_all()
 
     async def action_copy(self) -> None:
         """Copy selected text from the focused widget or active screen."""
