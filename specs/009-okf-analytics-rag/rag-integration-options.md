@@ -1,7 +1,7 @@
 # RAG Integration Options: Preprocess Hook vs MCP
 
-**Date**: 2026-06-30  
-**Branch**: `task/rag-preprocess-options`  
+**Date**: 2026-06-30
+**Branch**: `task/rag-preprocess-options`
 **Feature**: `009-okf-analytics-rag`
 
 ## Context
