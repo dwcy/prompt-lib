@@ -9,6 +9,8 @@ import secrets
 import shutil
 import socket
 import subprocess
+from pathlib import Path
+from typing import TextIO
 
 from cabal import service_prereqs
 from cabal.service_catalog import (
@@ -28,6 +30,11 @@ _INFO_DETAIL = "client-launched MCP server"
 _DEFAULT_AGENT = "claude"
 _STOP_GRACE_SECONDS = 3.0
 
+# Captured stdout/stderr of cabal-spawned services lands here, one file per key,
+# so the Services log view can tail a run and the last run survives cabal exit.
+_LOG_DIR = Path.home() / ".cabal" / "logs"
+_LOG_SUFFIX = ".log"
+
 _A2A_TOKEN_ENV = "A2A_BEARER_TOKEN"
 # Services that speak the A2A bearer-token handshake (bridge auth + orchestrator delegation).
 _TOKEN_SERVICES = ("a2a-bridge", "orchestrator")
@@ -42,6 +49,8 @@ _RUN_ARGS: dict[str, tuple[str, ...]] = {
 # liveness reconciles a tracked PID's exit and falls back to a port probe.
 _STATES: dict[str, ServiceState] = {}
 _PROCS: dict[str, subprocess.Popen] = {}
+# Open log file handles for live-captured services, closed on stop / proc clear.
+_LOGS: dict[str, TextIO] = {}
 
 # One ephemeral A2A bearer token shared by every service cabal starts this session.
 _SESSION_BEARER_TOKEN: str | None = None
@@ -73,6 +82,16 @@ def _child_env(definition: ServiceDefinition) -> dict[str, str] | None:
     if not env.get(_A2A_TOKEN_ENV):
         env[_A2A_TOKEN_ENV] = _session_bearer_token()
     return env
+
+
+def log_path(key: str) -> Path:
+    """Deterministic capture-log path for a service; safe to call when it is stopped.
+
+    Ensures the logs directory exists so the Services log view can always resolve a
+    path, whether it is tailing a live run or showing the last run that already ended.
+    """
+    _LOG_DIR.mkdir(parents=True, exist_ok=True)
+    return _LOG_DIR / f"{key}{_LOG_SUFFIX}"
 
 
 def status(key: str) -> ServiceState:
@@ -184,6 +203,7 @@ def stop(key: str) -> ServiceState:
 
     _terminate(proc)
     _PROCS.pop(key, None)
+    _close_log(key)
     state.pid = None
     state.started_by_cabal = False
     state.status = ServiceStatus.STOPPED
@@ -195,20 +215,28 @@ def _spawn(definition: ServiceDefinition, state: ServiceState) -> ServiceState:
     executable = shutil.which(definition.console_name) or definition.console_name
     command = [executable, *_RUN_ARGS.get(definition.key, ())]
     try:
+        log = open(log_path(definition.key), "w", encoding="utf-8")
+    except OSError as exc:
+        state.status = ServiceStatus.BLOCKED
+        state.detail = f"Could not open log for {definition.console_name}: {exc}"
+        return state
+    try:
         proc = subprocess.Popen(
             command,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
+            stdout=log,
+            stderr=subprocess.STDOUT,
             stdin=subprocess.DEVNULL,
             env=_child_env(definition),
             **_detach_kwargs(),
         )
     except OSError as exc:
+        log.close()
         state.status = ServiceStatus.BLOCKED
         state.detail = f"Could not start {definition.console_name}: {exc}"
         return state
 
     _PROCS[definition.key] = proc
+    _LOGS[definition.key] = log
     state.status = ServiceStatus.RUNNING
     state.pid = proc.pid
     state.started_by_cabal = True
@@ -217,10 +245,14 @@ def _spawn(definition: ServiceDefinition, state: ServiceState) -> ServiceState:
 
 
 def _detach_kwargs() -> dict[str, object]:
-    """Spawn the child detached so the daemon outlives the cabal session."""
+    """Spawn the child windowless-but-backgrounded so the daemon outlives cabal.
+
+    Windows uses CREATE_NO_WINDOW (not DETACHED_PROCESS): DETACHED_PROCESS flashes a
+    fresh console and drops our redirected stdout/stderr handles, so we lose the log.
+    """
     if platform.system() == "Windows":
         flags = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
-        flags |= getattr(subprocess, "DETACHED_PROCESS", 0)
+        flags |= getattr(subprocess, "CREATE_NO_WINDOW", 0)
         return {"creationflags": flags}
     return {"start_new_session": True}
 
@@ -252,8 +284,18 @@ def _clear_proc(key: str, state: ServiceState) -> None:
     proc = _PROCS.get(key)
     if proc is not None and proc.poll() is not None:
         _PROCS.pop(key, None)
+        _close_log(key)
         state.pid = None
         state.started_by_cabal = False
+
+
+def _close_log(key: str) -> None:
+    log = _LOGS.pop(key, None)
+    if log is not None:
+        try:
+            log.close()
+        except OSError:
+            pass
 
 
 def _port_running(definition: ServiceDefinition) -> bool:

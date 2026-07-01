@@ -93,9 +93,9 @@ class ServicesScreen(Screen):
     ServicesScreen Button.svc-action,
     ServicesScreen Button.svc-action:hover,
     ServicesScreen Button.svc-action:focus {
-        width: 9;
-        min-width: 9;
-        max-width: 9;
+        width: 8;
+        min-width: 8;
+        max-width: 8;
         height: 1;
         min-height: 1;
         max-height: 1;
@@ -112,6 +112,9 @@ class ServicesScreen(Screen):
     }
     ServicesScreen Button.svc-setup {
         background: #355E3B;
+    }
+    ServicesScreen Button.svc-logs {
+        background: #4B3B6B;
     }
     ServicesScreen Button.svc-dash {
         width: 12;
@@ -165,6 +168,11 @@ class ServicesScreen(Screen):
                     id=f"svc-stop-{service.key}",
                     classes="svc-action svc-stop",
                     disabled=True,
+                )
+                yield Button(
+                    "Logs",
+                    id=f"svc-logs-{service.key}",
+                    classes="svc-action svc-logs",
                 )
             if service.dashboard_command:
                 yield Button(
@@ -267,12 +275,14 @@ class ServicesScreen(Screen):
         if bid.startswith("svc-dash-"):
             self._open_dashboard(bid.removeprefix("svc-dash-"))
             return
+        if bid.startswith("svc-logs-"):
+            self._open_logs(bid.removeprefix("svc-logs-"))
+            return
         if not bid.startswith("svc-source-"):
             return
         key = bid.removeprefix("svc-source-")
         url = next(
-            (s.source_url for s in all_services() if s.key == key and s.source_url),
-            "",
+            (s.source_url for s in all_services() if s.key == key and s.source_url), ""
         )
         if not url:
             return
@@ -374,6 +384,12 @@ class ServicesScreen(Screen):
         )
         self._launch_foreground(argv)
         self._refresh_statuses()
+
+    def _open_logs(self, key: str) -> None:
+        from cabal.views.service_logs import ServiceLogScreen
+
+        label = next((s.label for s in all_services() if s.key == key), key)
+        self.app.push_screen(ServiceLogScreen(key, label))
 
     def _launch_foreground(self, argv: list[str]) -> None:
         """Hand the terminal to the dashboard child until it exits, then resume cabal."""
