@@ -169,7 +169,6 @@ class ServicesScreen(Screen):
                         "Stop",
                         id=f"svc-stop-{service.key}",
                         classes="svc-action svc-stop",
-                        disabled=True,
                     )
                     yield Button(
                         "Logs",
@@ -232,19 +231,21 @@ class ServicesScreen(Screen):
             self._sync_controls(key, state.status)
 
     def _sync_controls(self, key: str, status: ServiceStatus) -> None:
-        running = status == ServiceStatus.RUNNING
-        not_set_up = status == ServiceStatus.NOT_SET_UP
-        controls = (
-            ("svc-setup", not not_set_up),
-            ("svc-start", running or not_set_up),
-            ("svc-stop", not running),
+        # Show exactly the action that applies to the current state: Setup when
+        # not installed, Start when set up but not running (or blocked, to retry),
+        # Stop only while running.
+        can_start = status in (ServiceStatus.STOPPED, ServiceStatus.BLOCKED)
+        visibility = (
+            ("svc-setup", status == ServiceStatus.NOT_SET_UP),
+            ("svc-start", can_start),
+            ("svc-stop", status == ServiceStatus.RUNNING),
         )
-        for prefix, disabled in controls:
+        for prefix, visible in visibility:
             try:
                 button = self.query_one(f"#{prefix}-{key}", Button)
             except Exception:
                 continue
-            button.disabled = disabled
+            button.display = visible
 
     @staticmethod
     def _build_status_label(status: ServiceStatus, detail: str) -> str:
