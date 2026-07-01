@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 """ServicesScreen — view of the local agent services; lifecycle/install I/O via supervisor + installers.
 
-The dashboard hand-off (App.suspend() + run the resolved argv in the foreground)
-is the one allowed child-process in this view; the argv is resolved by
-service_supervisor.open_dashboard(), and the view only runs it under suspend so
-the child owns the terminal until it exits.
+The dashboard hand-off (App.suspend() + run service_supervisor.open_dashboard()'s
+argv in the foreground) is the one allowed child-process here; the child owns the
+terminal under suspend until it exits.
 """
 
 from __future__ import annotations
@@ -23,6 +22,7 @@ from cabal.app_widgets import AppHeader
 from cabal.installers.a2a_bridge import a2a_bridge_install
 from cabal.installers.orchestrator import orchestrator_install
 from cabal.service_catalog import ServiceDefinition, ServiceStatus, all_services
+from cabal.widgets.service_log_panel import ServiceLogPanel
 from cabal import service_supervisor
 
 _ACTION_START = "start"
@@ -129,8 +129,7 @@ class ServicesScreen(Screen):
         with VerticalScroll():
             yield Static(
                 "[bold bright_magenta]✦ Local Agent Services ✦[/bold bright_magenta]\n"
-                "[dim]The local agent services that power orchestration. Status "
-                "refreshes on open.[/dim]",
+                "[dim]Local agent services; status refreshes on open, logs stream below.[/dim]",
                 classes="panel",
             )
             with Vertical(classes="svc-group", id="svc-group"):
@@ -138,6 +137,7 @@ class ServicesScreen(Screen):
                 for service in all_services():
                     yield from self._build_row(service)
             yield Static("", id="services-status", classes="panel")
+            yield ServiceLogPanel(id="svc-log-panel")
         yield Footer(show_command_palette=False)
 
     def _build_row(self, service: ServiceDefinition):
@@ -315,6 +315,8 @@ class ServicesScreen(Screen):
             self.app.call_from_thread(self._show_error, str(exc))
             return
         self.app.call_from_thread(self._announce_lifecycle, key, state)
+        if action == _ACTION_START and state.status == ServiceStatus.RUNNING:
+            self.app.call_from_thread(self._open_logs, key)
         self.app.call_from_thread(self._refresh_statuses)
 
     def _announce_lifecycle(self, key: str, state) -> None:
@@ -386,10 +388,8 @@ class ServicesScreen(Screen):
         self._refresh_statuses()
 
     def _open_logs(self, key: str) -> None:
-        from cabal.views.service_logs import ServiceLogScreen
-
         label = next((s.label for s in all_services() if s.key == key), key)
-        self.app.push_screen(ServiceLogScreen(key, label))
+        self.query_one(ServiceLogPanel).show(key, label)
 
     def _launch_foreground(self, argv: list[str]) -> None:
         """Hand the terminal to the dashboard child until it exits, then resume cabal."""
