@@ -23,7 +23,9 @@ def _stub_home_background_probes(monkeypatch):
     monkeypatch.setattr(home, "has_deploy_drift", lambda: False)
     monkeypatch.setattr(codex_diff_apply, "has_codex_deploy_drift", lambda: False)
     monkeypatch.setattr(dashboard_panel.DashboardPanel, "on_mount", lambda self: None)
-    monkeypatch.setattr(okf_panel.OkfPanel, "on_mount", lambda self: None)
+    monkeypatch.setattr(
+        okf_panel.OkfPanel, "on_mount", lambda self: None, raising=False
+    )
     monkeypatch.setattr(update_panel.UpdatePanel, "on_mount", lambda self: None)
 
 
