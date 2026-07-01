@@ -7,7 +7,7 @@ import shutil
 import subprocess
 
 from cabal._paths import REPO_DIR
-from cabal.installers.uv import uv_install
+from cabal.installers.uv import ensure_uv_tool_bin_on_path, uv_install
 
 REPO_URL = "https://github.com/dwcy/prompt-lib"
 A2A_BRIDGE_PKG = "a2a-bridge"
@@ -36,6 +36,10 @@ def a2a_bridge_install() -> tuple[bool, str]:
                 "uv is required to install a2a-bridge. Install uv first "
                 f"(see the Tools view). ({msg})"
             )
+
+    # Make uv's tool-bin dir visible to this process so a fresh install resolves
+    # on PATH immediately (no app restart needed to see / start the service).
+    ensure_uv_tool_bin_on_path()
 
     if shutil.which(A2A_BRIDGE_PKG):
         r = subprocess.run(
