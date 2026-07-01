@@ -65,14 +65,17 @@ class ServicesScreen(Screen):
         margin: 0 0 1 0;
     }
     ServicesScreen .svc-row {
+        height: auto;
+        margin: 0 0 1 0;
+    }
+    ServicesScreen .svc-row-top {
         layout: horizontal;
         height: auto;
         align: left middle;
-        margin: 0 0 1 0;
     }
     ServicesScreen .svc-name { width: 20; }
-    ServicesScreen .svc-body { width: 1fr; }
-    ServicesScreen .svc-state { width: 16; content-align: left middle; }
+    ServicesScreen .svc-state { width: 18; content-align: left middle; }
+    ServicesScreen .svc-body { width: 100%; margin: 0 0 0 1; }
     ServicesScreen Button.svc-source,
     ServicesScreen Button.svc-source:hover,
     ServicesScreen Button.svc-source:focus {
@@ -140,51 +143,52 @@ class ServicesScreen(Screen):
         yield Footer(show_command_palette=False)
 
     def _build_row(self, service: ServiceDefinition):
-        with Horizontal(classes="svc-row", id=f"svc-row-{service.key}"):
-            yield Static(
-                f"[white]{escape_markup(service.label)}[/]",
-                classes="svc-name",
-            )
+        with Vertical(classes="svc-row", id=f"svc-row-{service.key}"):
+            with Horizontal(classes="svc-row-top"):
+                yield Static(
+                    f"[white]{escape_markup(service.label)}[/]",
+                    classes="svc-name",
+                )
+                yield Static(
+                    "[dim]…[/dim]",
+                    classes="svc-state",
+                    id=f"svc-state-{service.key}",
+                )
+                if service.runnable:
+                    yield Button(
+                        "Setup",
+                        id=f"svc-setup-{service.key}",
+                        classes="svc-action svc-setup",
+                    )
+                    yield Button(
+                        "Start",
+                        id=f"svc-start-{service.key}",
+                        classes="svc-action svc-start",
+                    )
+                    yield Button(
+                        "Stop",
+                        id=f"svc-stop-{service.key}",
+                        classes="svc-action svc-stop",
+                        disabled=True,
+                    )
+                    yield Button(
+                        "Logs",
+                        id=f"svc-logs-{service.key}",
+                        classes="svc-action svc-logs",
+                    )
+                if service.dashboard_command:
+                    yield Button(
+                        "Dashboard",
+                        id=f"svc-dash-{service.key}",
+                        classes="svc-action svc-dash",
+                    )
+                yield Button(
+                    "Read more",
+                    id=f"svc-source-{service.key}",
+                    classes="svc-source",
+                    disabled=not service.source_url,
+                )
             yield Static(self._body_markup(service), classes="svc-body")
-            yield Static(
-                "[dim]…[/dim]",
-                classes="svc-state",
-                id=f"svc-state-{service.key}",
-            )
-            if service.runnable:
-                yield Button(
-                    "Setup",
-                    id=f"svc-setup-{service.key}",
-                    classes="svc-action svc-setup",
-                )
-                yield Button(
-                    "Start",
-                    id=f"svc-start-{service.key}",
-                    classes="svc-action svc-start",
-                )
-                yield Button(
-                    "Stop",
-                    id=f"svc-stop-{service.key}",
-                    classes="svc-action svc-stop",
-                    disabled=True,
-                )
-                yield Button(
-                    "Logs",
-                    id=f"svc-logs-{service.key}",
-                    classes="svc-action svc-logs",
-                )
-            if service.dashboard_command:
-                yield Button(
-                    "Dashboard",
-                    id=f"svc-dash-{service.key}",
-                    classes="svc-action svc-dash",
-                )
-            yield Button(
-                "Read more",
-                id=f"svc-source-{service.key}",
-                classes="svc-source",
-                disabled=not service.source_url,
-            )
 
     @staticmethod
     def _body_markup(service: ServiceDefinition) -> str:
