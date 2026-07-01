@@ -1,6 +1,6 @@
 ---
 name: commit
-description: Lightweight quick commit — no branch safety check, category tagging, or agent authorship. Generates a conventional commit message from staged changes and commits after confirmation. For the full workflow (branch checks, tagging, agent authorship), use /git commit instead.
+description: Lightweight quick commit — no branch safety check, category tagging, or agent authorship. Use when the user says "quick commit", "just commit this", or wants a fast conventional commit from staged changes without ceremony. Generates the message and commits after confirmation. For the full workflow (branch checks, tagging, agent authorship), use /git commit instead.
 allowed-tools: Bash
 ---
 

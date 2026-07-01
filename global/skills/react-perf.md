@@ -1,6 +1,6 @@
 ---
 name: react-perf
-description: Performance audit for a React component or feature — unnecessary re-renders, missing memoisation, heavy imports, bundle size issues, large dataset handling, and lazy-load opportunities.
+description: Performance audit for a React component or feature — unnecessary re-renders, missing memoisation, heavy imports, bundle size issues, large dataset handling, and lazy-load opportunities. Use when the user says "this is slow", "too many re-renders", "the bundle is huge", or asks to optimise React code. Hand structural fixes to @react-architect.
 allowed-tools: Read, Glob, Bash
 ---
 

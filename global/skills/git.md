@@ -1,6 +1,6 @@
 ---
 name: git
-description: Full git workflow with branch safety, conventional commits authored as my@agent.commit, category tags (ui/dotnet/python/css/html/js/ts), and push guard. Subcommands: commit (default), branch, init.
+description: Full git workflow with branch safety, conventional commits authored as my@agent.commit, category tags (ui/dotnet/python/css/html/js/ts), and push guard. Use when the user says "commit this", "commit my changes", "create a branch", or "initialise git" and safety checks matter. Subcommands — commit (default), branch, init. Runs @gitignore-auditor and @secret-auditor pre-commit; for a quick no-checks commit use /commit.
 allowed-tools: Bash, Read, Glob
 ---
 

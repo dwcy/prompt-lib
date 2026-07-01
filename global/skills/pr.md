@@ -1,6 +1,6 @@
 ---
 name: pr
-description: Sync the branch with main, then draft a PR title and description from the diff, then create it with `gh pr create`. Always runs the sync step first so merge conflicts surface locally where they can be resolved with full context, not in GitHub's web UI.
+description: Create a pull request. Use when the user says "open a PR", "create a pull request", "make a PR for this branch", or a finished branch needs to go to GitHub. Syncs the branch with main first so merge conflicts surface locally where they can be resolved with full context, then drafts a PR title and description from the diff and creates it with `gh pr create`.
 allowed-tools: Bash, Read
 ---
 

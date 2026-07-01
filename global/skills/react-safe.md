@@ -1,6 +1,6 @@
 ---
 name: react-safe
-description: Audit a React file or feature for async correctness, error handling completeness, and security issues — unhandled promises, swallowed errors, missing sanitisation, logged secrets, and input validation gaps.
+description: Audit a React file or feature for async correctness, error handling completeness, and security issues — unhandled promises, swallowed errors, missing sanitisation, logged secrets, and input validation gaps. Use when the user asks "is this safe", "check the error handling", or ships async/fetch/user-input code. For a full OWASP pass use @owasp-security-reviewer.
 allowed-tools: Read, Glob, Bash
 ---
 
