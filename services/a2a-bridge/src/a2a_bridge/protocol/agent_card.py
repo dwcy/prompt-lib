@@ -12,6 +12,7 @@ before the adapter accepts traffic.
 from __future__ import annotations
 
 import json
+from importlib import resources
 from pathlib import Path
 from typing import Literal
 
@@ -57,9 +58,30 @@ class AgentCard(BaseModel):
 
 
 _SCHEMA: dict | None = None
+_SCHEMA_RESOURCE = "agent-card.schema.json"
 
 
-def _schema_path() -> Path:
+def _load_schema() -> dict:
+    global _SCHEMA
+    if _SCHEMA is None:
+        _SCHEMA = json.loads(_read_schema_text())
+    return _SCHEMA
+
+
+def _read_schema_text() -> str:
+    """Read the agent-card JSON Schema.
+
+    Prefers the copy packaged next to this module so it resolves when a2a-bridge is
+    installed as a wheel / uv tool (where the repo's ``specs/`` tree is absent). Falls
+    back to the in-repo source of truth when running from a bare source checkout.
+    """
+    packaged = resources.files(__package__).joinpath(_SCHEMA_RESOURCE)
+    if packaged.is_file():
+        return packaged.read_text(encoding="utf-8")
+    return _repo_schema_path().read_text(encoding="utf-8")
+
+
+def _repo_schema_path() -> Path:
     return (
         Path(__file__).resolve().parents[5]
         / "specs"
@@ -67,13 +89,6 @@ def _schema_path() -> Path:
         / "contracts"
         / "agent-card.schema.json"
     )
-
-
-def _load_schema() -> dict:
-    global _SCHEMA
-    if _SCHEMA is None:
-        _SCHEMA = json.loads(_schema_path().read_text(encoding="utf-8"))
-    return _SCHEMA
 
 
 def build_agent_card(

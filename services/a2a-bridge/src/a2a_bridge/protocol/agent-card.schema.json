@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prompt-lib.local/contracts/a2a-bridge-v1/agent-card.schema.json",
+  "title": "A2A Bridge v1 — Agent Card",
+  "description": "JSON Schema for the Agent Card published by every v1 adapter at /.well-known/agent-card.json. This is a strict subset of the A2A v1.0.0 Agent Card schema, restricted to the fields the v1 bridge populates.",
+  "type": "object",
+  "required": [
+    "name",
+    "description",
+    "url",
+    "version",
+    "protocols",
+    "capabilities",
+    "authentication",
+    "skills"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable adapter name, e.g. claude-code-a2a-adapter"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "url": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^http://127\\.0\\.0\\.1:\\d+$",
+      "description": "v1 adapters bind to localhost only (FR-009)"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Bridge release version (semver). Not the A2A spec version."
+    },
+    "protocols": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "enum": ["json-rpc-2.0"]
+      },
+      "description": "v1 implements JSON-RPC 2.0 only; gRPC and HTTP+JSON/REST are out of scope (see contracts/README.md)"
+    },
+    "capabilities": {
+      "type": "object",
+      "required": ["streaming", "push_notifications", "state_history"],
+      "additionalProperties": false,
+      "properties": {
+        "streaming": { "const": true },
+        "push_notifications": { "const": false },
+        "state_history": { "const": false }
+      }
+    },
+    "authentication": {
+      "type": "object",
+      "required": ["schemes"],
+      "additionalProperties": false,
+      "properties": {
+        "schemes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "enum": ["bearer"]
+          }
+        }
+      }
+    },
+    "skills": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "description", "input_modes", "output_modes"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "name": { "type": "string", "minLength": 1 },
+          "description": { "type": "string", "minLength": 1 },
+          "input_modes": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string", "enum": ["text/plain", "text/markdown"] }
+          },
+          "output_modes": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string", "enum": ["text/plain", "text/markdown"] }
+          }
+        }
+      }
+    }
+  }
+}
