@@ -24,8 +24,8 @@ async def test_tools_screen_renders_descriptions():
         await app.push_screen(screen)
         await pilot.pause()
 
-        description = screen.query_one("#tool-description-git", Static)
-        assert "version control" in str(description.content).lower()
+        name = screen.query_one("#tool-name-git", Static)
+        assert "version control" in str(name.tooltip).lower()
 
 
 @pytest.mark.asyncio
@@ -56,7 +56,9 @@ async def test_read_more_uses_source_url(monkeypatch):
         await pilot.pause()
 
         assert opened == ["https://zed.dev/"]
-        assert "https://zed.dev/" in str(screen.query_one("#tools-status", Static).content)
+        assert "https://zed.dev/" in str(
+            screen.query_one("#tools-status", Static).content
+        )
 
 
 @pytest.mark.asyncio

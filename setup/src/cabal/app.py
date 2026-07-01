@@ -96,7 +96,12 @@ class CabalApp(App):
         return read_clipboard() or self._clipboard
 
     def copy_to_clipboard(self, text: str) -> None:
-        """Copy text to both Textual's buffer and the OS clipboard."""
+        """Copy text to both Textual's buffer and the OS clipboard.
+
+        Trailing whitespace per line is trimmed — Textual's cell-based text
+        selection pads the copied region, and copying that padding is unwanted.
+        """
+        text = "\n".join(line.rstrip() for line in text.split("\n"))
         super().copy_to_clipboard(text)
         write_clipboard(text)
 
