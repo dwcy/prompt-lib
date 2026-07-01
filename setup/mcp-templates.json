@@ -1,5 +1,5 @@
 {
-  "_doc": "Canonical MCP server definitions in Unix-native form. The wizard reads this file and registers servers via `claude mcp add`, applying the Windows cmd /s /c wrapper at apply time. NOT read by Claude Code — settings.json `mcpServers` is dead, see global/skills/add-mcp.md.",
+  "_doc": "Canonical MCP server definitions in Unix-native form. The wizard reads this file and registers servers via `claude mcp add`, applying the Windows cmd /s /c wrapper at apply time. NOT read by Claude Code — settings.json `mcpServers` is dead, see global/skills/add-mcp/SKILL.md.",
   "templates": {
     "context7": {
       "transport": "stdio",

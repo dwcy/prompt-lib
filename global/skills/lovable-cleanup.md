@@ -1,6 +1,6 @@
 ---
 name: lovable-cleanup
-description: Remove all Lovable/GPTEngineer scaffolding from a project — strips lovable-tagger from package.json and vite.config.ts, cleans index.html metadata, removes injected data-lovable-id and data-gptengineer-id attributes from all source files, rewrites README, and regenerates the lockfile.
+description: Remove all Lovable/GPTEngineer scaffolding from a project. Use when a project was exported from Lovable (lovable-tagger in package.json, data-lovable-id attributes in markup) and the user says "clean this up", "remove Lovable", or "de-Lovable this repo" — strips lovable-tagger from package.json and vite.config.ts, cleans index.html metadata, removes injected data-lovable-id and data-gptengineer-id attributes from all source files, rewrites README, and regenerates the lockfile.
 allowed-tools: Read, Edit, Glob, Bash
 ---
 

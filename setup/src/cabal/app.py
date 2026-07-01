@@ -22,6 +22,7 @@ from cabal import service_supervisor
 from cabal.clipboard import read_clipboard, write_clipboard
 from cabal.app_widgets import AppCommandsProvider, AppHeader  # noqa: F401  (re-export)
 from cabal.views.claude_info import ClaudeInfoScreen  # noqa: F401
+from cabal.views.model_assignments import ModelAssignmentsScreen  # noqa: F401
 from cabal.views.clone_repo import CloneRepoScreen  # noqa: F401
 from cabal.views.codex_conversion import CodexConversionScreen  # noqa: F401
 from cabal.views.codex_local import CodexLocalScreen  # noqa: F401
@@ -359,7 +360,7 @@ def _suppress_sigint() -> None:
     """
     try:
         signal.signal(signal.SIGINT, signal.SIG_IGN)
-    except (ValueError, OSError):
+    except ValueError, OSError:
         # Not the main thread, or a platform without SIGINT — non-fatal.
         pass
 

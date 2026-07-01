@@ -97,7 +97,7 @@ Every command available in this project, grouped by purpose. Source links point 
 | `/git` | Full git workflow — branch safety, conventional commits, agent authorship, push guard | [src](global/skills/git.md) · [docs](docs/skills.md#git) |
 | `/commit` | Quick conventional commit without the full safety machinery — fixups inside a feature branch | [src](global/skills/commit.md) · [docs](docs/skills.md#commit) |
 | `/pr` | Draft a PR title + description from branch diffs, then create it with `gh pr create` | [src](global/skills/pr.md) · [docs](docs/skills.md#pr) |
-| `/review` | Structured branch review against `main` — Critical / Warning / Suggestion findings | [src](global/skills/review.md) · [docs](docs/skills.md#review) |
+| `/branch-review` | Structured branch review against `main` — Critical / Warning / Suggestion findings | [src](global/skills/branch-review.md) · [docs](docs/skills.md#review) |
 | `/finishing-a-development-branch` | End-of-feature checklist — runs tests, builds, commits, offers PR/push | [src](global/skills/finishing-a-development-branch.md) · [docs](docs/skills.md#finishing-a-development-branch) |
 | `/using-git-worktrees` | Create/list/remove/prune git worktrees for parallel Claude Code sessions | [src](global/skills/using-git-worktrees.md) · [docs](docs/parallel-isolation.md) |
 | `/standup` | Generate a standup summary from recent git log | [src](.claude/skills/standup.md) · [docs](docs/skills.md) |
@@ -135,8 +135,8 @@ Every command available in this project, grouped by purpose. Source links point 
 | `/react-safe` | Audit a React file for async correctness, error handling, security gaps | [src](global/skills/react-safe.md) · [docs](docs/skills.md#react-safe) |
 | `/react-perf` | Performance audit — re-renders, memoisation, bundle size, lazy-load opportunities | [src](global/skills/react-perf.md) · [docs](docs/skills.md#react-perf) |
 | `/css` | `scaffold` for `globals.css`, or `<ComponentName>` for `<Name>.module.css` next to the component | [src](global/skills/css.md) · [docs](docs/skills.md#css) |
-| `/ui-component` | Build a UI component on demand — design-language compliance, Preview, semantic HTML, Zustand+Zod forms | [src](global/skills/ui-component.md) · [docs](docs/skills.md#ui-component) |
-| `/design` | Load the Premium Digital Agency 2.0 design system into context before styling decisions | [src](global/skills/design.md) · [docs](docs/skills.md#design) |
+| `/ui-component` | Build a UI component on demand — design-language compliance, Preview, semantic HTML, Zustand+Zod forms | [src](global/skills/ui-component/SKILL.md) · [docs](docs/skills.md#ui-component) |
+| `/design` | Load the Premium Digital Agency 2.0 design system into context before styling decisions | [src](global/skills/design/SKILL.md) · [docs](docs/skills.md#design) |
 | `/lovable-cleanup` | Strip all Lovable / GPTEngineer scaffolding from a project | [src](global/skills/lovable-cleanup.md) · [docs](docs/skills.md#lovable-cleanup) |
 
 ### .NET

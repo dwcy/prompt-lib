@@ -57,12 +57,15 @@ Agent(subagent_type, isolation="worktree")    Agent × N
 | `db-architect` | Schema design, indexing, migrations, data modelling | Yes (DDL / migrations) |
 | `website-content-analyst` | Fetch + distil web pages from URLs into cited findings | Yes (research reports) |
 | `git-repo-analyst` | Two-stage repo analysis: feature map → code/idea extraction | Yes (analysis reports; clones to scratch) |
+| `solution-architect` | Cross-cutting system design: service boundaries, integration style, caching, scalability, ADRs | Yes (design docs / ADRs) |
+| `devops-engineer` | Dockerfiles, docker-compose, GitHub Actions pipelines, release engineering | Yes |
+| `frontend-tester` | Vitest + React Testing Library, MSW, Playwright, frontend test strategy | Yes |
 
 > `load-project` is NOT routed via `/orchestrate` — it runs at session start only.
 
 ## Routing logic
 
-The skill matches **domain signals** (technology keywords) against **phase signals** (what kind of work) and selects the highest-priority matching agent. Full routing table: [`global/skills/orchestrate.md`](../global/skills/orchestrate.md).
+The skill matches **domain signals** (technology keywords) against **phase signals** (what kind of work) and selects the highest-priority matching agent. Full routing table: [`global/skills/orchestrate/SKILL.md`](../global/skills/orchestrate/SKILL.md).
 
 Priority rules:
 - More specific beats more general (e.g. `dotnet-tester` over `dotnet-architect` when test keywords present)

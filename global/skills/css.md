@@ -1,6 +1,6 @@
 ---
 name: css
-description: Scaffold CSS for a frontend project. /css scaffold — sets up globals.css with reset and design tokens. /css Button — generates Button.module.css alongside the component file.
+description: Scaffold CSS for a frontend project. Use when the user says "set up the CSS", "scaffold styles", "create a CSS module for X", or a new component needs its stylesheet. /css scaffold — sets up globals.css with reset and design tokens. /css Button — generates Button.module.css alongside the component file. For technique questions use /css-guide; for CSS architecture decisions use @frontend-css.
 allowed-tools: Read, Write, Edit, Glob
 ---
 
