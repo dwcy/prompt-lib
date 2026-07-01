@@ -143,7 +143,7 @@
                         "reason":  "Flat Claude slash skill converted to Codex folder skill."
                     },
                     {
-                        "source":  "global/skills/review.md",
+                        "source":  "global/skills/branch-review.md",
                         "output":  "global/codex/skills/review/SKILL.md",
                         "kind":  "skill",
                         "status":  "converted",

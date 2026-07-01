@@ -263,7 +263,7 @@ global/
 │   ├── commit.md                     # /commit — quick conventional commit (no safety checks)
 │   ├── standup.md                    # /standup — generate standup from git log
 │   ├── pr.md                         # /pr — generate PR title + description, create with gh
-│   ├── review.md                     # /review — structured branch review against main
+│   ├── branch-review.md              # /branch-review — structured branch review against main
 │   ├── css.md                        # /css [scaffold|ComponentName] — globals.css or CSS module
 │   └── lovable-cleanup.md            # /lovable-cleanup — strip all Lovable/GPTEngineer scaffolding
 │
