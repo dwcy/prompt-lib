@@ -7,7 +7,7 @@ import shutil
 import subprocess
 
 from cabal._paths import REPO_DIR
-from cabal.installers.uv import uv_install
+from cabal.installers.uv import ensure_uv_tool_bin_on_path, uv_install
 
 REPO_URL = "https://github.com/dwcy/prompt-lib"
 ORCHESTRATOR_PKG = "orchestrator"
@@ -43,24 +43,21 @@ def orchestrator_install() -> tuple[bool, str]:
                 f"(see the Tools view). ({msg})"
             )
 
-    if shutil.which(ORCHESTRATOR_PKG):
-        r = subprocess.run(
-            ["uv", "tool", "upgrade", ORCHESTRATOR_PKG],
-            capture_output=True,
-            text=True,
-        )
-        out = (r.stdout or r.stderr or "").strip()
-        return r.returncode == 0, f"uv tool upgrade {ORCHESTRATOR_PKG} — {out or 'ok'}"
+    # Make uv's tool-bin dir visible to this process so a fresh install resolves
+    # on PATH immediately (no app restart needed to see / start the service).
+    ensure_uv_tool_bin_on_path()
 
     source, is_local = _resolve_source()
-    r = subprocess.run(
-        ["uv", "tool", "install", "--from", source, ORCHESTRATOR_PKG],
-        capture_output=True,
-        text=True,
-    )
+    cmd = ["uv", "tool", "install", "--force", "--from", source, ORCHESTRATOR_PKG]
+    if is_local:
+        # Local checkout: force a clean, uncached rebuild so iterating on the
+        # service code always reinstalls the current source (uv otherwise reuses
+        # a cached same-version build).
+        cmd[3:3] = ["--reinstall", "--no-cache"]
+    r = subprocess.run(cmd, capture_output=True, text=True)
     out = (r.stdout or r.stderr or "").strip()
     if r.returncode == 0:
-        return True, out or f"uv tool install --from {source} {ORCHESTRATOR_PKG}"
+        return True, out or " ".join(cmd)
     if not is_local:
         out = (
             f"{out} — orchestrator depends on a2a-bridge; install a2a-bridge "

@@ -121,24 +121,57 @@ def test_install_fresh_success_returns_true(
 
 
 @pytest.mark.parametrize("module, console", INSTALLERS)
-def test_install_upgrade_success_when_console_already_present(
+def test_install_force_clean_rebuild_from_local_checkout(
     monkeypatch: pytest.MonkeyPatch, module: types.ModuleType, console: str
 ) -> None:
+    # Local checkout, console already present: must force a clean, uncached rebuild
+    # (not a no-op `uv tool upgrade`) so local code changes always reinstall.
     _patch_which(
         monkeypatch, module, {"uv": "/usr/bin/uv", console: f"/usr/bin/{console}"}
+    )
+    monkeypatch.setattr(module, "_resolve_source", lambda: ("/local/checkout", True))
+    captured: dict[str, list[str]] = {}
+
+    def _run(cmd, *a, **k):
+        captured["cmd"] = cmd
+        return types.SimpleNamespace(returncode=0, stdout="reinstalled", stderr="")
+
+    monkeypatch.setattr(module.subprocess, "run", _run)
+
+    ok, _msg = _install_fn(module)()
+
+    cmd = captured["cmd"]
+    assert ok is True
+    assert "install" in cmd and "upgrade" not in cmd
+    assert "--reinstall" in cmd
+    assert "--no-cache" in cmd
+
+
+@pytest.mark.parametrize("module, console", INSTALLERS)
+def test_install_git_fallback_keeps_the_cache(
+    monkeypatch: pytest.MonkeyPatch, module: types.ModuleType, console: str
+) -> None:
+    # No local checkout (git subdirectory source): force reinstall but keep the
+    # cache — no --no-cache/--reinstall churn for the non-dev path.
+    _patch_which(monkeypatch, module, {"uv": "/usr/bin/uv", console: None})
+    monkeypatch.setattr(
+        module, "_resolve_source", lambda: ("git+https://x#subdirectory=y", False)
     )
     captured: dict[str, list[str]] = {}
 
     def _run(cmd, *a, **k):
         captured["cmd"] = cmd
-        return types.SimpleNamespace(returncode=0, stdout="upgraded", stderr="")
+        return types.SimpleNamespace(returncode=0, stdout="ok", stderr="")
 
     monkeypatch.setattr(module.subprocess, "run", _run)
 
-    ok, msg = _install_fn(module)()
+    ok, _msg = _install_fn(module)()
 
+    cmd = captured["cmd"]
     assert ok is True
-    assert "upgrade" in captured["cmd"]
+    assert "--force" in cmd
+    assert "--no-cache" not in cmd
+    assert "--reinstall" not in cmd
 
 
 @pytest.mark.parametrize("module, console", INSTALLERS)
