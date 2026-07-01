@@ -6,8 +6,10 @@ import argparse
 import json
 from pathlib import Path
 
+from cabal.okf.analytics import analyze_bundle
 from cabal.okf.doctor import doctor_bundle, render_human, render_json
 from cabal.okf.exporter import export_okf
+from cabal.okf.index import build_index
 from cabal.okf.recommendations import recommend_from_graph
 from cabal.okf.viewer import generate_viewer
 
@@ -34,6 +36,19 @@ def build_parser() -> argparse.ArgumentParser:
     recommend.add_argument("graph", help="graph.json path")
     recommend.add_argument("query", nargs="+", help="Task text")
 
+    index = sub.add_parser("index", help="Build the SQLite search index for a bundle")
+    index.add_argument("bundle", help="Bundle root")
+    index.add_argument("--db", default=None, help="Output SQLite index path")
+
+    analytics = sub.add_parser(
+        "analytics", help="Compute analytics for an indexed bundle"
+    )
+    analytics.add_argument("bundle", help="Bundle root")
+    analytics.add_argument("--db", default=None, help="SQLite index path")
+    analytics.add_argument("--format", choices=("json",), default="json")
+    analytics.add_argument("--incoming-threshold", type=int, default=1)
+    analytics.add_argument("--fanout-threshold", type=int, default=2)
+
     return parser
 
 
@@ -45,11 +60,16 @@ def main(argv: list[str] | None = None) -> int:
             Path(args.out) if args.out else None,
             generated_at=args.timestamp,
         )
-        print(f"OKF export wrote {result.document_count} documents and {result.relation_count} relations to {result.bundle_root}")
+        print(
+            f"OKF export wrote {result.document_count} documents and {result.relation_count} relations to {result.bundle_root}"
+        )
         return 0
     if args.command == "doctor":
         report = doctor_bundle(Path(args.bundle), Path(args.repo))
-        print(render_json(report) if args.format == "json" else render_human(report), end="")
+        print(
+            render_json(report) if args.format == "json" else render_human(report),
+            end="",
+        )
         return report.exit_code
     if args.command == "graph":
         viewer = generate_viewer(Path(args.graph), Path(args.out))
@@ -59,6 +79,19 @@ def main(argv: list[str] | None = None) -> int:
         recommendations = recommend_from_graph(Path(args.graph), " ".join(args.query))
         print(json.dumps(recommendations, indent=2, sort_keys=True))
         return 0 if recommendations else 1
+    if args.command == "index":
+        db = build_index(Path(args.bundle), Path(args.db) if args.db else None)
+        print(str(db))
+        return 0
+    if args.command == "analytics":
+        report = analyze_bundle(
+            Path(args.bundle),
+            db_path=Path(args.db) if args.db else None,
+            incoming_threshold=args.incoming_threshold,
+            fanout_threshold=args.fanout_threshold,
+        )
+        print(json.dumps(report, indent=2, sort_keys=True, default=str))
+        return 0
     return 2
 
 
