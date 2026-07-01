@@ -125,6 +125,12 @@ Agent(
 )
 ```
 
+Every dispatch prompt MUST end with this completeness brief (verbatim or tightened, never dropped):
+
+> Deliver the complete implementation — no MVP, stubs, placeholder bodies, or skipped error handling unless the user explicitly asked for a prototype. If you believe something in scope should be deferred, say so explicitly in your report instead of leaving it half-done. Before returning, re-check the brief for anything not yet implemented and finish it.
+
+When an agent's result comes back half-done anyway (stubs, unimplemented in-scope items), re-dispatch it with the gaps listed — do not patch around it or present it as complete.
+
 For parallel agents, dispatch all in a single message (multiple Agent tool calls). Set `run_in_background: true` on all but the last so they run concurrently.
 
 ---
