@@ -34,6 +34,15 @@ Personal preferences and conventions that apply to every project and session.
 - Always read a file before editing it.
 - Run the relevant tests after making changes if a test command is known.
 
+## Implementation completeness
+
+- **Full implementation is the default.** Never deliver a half-done "MVP-style" slice unless I explicitly ask for an MVP, prototype, spike, or quick-and-dirty version. Absent those words, the request means the complete, working feature.
+- **No silent stubs.** No `NotImplementedError`, placeholder bodies, hardcoded happy-path returns, skipped error handling, or "wire this up later" gaps inside the agreed scope. If something genuinely must be deferred, name it explicitly and get my OK — never let it ride silently.
+- **Underspecified → analyse first, then ask.** When the request leaves real decisions open, do the analysis and ask targeted questions until the scope is clear enough to implement fully — don't guess your way into a partial build.
+- **Large scope → steer to Spec Kit.** If the work spans multiple features or subsystems, or can't be finished properly in one pass, recommend the Spec Kit flow (`/speckit-specify` → `/speckit-clarify` → `/speckit-plan` → `/speckit-tasks`) instead of starting an ad-hoc partial implementation.
+- **"Done" check before stopping.** Before declaring a task complete, re-scan the agreed scope for anything not yet implemented. If in-scope work remains, keep going — done means implemented and verified, not "mostly there".
+- **Applies to subagents.** Put these expectations in every dispatch brief; when a subagent returns half-done work, send it back rather than accepting it.
+
 ## Versions
 
 - Always prefer the latest stable version of any language, framework, library, or API.
@@ -112,6 +121,8 @@ When a task clearly belongs to a specialist domain, invoke `/orchestrate` proact
 - The task involves Unity3D scene or MonoBehaviour design
 - The task involves Raspberry Pi or Arduino hardware
 - The task involves GitHub repo settings configuration
+- The task involves Docker, docker-compose, CI/CD pipelines, GitHub Actions, or release engineering — routes to `@devops-engineer`
+- The task spans services or subsystems, or needs cross-cutting design (boundaries, queues, caching, scalability, tech selection) — routes to `@solution-architect`
 - The user says "write tests", "architect this", "design the UX", or "verify the implementation"
 - The user asks for a security review, mentions OWASP/vulnerabilities, or ships auth/API/upload changes toward a release — routes to `@owasp-security-reviewer` (review-only report)
 - The user asks to clean the repo, remove dead code / unused CSS / unused dependencies — routes to `@code-cleaner`

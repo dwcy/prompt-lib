@@ -10,7 +10,7 @@ Runs three checks. Exits 0 only if all pass.
    Rationale: Claude Code never reads MCP definitions from settings.json — the
    canonical sources are `~/.claude.json` (user scope, via `claude mcp add`) and
    `.mcp.json` (project / plugin scope). Duplicating into settings.json creates
-   a false impression that the block is live. See global/skills/add-mcp.md.
+   a false impression that the block is live. See global/skills/add-mcp/SKILL.md.
 3. Hooks parity: for every event in {SessionStart, PreToolUse, PostToolUse, Stop}, the set of
    (matcher, script-basename) tuples in `global/hooks/hooks.json` MUST equal the same set in
    `global/settings.json.hooks`, ignoring the path prefix difference
@@ -31,7 +31,7 @@ SETTINGS = REPO_ROOT / "global" / "settings.json"
 MCP_JSON = REPO_ROOT / "global" / ".mcp.json"
 HOOKS_JSON = REPO_ROOT / "global" / "hooks" / "hooks.json"
 
-_SCRIPT_RE = re.compile(r'(?:[\$\{\w/.~\-]+/)?hooks/([\w.\-]+)')
+_SCRIPT_RE = re.compile(r"(?:[\$\{\w/.~\-]+/)?hooks/([\w.\-]+)")
 
 
 def load_json(p: Path) -> dict:
@@ -41,7 +41,10 @@ def load_json(p: Path) -> dict:
 def step_claude_validate() -> tuple[bool, str]:
     claude = shutil.which("claude")
     if claude is None:
-        return (True, "SKIP   claude CLI not on PATH (install Claude Code to run schema validation)")
+        return (
+            True,
+            "SKIP   claude CLI not on PATH (install Claude Code to run schema validation)",
+        )
     try:
         proc = subprocess.run(
             [claude, "plugin", "validate", "."],
@@ -53,7 +56,10 @@ def step_claude_validate() -> tuple[bool, str]:
     except subprocess.TimeoutExpired:
         return (False, "FAIL   claude plugin validate timed out after 60s")
     if proc.returncode != 0:
-        return (False, f"FAIL   claude plugin validate exit {proc.returncode}\n{proc.stdout}\n{proc.stderr}")
+        return (
+            False,
+            f"FAIL   claude plugin validate exit {proc.returncode}\n{proc.stdout}\n{proc.stderr}",
+        )
     return (True, "OK     claude plugin validate")
 
 
@@ -69,9 +75,12 @@ def step_mcp_authority() -> tuple[bool, str]:
         return (
             False,
             "FAIL   mcp-authority: global/settings.json contains dead keys "
-            f"{leaks} — strip them (see global/skills/add-mcp.md)",
+            f"{leaks} — strip them (see global/skills/add-mcp/SKILL.md)",
         )
-    return (True, f"OK     mcp-authority ({len(mcp)} servers in .mcp.json; settings.json clean)")
+    return (
+        True,
+        f"OK     mcp-authority ({len(mcp)} servers in .mcp.json; settings.json clean)",
+    )
 
 
 def _script_basename(command: str) -> str | None:
@@ -105,7 +114,10 @@ def step_hooks_parity() -> tuple[bool, str]:
 
     if settings_tuples == plugin_tuples:
         total = sum(len(v) for v in plugin_tuples.values())
-        return (True, f"OK     hooks-sync ({total} hook entries in parity across {len(plugin_tuples)} events)")
+        return (
+            True,
+            f"OK     hooks-sync ({total} hook entries in parity across {len(plugin_tuples)} events)",
+        )
 
     lines = ["FAIL   hooks-sync: global/hooks/hooks.json != global/settings.json hooks"]
     events = sorted(set(settings_tuples) | set(plugin_tuples))

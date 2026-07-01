@@ -1,6 +1,6 @@
 ---
 name: executing-plans
-description: Use when you have a written implementation plan to execute in a separate session with review checkpoints
+description: Use when you have a written implementation plan to execute in a separate session with review checkpoints. Verify completed batches with @code-plan-verifier before marking them done.
 allowed-tools: Bash, Read, Write, Edit, Glob, Grep
 ---
 

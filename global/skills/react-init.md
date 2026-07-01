@@ -1,6 +1,6 @@
 ---
 name: react-init
-description: Scaffold a new current-stable React project with Vite, TypeScript, Zustand, TanStack, Biome, Tailwind, Zod, and MUI Icons. Asks questions then generates all config files, folder structure, and .cursorrules.
+description: Scaffold a new current-stable React project with Vite, TypeScript, Zustand, TanStack, Biome, Tailwind, Zod, and MUI Icons. Use when the user says "new React project", "scaffold a React app", "set up a Vite project", or starts a frontend project on this stack. Asks questions then generates all config files, folder structure, and .cursorrules. Hand architecture questions to @react-architect.
 allowed-tools: Bash, Read, Write, Edit, Glob
 ---
 

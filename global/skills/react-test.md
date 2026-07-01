@@ -1,6 +1,6 @@
 ---
 name: react-test
-description: Scaffold or review tests for a React component, hook, or feature using Vitest and React Testing Library. Follows dependency-injection patterns, covers happy paths and failure modes, never tests implementation details.
+description: Scaffold or review tests for a React component, hook, or feature using Vitest and React Testing Library. Use when the user says "write tests for this component", "test this hook", "add coverage", or "review my tests" in a React project. Follows dependency-injection patterns, covers happy paths and failure modes, never tests implementation details.
 allowed-tools: Read, Write, Glob, Bash
 ---
 

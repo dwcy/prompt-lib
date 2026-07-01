@@ -1,6 +1,6 @@
 ---
 name: react-review
-description: Structured code quality review of a React file or feature — checks separation of concerns, naming, component design, data flow, types, documentation, and code hygiene. Reports Critical / Warning / Suggestion.
+description: Structured code quality review of a React file or feature — checks separation of concerns, naming, component design, data flow, types, documentation, and code hygiene. Use when the user says "review this component", "review this React code", or wants a quality pass before merging. Reports Critical / Warning / Suggestion. Hand redesign follow-ups to @react-architect.
 allowed-tools: Read, Glob, Bash
 ---
 
