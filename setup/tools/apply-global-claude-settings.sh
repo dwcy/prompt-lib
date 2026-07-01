@@ -113,10 +113,18 @@ mkdir -p "$TARGET/rules"
 cp "$SCRIPT_DIR/rules/"*.md "$TARGET/rules/"
 echo "  Copied  rules/ ($(ls "$SCRIPT_DIR/rules/"*.md | wc -l) files)"
 
-# Copy skills
+# Copy skills — flat <name>.md files and directory-style <name>/SKILL.md bundles.
+# A dir-style skill replaces any stale flat copy of the same name in the target.
 mkdir -p "$TARGET/skills"
-cp "$SCRIPT_DIR/skills/"*.md "$TARGET/skills/"
-echo "  Copied  skills/ ($(ls "$SCRIPT_DIR/skills/"*.md | wc -l) files)"
+cp "$SCRIPT_DIR/skills/"*.md "$TARGET/skills/" 2>/dev/null || true
+for dir in "$SCRIPT_DIR/skills/"*/; do
+  [ -d "$dir" ] || continue
+  name="$(basename "$dir")"
+  rm -f "$TARGET/skills/$name.md"
+  mkdir -p "$TARGET/skills/$name"
+  cp -r "$dir." "$TARGET/skills/$name/"
+done
+echo "  Copied  skills/ ($(ls "$SCRIPT_DIR/skills/"*.md 2>/dev/null | wc -l) flat + $(find "$SCRIPT_DIR/skills" -mindepth 1 -maxdepth 1 -type d | wc -l) dir skills)"
 
 # Copy keybindings
 if [ -f "$SCRIPT_DIR/keybindings.json" ]; then

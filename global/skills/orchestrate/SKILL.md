@@ -1,3 +1,8 @@
+---
+name: orchestrate
+description: Automatic subagent routing. Use PROACTIVELY before any non-trivial code task — when work touches multiple files, modules, or subsystems, when the request is vague but code-related ("fix this bug", "add this feature", "clean this up", "make this better"), or when the task belongs to a specialist domain such as .NET/C# architecture or testing, Python service design or pytest, React/Vue/Next.js/TanStack/CSS, Unity3D, Raspberry Pi/Arduino, GitHub repo settings, requirements scoping, API contracts, database schemas, data analysis, security review, or repo cleanup. Analyses the task, selects agents from the routing table, dispatches with worktree isolation when needed, and aggregates results.
+---
+
 # /orchestrate — Automatic Subagent Routing
 
 Route a task to the right specialist subagent(s) automatically. Analyses the task, selects agents from the registry, dispatches with worktree isolation when needed, and aggregates results.
