@@ -85,12 +85,69 @@ SQLite FTS5 virtual table over:
 ```json
 {
   "query": "Python service architecture",
+  "budget": "focused",
   "matches": [],
   "expanded_concepts": [],
   "evidence_edges": [],
+  "estimated_tokens": 1500,
   "why": []
 }
 ```
+
+## Preflight Shape
+
+```json
+{
+  "task": "Add an MCP-backed OKF context pack",
+  "scope": "L",
+  "risk_flags": ["mcp_protocol", "cabal_ui", "token_heavy"],
+  "likely_areas": ["okf", "mcp", "cabal_knowledge"],
+  "recommended_budget": "focused",
+  "index_state": "fresh",
+  "why": []
+}
+```
+
+Scope tiers:
+
+- `S`: one doc/file, no deploy impact.
+- `M`: multiple files or normal localized feature work.
+- `L`: Cabal runtime, generated OKF, hook behavior, MCP template, or cross-platform behavior.
+- `XL`: protocol surface, global deploy behavior, security hooks, agent routing, or migration-like changes.
+
+## Usage Ledger Entry Shape
+
+Stored as JSON Lines under `.cabal/okf/usage.jsonl`.
+
+```json
+{
+  "timestamp": "2026-07-01T12:00:00Z",
+  "client": "claude",
+  "entrypoint": "mcp",
+  "action": "okf_context_pack",
+  "query_hash": "sha256:...",
+  "query_preview": "Python service architecture",
+  "budget": "focused",
+  "included_concepts": ["skill:orchestrate", "agent:python-architect"],
+  "evidence_edge_count": 2,
+  "estimated_tokens": 1500,
+  "cache_state": "fresh",
+  "duration_ms": 42
+}
+```
+
+The ledger is telemetry, not source of truth. It must avoid storing full prompts by default.
+
+## OKF RAG MCP Tool Surface
+
+The opt-in `okf-rag` MCP server exposes thin adapters over the service layer:
+
+- `okf_prepare`
+- `okf_search`
+- `okf_preflight`
+- `okf_context_pack`
+- `okf_analytics`
+- `okf_usage`
 
 ## Visual Analytics Shape
 
