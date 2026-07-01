@@ -35,7 +35,7 @@ _INSTALLERS: dict[str, callable] = {
 }
 
 _STATUS_GLYPHS: dict[ServiceStatus, tuple[str, str]] = {
-    ServiceStatus.RUNNING: ("✓ running", "bright_green"),
+    ServiceStatus.RUNNING: ("✓ running", "#FF5FD7"),
     ServiceStatus.STOPPED: ("○ stopped", "bright_yellow"),
     ServiceStatus.NOT_SET_UP: ("✗ not set up", "red"),
     ServiceStatus.BLOCKED: ("✗ blocked", "red"),
@@ -136,7 +136,6 @@ class ServicesScreen(Screen):
                 yield Static("✦ Local Agent Services", classes="svc-group-title")
                 for service in all_services():
                     yield from self._build_row(service)
-            yield Static("", id="services-status", classes="panel")
             yield ServiceLogPanel(id="svc-log-panel")
         yield Footer(show_command_palette=False)
 
@@ -189,20 +188,13 @@ class ServicesScreen(Screen):
 
     @staticmethod
     def _body_markup(service: ServiceDefinition) -> str:
-        lines = [
-            f"[dim]{escape_markup(service.description)}[/dim]",
-            f"[cyan]{escape_markup(service.run_command)}[/cyan]",
-        ]
+        lines = [f"[dim]{escape_markup(service.description)}[/dim]"]
         if service.depends_on:
             deps = ", ".join(service.depends_on)
             lines.append(f"[dim italic]depends on {escape_markup(deps)}[/dim italic]")
         if not service.runnable:
             lines.append(
                 "[dim italic]client-launched MCP server — no start/stop[/dim italic]"
-            )
-        if service.log_hint:
-            lines.append(
-                f"[dim italic]logs: {escape_markup(service.log_hint)}[/dim italic]"
             )
         return "\n".join(lines)
 
@@ -253,13 +245,11 @@ class ServicesScreen(Screen):
     @staticmethod
     def _build_status_label(status: ServiceStatus, detail: str) -> str:
         label, color = _STATUS_GLYPHS.get(status, ("? unknown", "white"))
-        suffix = f" [dim]{escape_markup(detail)}[/dim]" if detail else ""
-        return f"[{color}]{label}[/{color}]{suffix}"
+        suffix = f" {escape_markup(detail)}" if detail else ""
+        return f"[{color}]{label}{suffix}[/{color}]"
 
     def _show_error(self, message: str) -> None:
-        self.query_one("#services-status", Static).update(
-            f"[red]Status refresh failed: {escape_markup(message)}[/red]"
-        )
+        self.notify(message, title="error", severity="error", timeout=12)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         bid = event.button.id or ""
@@ -286,19 +276,12 @@ class ServicesScreen(Screen):
         )
         if not url:
             return
-        self.query_one("#services-status", Static).update(
-            f"[cyan]source:[/cyan] [underline]{escape_markup(url)}[/underline]"
-        )
         try:
             webbrowser.open(url)
         except Exception:
             pass
 
     def _dispatch_lifecycle(self, key: str, action: str) -> None:
-        verb = "Starting" if action == _ACTION_START else "Stopping"
-        self.query_one("#services-status", Static).update(
-            f"[cyan]{verb} {escape_markup(key)}…[/cyan]"
-        )
         self.run_worker(
             lambda: self._run_lifecycle(key, action),
             thread=True,
@@ -322,29 +305,15 @@ class ServicesScreen(Screen):
     def _announce_lifecycle(self, key: str, state) -> None:
         if state.status == ServiceStatus.BLOCKED:
             message = state.detail or f"{key} could not start."
-            self.query_one("#services-status", Static).update(
-                f"[red]blocked:[/red] {escape_markup(message)}"
-            )
             self.notify(message, title=key, severity="warning", timeout=12)
-            return
-        if state.status == ServiceStatus.NOT_SET_UP:
+        elif state.status == ServiceStatus.NOT_SET_UP:
             message = state.detail or f"{key} is not set up yet."
-            self.query_one("#services-status", Static).update(
-                f"[yellow]{escape_markup(message)}[/yellow]"
-            )
-            return
-        label, _color = _STATUS_GLYPHS.get(state.status, ("? unknown", "white"))
-        self.query_one("#services-status", Static).update(
-            f"[cyan]{escape_markup(key)}:[/cyan] {escape_markup(label)}"
-        )
+            self.notify(message, title=key, severity="warning", timeout=12)
 
     def _dispatch_setup(self, key: str) -> None:
         installer = _INSTALLERS.get(key)
         if installer is None:
             return
-        self.query_one("#services-status", Static).update(
-            f"[cyan]Setting up {escape_markup(key)}…[/cyan]"
-        )
         self.run_worker(
             lambda: self._run_setup(key, installer),
             thread=True,
@@ -361,11 +330,6 @@ class ServicesScreen(Screen):
         self.app.call_from_thread(self._refresh_statuses)
 
     def _announce_setup(self, key: str, ok: bool, message: str) -> None:
-        color = "green" if ok else "red"
-        verb = "set up" if ok else "setup failed"
-        self.query_one("#services-status", Static).update(
-            f"[{color}]{escape_markup(key)} {verb}:[/{color}] {escape_markup(message)}"
-        )
         self.notify(
             message,
             title=key,
@@ -376,14 +340,8 @@ class ServicesScreen(Screen):
     def _open_dashboard(self, key: str) -> None:
         argv, message = service_supervisor.open_dashboard(key)
         if argv is None:
-            self.query_one("#services-status", Static).update(
-                f"[yellow]{escape_markup(message)}[/yellow]"
-            )
             self.notify(message, title=key, severity="warning", timeout=12)
             return
-        self.query_one("#services-status", Static).update(
-            f"[cyan]{escape_markup(message)}[/cyan]"
-        )
         self._launch_foreground(argv)
         self._refresh_statuses()
 

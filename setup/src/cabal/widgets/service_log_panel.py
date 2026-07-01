@@ -27,7 +27,8 @@ class ServiceLogPanel(Widget):
 
     DEFAULT_CSS = """
     ServiceLogPanel {
-        height: 14;
+        height: 30;
+        min-height: 20;
         padding: 1 2;
         margin: 0 2 1 2;
         background: $boost;
