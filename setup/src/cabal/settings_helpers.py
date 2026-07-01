@@ -4,7 +4,7 @@
 Claude Code does NOT read MCP server definitions from settings.json — those
 blocks are silently ignored. The canonical interface is `claude mcp add`
 which writes to `~/.claude.json`. Stripping these fields here keeps the
-deployed file honest. See `global/skills/add-mcp.md`.
+deployed file honest. See `global/skills/add-mcp/SKILL.md`.
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ def _effective_settings_text(src: Path) -> str:
     Why: Claude Code does NOT read MCP server definitions from settings.json — those
     blocks are silently ignored. The canonical interface is `claude mcp add` which
     writes to `~/.claude.json`. Stripping these fields keeps the deployed file honest
-    so future readers don't think the config is active. See global/skills/add-mcp.md.
+    so future readers don't think the config is active. See global/skills/add-mcp/SKILL.md.
     Additionally, the repo authors paths with $USERPROFILE (Windows) — on POSIX
     shells we swap to $HOME via translate_for_os so hook commands resolve.
     """

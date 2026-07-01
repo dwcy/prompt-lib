@@ -1,6 +1,6 @@
 ---
 name: pr
-description: Create a pull request. Use when the user says "open a PR", "create a pull request", "make a PR for this branch", or a finished branch needs to go to GitHub. Syncs the branch with main first so merge conflicts surface locally where they can be resolved with full context, then drafts a PR title and description from the diff and creates it with `gh pr create`.
+description: Create a pull request. Use when the user says "open a PR", "create a pull request", "make a PR for this branch", or a finished branch needs to go to GitHub. Syncs the branch with main first so merge conflicts surface locally where they can be resolved with full context, then drafts a PR title and description from the diff and creates it with `gh pr create`. For release-bound branches consider @owasp-security-reviewer and @code-plan-verifier first (see /finishing-a-development-branch).
 allowed-tools: Bash, Read
 ---
 

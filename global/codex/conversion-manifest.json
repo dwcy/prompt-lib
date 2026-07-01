@@ -3,7 +3,7 @@
     "generated_by":  "cabal codex-setup curated conversion",
     "entries":  [
                     {
-                        "source":  "global/skills/add-mcp.md",
+                        "source":  "global/skills/add-mcp/SKILL.md",
                         "output":  "global/codex/skills/add-mcp/SKILL.md",
                         "kind":  "skill",
                         "status":  "converted",
@@ -24,7 +24,7 @@
                         "reason":  "Flat Claude slash skill converted to Codex folder skill."
                     },
                     {
-                        "source":  "global/skills/design.md",
+                        "source":  "global/skills/design/SKILL.md",
                         "output":  "global/codex/skills/design/SKILL.md",
                         "kind":  "skill",
                         "status":  "converted",
@@ -87,7 +87,7 @@
                         "reason":  "Flat Claude slash skill converted to Codex folder skill."
                     },
                     {
-                        "source":  "global/skills/orchestrate.md",
+                        "source":  "global/skills/orchestrate/SKILL.md",
                         "output":  "global/codex/skills/orchestrate/SKILL.md",
                         "kind":  "skill",
                         "status":  "converted",
@@ -157,7 +157,7 @@
                         "reason":  "Flat Claude slash skill converted to Codex folder skill."
                     },
                     {
-                        "source":  "global/skills/ui-component.md",
+                        "source":  "global/skills/ui-component/SKILL.md",
                         "output":  "global/codex/skills/ui-component/SKILL.md",
                         "kind":  "skill",
                         "status":  "converted",

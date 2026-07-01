@@ -112,6 +112,8 @@ When a task clearly belongs to a specialist domain, invoke `/orchestrate` proact
 - The task involves Unity3D scene or MonoBehaviour design
 - The task involves Raspberry Pi or Arduino hardware
 - The task involves GitHub repo settings configuration
+- The task involves Docker, docker-compose, CI/CD pipelines, GitHub Actions, or release engineering — routes to `@devops-engineer`
+- The task spans services or subsystems, or needs cross-cutting design (boundaries, queues, caching, scalability, tech selection) — routes to `@solution-architect`
 - The user says "write tests", "architect this", "design the UX", or "verify the implementation"
 - The user asks for a security review, mentions OWASP/vulnerabilities, or ships auth/API/upload changes toward a release — routes to `@owasp-security-reviewer` (review-only report)
 - The user asks to clean the repo, remove dead code / unused CSS / unused dependencies — routes to `@code-cleaner`
