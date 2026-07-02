@@ -26,6 +26,9 @@ dependencies = [
   "rich>=13,<15",
 ]
 
+[project.optional-dependencies]
+semantic = ["fastembed>=0.4,<1"]
+
 [project.urls]
 Homepage = "https://github.com/dwcy/prompt-lib"
 Repository = "https://github.com/dwcy/prompt-lib"

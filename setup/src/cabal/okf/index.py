@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import sqlite3
 from pathlib import Path
 from typing import Any
@@ -11,7 +12,7 @@ from typing import Any
 from cabal.okf.frontmatter import extract_frontmatter, parse_frontmatter
 
 
-SCHEMA_VERSION = "1"
+SCHEMA_VERSION = "2"
 
 
 def default_index_path(bundle_root: Path) -> Path:
@@ -29,6 +30,13 @@ def connect(db_path: Path) -> sqlite3.Connection:
 
 def _hash(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _match_query(query: str) -> str:
+    tokens = re.findall(r"[A-Za-z0-9_]+", query)
+    if not tokens:
+        return ""
+    return " OR ".join(f'"{token}"' for token in tokens)
 
 
 def _table_exists(conn: sqlite3.Connection, name: str) -> bool:
@@ -143,16 +151,25 @@ def _load_docs(bundle_root: Path) -> list[dict[str, Any]]:
     return docs
 
 
+def bundle_fingerprint(bundle_root: Path) -> str:
+    """Hash of sorted (doc_id, body_hash) pairs — the bundle's current content fingerprint."""
+    docs = _load_docs(Path(bundle_root))
+    pairs = sorted((doc["id"], _hash(doc["body"])) for doc in docs)
+    return _hash(json.dumps(pairs, sort_keys=True))
+
+
 def build_index(bundle_root: Path, db_path: Path | None = None) -> Path:
     bundle_root = Path(bundle_root)
     db_path = Path(db_path or default_index_path(bundle_root))
     graph = json.loads((bundle_root / "graph.json").read_text(encoding="utf-8"))
     docs = _load_docs(bundle_root)
+    fingerprint = _hash(json.dumps(sorted((doc["id"], _hash(doc["body"])) for doc in docs), sort_keys=True))
     with connect(db_path) as conn:
         _create_schema(conn)
         conn.execute("INSERT INTO metadata(key, value) VALUES (?, ?)", ("schema_version", SCHEMA_VERSION))
         conn.execute("INSERT INTO metadata(key, value) VALUES (?, ?)", ("bundle_root", str(bundle_root)))
         conn.execute("INSERT INTO metadata(key, value) VALUES (?, ?)", ("generated_at", graph.get("generated_at", "")))
+        conn.execute("INSERT INTO metadata(key, value) VALUES (?, ?)", ("bundle_fingerprint", fingerprint))
         for doc in docs:
             conn.execute(
                 """
@@ -215,9 +232,12 @@ def build_index(bundle_root: Path, db_path: Path | None = None) -> Path:
 
 
 def search_index(db_path: Path, query: str, *, limit: int = 10, types: tuple[str, ...] = ()) -> list[dict[str, Any]]:
+    match_query = _match_query(query)
+    if not match_query:
+        return []
     with connect(db_path) as conn:
         where = "concept_fts MATCH ?"
-        params: list[Any] = [query]
+        params: list[Any] = [match_query]
         if types:
             placeholders = ",".join("?" for _ in types)
             where += f" AND type IN ({placeholders})"
