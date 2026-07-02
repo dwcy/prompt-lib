@@ -141,6 +141,16 @@ When skipping `/orchestrate` for a non-trivial-looking task, proceed without cer
 
 See [`docs/orchestration.md`](docs/orchestration.md) for the full routing table and agent registry.
 
+## Recurring & scheduled tasks
+
+`/loop` and `/schedule` are built-in Claude Code skills — available in every session, nothing to install.
+
+- **Suggest `/loop` proactively** when I phrase a task as recurring in *this* session: "keep checking X", "every N minutes", "until it's green/done/merged" — watching CI, babysitting a PR, polling a deploy, draining a work queue, re-running a flaky test until stable.
+- **Interval:** pass it explicitly when the cadence is known (`/loop 5m /foo`); omit it to self-pace. Self-pacing: stay under ~4.5 min to keep the prompt cache warm, otherwise commit to 20–30 min idle ticks — never ~5 min (worst of both).
+- **`/loop` vs `/schedule`:** `/loop` dies with the session; `/schedule` creates cloud routines that run without a live session. Recurring work that must survive the laptop closing → `/schedule`.
+- **House rules apply per iteration:** branch guard, git-identity wrapper, no pushes. A loop never auto-pushes or auto-merges — it reports and waits.
+- **Not for:** one-off tasks; polling harness-tracked background work (agents/tasks — completion notifications already fire); anything a hook can do deterministically ("every time X happens" → `/update-config` hooks).
+
 ## Package managers
 
 - For frontend and Node.js work, use only `pnpm` or `bun`.
