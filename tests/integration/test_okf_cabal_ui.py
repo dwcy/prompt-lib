@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 from textual.app import App, ComposeResult
-from textual.widgets import Static
+from textual.widgets import Button, Input, Select, Static
 
 from cabal.views.knowledge import KnowledgeScreen
 from cabal.widgets.okf_panel import OkfPanel
@@ -25,6 +25,11 @@ async def test_knowledge_screen_mounts() -> None:
         await pilot.pause()
 
         assert app.query_one("#okf-status", Static)
+        assert app.query_one("#okf-rag-status", Static)
+        assert app.query_one("#okf-rag-query", Input)
+        assert app.query_one("#okf-budget", Select)
+        assert app.query_one("#okf-preflight", Button)
+        assert app.query_one("#okf-context", Button)
         help_text = str(app.query_one("#okf-export-help", Static).render())
         assert "docs/okf/prompt-lib" in help_text
         assert "auto-inject" in help_text

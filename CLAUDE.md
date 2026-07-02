@@ -83,7 +83,7 @@ python -m cabal.okf doctor docs/okf/prompt-lib --format human
 
 Use `docs/okf/README.md` for the human explanation and `docs/okf/prompt-lib/graph.json` for machine-readable agent, skill, hook, rule, template, Codex, output-style, and Spec Kit relations. The bundle is generated reference data, not the source of truth; fix source files first and regenerate.
 
-Claude, Codex, and compatible agents do not automatically ingest this bundle just because it exists. When a task asks about how the agent ecosystem connects, routing overlap, unused concepts, or skill-agent references, explicitly read the OKF docs or graph. The active `009-okf-analytics-rag` feature is the planned path for SQLite search, analytics lenses, context packs, and later RAG-style retrieval.
+Claude, Codex, and compatible agents do not automatically ingest this bundle just because it exists. When a task asks about how the agent ecosystem connects, routing overlap, unused concepts, or skill-agent references, explicitly read the OKF docs or graph. SQLite search, preflight, context packs, and a usage ledger from `009-okf-analytics-rag` are implemented in the CLI and Cabal's Knowledge screen OKF RAG panel; semantic search and an `okf-rag` MCP server are still outstanding.
 
 <!-- SPECKIT START -->
 Active spec-kit feature: **014-cabal-services-view** — Surface the runnable local agent services (orchestrator, a2a-bridge) as first-class apps in the cabal TUI via a dedicated **Local Agent Services** screen: a service registry, a session-scoped process supervisor (start/stop/live status — net-new for cabal), per-service prerequisite checks with actionable messages, and `uv tool` installers. mcp-bus is NOT shown here (it lives in the Tools **MCP** group as a client-launched stdio MCP server). No `global/` changes, no external protocol. Out of scope: auto-restart supervisor, cross-launch PID persistence.
@@ -95,7 +95,7 @@ Previously active: **012-headroom-tool** — Headroom as a managed tool in the c
 
 Also active: **010-cabal-tools-polish-part2** - Cabal Tools view polish for richer tool metadata, source links, expanded AI/editor/database/Azure/dev-tool coverage, container-backed database installs, copyable text, runtime backups, and version selectors. Design tree at [`specs/010-cabal-tools-polish-part2/plan.md`](specs/010-cabal-tools-polish-part2/plan.md).
 
-Also planned: **009-okf-analytics-rag** - OKF Analytics and RAG Index for SQLite-backed search, overlap analytics, visual graph lenses, context packs, optional semantic retrieval, and optional DuckDB exploration. Design tree at [`specs/009-okf-analytics-rag/plan.md`](specs/009-okf-analytics-rag/plan.md).
+Also active: **009-okf-analytics-rag** - OKF Analytics and RAG Index: SQLite-backed search, preflight, context packs, and a usage ledger are implemented in the CLI and Cabal's Knowledge screen; semantic retrieval, optional DuckDB exploration, and the `okf-rag` MCP server are still outstanding. Design tree at [`specs/009-okf-analytics-rag/plan.md`](specs/009-okf-analytics-rag/plan.md).
 
 Completed: **005-cabal-tools-polish** - Part A refactored `cabal/wizard.py` into maintainable modules; Part B added the Init Project wizard view, Project MCP screen, and Claude Stats panel. Task ledger is complete at 98/98. Design tree at [`specs/005-cabal-tools-polish/plan.md`](specs/005-cabal-tools-polish/plan.md).
 
