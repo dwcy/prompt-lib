@@ -1,6 +1,6 @@
 ---
 name: using-git-worktrees
-description: Create, list, switch, or remove a git worktree for multi-session work on one repo. Use when running multiple Claude Code instances in parallel on the same repository, or when /executing-plans needs an isolated workspace for a feature branch. Subcommands: create (default), list, remove, prune.
+description: Create, list, switch, or remove a git worktree for multi-session work on one repo. Use when running multiple Claude Code instances in parallel on the same repository, or when /executing-plans needs an isolated workspace for a feature branch. Subcommands — create (default), list, remove, prune.
 allowed-tools: Bash, Read, Glob
 ---
 

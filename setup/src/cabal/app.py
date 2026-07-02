@@ -20,6 +20,7 @@ from textual.binding import Binding
 from cabal.clipboard import read_clipboard, write_clipboard
 from cabal.app_widgets import AppCommandsProvider, AppHeader  # noqa: F401  (re-export)
 from cabal.views.claude_info import ClaudeInfoScreen  # noqa: F401
+from cabal.views.model_assignments import ModelAssignmentsScreen  # noqa: F401
 from cabal.views.clone_repo import CloneRepoScreen  # noqa: F401
 from cabal.views.codex_conversion import CodexConversionScreen  # noqa: F401
 from cabal.views.codex_local import CodexLocalScreen  # noqa: F401
@@ -96,7 +97,12 @@ class CabalApp(App):
         return read_clipboard() or self._clipboard
 
     def copy_to_clipboard(self, text: str) -> None:
-        """Copy text to both Textual's buffer and the OS clipboard."""
+        """Copy text to both Textual's buffer and the OS clipboard.
+
+        Trailing whitespace per line is trimmed — Textual's cell-based text
+        selection pads the copied region, and copying that padding is unwanted.
+        """
+        text = "\n".join(line.rstrip() for line in text.split("\n"))
         super().copy_to_clipboard(text)
         write_clipboard(text)
 
@@ -346,7 +352,7 @@ def _suppress_sigint() -> None:
     """
     try:
         signal.signal(signal.SIGINT, signal.SIG_IGN)
-    except (ValueError, OSError):
+    except ValueError, OSError:
         # Not the main thread, or a platform without SIGINT — non-fatal.
         pass
 

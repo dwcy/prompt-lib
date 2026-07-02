@@ -1,6 +1,6 @@
 ---
-name: review
-description: Review all changes on the current branch against main — code quality, conventions, and potential issues
+name: branch-review
+description: Review all changes on the current branch against main — code quality, conventions, and potential issues. Use when the user says "review my changes", "review this branch", or wants a quality pass before opening a PR. Pairs with @code-plan-verifier for plan-conformance checks.
 allowed-tools: Bash, Read, Glob
 ---
 

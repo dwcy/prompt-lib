@@ -78,7 +78,7 @@ COMPONENTS: list[Component] = [
     ),
     Component("agents", "agents/", "dir", "agents", "agents", glob="*.md"),
     Component("hooks", "hooks/", "dir", "hooks", "hooks", glob="*"),
-    Component("skills", "skills/", "dir", "skills", "skills", glob="*.md"),
+    Component("skills", "skills/", "dir", "skills", "skills", recursive=True),
     Component("rules", "rules/", "dir", "rules", "rules", glob="*.md"),
     Component(
         "output_styles",

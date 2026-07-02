@@ -6,6 +6,7 @@ imports so we do not require a wheel install.
 
 from __future__ import annotations
 
+import os
 import shutil
 import sys
 import tempfile
@@ -18,6 +19,13 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 CABAL_SRC = REPO_ROOT / "setup" / "src"
 if str(CABAL_SRC) not in sys.path:
     sys.path.insert(0, str(CABAL_SRC))
+
+# Subprocess-based tests (e.g. `python -m cabal.okf ...`) don't inherit sys.path,
+# so expose CABAL_SRC via PYTHONPATH for any child process the tests spawn.
+if str(CABAL_SRC) not in os.environ.get("PYTHONPATH", "").split(os.pathsep):
+    os.environ["PYTHONPATH"] = os.pathsep.join(
+        p for p in (str(CABAL_SRC), os.environ.get("PYTHONPATH", "")) if p
+    )
 
 
 _FAST_ENV = {

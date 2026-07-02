@@ -8,7 +8,7 @@ from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
 
-from cabal.okf.frontmatter import dump_document
+from cabal.okf.frontmatter import dump_document, extract_frontmatter
 from cabal.okf.graph import build_graph
 from cabal.okf.models import ConceptDocument, ExportResult, SourceArtifact
 from cabal.okf.paths import has_secret_value, safe_excerpt
@@ -93,7 +93,15 @@ def _description_for(source: SourceArtifact, text: str) -> str:
     )
 
 
-def _body_for(source: SourceArtifact, description: str) -> str:
+def _safe_content(text: str) -> str:
+    """Redacted source body for search/RAG; empty when the source carries any secret."""
+    if has_secret_value(text):
+        return ""
+    _, body = extract_frontmatter(text)
+    return body.strip()
+
+
+def _body_for(source: SourceArtifact, description: str, content: str) -> str:
     lines = [
         f"# {source.name}",
         "",
@@ -102,6 +110,8 @@ def _body_for(source: SourceArtifact, description: str) -> str:
         f"- Source: `{source.resource}`",
         f"- Category: `{source.category}`",
     ]
+    if content:
+        lines += ["", "## Content", "", content]
     return "\n".join(lines) + "\n"
 
 
@@ -137,7 +147,7 @@ def build_concepts(
                 tags=tags,
                 timestamp=generated_at,
                 path=unique_path,
-                body=_body_for(source, description),
+                body=_body_for(source, description, _safe_content(text)),
             )
         )
     return tuple(sorted(concepts, key=lambda item: (item.type, item.id)))

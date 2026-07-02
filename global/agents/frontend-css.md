@@ -1,6 +1,6 @@
 ---
 name: frontend-css
-description: CSS architecture specialist for frontend projects. Scaffolds globals.css with reset, CSS custom properties, and theming; generates CSS modules for components; enforces the modular + global pattern with no hardcoded values.
+description: CSS architecture specialist for frontend projects. Use PROACTIVELY whenever styling work comes up — "style this", "add CSS", theming, dark mode, design tokens, spacing/color fixes, or a new component needing styles. Scaffolds globals.css with reset, CSS custom properties, and theming; generates CSS modules for components; enforces the modular + global pattern with no hardcoded values. Takes design language from @frontend-designer's DESIGN.md; styles the components built by @react-architect, @tanstack-architect, or @frontend-architect.
 tools: Read, Write, Edit, Glob, Bash
 ---
 

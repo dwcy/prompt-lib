@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
-"""Pre-commit: Textual base-class shadow check + logged-in email leak check.
+"""Pre-commit: Textual shadow check + email leak check + ctrl+c binding guard.
 
 Shadow check: flags methods on classes inheriting from `textual.*` whose name
 collides with a base-class member (excluding dunders). See
 global/rules/python.md "Textual widgets". Per-method bypass: append
 `# noqa: textual-shadow` to the `def` line.
+
+Ctrl+C guard: refuses any staged cabal source (except app.py) containing a
+"ctrl+c" key string. Ctrl+C is reserved app-wide for copy (global/skills/tui
+Rule 1); a screen- or widget-level binding shadows the app binding and breaks
+copy on that view. Per-line bypass: append `# noqa: ctrl-c-binding`.
 
 Email leak check: refuses the commit if the logged-in account email
 (~/.claude.json oauthAccount.emailAddress) appears anywhere in the index.
@@ -102,6 +107,36 @@ def check_file(path: Path) -> list[str]:
     return errors
 
 
+_CTRL_C_OWNER = Path("setup/src/cabal/app.py")
+
+
+def ctrl_c_binding_hits(path: Path) -> list[str]:
+    """Flag "ctrl+c" key strings in cabal source outside the app-level owner."""
+    parts = path.as_posix()
+    if not parts.startswith("setup/src/cabal/") or path == _CTRL_C_OWNER:
+        return []
+    src = path.read_text(encoding="utf-8-sig")
+    try:
+        tree = ast.parse(src)
+    except SyntaxError:
+        return [f"{path}: SyntaxError — ctrl+c guard could not parse the file"]
+    src_lines = src.splitlines()
+    hits: list[str] = []
+    for node in ast.walk(tree):
+        if not (isinstance(node, ast.Constant) and isinstance(node.value, str)):
+            continue
+        if "ctrl+c" not in node.value:
+            continue
+        line_src = src_lines[node.lineno - 1] if 0 < node.lineno <= len(src_lines) else ""
+        if "# noqa: ctrl-c-binding" in line_src:
+            continue
+        hits.append(
+            f"{path}:{node.lineno}: \"ctrl+c\" outside app.py — Ctrl+C is reserved "
+            f"for copy on every view (see global/skills/tui Rule 1)."
+        )
+    return hits
+
+
 def logged_in_email() -> str | None:
     filter_path = Path(__file__).resolve().parent.parent / "setup" / "tools" / "email-filter.py"
     try:
@@ -127,10 +162,12 @@ def email_leak_hits() -> list[str]:
 def main() -> int:
     rc = 0
     errors: list[str] = []
+    ctrl_c_errors: list[str] = []
     for path in staged_python_files():
         if not path.exists():
             continue
         errors.extend(check_file(path))
+        ctrl_c_errors.extend(ctrl_c_binding_hits(path))
     if errors:
         print("Textual shadow check failed:\n", file=sys.stderr)
         for e in errors:
@@ -140,6 +177,18 @@ def main() -> int:
             "base methods compile silently and crash at layout time.\n"
             "See global/rules/python.md \"Textual widgets\".\n"
             "Bypass for a legitimate one-off: append `# noqa: textual-shadow` to the def line.",
+            file=sys.stderr,
+        )
+        rc = 1
+
+    if ctrl_c_errors:
+        print("Ctrl+C binding guard failed:\n", file=sys.stderr)
+        for e in ctrl_c_errors:
+            print(f"  {e}", file=sys.stderr)
+        print(
+            "\nBinding ctrl+c on a screen or widget shadows the app-level copy binding\n"
+            "and silently breaks copy-selected-text on that view. Quit is ctrl+q / q.\n"
+            "Legitimate exception: append `# noqa: ctrl-c-binding` to the line.",
             file=sys.stderr,
         )
         rc = 1

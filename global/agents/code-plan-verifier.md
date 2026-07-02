@@ -1,6 +1,6 @@
 ---
 name: code-plan-verifier
-description: Use after implementation to verify the code follows the agreed plan, architecture, project guidelines, and version-specific examples. Must not rewrite code.
+description: Use PROACTIVELY after implementation to verify the code follows the agreed plan, architecture, project guidelines, and version-specific examples — including when the user says "verify the implementation", "check the plan was followed", or "did we cover everything". Review-only report; must not rewrite code.
 tools: Read, Grep, Glob, Bash, WebSearch, WebFetch
 ---
 

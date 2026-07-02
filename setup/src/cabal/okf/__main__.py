@@ -105,11 +105,16 @@ def main(argv: list[str] | None = None) -> int:
             Path(args.out) if args.out else None,
             generated_at=args.timestamp,
         )
-        print(f"OKF export wrote {result.document_count} documents and {result.relation_count} relations to {result.bundle_root}")
+        print(
+            f"OKF export wrote {result.document_count} documents and {result.relation_count} relations to {result.bundle_root}"
+        )
         return 0
     if args.command == "doctor":
         report = doctor_bundle(Path(args.bundle), Path(args.repo))
-        print(render_json(report) if args.format == "json" else render_human(report), end="")
+        print(
+            render_json(report) if args.format == "json" else render_human(report),
+            end="",
+        )
         return report.exit_code
     if args.command == "graph":
         viewer = generate_viewer(Path(args.graph), Path(args.out))
