@@ -38,6 +38,7 @@ from cabal.views.init_project_prompt import build_init_prompt, write_init_prompt
 from cabal.views.knowledge import KnowledgeScreen  # noqa: F401
 from cabal.views.local import LocalScreen  # noqa: F401
 from cabal.views.mcp import McpScreen  # noqa: F401
+from cabal.views.package_security import PackageSecurityScreen  # noqa: F401
 from cabal.views.project_gate import ProjectGateScreen
 from cabal.views.project_mcp import ProjectMcpScreen  # noqa: F401
 from cabal.views.readme import ReadmeScreen  # noqa: F401
