@@ -79,7 +79,12 @@ from cabal.installers.containers import (
     openshift_install,
     podman_install,
 )
-from cabal.installers.devtools import hugo_install, postman_install, uvicorn_install
+from cabal.installers.devtools import (
+    hugo_install,
+    lighthouse_install,
+    postman_install,
+    uvicorn_install,
+)
 from cabal.installers.editors import (
     cursor_install,
     rider_install,
@@ -229,6 +234,8 @@ def _probe_key(key: str) -> object:
         return _probe_version("hugo", "version")
     if key == "uvicorn":
         return _probe_version("uvicorn", "--version")
+    if key == "lighthouse":
+        return _probe_version("lighthouse", "--version")
     if key == "copilot":
         return _has_copilot_cli()
     if key == "vscode":
@@ -455,6 +462,7 @@ INSTALLER_FUNCTIONS: dict[str, Callable[[], tuple[bool, str]]] = {
     "postman": postman_install,
     "hugo": hugo_install,
     "uvicorn": uvicorn_install,
+    "lighthouse": lighthouse_install,
     "specify": specify_install,
     "claude-devtools": cdt_install,
     "sqlite": sqlite_install,

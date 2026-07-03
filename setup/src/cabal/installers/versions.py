@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 
 from cabal.env_detect import _probe_version
+from cabal.installers.dotnet_releases import DotnetReleaseSet, get_cached_release_set
 
 
 @dataclass(frozen=True)
@@ -79,6 +80,49 @@ def _option(
     )
 
 
+def _dotnet_release_options(release_set: DotnetReleaseSet | None) -> list[VersionOption]:
+    """Build dotnet VersionOptions from live releases-index data.
+
+    Falls back to channel-only placeholders when no live or cached data is
+    available (network outage with an empty cache) so the picker still renders.
+    """
+    if release_set is None or release_set.latest_lts is None:
+        return [
+            _option("dotnet", "lts", "Latest LTS SDK", "lts", is_lts=True),
+            _option("dotnet", "sts", "Latest STS SDK", "sts", is_latest=True),
+        ]
+    options = [
+        _option(
+            "dotnet",
+            release_set.latest_lts.latest_sdk,
+            f"Latest LTS ({release_set.latest_lts.latest_sdk})",
+            "lts",
+            is_lts=True,
+            is_latest=True,
+        )
+    ]
+    if release_set.previous_lts is not None:
+        options.append(
+            _option(
+                "dotnet",
+                release_set.previous_lts.latest_sdk,
+                f"Previous LTS ({release_set.previous_lts.latest_sdk})",
+                "lts-previous",
+                is_lts=True,
+            )
+        )
+    if release_set.preview is not None:
+        options.append(
+            _option(
+                "dotnet",
+                release_set.preview.latest_sdk,
+                f"Next preview ({release_set.preview.latest_sdk})",
+                "preview",
+            )
+        )
+    return options
+
+
 def version_options_for(
     tool_key: str,
     *,
@@ -86,9 +130,12 @@ def version_options_for(
 ) -> VersionProviderResult:
     """Return non-blocking version choices for a covered runtime.
 
-    The Tools screen calls this during render, so the default path avoids fresh
-    network requests. Providers still expose source URLs and channels so future
-    background workers can hydrate exact versions without changing the UI API.
+    The Tools screen calls this during render, so this never performs network
+    I/O — it only reads whatever is already known. `dotnet` is the one entry
+    backed by live data: it reads a 24h cache (`get_cached_release_set`,
+    fresh-or-stale, never fetching) populated by a background worker
+    (`cabal.installers.dotnet_releases.refresh_release_cache`), and falls back
+    to static channel placeholders until that cache has something to read.
     """
     if tool_key not in VERSION_SOURCE_URLS:
         return VersionProviderResult(tool_key, (), "", stale=True, message="No provider")
@@ -114,12 +161,7 @@ def version_options_for(
             ]
         )
     elif tool_key == "dotnet":
-        options.extend(
-            [
-                _option(tool_key, "lts", "Latest LTS SDK", "lts", is_lts=True),
-                _option(tool_key, "sts", "Latest STS SDK", "sts", is_latest=True),
-            ]
-        )
+        options.extend(_dotnet_release_options(get_cached_release_set()))
     elif tool_key == "python":
         options.extend(
             [

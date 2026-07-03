@@ -12,7 +12,7 @@ import json
 import os
 import tempfile
 import threading
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -60,6 +60,29 @@ def load_entry(key: str) -> Any | None:
         data = _read_all()
     entry = data["entries"].get(key)
     if not isinstance(entry, dict):
+        return None
+    return entry.get("payload")
+
+
+def load_entry_if_fresh(key: str, max_age: timedelta) -> Any | None:
+    """Return the cached payload for `key` only if it was saved within `max_age`.
+
+    Callers that need daily-refresh semantics (e.g. a slow network lookup) use
+    this instead of `load_entry` so a stale entry falls through to a re-fetch.
+    """
+    with _LOCK:
+        data = _read_all()
+    entry = data["entries"].get(key)
+    if not isinstance(entry, dict):
+        return None
+    ts_raw = entry.get("ts")
+    if not isinstance(ts_raw, str):
+        return None
+    try:
+        ts = datetime.fromisoformat(ts_raw)
+    except ValueError:
+        return None
+    if datetime.now(timezone.utc) - ts > max_age:
         return None
     return entry.get("payload")
 

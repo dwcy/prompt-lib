@@ -233,7 +233,7 @@ TOOL_CATEGORIES: tuple[ToolCategory, ...] = (
     ToolCategory(
         "Developer Tools",
         "developer-tools",
-        ("postman", "hugo", "uvicorn", "specify", "claude-devtools"),
+        ("postman", "hugo", "uvicorn", "lighthouse", "specify", "claude-devtools"),
     ),
 )
 
@@ -695,6 +695,13 @@ TOOL_DEFINITIONS: tuple[ToolDefinition, ...] = (
         "Developer Tools",
         "ASGI web server used to run FastAPI and other Python async apps.",
         "https://www.uvicorn.org/",
+    ),
+    _t(
+        "lighthouse",
+        "Lighthouse",
+        "Developer Tools",
+        "Google's automated tool for auditing web page performance, accessibility, SEO, and best practices.",
+        "https://github.com/GoogleChrome/lighthouse",
     ),
     _t(
         "specify",
