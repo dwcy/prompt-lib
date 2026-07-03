@@ -16,7 +16,7 @@ from cabal.views.project_gate import ProjectGateScreen
 def _stub_home_background_probes(monkeypatch):
     """Keep HomeScreen smoke tests from starting real host/network probes."""
     from cabal.views import home
-    from cabal.widgets import dashboard_panel, okf_panel, update_panel
+    from cabal.widgets import dashboard_panel, okf_panel, package_security_panel, update_panel
     from cabal.codex_setup import diff_apply as codex_diff_apply
 
     monkeypatch.setattr(home, "has_deploy_drift", lambda: False)
@@ -26,6 +26,9 @@ def _stub_home_background_probes(monkeypatch):
         okf_panel.OkfPanel, "on_mount", lambda self: None, raising=False
     )
     monkeypatch.setattr(update_panel.UpdatePanel, "on_mount", lambda self: None)
+    monkeypatch.setattr(
+        package_security_panel.PackageSecurityPanel, "on_mount", lambda self: None
+    )
 
 
 async def _home(app):
