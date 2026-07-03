@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Developer utility installers: Postman, Hugo, Uvicorn."""
+"""Developer utility installers: Postman, Hugo, Uvicorn, Lighthouse."""
 
 from __future__ import annotations
 
@@ -55,3 +55,9 @@ def uvicorn_install() -> tuple[bool, str]:
     if shutil.which("python"):
         return _run_install(["python", "-m", "pip", "install", "--user", "uvicorn"])
     return False, "Python not found - install Python first, then install Uvicorn."
+
+
+def lighthouse_install() -> tuple[bool, str]:
+    if shutil.which("npm"):
+        return _run_install(["npm", "install", "-g", "lighthouse"])
+    return False, "npm not found - install Node.js, then see https://github.com/GoogleChrome/lighthouse"

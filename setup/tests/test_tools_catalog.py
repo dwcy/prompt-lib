@@ -79,6 +79,18 @@ def test_uv_entry_is_recommended_package_manager():
     assert installer[0] == "uv"
 
 
+def test_lighthouse_entry_is_developer_tool_with_npm_installer():
+    definition = get_tool_definition("lighthouse")
+
+    assert definition is not None
+    assert definition.label == "Lighthouse"
+    assert definition.category == "Developer Tools"
+    assert definition.source_url == "https://github.com/GoogleChrome/lighthouse"
+    installer = tools._installer_for("lighthouse")
+    assert installer is not None
+    assert installer[0] == "Lighthouse"
+
+
 def test_requested_tools_are_in_expected_categories():
     groups = dict(tools.ENV_TOOL_GROUPS)
 
