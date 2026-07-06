@@ -23,6 +23,8 @@ from cabal.clipboard import read_clipboard, write_clipboard
 from cabal.app_widgets import AppCommandsProvider, AppHeader  # noqa: F401  (re-export)
 from cabal.views.claude_info import ClaudeInfoScreen  # noqa: F401
 from cabal.views.model_assignments import ModelAssignmentsScreen  # noqa: F401
+from cabal.views.cleanup import CleanupScreen  # noqa: F401
+from cabal.views.cleanup_restore import CleanupRestoreScreen  # noqa: F401
 from cabal.views.clone_repo import CloneRepoScreen  # noqa: F401
 from cabal.views.codex_conversion import CodexConversionScreen  # noqa: F401
 from cabal.views.codex_local import CodexLocalScreen  # noqa: F401
