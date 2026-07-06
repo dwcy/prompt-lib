@@ -2,7 +2,7 @@
 
 For each common interaction, the modern CSS approach (and the property that makes it work) versus the narrow case where JavaScript is actually required. Default to the CSS column. Reach for JS only when the "JS genuinely required" condition holds.
 
-All examples assume the design tokens from [`/css scaffold`](../../css.md) exist (`--color-*`, `--size-*`, `--radius-*`). Honor `@media (prefers-reduced-motion: reduce)` whenever you add motion.
+All examples assume the design tokens from [`/css scaffold`](../../css/SKILL.md) exist (`--color-*`, `--size-*`, `--radius-*`). Honor `@media (prefers-reduced-motion: reduce)` whenever you add motion.
 
 | Effect | CSS approach (modern property) | JS genuinely required when… |
 |---|---|---|

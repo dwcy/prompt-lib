@@ -1,8 +1,14 @@
 ---
 name: git
-description: Full git workflow with branch safety, conventional commits authored as my@agent.commit, category tags (ui/dotnet/python/css/html/js/ts), and push guard. Use when the user says "commit this", "commit my changes", "create a branch", or "initialise git" and safety checks matter. Subcommands — commit (default), branch, init. Runs @gitignore-auditor and @secret-auditor pre-commit; for a quick no-checks commit use /commit.
-allowed-tools: Bash, Read, Glob
+description: Full git workflow — branch safety, staged-file audits (@gitignore-auditor, @secret-auditor), conventional commit through the git-identity wrapper, policy-gated tags, and push guard. Subcommands — commit (default), branch, init.
+disable-model-invocation: true
+allowed-tools: Bash(git *), Bash(python *), Bash(gh *), Read, Glob
 ---
+
+## Current state
+
+- Branch: !`git rev-parse --abbrev-ref HEAD`
+- Status: !`git status --short`
 
 ## Subcommands
 
@@ -10,26 +16,23 @@ allowed-tools: Bash, Read, Glob
 - `/git branch <name>` → create and switch to a new branch
 - `/git init` → initialise a repo with `main` as the default branch
 
+All policy values (agent identity, allowed types, branch refusal, tag gating) live in `~/.claude/git-policy.json`. Full mechanics: `docs/git-policy.md` in prompt-lib.
+
 ---
 
 ## /git commit
 
 ### Step 1 — Branch safety check
 
-```bash
-git rev-parse --abbrev-ref HEAD
-```
-
-If the current branch is `main` or `master`, **stop immediately**. Do not proceed. Tell the user:
+If the current branch (shown above) is `main` or `master`, **stop immediately**. Do not proceed. Tell the user:
 
 > You are on `main`/`master`. Create a feature branch first with `/git branch <name>`.
 
+The `git-identity` wrapper enforces this too (`policy.refuse_on_branches`), but check up front so the user isn't dragged through the whole flow first.
+
 ### Step 2 — Inspect changes
 
-Run in parallel:
-
 ```bash
-git status --short
 git diff --staged
 git diff
 ```
@@ -63,9 +66,9 @@ How to handle the result:
 - **CLEAN** — proceed to Step 3.
 - **SUSPECTED / FOUND** — for **every finding**, ask the user a y/n question of the shape:
 
-  > `secret-auditor flagged a <type> (severity <level>) at <file>:<line>:`  
-  > `<redacted snippet>`  
-  > `Recommended action: <action>`  
+  > `secret-auditor flagged a <type> (severity <level>) at <file>:<line>:`
+  > `<redacted snippet>`
+  > `Recommended action: <action>`
   > `Is this OK to commit? (y/n)`
 
   Loop one finding at a time. Do not bulk-approve.
@@ -74,11 +77,11 @@ How to handle the result:
   - If the user answers **yes** for a finding: record the explicit approval and continue to the next finding.
   - Once every finding is either resolved or explicitly approved, proceed to Step 3.
 
-  In Step 6 (Show and confirm), include the list of explicitly-approved findings so the user sees the full picture before committing.
+  In Step 5 (Show and confirm), include the list of explicitly-approved findings so the user sees the full picture before committing.
 
 ### Step 3 — Determine commit type
 
-Pick the type that best fits the changes:
+Pick the type that best fits the changes. Types are enforced by the wrapper against `policy.allowed_types`:
 
 | Type | When to use |
 |---|---|
@@ -91,15 +94,7 @@ Pick the type that best fits the changes:
 
 `task` is a first-class type here for work that is real but smaller than a full `feat`.
 
-### Step 4 — Choose category tags
-
-Ask the user which tags apply to this commit (multi-select, all optional):
-
-```
-ui  dotnet  python  css  html  js  ts
-```
-
-### Step 5 — Draft the commit
+### Step 4 — Draft the commit
 
 **Subject line format:**
 
@@ -121,62 +116,39 @@ Rules:
 - Imperative mood ("add" not "added", "fix" not "fixed")
 - No period at the end
 
-**Body (always include — this is the description):**
+**Body (include when the why is non-obvious):** one short paragraph or a tight bullet list explaining why the change was made or what problem it solves.
 
-```
-Why this change was made, what problem it solves, or any non-obvious context.
-One short paragraph or a tight bullet list. Skip if the subject is truly self-explanatory.
-
-Tags: ui, dotnet   ← append selected tags here as a line
-```
-
-### Step 6 — Show and confirm
+### Step 5 — Show and confirm
 
 Display the full proposed commit message. Ask for confirmation before committing.
 
-### Step 7 — Commit with agent authorship
+### Step 6 — Commit through the git-identity wrapper
 
-Use `-c` flags to set the author for this commit without touching git config:
-
-```bash
-git commit \
-  -c user.email="my@agent.commit" \
-  -c user.name="Claude Agent" \
-  -m "$(cat <<'EOF'
-<subject>
-
-<body>
-
-Tags: <selected tags>
-EOF
-)"
-```
-
-### Step 8 — Apply git tags
-
-After a successful commit, apply a lightweight tag per selected category, suffixed with the short commit SHA to avoid conflicts:
+Never raw `git commit`. The wrapper snapshots the user's real `--global` identity once, applies the agent identity in `--local` scope, commits, and restores — and it enforces type and branch policy:
 
 ```bash
-SHA=$(git rev-parse --short HEAD)
-git tag "ui-$SHA"       # for each selected tag
-git tag "dotnet-$SHA"
-# etc.
+python ~/.claude/scripts/git-identity.py commit --repo <repo> -m "<subject>" -m "<body paragraph>"
 ```
 
-Report which tags were applied.
+Repeat `-m` per paragraph. Do not add `Co-Authored-By` trailers — the wrapper's identity override replaces that convention.
 
-> **Tag cleanup:** Category tags accumulate over time. Prune old ones periodically:
-> ```bash
-> for CAT in ui dotnet python css html js ts; do
->   git tag --list "$CAT-*" | sort -r | tail -n +11 | xargs -r git tag -d
-> done
-> ```
+If the wrapper crashes mid-commit and the identity looks wrong afterwards, repair with `/git-restore-identity` (or `python ~/.claude/scripts/git-identity.py restore`).
 
-### Step 9 — Never push
+### Step 7 — Tags (policy-gated)
+
+Tags are off by default (`policy.tags.agent_may_tag: false`). Do not fall back to raw `git tag`. If the user asks for a tag:
+
+```bash
+python ~/.claude/scripts/git-identity.py tag "<name>" -m "<message>" --repo <repo>
+```
+
+If the policy gate refuses, report it and point the user at `python ~/.claude/scripts/git-identity.py policy` to change the setting — don't work around it.
+
+### Step 8 — Never push
 
 Do **not** run `git push` unless the user explicitly says to push. End with:
 
-> Committed. Run `/git push` or `git push` when you're ready to push.
+> Committed. Say "push" when you're ready to push.
 
 When the user *does* ask to push, always route git auth through `gh` first — a raw `git push` against an HTTPS remote triggers an interactive askpass prompt that hangs/fails in a non-interactive shell, even when `gh` is authenticated. Check auth status first; that decides the path:
 
@@ -191,37 +163,31 @@ gh auth status
 
 ## /git branch \<name\>
 
-Branch naming format: `<your-name>/<feat>` or `<your-name>/<feat>-<task>`
+Branch naming format: `<type>/<slug>` — the same `<type>` set as commits, slug in kebab-case, named after the task.
 
 Examples:
 ```
-dawid/place-order-api
-dawid/authentication-login
-dawid/payment-refactor
+feat/place-order-api
+fix/authentication-login
+refactor/payment-service
 ```
 
-1. Read the user's name from git config:
-   ```bash
-   git config user.name
-   ```
-   If not set, ask for their first name.
-
-2. If the user provided a full branch name, use it as-is.
+1. If the user provided a full branch name, use it as-is.
    If they provided just a description (e.g. "place order api"), convert it:
    - kebab-case the description
-   - prefix with their name: `dawid/place-order-api`
+   - prefix with the best-fitting type: `feat/place-order-api`
 
-3. Check the branch does not already exist:
+2. Check the branch does not already exist:
    ```bash
    git branch --list "<name>"
    ```
 
-4. Create and switch:
+3. Create and switch:
    ```bash
    git checkout -b <name>
    ```
 
-5. Confirm the new branch name and current branch.
+4. Confirm the new branch name and current branch.
 
 ---
 

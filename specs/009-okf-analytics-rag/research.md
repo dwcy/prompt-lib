@@ -81,3 +81,40 @@
 - It is useful for historical trend analysis, joining OKF with usage logs, token stats, and run histories.
 - It supports a notebook-style exploratory workflow better than SQLite.
 - It should not sit on the critical path for Cabal search/health checks.
+
+## R7 - How should Claude and Cursor use OKF retrieval?
+
+**Decision**: Use an opt-in `okf-rag` MCP server as the shared client adapter.
+
+**Rationale**:
+
+- Claude and Cursor can share one retrieval contract instead of separate prompt/rule integrations.
+- MCP keeps retrieval explicit and query-specific, which protects token budgets.
+- Cabal already owns MCP template registration/status through its MCP tooling.
+- Client-specific rules can remain thin hints that the MCP server exists.
+
+**Alternatives considered**:
+
+- *Claude-only hooks*: rejected because Cursor would need a second implementation and hook output is not query-specific.
+- *Client-specific prompts/rules*: rejected for core retrieval because usage would be hard to prove and behavior would drift.
+- *Local Agent Services daemon*: rejected for now because `okf-rag` is a client-launched stdio MCP server, not a standalone long-running service.
+
+## R8 - How should automatic behavior work?
+
+**Decision**: Automatic behavior is limited to cache freshness and small preflight cards; full context retrieval is explicit.
+
+**Rationale**:
+
+- The user wants both automatic and explicit behavior, but automatic full retrieval risks noisy token injection.
+- Preflight can classify scope, risk flags, likely OKF areas, and recommended budget in a bounded output.
+- Explicit context packs can then spend the chosen budget with evidence and source paths.
+
+## R9 - How should Cabal prove usage?
+
+**Decision**: Use a local OKF usage ledger plus Claude Sessions cross-checks.
+
+**Rationale**:
+
+- Cursor usage will not appear in Claude Code transcripts, so the MCP server must write its own ledger.
+- Claude Sessions can verify Claude-side `okf_*` calls and token context when present.
+- Cabal Knowledge should be the primary dashboard for cross-client OKF usage, with Sessions linking back when relevant.

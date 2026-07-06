@@ -83,6 +83,7 @@ from cabal.widgets.claude_stats_panel import ClaudeStatsPanel
 from cabal.widgets.dashboard_panel import DashboardPanel
 from cabal.widgets.logo import CabalLogo
 from cabal.widgets.okf_panel import OkfPanel
+from cabal.widgets.package_security_panel import PackageSecurityPanel
 from cabal.widgets.update_panel import UpdatePanel
 
 
@@ -170,6 +171,26 @@ class HomeScreen(Screen):
                         id="btn-op-services",
                         variant="default",
                     )
+            with Vertical(id="pkgsec-panel", classes="home-section"):
+                yield Static(
+                    "[bold]Package Security Check[/bold]",
+                    id="pkgsec-title",
+                    classes="home-section-title",
+                )
+                yield Static(
+                    "[dim]Scans this project's .NET, npm/frontend, and Python dependencies "
+                    "for vulnerable, outdated, and deprecated packages. Runs automatically "
+                    "when a project opens; fixes require your confirmation.[/dim]",
+                    id="pkgsec-desc",
+                    classes="home-section-desc",
+                )
+                with Horizontal(classes="ops-row"):
+                    yield Button(
+                        "Package Security Check",
+                        id="btn-op-pkgsecurity",
+                        variant="default",
+                    )
+                yield PackageSecurityPanel(id="pkgsec-summary")
             with Vertical(id="codex-settings-panel", classes="home-section"):
                 yield Static(
                     "[bold]Codex Settings (~/.codex)[/bold]",
@@ -286,6 +307,7 @@ class HomeScreen(Screen):
         from cabal.views.local import LocalScreen
         from cabal.views.statusline import StatuslineScreen
         from cabal.views.knowledge import KnowledgeScreen
+        from cabal.views.package_security import PackageSecurityScreen
         from cabal.views.services import ServicesScreen
         from cabal.views.settings import SettingsScreen
         from cabal.views.codex_update import CodexUpdateScreen
@@ -300,6 +322,7 @@ class HomeScreen(Screen):
             "btn-op-statusline": StatuslineScreen,
             "btn-op-knowledge": KnowledgeScreen,
             "btn-op-services": ServicesScreen,
+            "btn-op-pkgsecurity": PackageSecurityScreen,
             "btn-op-settings": SettingsScreen,
             "btn-op-codex-update": CodexUpdateScreen,
             "btn-op-codex-local": CodexLocalScreen,

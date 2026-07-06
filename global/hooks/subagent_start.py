@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
-"""PreToolUse(Task) hook — record the subagent being dispatched.
+"""PreToolUse(Task|Agent) hook — record the subagent being dispatched.
 
 Writes ~/.claude/.subagent_state.json (name + model + start time) so the
 statusline can show a "subagent running" chip, and prints a one-line chat
 notice. Cleared by subagent_stop.py on SubagentStop.
 
-We hook PreToolUse(Task) rather than SubagentStart because the model is only
-present here (tool_input.model); the SubagentStart payload has no model field.
-The start marker (started_at) is also the anchor a future token-report step
-would use to attribute the subagent's transcript slice. Never blocks: any
-error or non-Task call exits 0 (allow).
+We hook PreToolUse(Task|Agent) rather than SubagentStart because the model is
+only present here (tool_input.model); the SubagentStart payload has no model
+field. The dispatch tool is named Agent in current Claude Code, Task in older
+versions — both are accepted. The start marker (started_at) is also the anchor
+a future token-report step would use to attribute the subagent's transcript
+slice. Never blocks: any error or non-dispatch call exits 0 (allow).
 """
 
 import json
@@ -36,7 +37,7 @@ def main() -> None:
     except (json.JSONDecodeError, ValueError):
         sys.exit(0)
 
-    if data.get("tool_name") != "Task":
+    if data.get("tool_name") not in ("Task", "Agent"):
         sys.exit(0)
 
     tool_input = data.get("tool_input") or {}

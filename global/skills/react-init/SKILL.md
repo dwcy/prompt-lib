@@ -67,7 +67,7 @@ pnpm add zustand @tanstack/react-query @tanstack/react-router @tanstack/react-fo
 pnpm add zod dompurify
 pnpm add @mui/icons-material @mui/material @emotion/react @emotion/styled
 pnpm add tailwindcss @tailwindcss/vite
-pnpm add -D @biomejs/biome @types/node @types/dompurify
+pnpm add -D @biomejs/biome @types/node
 ```
 
 **With Bun:**
@@ -76,8 +76,10 @@ bun add zustand @tanstack/react-query @tanstack/react-router @tanstack/react-for
 bun add zod dompurify
 bun add @mui/icons-material @mui/material @emotion/react @emotion/styled
 bun add tailwindcss @tailwindcss/vite
-bun add -d @biomejs/biome @types/node @types/dompurify
+bun add -d @biomejs/biome @types/node
 ```
+
+(`dompurify` ships its own types — do not add the deprecated `@types/dompurify` stub.)
 
 ---
 
@@ -189,44 +191,7 @@ export default defineConfig(({ mode }) => ({
 
 ### `biome.json`
 
-Write fresh. If you have verified the current stable Biome schema URL, include it; otherwise omit `$schema` rather than pinning a stale version.
-
-```json
-{
-  "vcs": {
-    "enabled": true,
-    "clientKind": "git",
-    "useIgnoreFile": true
-  },
-  "files": {
-    "ignoreUnknown": false,
-    "ignore": ["dist", "node_modules", ".storybook", "storybook-static"]
-  },
-  "formatter": {
-    "enabled": true,
-    "indentStyle": "space",
-    "indentWidth": 2,
-    "lineWidth": 100
-  },
-  "organizeImports": {
-    "enabled": true
-  },
-  "linter": {
-    "enabled": true,
-    "rules": {
-      "recommended": true
-    }
-  },
-  "javascript": {
-    "formatter": {
-      "quoteStyle": "double",
-      "semicolons": "always",
-      "trailingCommas": "all",
-      "arrowParentheses": "always"
-    }
-  }
-}
-```
+Copy `${CLAUDE_SKILL_DIR}/assets/biome.json` to the project root verbatim (Biome 2.x format: `files.includes` with `!` negations, import organizing under `assist.actions`). If you have verified the current stable Biome schema URL, add `$schema`; otherwise leave it out rather than pinning a stale version.
 
 ### `tsconfig.json`
 
@@ -347,51 +312,7 @@ If Storybook was selected, it creates `.storybook/` automatically — skip.
 
 ### `src/styles/globals.css`
 
-Check if this file exists (CSS setup may already be done via `/css scaffold`). If not, write:
-
-```css
-/* ─── Reset ─────────────────────────────────────────────────────── */
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-html {
-  -webkit-text-size-adjust: 100%;
-  color-scheme: dark;
-}
-
-body {
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-}
-
-img, video, svg {
-  display: block;
-  max-width: 100%;
-}
-
-input, button, textarea, select {
-  font: inherit;
-}
-
-/* Prevent cursor selection on non-editable elements */
-button, a, nav, label, [role="button"] {
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-@import "tailwindcss";
-
-@theme {
-  --font-body: '<chosen-font>', sans-serif;
-  --font-display: '<chosen-font>', sans-serif;
-}
-```
-
-Replace `<chosen-font>` with the font the user selected in Step 1.
+Check if this file exists (CSS setup may already be done via `/css scaffold`). If not, copy `${CLAUDE_SKILL_DIR}/assets/globals.css` and replace `<chosen-font>` with the font the user selected in Step 1.
 
 ### `src/api/client.ts`
 
@@ -517,83 +438,7 @@ import "@testing-library/jest-dom";
 
 ## Step 9 — Generate `.cursorrules`
 
-Write `.cursorrules` in the project root:
-
-```
-# Current Stable React Stack - Project Rules
-
-## Stack
-React, TypeScript strict, Vite, Zustand, TanStack Query/Router/Forms, Biome, Tailwind, Zod, DOMPurify, MUI Icons
-[Add: react-i18next] [if i18n selected]
-[Add: Clerk / Auth.js] [if auth selected]
-[Add: Vitest + React Testing Library + Playwright] [if testing selected]
-
-## Package manager
-- Use only <selected-package-manager>: pnpm or bun
-- Do not use npm, npx, or yarn
-- Use pnpm dlx or bunx for one-off package executors
-- Verify latest stable package docs before adding version-specific APIs
-
-## Folder structure
-src/api/         — TanStack Query client and query/mutation hooks
-src/components/  — Pure reusable UI, no app logic
-src/components/ui/ — Design system atoms
-src/features/    — Self-contained feature modules
-src/forms/       — Shared Zod schemas and TanStack Form config
-src/hooks/       — Shared custom React hooks
-src/layouts/     — Page layout wrappers
-src/lib/         — Pure utility functions (no React)
-src/pages/       — Route-level page components
-src/router/      — TanStack Router config
-src/state/       — Zustand stores
-src/types/       — Shared TypeScript types
-src/styles/      — globals.css and Tailwind entry
-
-## State rules
-- Server data (API responses) → TanStack Query
-- Cross-feature UI state → Zustand (src/state/)
-- Local UI state → useState / useReducer
-- Form state → TanStack Forms
-- Never put server data in Zustand
-
-## Naming
-- Components: PascalCase (UserCard.tsx)
-- Hooks: camelCase, use prefix (useUserProfile.ts)
-- Zustand stores: camelCase, Store suffix (useCartStore.ts)
-- Zod schemas: camelCase, Schema suffix (loginSchema)
-- Types/interfaces: PascalCase, Props suffix for component props
-
-## Component rules
-- One component per file
-- No business logic in components — hooks only
-- Props interface named [ComponentName]Props
-- DOMPurify before any dangerouslySetInnerHTML
-- user-select: none on all non-editable interactive elements
-
-## Import style
-- Use @/ alias for all src-relative imports
-- Group: external libs → @/ paths → relative paths
-
-## TypeScript
-- strict: true always
-- No any — use unknown and narrow with Zod or type guards
-- All API response shapes typed
-
-## Biome
-- Double quotes, 2-space indent, 100-char line width
-- Run: pnpm check or bun run check, matching the selected package manager
-
-## Forms
-- TanStack Forms for form state management
-- Zod schema for all validation
-- DOMPurify for any user-generated HTML content
-
-## Environment
-- VITE_ prefix required for client-side env vars
-- .env.develop → loaded in dev (vite --mode develop)
-- .env → loaded in production
-- Never commit .env or .env.develop
-```
+Copy `${CLAUDE_SKILL_DIR}/assets/cursorrules.tmpl` to `.cursorrules` in the project root, then resolve the placeholders: set `<selected-package-manager>`, and keep or drop each `[Add: …] [if … selected]` stack line based on the Step 1 answers.
 
 ---
 

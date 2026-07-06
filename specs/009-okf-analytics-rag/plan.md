@@ -13,32 +13,37 @@ MVP delivers:
 - Graph health analytics for agent/skill route pressure, unused agents, overlap, density, and changed concepts.
 - Analytics-aware graph visualization with lenses for route pressure, overlap, unused agents, and changes.
 - Cabal Knowledge screen summary.
+- Cabal preflight card for scope/complexity and recommended context budget.
+- Local OKF usage ledger for CLI, preflight, and context-pack calls.
 
 Post-MVP delivers:
 
 - Graph-backed context packs for agent use.
+- Opt-in `okf-rag` MCP server so Claude and Cursor share the same context-pack contract.
+- MCP calls appended to the same OKF usage ledger.
+- Cabal visibility for Claude/Cursor registration, context-pack inspection, and proof-of-use.
 - Optional semantic overlap via embedding provider interface.
 - Optional DuckDB analytics/export backend for historical snapshots and analytical exploration.
 
 ## Technical Context
 
-**Language/Version**: Python 3.11+  
-**Primary Dependencies**: stdlib `sqlite3`, existing Cabal/Textual, pytest  
-**Storage**: Local generated SQLite cache, recommended default `.cabal/okf/index.sqlite`; OKF Markdown/JSON remains source of truth  
-**Testing**: pytest unit, contract, integration; Textual `run_test()` for UI slice  
-**Target Platform**: Windows, Linux, macOS local checkouts  
-**Project Type**: Python package/CLI/Textual TUI feature  
-**Performance Goals**: Index current OKF bundle under 10 seconds; analytics query under 1 second for current repo scale  
-**Constraints**: Offline by default, no new hard dependency, no committed binary index required, no secret leakage  
+**Language/Version**: Python 3.11+
+**Primary Dependencies**: stdlib `sqlite3`, existing Cabal/Textual, pytest; optional MCP SDK only when implementing the `okf-rag` server
+**Storage**: Local generated SQLite cache, recommended default `.cabal/okf/index.sqlite`; local OKF usage ledger under `.cabal/okf/`; OKF Markdown/JSON remains source of truth
+**Testing**: pytest unit, contract, integration; Textual `run_test()` for UI slice
+**Target Platform**: Windows, Linux, macOS local checkouts
+**Project Type**: Python package/CLI/Textual TUI feature
+**Performance Goals**: Index current OKF bundle under 10 seconds; analytics query under 1 second for current repo scale
+**Constraints**: Offline by default, no new hard dependency for SQLite analytics, no committed binary index required, no secret leakage, usage ledger stores redacted previews not full prompts
 **Scale/Scope**: Hundreds to low thousands of concept docs initially; design supports larger catalogs by rebuilding deterministic cache
 
 ## Constitution Check
 
 ### Gate 1 - Spec-First Conformance
 
-**Status**: PASS
+**Status**: PASS WITH SCOPE NOTE
 
-No new external protocol is implemented. The feature consumes the OKF bundle produced by feature 008 and keeps OKF as source of truth.
+SQLite analytics, CLI, Cabal Knowledge, and context-pack services consume the OKF bundle produced by feature 008 and define no external protocol. The optional `okf-rag` adapter implements an MCP server surface; for that slice, the canonical Model Context Protocol specification is authoritative and contract tests are required before implementation. The server should be client-launched stdio MCP, not a Cabal Local Agent Services daemon, unless a future ADR changes it into a long-running service.
 
 ### Gate 2 - Subagent Delegation
 
@@ -56,6 +61,9 @@ Contract tests are required for:
 - Analytics JSON shape.
 - Visual analytics viewer behavior.
 - Context pack JSON shape.
+- Preflight JSON shape.
+- Usage ledger JSONL shape.
+- `okf-rag` MCP tool schemas and responses.
 
 These must precede implementation tasks.
 
@@ -63,13 +71,13 @@ These must precede implementation tasks.
 
 **Status**: PASS
 
-No deployed `global/` config mutation is required. `.cabal/okf/index.sqlite` is generated local cache and can be deleted/rebuilt.
+No deployed `global/` config mutation is required for SQLite analytics. `.cabal/okf/index.sqlite` and `.cabal/okf/usage.jsonl` are generated local cache/telemetry and can be deleted/rebuilt or restarted. `okf-rag` registration is opt-in through Cabal MCP tooling / `.mcp.json` or user MCP scope, and must be reversible.
 
 ### Gate 5 - Minimal Skill & Agent Surface
 
 **Status**: PASS
 
-No new skills or agents required. Existing Cabal Knowledge screen is extended.
+No new skills or agents required. Existing Cabal Knowledge and MCP screens are extended. `okf-rag` is an MCP server template, not a slash skill or subagent.
 
 ### Gate 6 - Parallel Isolation
 
@@ -82,10 +90,11 @@ Parallelizable test and UI tasks touch disjoint paths. Any concurrent writer tas
 | Phase / concern | Owner | Why |
 |---|---|---|
 | SQLite schema/index/search implementation | `@python-architect` | Python service/package architecture |
-| Analytics report queries and context-pack service | `@python-architect` | Python data processing and API design |
+| Analytics report queries, preflight, usage ledger, and context-pack service | `@python-architect` | Python data processing and API design |
+| `okf-rag` MCP adapter and tool contracts | `@api-designer`, `@python-architect` | MCP tool schema/protocol surface plus Python implementation |
 | Analytics graph lenses and viewer integration | `@frontend-css`, `@python-architect` | Static viewer behavior plus Textual/HTML polish |
 | Contract/unit/integration tests | `@python-tester` | pytest and fixture coverage |
-| Cabal Knowledge UI summary | `@python-architect` | Textual Python screen/widget changes |
+| Cabal Knowledge, MCP status, and Sessions usage hooks | `@python-architect` | Textual Python screen/widget changes |
 | Optional Textual styling polish | `@frontend-css` | CSS-only/Textual style work |
 | Docs, source-of-truth policy, task orchestration | main | Cross-cutting documentation and coordination |
 | Final conformance audit | `@code-plan-verifier` | Read-only verification |
@@ -112,7 +121,10 @@ specs/009-okf-analytics-rag/
     |-- sqlite-index.contract.md
     |-- analytics-report.contract.md
     |-- visual-analytics.contract.md
-    `-- context-pack.contract.md
+    |-- context-pack.contract.md
+    |-- preflight.contract.md
+    |-- usage-ledger.contract.md
+    `-- okf-rag-mcp.contract.md
 ```
 
 ### Source Code
@@ -122,28 +134,39 @@ setup/src/cabal/okf/
 |-- index.py              # SQLite schema, rebuild, FTS search
 |-- analytics.py          # health reports and overlap detection
 |-- context.py            # graph-expanded context packs
+|-- preflight.py          # scope/complexity and context-budget card
+|-- usage.py              # local usage ledger for CLI/preflight/MCP
+|-- mcp_server.py         # optional client-launched okf-rag MCP adapter
 |-- embeddings.py         # optional provider interface, no default provider
 |-- viewer.py             # analytics lenses in static graph viewer
-|-- __main__.py           # index/search/analytics/context commands
+|-- __main__.py           # index/search/analytics/context/preflight/usage commands
 `-- recommendations.py    # may reuse context pack later
 
 setup/src/cabal/views/
-`-- knowledge.py          # analytics summary in Cabal
+|-- knowledge.py          # analytics, preflight, context inspection, usage summary
+|-- mcp.py                # okf-rag registration/status through existing MCP manager
+`-- sessions.py           # flags okf_* calls in Claude transcripts when present
 
 tests/
 |-- contract/
 |   |-- test_okf_sqlite_index_contract.py
 |   |-- test_okf_analytics_contract.py
 |   |-- test_okf_visual_analytics_contract.py
-|   `-- test_okf_context_pack_contract.py
+|   |-- test_okf_context_pack_contract.py
+|   |-- test_okf_preflight_contract.py
+|   |-- test_okf_usage_ledger_contract.py
+|   `-- test_okf_rag_mcp_contract.py
 |-- unit/
 |   |-- test_okf_index.py
 |   |-- test_okf_analytics.py
-|   `-- test_okf_context.py
+|   |-- test_okf_context.py
+|   |-- test_okf_preflight.py
+|   `-- test_okf_usage.py
 `-- integration/
     |-- test_okf_analytics_cli.py
     |-- test_okf_visual_analytics_viewer.py
-    `-- test_okf_knowledge_analytics_ui.py
+    |-- test_okf_knowledge_analytics_ui.py
+    `-- test_okf_rag_mcp_registration.py
 ```
 
 **Structure Decision**: Keep the index as a generated local cache under Cabal's OKF package. Do not add DuckDB to `pyproject.toml` for MVP.
@@ -156,6 +179,8 @@ Resolved in [research.md](./research.md):
 - DuckDB is optional later for analytical exploration, historical snapshots, larger joins, and notebook-style workflows.
 - Analytics should use layered evidence: graph first, text/FTS second, semantic embeddings later.
 - Context packs are the first RAG deliverable; embeddings are optional post-MVP.
+- Automatic behavior should stay small: preflight and cache freshness only. Full context retrieval is explicit via CLI, Cabal action, or MCP tool call.
+- MCP is the shared Claude/Cursor adapter. Cabal owns registration/status and proof-of-use.
 
 ## Phase 1: Design and Contracts
 
@@ -166,6 +191,9 @@ Generated artifacts:
 - [contracts/analytics-report.contract.md](./contracts/analytics-report.contract.md)
 - [contracts/visual-analytics.contract.md](./contracts/visual-analytics.contract.md)
 - [contracts/context-pack.contract.md](./contracts/context-pack.contract.md)
+- [contracts/preflight.contract.md](./contracts/preflight.contract.md)
+- [contracts/usage-ledger.contract.md](./contracts/usage-ledger.contract.md)
+- [contracts/okf-rag-mcp.contract.md](./contracts/okf-rag-mcp.contract.md)
 - [quickstart.md](./quickstart.md)
 
 ## Phase 2: MVP Implementation Plan
@@ -190,7 +218,15 @@ Generated artifacts:
 7. Add Cabal Knowledge summary for top analytics findings.
 8. Add contract/unit/integration coverage.
 
-## Phase 3: Visual Analytics Polish
+## Phase 3: Preflight and Usage Visibility
+
+1. Implement `preflight` command and service.
+2. Classify task text into scope tiers (`S`, `M`, `L`, `XL`) and risk flags.
+3. Recommend context budget (`tiny`, `focused`, `full`) without emitting full context by default.
+4. Implement local `.cabal/okf/usage.jsonl` writes for CLI/preflight/context calls.
+5. Extend Cabal Knowledge/OKF panels with index freshness, preflight card, usage timeline, and context-pack inspector.
+
+## Phase 4: Visual Analytics Polish
 
 1. Add graph legend and lens controls.
 2. Add clickable analytics findings that focus the graph.
@@ -198,7 +234,7 @@ Generated artifacts:
 4. Add changed-concept badges when previous-index comparison is available.
 5. Keep the generated viewer static/offline.
 
-## Phase 4: RAG Context Packs
+## Phase 5: RAG Context Packs
 
 1. Implement `context` command and service.
 2. Retrieve FTS hits from SQLite.
@@ -206,7 +242,16 @@ Generated artifacts:
 4. Emit JSON and human output explaining why each item was included.
 5. Reuse context packs for recommendation explanations.
 
-## Phase 5: Semantic Layer
+## Phase 6: Shared MCP Adapter for Claude and Cursor
+
+1. Implement opt-in `okf-rag` as a client-launched stdio MCP server.
+2. Expose `okf_prepare`, `okf_search`, `okf_preflight`, `okf_context_pack`, `okf_analytics`, and `okf_usage`.
+3. Register through `setup/mcp-templates.json` with `default_enabled: false`.
+4. Show Claude/Cursor configuration state from Cabal MCP tooling.
+5. Write usage ledger entries for every MCP call.
+6. Extend Claude Sessions display only enough to flag `okf_*` calls and link back to OKF usage.
+
+## Phase 7: Semantic Layer
 
 1. Add embedding provider protocol with fake provider tests.
 2. Store chunk embeddings with model name and text hash.
@@ -214,7 +259,7 @@ Generated artifacts:
 4. Add semantic retrieval to context packs when provider is configured.
 5. Fall back gracefully to FTS when unavailable.
 
-## Phase 6: Optional DuckDB Backend
+## Phase 8: Optional DuckDB Backend
 
 1. Add export from SQLite/OKF to DuckDB or Parquet.
 2. Add historical snapshot analytics.
@@ -229,7 +274,7 @@ No constitution violations expected. The main complexity choice is explicitly de
 
 **Status**: PASS
 
-The plan keeps source of truth in OKF, adds no new global config, adds no new skill/agent, defines contract surfaces, and isolates optional complexity behind later phases.
+The plan keeps source of truth in OKF, adds no new deployed global config by default, adds no new skill/agent, defines contract surfaces, and isolates optional complexity behind later phases. The `okf-rag` MCP adapter adds a protocol surface, so it is explicitly covered by contract tests and opt-in registration.
 
 ## Next Command
 

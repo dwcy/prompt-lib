@@ -101,7 +101,7 @@ When two or more subagents are dispatched to operate concurrently on the same re
 - **Alternative**: pre-create a worktree via `/using-git-worktrees create <branch>` and brief the subagent with its path as its working directory.
 - **Exempt**: read-only agents (no Write/Edit in `tools:`) and sequential single-agent dispatch.
 
-**Runtime enforcement**: `global/hooks/pretool_task_isolation.py` blocks background `Task` dispatches that lack `isolation: "worktree"` (unless the subagent is on the read-only allowlist), and `global/hooks/session_start.py` auto-creates a sibling worktree when a second Claude session lands on a feature branch already held by another live session.
+**Runtime enforcement**: `global/hooks/pretool_task_isolation.py` blocks background `Agent` (formerly `Task`) dispatches that lack `isolation: "worktree"` (unless the subagent is on the read-only allowlist), and `global/hooks/session_start.py` auto-creates a sibling worktree when a second Claude session lands on a feature branch already held by another live session.
 
 See [`docs/parallel-isolation.md`](docs/parallel-isolation.md) for the full rule, edge cases, and anti-patterns.
 
