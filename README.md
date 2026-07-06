@@ -20,8 +20,8 @@ multi-agent workflows easier to run across projects.
 
 | Need | How Cabal handles it |
 |---|---|
-| Domain expertise on demand | 26 specialist subagents (`@dotnet-architect`, `@python-tester`, `@react-architect`, `@tanstack-architect`, `@frontend-css`, `@frontend-designer`, `@ux-analyst`, `@unity-architect`, `@requirements-analyst`, `@api-designer`, `@db-architect`, `@data-analyst`, `@website-content-analyst`, `@git-repo-analyst`, `@code-plan-verifier`, `@gitignore-auditor`, `@secret-auditor`, `@owasp-security-reviewer`, `@code-cleaner`, `@init-project`, `@load-project`, …) auto-invoked when the task matches their description |
-| Repetitive workflows (commit, PR, review, scaffold) | 17 slash-command skills under `global/skills/` — `/git`, `/commit`, `/pr`, `/review`, `/react-init`, `/react-review`, `/react-test`, `/react-perf`, `/react-safe`, `/css`, `/lovable-cleanup`, `/skill-create`, `/executing-plans`, `/finishing-a-development-branch`, `/using-git-worktrees`, `/design`, `/ui-component` |
+| Domain expertise on demand | 29 specialist subagents (`@dotnet-architect`, `@python-tester`, `@react-architect`, `@tanstack-architect`, `@frontend-css`, `@frontend-designer`, `@ux-analyst`, `@unity-architect`, `@requirements-analyst`, `@api-designer`, `@db-architect`, `@data-analyst`, `@website-content-analyst`, `@git-repo-analyst`, `@code-plan-verifier`, `@gitignore-auditor`, `@secret-auditor`, `@owasp-security-reviewer`, `@code-cleaner`, `@init-project`, `@load-project`, …) auto-invoked when the task matches their description |
+| Repetitive workflows (commit, PR, review, scaffold) | 26 slash-command skills under `global/skills/` — `/git`, `/pr`, `/react-init`, `/react-review`, `/react-test`, `/react-perf`, `/react-safe`, `/css`, `/css-guide`, `/lovable-cleanup`, `/skill-create`, `/executing-plans`, `/finishing-a-development-branch`, `/using-git-worktrees`, `/design`, `/ui-component`, `/orchestrate`, `/tui`, `/cli-llm-app`, `/add-mcp`, `/dependency-audit`, `/docs`, `/git-restore-identity`, `/github-audit`, `/github-scaffold`, `/infographics-design` |
 | Loading project context on session start | `SessionStart` hook detects whether the cwd has a `CLAUDE.md`; if yes, invokes `@load-project`; if no, offers to scaffold one from a template (`.NET`, Python, frontend, monorepo, Unity, generic) |
 | Always-on context bloat | Conditional rules in `global/rules/` (`csharp.md`, `typescript.md`, `react.md`, `tests.md`) load only when Claude touches a matching file |
 | Response-mode switching | Four output styles — `concise`, `technical`, `review`, `architect` — picked per session via `/output-style` |
@@ -94,22 +94,27 @@ Every command available in this project, grouped by purpose. Source links point 
 
 | Command | When to use | Links |
 |---|---|---|
-| `/git` | Full git workflow — branch safety, conventional commits, agent authorship, push guard | [src](global/skills/git.md) · [docs](docs/skills.md#git) |
-| `/commit` | Quick conventional commit without the full safety machinery — fixups inside a feature branch | [src](global/skills/commit.md) · [docs](docs/skills.md#commit) |
-| `/pr` | Draft a PR title + description from branch diffs, then create it with `gh pr create` | [src](global/skills/pr.md) · [docs](docs/skills.md#pr) |
-| `/branch-review` | Structured branch review against `main` — Critical / Warning / Suggestion findings | [src](global/skills/branch-review.md) · [docs](docs/skills.md#review) |
-| `/finishing-a-development-branch` | End-of-feature checklist — runs tests, builds, commits, offers PR/push | [src](global/skills/finishing-a-development-branch.md) · [docs](docs/skills.md#finishing-a-development-branch) |
-| `/using-git-worktrees` | Create/list/remove/prune git worktrees for parallel Claude Code sessions | [src](global/skills/using-git-worktrees.md) · [docs](docs/parallel-isolation.md) |
+| `/git` | Full git workflow — branch safety, conventional commits, agent authorship, push guard | [src](global/skills/git/SKILL.md) · [docs](docs/skills.md#git) |
+| `/commit` | Quick conventional commit without the full safety machinery — fixups inside a feature branch | [src](.claude/skills/commit.md) · [docs](docs/skills.md#commit) |
+| `/pr` | Draft a PR title + description from branch diffs, then create it with `gh pr create` | [src](global/skills/pr/SKILL.md) · [docs](docs/skills.md#pr) |
+| `/review` | Structured branch review against `main` — Critical / Warning / Suggestion findings | [src](.claude/skills/review.md) · [docs](docs/skills.md#review) |
+| `/finishing-a-development-branch` | End-of-feature checklist — runs tests, builds, commits, offers PR/push | [src](global/skills/finishing-a-development-branch/SKILL.md) · [docs](docs/skills.md#finishing-a-development-branch) |
+| `/using-git-worktrees` | Create/list/remove/prune git worktrees for parallel Claude Code sessions | [src](global/skills/using-git-worktrees/SKILL.md) · [docs](docs/parallel-isolation.md) |
 | `/standup` | Generate a standup summary from recent git log | [src](.claude/skills/standup.md) · [docs](docs/skills.md) |
+| `/git-restore-identity` | Clear a stuck `--local` agent git identity after a crashed commit | [src](global/skills/git-restore-identity/SKILL.md) · [docs](docs/git-policy.md) |
+| `/github-audit` | Read-only audit of a repo's GitHub hygiene — settings, protections, workflows | [src](global/skills/github-audit/SKILL.md) |
+| `/github-scaffold` | Scaffold `.github/` — CodeQL, CI, Dependabot, CODEOWNERS | [src](global/skills/github-scaffold/SKILL.md) |
 
 ### Planning & implementation
 
 | Command | When to use | Links |
 |---|---|---|
 | `/plan` | Plan a non-trivial feature — classify, scope, contract (full-stack), task breakdown, spawn parallel agents with worktree isolation | [src](.claude/commands/plan.md) · [docs](docs/workflows.md) |
-| `/executing-plans` | Execute a written `tasks.md` plan with review checkpoints between phases | [src](global/skills/executing-plans.md) · [docs](docs/workflows.md#workflow-1--spec-kit-feature-single-session) |
+| `/executing-plans` | Execute a written `tasks.md` plan with review checkpoints between phases | [src](global/skills/executing-plans/SKILL.md) · [docs](docs/workflows.md#workflow-1--spec-kit-feature-single-session) |
 | `/adr` | Create a numbered Architecture Decision Record under `docs/adr/` | [src](.claude/commands/adr.md) · [docs](docs/adr/) |
 | `/cli-llm-app` | Integrate Claude Code / Codex into an app via the CLI (subscription auth, no API key) — persistent-subprocess pattern, flag gotchas, stream-json schema | [src](global/skills/cli-llm-app/SKILL.md) |
+| `/orchestrate` | Automatic subagent routing — analyse the task, dispatch specialists with worktree isolation, aggregate results | [src](global/skills/orchestrate/SKILL.md) · [docs](docs/orchestration.md) |
+| `/tui` | Textual TUI lessons learned from the cabal wizard — Ctrl+C-is-copy, clipboard, Pilot tests, child-process lifecycle | [src](global/skills/tui/SKILL.md) |
 
 ### Spec-kit feature flow
 
@@ -130,15 +135,17 @@ Every command available in this project, grouped by purpose. Source links point 
 
 | Command | When to use | Links |
 |---|---|---|
-| `/react-init` | Scaffold a full current-stable React project — Vite + TS + Zustand + TanStack + Biome + Tailwind + Zod + MUI Icons | [src](global/skills/react-init.md) · [docs](docs/skills.md#react-init) |
-| `/react-review` | Code-quality review of a React file/feature — Critical / Warning / Suggestion | [src](global/skills/react-review.md) · [docs](docs/skills.md#react-review) |
-| `/react-test` | Scaffold or review Vitest + RTL tests for a component, hook, or feature | [src](global/skills/react-test.md) · [docs](docs/skills.md#react-test) |
-| `/react-safe` | Audit a React file for async correctness, error handling, security gaps | [src](global/skills/react-safe.md) · [docs](docs/skills.md#react-safe) |
-| `/react-perf` | Performance audit — re-renders, memoisation, bundle size, lazy-load opportunities | [src](global/skills/react-perf.md) · [docs](docs/skills.md#react-perf) |
-| `/css` | `scaffold` for `globals.css`, or `<ComponentName>` for `<Name>.module.css` next to the component | [src](global/skills/css.md) · [docs](docs/skills.md#css) |
+| `/react-init` | Scaffold a full current-stable React project — Vite + TS + Zustand + TanStack + Biome + Tailwind + Zod + MUI Icons | [src](global/skills/react-init/SKILL.md) · [docs](docs/skills.md#react-init) |
+| `/react-review` | Code-quality review of a React file/feature — Critical / Warning / Suggestion | [src](global/skills/react-review/SKILL.md) · [docs](docs/skills.md#react-review) |
+| `/react-test` | Scaffold or review Vitest + RTL tests for a component, hook, or feature | [src](global/skills/react-test/SKILL.md) · [docs](docs/skills.md#react-test) |
+| `/react-safe` | Audit a React file for async correctness, error handling, security gaps | [src](global/skills/react-safe/SKILL.md) · [docs](docs/skills.md#react-safe) |
+| `/react-perf` | Performance audit — re-renders, memoisation, bundle size, lazy-load opportunities | [src](global/skills/react-perf/SKILL.md) · [docs](docs/skills.md#react-perf) |
+| `/css` | `scaffold` for `globals.css`, or `<ComponentName>` for `<Name>.module.css` next to the component | [src](global/skills/css/SKILL.md) · [docs](docs/skills.md#css) |
 | `/ui-component` | Build a UI component on demand — design-language compliance, Preview, semantic HTML, Zustand+Zod forms | [src](global/skills/ui-component/SKILL.md) · [docs](docs/skills.md#ui-component) |
 | `/design` | Load the Premium Digital Agency 2.0 design system into context before styling decisions | [src](global/skills/design/SKILL.md) · [docs](docs/skills.md#design) |
-| `/lovable-cleanup` | Strip all Lovable / GPTEngineer scaffolding from a project | [src](global/skills/lovable-cleanup.md) · [docs](docs/skills.md#lovable-cleanup) |
+| `/lovable-cleanup` | Strip all Lovable / GPTEngineer scaffolding from a project | [src](global/skills/lovable-cleanup/SKILL.md) · [docs](docs/skills.md#lovable-cleanup) |
+| `/css-guide` | CSS-first techniques & animations — prefer CSS over JS for hover/scroll/reveal effects, layout, state toggles | [src](global/skills/css-guide/SKILL.md) |
+| `/infographics-design` | Single-file HTML infographic or printable A4 visual overview with CSS-only data viz | [src](global/skills/infographics-design/SKILL.md) |
 
 ### .NET
 
@@ -151,10 +158,10 @@ Every command available in this project, grouped by purpose. Source links point 
 
 | Command | When to use | Links |
 |---|---|---|
-| `/docs` | Generate a `/docs` folder for a project — index + architecture + per-component reference + workflows + learning path | [src](global/skills/docs.md) · [docs](docs/README.md) |
-| `/readme` | Drift-check the top-level README against the live repo state (skills, agents, hooks, MCP servers, statusline segments) and propose surgical patches | [src](global/skills/readme.md) |
+| `/docs` | Generate a `/docs` folder for a project — index + architecture + per-component reference + workflows + learning path | [src](global/skills/docs/SKILL.md) · [docs](docs/README.md) |
+| `/readme` | Drift-check the top-level README against the live repo state (skills, agents, hooks, MCP servers, statusline segments) and propose surgical patches | [src](.claude/skills/readme/SKILL.md) |
 | `/self-improvement` | Maintain project memory (lessons / mistakes / preferences / evals); stale-detect and remove obsolete entries | [src](.claude/skills/self-improvement/SKILL.md) · [docs](docs/skills.md#self-improvement-project-local) |
-| `/skill-create` | Design, write, test, and refine a new skill — scaffolds the Agent Skill folder with `scripts/`, `references/`, `assets/` | [src](global/skills/skill-create.md) · [docs](docs/skills.md#skill-create) |
+| `/skill-create` | Design, write, test, and refine a new skill — scaffolds the Agent Skill folder with `scripts/`, `references/`, `assets/` | [src](global/skills/skill-create/SKILL.md) · [docs](docs/skills.md#skill-create) |
 
 ### Meta / safety
 
@@ -162,6 +169,8 @@ Every command available in this project, grouped by purpose. Source links point 
 |---|---|---|
 | `/review-conflicts` | Detect overlapping agent / skill descriptions that would cause routing collisions | [src](.claude/commands/review-conflicts.md) · [docs](docs/architecture.md#5-ready--how-claude-picks-a-tool) |
 | `/prompt-injection-guard` | Scan staged content for prompt-injection patterns before commit | [src](.claude/commands/prompt-injection-guard.md) · [docs](docs/hooks.md) |
+| `/dependency-audit` | Audit project dependencies for known vulnerabilities — read-only, reports by severity with upgrade paths | [src](global/skills/dependency-audit/SKILL.md) |
+| `/add-mcp` | Register an MCP server the right way — scope precedence, Windows `.cmd` wrapping, env-var handling | [src](global/skills/add-mcp/SKILL.md) · [docs](global/MCP.md) |
 | `/xlsx` | Read, edit, and recalculate Excel workbooks via LibreOffice + python-openpyxl | [src](.claude/skills/xlsx.md) · [docs](docs/skills.md) |
 
 ## Layout
