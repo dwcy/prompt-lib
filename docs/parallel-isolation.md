@@ -113,7 +113,7 @@ Linked worktrees, `main`/`master`, detached HEAD, and non-repo dirs are exempt. 
 | `.claude/commands/plan.md` | Step 6 sets `isolation: "worktree"` on both full-stack dispatches |
 | `global/hooks/session_start.py` | Claims per-branch lock; auto-creates sibling worktree on collision |
 | `global/hooks/session_end_release_lock.py` | Releases the per-branch lock on session exit |
-| `global/hooks/pretool_task_isolation.py` | Blocks background `Task` dispatches without `isolation: "worktree"` |
+| `global/hooks/pretool_task_isolation.py` | Blocks background `Agent` (formerly `Task`) dispatches without `isolation: "worktree"` |
 | `docs/parallel-isolation.md` | (this file) — canonical explainer |
 
 ## The `Parallel: yes` task convention
