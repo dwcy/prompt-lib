@@ -2,13 +2,14 @@
 
 Two subcommands wire the v1 surface together:
 
-* ``serve gemini`` / ``serve claude`` — boot the chosen A2A adapter under
-  uvicorn after validating ``A2A_BEARER_TOKEN``. Default ports differ per
-  agent (gemini: 8766, claude: 8765) so both adapters can run side-by-side
-  on the same host.
-* ``delegate gemini <prompt>`` — open an outbound :class:`DelegationClient`
-  against a peer adapter and stream parsed SSE events to stdout, one JSON dict
-  per line. Exit codes are deterministic per the v1 surface contract:
+* ``serve gemini`` / ``serve claude`` / ``serve codex`` — boot the chosen A2A
+  adapter under uvicorn after validating ``A2A_BEARER_TOKEN``. Default ports
+  differ per agent (gemini: 8766, claude: 8765, codex: 8767) so the adapters
+  can run side-by-side on the same host.
+* ``delegate gemini <prompt>`` / ``delegate codex <prompt>`` — open an outbound
+  :class:`DelegationClient` against a peer adapter and stream parsed SSE events
+  to stdout, one JSON dict per line. Exit codes are deterministic per the v1
+  surface contract:
   0 completed, 1 connect refused, 2 auth fail, 3 protocol error,
   4 cancelled or failed task state.
 """
@@ -27,6 +28,7 @@ import uvicorn
 from fastapi import FastAPI
 
 from a2a_bridge.adapters.claude.server import build_claude_app
+from a2a_bridge.adapters.codex.server import build_codex_app
 from a2a_bridge.adapters.gemini.server import build_gemini_app
 from a2a_bridge.client.delegation import (
     DelegationAuthError,
@@ -39,21 +41,22 @@ from a2a_bridge.protocol.auth import validate_token_at_startup
 
 app = typer.Typer(help="A2A bridge: serve adapters and delegate prompts.", add_completion=False)
 
-_DEFAULT_PEER_URL = "http://127.0.0.1:8766"
 _DEFAULT_SERVE_HOST = "127.0.0.1"
-_AGENT_DEFAULT_PORTS: dict[str, int] = {"gemini": 8766, "claude": 8765}
+_AGENT_DEFAULT_PORTS: dict[str, int] = {"gemini": 8766, "claude": 8765, "codex": 8767}
 _AGENT_APP_FACTORIES: dict[str, Callable[..., FastAPI]] = {
     "gemini": build_gemini_app,
     "claude": build_claude_app,
+    "codex": build_codex_app,
 }
+_DELEGATE_PEERS: frozenset[str] = frozenset({"gemini", "codex"})
 
 
 @app.command()
 def serve(
-    agent: str = typer.Argument(..., help="Adapter to serve: 'gemini' or 'claude'."),
+    agent: str = typer.Argument(..., help="Adapter to serve: 'gemini', 'claude', or 'codex'."),
     host: str = typer.Option(_DEFAULT_SERVE_HOST, help="Bind host."),
     port: int | None = typer.Option(
-        None, help="Bind port (defaults: gemini=8766, claude=8765)."
+        None, help="Bind port (defaults: gemini=8766, claude=8765, codex=8767)."
     ),
     task_timeout_seconds: float = typer.Option(
         300.0, help="Per-task CLI subprocess timeout in seconds."
@@ -61,7 +64,7 @@ def serve(
 ) -> None:
     """Start an A2A adapter HTTP server."""
     if agent not in _AGENT_APP_FACTORIES:
-        typer.echo(f"unknown agent {agent!r}; expected 'gemini' or 'claude'.", err=True)
+        typer.echo(f"unknown agent {agent!r}; expected 'gemini', 'claude', or 'codex'.", err=True)
         raise typer.Exit(code=2)
 
     bearer_token = os.environ.get("A2A_BEARER_TOKEN")
@@ -96,32 +99,31 @@ def _parse_cwd_allowed_roots(raw: str | None) -> list[Path]:
 
 @app.command()
 def delegate(
-    peer: str = typer.Argument(..., help="Peer adapter to delegate to (currently only 'gemini')."),
+    peer: str = typer.Argument(..., help="Peer adapter to delegate to: 'gemini' or 'codex'."),
     prompt: str = typer.Argument(..., help="Prompt forwarded to the peer adapter."),
-    peer_url: str = typer.Option(
-        _DEFAULT_PEER_URL,
+    peer_url: str | None = typer.Option(
+        None,
         "--peer-url",
-        help="Base URL of the peer adapter (default: http://127.0.0.1:8766).",
+        help="Base URL of the peer adapter (defaults: gemini=http://127.0.0.1:8766, "
+        "codex=http://127.0.0.1:8767).",
     ),
     timeout_seconds: float = typer.Option(
         300.0, help="Read timeout for the SSE stream in seconds."
     ),
 ) -> None:
     """Delegate a prompt to a peer A2A adapter and stream events to stdout."""
-    if peer != "gemini":
-        typer.echo(f"unknown peer {peer!r}; expected 'gemini'.", err=True)
+    if peer not in _DELEGATE_PEERS:
+        typer.echo(f"unknown peer {peer!r}; expected 'gemini' or 'codex'.", err=True)
         raise typer.Exit(code=2)
 
-    bearer_token = os.environ.get("A2A_PEER_BEARER_TOKEN") or os.environ.get(
-        "A2A_BEARER_TOKEN"
-    )
+    resolved_peer_url = peer_url or f"http://127.0.0.1:{_AGENT_DEFAULT_PORTS[peer]}"
+
+    bearer_token = os.environ.get("A2A_PEER_BEARER_TOKEN") or os.environ.get("A2A_BEARER_TOKEN")
     if not bearer_token:
-        typer.echo(
-            "A2A_PEER_BEARER_TOKEN (or A2A_BEARER_TOKEN) must be set.", err=True
-        )
+        typer.echo("A2A_PEER_BEARER_TOKEN (or A2A_BEARER_TOKEN) must be set.", err=True)
         raise typer.Exit(code=2)
 
-    exit_code = asyncio.run(_run_delegate(peer_url, bearer_token, prompt, timeout_seconds))
+    exit_code = asyncio.run(_run_delegate(resolved_peer_url, bearer_token, prompt, timeout_seconds))
     raise typer.Exit(code=exit_code)
 
 
