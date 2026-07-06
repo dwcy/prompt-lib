@@ -109,6 +109,7 @@ Every command available in this project, grouped by purpose. Source links point 
 | `/plan` | Plan a non-trivial feature — classify, scope, contract (full-stack), task breakdown, spawn parallel agents with worktree isolation | [src](.claude/commands/plan.md) · [docs](docs/workflows.md) |
 | `/executing-plans` | Execute a written `tasks.md` plan with review checkpoints between phases | [src](global/skills/executing-plans.md) · [docs](docs/workflows.md#workflow-1--spec-kit-feature-single-session) |
 | `/adr` | Create a numbered Architecture Decision Record under `docs/adr/` | [src](.claude/commands/adr.md) · [docs](docs/adr/) |
+| `/cli-llm-app` | Integrate Claude Code / Codex into an app via the CLI (subscription auth, no API key) — persistent-subprocess pattern, flag gotchas, stream-json schema | [src](global/skills/cli-llm-app/SKILL.md) |
 
 ### Spec-kit feature flow
 
