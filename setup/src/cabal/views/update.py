@@ -118,6 +118,7 @@ class UpdateScreen(Screen):
                 yield Button("Apply (Ctrl+A)", id="upd-apply", variant="success")
                 yield Button("View (v)", id="upd-view", variant="primary")
                 yield Static("", classes="upd-spacer")
+                yield Button("Cleanup extras", id="upd-cleanup", variant="warning")
                 yield Button("Load Backup", id="upd-restore", variant="warning")
             yield Static("", id="update-summary")
             yield DataTable(id="preview")
@@ -386,5 +387,9 @@ class UpdateScreen(Screen):
             self.action_apply()
         elif bid == "upd-view":
             self.action_view_file()
+        elif bid == "upd-cleanup":
+            from cabal.views.cleanup import CleanupScreen
+
+            self.app.push_screen(CleanupScreen())
         elif bid == "upd-restore":
             self.app.push_screen(RestoreScreen())
