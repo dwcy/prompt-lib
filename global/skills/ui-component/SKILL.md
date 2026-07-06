@@ -12,9 +12,9 @@ allowed-tools: Read, Glob, Grep, Write, Edit
 
 Before writing any code, locate the active design system:
 
-1. Check `C:\projects\global\DESIGN.md` (project-level design system — should be present).
-2. Check `~/.claude/design.md` (global fallback — referenced from CLAUDE.md).
-3. Check for project-local files: `design-system.md`, `DESIGN.md`, `tokens.md`, `docs/design.md`.
+1. Check the project root for `DESIGN.md` (project-level design system — takes precedence).
+2. Check for other project-local files: `design-system.md`, `tokens.md`, `docs/design.md`.
+3. Fall back to the global design system: the `/design` skill (Premium Digital Agency 2.0, canonical tokens at `~/.claude/skills/design/references/tokens.css`).
 
 If **no design language exists**, stop and guide the user:
 
@@ -36,39 +36,7 @@ Always state at the top of your response which file is active:
 
 All visual properties must use CSS custom properties. Never use raw hex values in component code.
 
-**Declare in `:root` (or `[data-theme="default"]`):**
-
-```css
-:root,
-[data-theme="default"] {
-  --color-surface:                #161120;
-  --color-surface-container-low:  #1e1929;
-  --color-surface-container:      #221d2d;
-  --color-surface-container-high: #2b2538;
-  --color-surface-bright:         #3c3647;
-  --color-primary:                #fbabff;
-  --color-primary-container:      #eb6afb;
-  --color-on-primary:             #580065;
-  --color-secondary:              #48e351;
-  --color-tertiary-container:     #a191ff;
-  --color-on-surface:             #e9def5;
-  --color-on-surface-muted:       #a89ec0;
-  --color-outline-variant:        #514251;
-  --shadow-ambient:               0 0 50px 0 rgba(233,222,245,0.06);
-  --shadow-glow-primary:          0 0 20px rgba(251,171,255,0.20);
-  --glass-bg:                     rgba(22,17,32,0.60);
-  --glass-blur:                   20px;
-  --font-display:                 'Plus Jakarta Sans', sans-serif;
-  --font-body:                    'Manrope', sans-serif;
-  --radius-sm:   0.375rem;
-  --radius-md:   0.75rem;
-  --radius-lg:   1.25rem;
-  --radius-full: 9999px;
-  --space-1: 0.25rem; --space-2: 0.5rem;  --space-3: 0.75rem;
-  --space-4: 1rem;    --space-6: 1.5rem;  --space-8: 2rem;
-  --space-12: 3rem;   --space-16: 4rem;
-}
-```
+The token declarations live in `globals.css`, scaffolded by `/css scaffold` from the canonical sheet at `~/.claude/skills/design/references/tokens.css`. If the project has no `globals.css` yet, run `/css scaffold` first — do not declare ad-hoc token blocks per component.
 
 Quick token reference:
 
@@ -83,7 +51,7 @@ Quick token reference:
 | Borders | Forbidden — use surface color shifts |
 | Ghost Border | `outline-variant` (#514251) at 15% opacity |
 | Nav/floats | `var(--glass-bg)` + `backdrop-filter: blur(var(--glass-blur))` |
-| Dividers | Forbidden — use `var(--space-6)` / `var(--space-8)` vertical gap |
+| Dividers | Forbidden — use `var(--size-6)` / `var(--size-8)` vertical gap |
 
 ---
 
@@ -128,31 +96,47 @@ If the project uses Tailwind v4, wire tokens in `globals.css`:
 **1. The component** — production-ready, all values from CSS variables.
 **2. `<ComponentNamePreview />`** — renders all meaningful states side by side.
 
+Styling lives in a CSS module (never inline `style` props, never JS hover handlers — hover is CSS's job; see `/css` for the module conventions):
+
+```css
+/* PrimaryButton.module.css */
+.root {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  border-radius: var(--radius-md);
+  border: none;
+  padding: var(--size-2) var(--size-4);
+  font-family: var(--font-body);
+  font-weight: 600;
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+}
+
+.root:hover:not(:disabled) {
+  box-shadow: var(--shadow-glow-primary);
+}
+
+.root:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.preview {
+  background: var(--color-surface);
+  padding: var(--size-8);
+  display: flex;
+  gap: var(--size-4);
+  flex-wrap: wrap;
+}
+```
+
 ```tsx
 // PrimaryButton.tsx
+import styles from './PrimaryButton.module.css'
 
 export function PrimaryButton({ children, disabled, onClick }: PrimaryButtonProps) {
   return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      style={{
-        background: 'var(--color-primary)',
-        color: 'var(--color-on-primary)',
-        borderRadius: 'var(--radius-md)',
-        border: 'none',
-        padding: `var(--space-2) var(--space-4)`,
-        fontFamily: 'var(--font-body)',
-        fontWeight: 600,
-        cursor: disabled ? 'not-allowed' : 'pointer',
-        opacity: disabled ? 0.4 : 1,
-        transition: 'box-shadow 0.2s',
-      }}
-      onMouseEnter={(e) => {
-        if (!disabled) e.currentTarget.style.boxShadow = 'var(--shadow-glow-primary)'
-      }}
-      onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none' }}
-    >
+    <button className={styles.root} onClick={onClick} disabled={disabled}>
       {children}
     </button>
   )
@@ -160,7 +144,7 @@ export function PrimaryButton({ children, disabled, onClick }: PrimaryButtonProp
 
 export function PrimaryButtonPreview() {
   return (
-    <div style={{ background: 'var(--color-surface)', padding: 'var(--space-8)', display: 'flex', gap: 'var(--space-4)', flexWrap: 'wrap' }}>
+    <div className={styles.preview}>
       <PrimaryButton onClick={() => {}}>Default</PrimaryButton>
       <PrimaryButton disabled onClick={() => {}}>Disabled</PrimaryButton>
     </div>
@@ -195,9 +179,9 @@ Never use `type="text"` for emails, phones, URLs, or numbers.
 
 ---
 
-## Step 5 — Forms: Zustand + Zod
+## Step 5 — Forms
 
-All forms use a Zustand store with `subscribeWithSelector` and a Zod schema.
+Check `package.json` first: if the project uses TanStack Form (`@tanstack/react-form`), wire the form with it and hand architecture questions to `@tanstack-architect`. Otherwise use the Zustand + Zod pattern below — a Zustand store with `subscribeWithSelector` and a Zod schema.
 
 ```ts
 // src/frontend/src/store/exampleForm.store.ts

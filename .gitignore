@@ -52,4 +52,6 @@ Thumbs.db
 # The hand-written docs/okf/README.md stays tracked; only the generated bundle is ignored.
 docs/okf/prompt-lib/
 
+.cabal/
+
 .mcp.json

@@ -88,7 +88,24 @@ As a future agent or Cabal user, I want a query to return a context pack that co
 
 ---
 
-### User Story 6 - Add semantic overlap later (Priority: P3)
+### User Story 6 - Use OKF RAG from Claude and Cursor with visible usage (Priority: P2)
+
+As the Cabal user, I want Claude and Cursor to use the same local OKF retrieval surface, and I want Cabal to show me when it was used, what it included, and roughly how many tokens it emitted, so that token optimization and scope control are observable rather than invisible magic.
+
+**Why this priority**: Context packs are only useful operationally if the AI clients can call them and the maintainer can verify adoption. Claude and Cursor should not need separate retrieval implementations.
+
+**Independent Test**: Register an opt-in `okf-rag` MCP template against a fixture server, call `okf_context_pack`, and verify Cabal records a usage ledger entry with client, budget, concepts, evidence count, token estimate, cache state, and duration.
+
+**Acceptance Scenarios**:
+
+1. **Given** Claude or Cursor is configured with the `okf-rag` MCP server, **When** the client calls `okf_context_pack`, **Then** the server returns the same context-pack shape as the CLI and writes a local usage-ledger entry.
+2. **Given** Cabal opens the OKF Knowledge area, **When** usage entries exist, **Then** Cabal shows recent calls by client, action, budget, included concepts, token estimate, and cache state.
+3. **Given** a Claude Code session used an `okf_*` MCP tool, **When** the Sessions screen parses the transcript, **Then** Cabal can cross-link that session activity to the OKF usage entry or show a Claude transcript match.
+4. **Given** the user asks for automatic behavior, **When** Cabal preflight runs, **Then** it emits only a small scope/complexity card and recommended context budget unless the user explicitly asks for a context pack.
+
+---
+
+### User Story 7 - Add semantic overlap later (Priority: P3)
 
 As the maintainer, I want an optional semantic layer for overlap and RAG so that skills with different wording but similar intent can be found when FTS is not enough.
 
@@ -110,6 +127,9 @@ As the maintainer, I want an optional semantic layer for overlap and RAG so that
 - DuckDB should not become a default dependency for Cabal.
 - Semantic embeddings must not leak secrets; use the same redaction policy as OKF export.
 - Analytics thresholds must be configurable so small fixture catalogs and the real repo can both be tested.
+- Usage telemetry must avoid storing full prompts by default; store a redacted preview plus a hash.
+- Claude transcript parsing can verify Claude usage, but Cursor usage must rely on the local OKF usage ledger.
+- Client-launched stdio MCP servers should not appear as runnable daemons in Local Agent Services unless they later become long-running services.
 
 ## Requirements *(mandatory)*
 
@@ -134,6 +154,14 @@ As the maintainer, I want an optional semantic layer for overlap and RAG so that
 - **FR-017**: Graph viewer MUST support analytics lenses for route pressure, fanout, overlap, unused agents, and changed concepts.
 - **FR-018**: Graph viewer MUST allow a selected analytics finding to reveal affected nodes, affected edges, and evidence.
 - **FR-019**: Graph visualization MUST remain static/offline and must not require a database server.
+- **FR-020**: Cabal MUST provide a preflight result that classifies task scope/complexity, risk flags, likely OKF areas, and recommended context budget without emitting a full context pack by default.
+- **FR-021**: System MUST expose context-pack retrieval through an opt-in `okf-rag` MCP server so Claude, Cursor, and other MCP clients can share one retrieval contract.
+- **FR-022**: The `okf-rag` MCP server MUST be registered through Cabal MCP tooling / `setup/mcp-templates.json` and MUST NOT be enabled by default.
+- **FR-023**: CLI, preflight, and MCP retrieval paths MUST write a local usage-ledger entry containing client, entrypoint, action, budget, included concepts, evidence count, token estimate, cache state, and duration.
+- **FR-024**: Cabal Knowledge UI MUST show index freshness, preflight output, context-pack inspection, and cross-client OKF usage history.
+- **FR-025**: Claude Sessions UI SHOULD detect `okf_*` tool calls in Claude transcripts and link or annotate them against OKF usage when possible.
+- **FR-026**: `okf-rag` MUST be treated as a client-launched MCP server, not a Local Agent Services daemon, unless a future design changes it into a long-running service.
+- **FR-027**: Automatic behavior MUST stay bounded to cache freshness and small preflight summaries; full retrieval MUST require an explicit context-pack action or MCP tool call.
 
 ### Key Entities
 
@@ -145,6 +173,10 @@ As the maintainer, I want an optional semantic layer for overlap and RAG so that
 - **Overlap Finding**: Evidence-backed graph, text, or semantic similarity between skills.
 - **Analytics Lens**: Viewer mode that maps report findings onto graph nodes and edges.
 - **Context Pack**: Retrieved concepts, graph neighbors, evidence lines, and inclusion reasons for a query.
+- **Preflight Card**: Small task-scope summary with complexity tier, risk flags, likely OKF areas, and recommended context budget.
+- **OKF RAG MCP Server**: Client-launched stdio server exposing prepare/search/context/analytics/preflight/usage tools over MCP.
+- **Usage Ledger Entry**: Local append-only record proving a CLI, preflight, or MCP retrieval action ran and what it emitted.
+- **Client Registration State**: Cabal-visible status showing whether Claude and Cursor are configured to use `okf-rag`.
 - **Embedding Record**: Optional future vector for a chunk with model and text hash provenance.
 
 ## Success Criteria *(mandatory)*
@@ -158,6 +190,9 @@ As the maintainer, I want an optional semantic layer for overlap and RAG so that
 - **SC-005**: Cabal Knowledge screen can display analytics summary without blocking UI.
 - **SC-006**: No generated SQLite index is treated as source of truth; deleting it and rebuilding produces equivalent report results.
 - **SC-007**: Graph viewer can highlight at least one analytics finding and display its evidence in the inspector.
+- **SC-008**: Preflight returns a deterministic scope tier and recommended context budget for fixture task descriptions.
+- **SC-009**: MCP `okf_context_pack` returns the same required context-pack JSON shape as the CLI path.
+- **SC-010**: Cabal can show at least one usage-ledger entry from Claude/Cursor/Cabal with included concept ids and token estimate.
 
 ## Assumptions
 
@@ -166,3 +201,4 @@ As the maintainer, I want an optional semantic layer for overlap and RAG so that
 - SQLite FTS5 is available in the normal runtime; implementation will detect and report if not.
 - DuckDB is useful later for heavy analytics, historical snapshots, and notebook-style exploration, but not for the default product path.
 - Embeddings/RAG are incremental, not required for the first analytics release.
+- Claude and Cursor can both consume MCP servers, but Cabal should still own setup/status/usage visibility instead of duplicating client-specific retrieval logic.

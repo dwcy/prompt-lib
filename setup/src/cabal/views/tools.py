@@ -86,6 +86,7 @@ from cabal.tool_catalog import (
     get_tool_definition,
     redact_secret_text,
 )
+from cabal.installers.dotnet_releases import refresh_release_cache
 from cabal.installers.runtime_backups import backup_before_install
 from cabal.installers.versions import version_options_for
 from cabal.updates import check_for_updates, do_git_pull
@@ -431,6 +432,30 @@ class ToolsScreen(Screen):
             )
             return
         self.app.call_from_thread(self._apply_outdated, outdated)
+        self._refresh_dotnet_version_select()
+
+    def _refresh_dotnet_version_select(self) -> None:
+        """Populate the dotnet releases-index cache off the UI thread, then re-render
+        the version Select with real SDK versions.
+
+        `compose()` / `version_options_for` only ever read this cache (fresh or
+        stale); this worker method is the sole caller of the network fetch.
+        """
+        try:
+            refresh_release_cache()
+        except Exception:
+            return
+        self.app.call_from_thread(self._apply_dotnet_version_options)
+
+    def _apply_dotnet_version_options(self) -> None:
+        try:
+            select = self.query_one("#tool-version-dotnet", Select)
+        except Exception:
+            return
+        result = version_options_for("dotnet")
+        options = [(option.label, option.version) for option in result.options]
+        if options:
+            select.set_options(options)
 
     def _group_error(self, slug: str, msg: str) -> None:
         self.query_one("#tools-status", Static).update(
@@ -487,6 +512,12 @@ class ToolsScreen(Screen):
 
     def _tool_state(self, key: str, env: dict) -> tuple[bool, str]:
         """Return (installed, detail) — detail is the version string when known."""
+        if key == "dotnet":
+            # dotnet --version only reports the active SDK; show every installed
+            # SDK so a multi-target machine doesn't look like it's missing one.
+            sdks = env.get("dotnet_sdks") or []
+            if sdks:
+                return True, ", ".join(sdks)
         val = env.get(key)
         if isinstance(val, str) and val:
             # versioned probe (e.g. node → 'v22.16.0')

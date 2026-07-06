@@ -8,7 +8,11 @@ The export describes agents, skills, hooks, rules, tools, templates, Codex asset
 
 Exporting creates files; it does not automatically load the catalog into Claude, Codex, or other tools. Point prompts, repo instructions, or future indexes at this directory when you want an AI tool to use the catalog.
 
-The current branch provides the OKF bundle, doctor checks, route extraction, graph data, a static graph viewer, and the Cabal Knowledge screen. The next analytics/RAG work builds on this by adding SQLite-backed search, overlap reports, graph lenses, context packs, and optional semantic retrieval.
+The current branch provides the OKF bundle, doctor checks, route extraction, graph data, and a static graph viewer. On top of that, prompt-lib now ships a SQLite-backed OKF index with keyword search, preflight scope estimation, budgeted context packs, and a usage ledger, plus embedding-based semantic search once its optional dependency is installed. All of this is reachable from Cabal's Knowledge screen, in the "OKF RAG" panel: `Rebuild Index` (re)builds the SQLite index from the bundle, `Search` runs a raw full-text keyword lookup against the index, `Preflight` estimates likely-relevant concepts and a recommended token budget for a query, `Context` builds a token-budgeted, graph-expanded context pack, `Semantic` runs embedding similarity search when the optional dependency is available, and `Usage` shows the most recent entries from the on-disk usage ledger. The same operations are also available from the `python -m cabal.okf` CLI.
+
+The index only covers the generated OKF concept documents with frontmatter under `docs/okf/prompt-lib/` — the agent, skill, hook, rule, tool, template, Codex, output-style, and Spec Kit concept files produced by export. It does not index arbitrary repository files such as top-level `README.md`s or other prose docs; if a search or context-pack query returns no matches, check whether the concept you expect was actually exported into the bundle before assuming the index is broken.
+
+What is not built yet: an `okf-rag` MCP server. Claude, Codex, Cursor, and other MCP-aware tools cannot call search, preflight, or context-pack building automatically today — only Cabal's own TUI panel and the `cabal.okf` CLI can. Point prompts or repo instructions at the generated bundle directly (as described above) until the MCP server lands.
 
 `docs/okf/prompt-lib/` is generated from prompt-lib source files. Treat it as a portable catalog for other AI tools and visualizers, not as the source of truth.
 

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""PreToolUse guard for the Task tool: block concurrent background writers
+"""PreToolUse guard for the subagent-dispatch tool (named Agent in current
+Claude Code, Task in older versions): block concurrent background writers
 that don't opt into worktree isolation.
 
 Enforces the rule documented in docs/parallel-isolation.md:
@@ -43,7 +44,7 @@ def main() -> None:
     except (json.JSONDecodeError, ValueError):
         sys.exit(0)
 
-    if data.get("tool_name") != "Task":
+    if data.get("tool_name") not in ("Task", "Agent"):
         sys.exit(0)
 
     tool_input = data.get("tool_input") or {}

@@ -1,0 +1,39 @@
+/* ─── Reset ─────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  color-scheme: dark;
+}
+
+body {
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+img, video, svg {
+  display: block;
+  max-width: 100%;
+}
+
+input, button, textarea, select {
+  font: inherit;
+}
+
+/* Prevent cursor selection on non-editable elements */
+button, a, nav, label, [role="button"] {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+@import "tailwindcss";
+
+@theme {
+  --font-body: '<chosen-font>', sans-serif;
+  --font-display: '<chosen-font>', sans-serif;
+}

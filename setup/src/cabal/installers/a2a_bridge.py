@@ -7,7 +7,7 @@ import shutil
 import subprocess
 
 from cabal._paths import REPO_DIR
-from cabal.installers.uv import uv_install
+from cabal.installers.uv import ensure_uv_tool_bin_on_path, uv_install
 
 REPO_URL = "https://github.com/dwcy/prompt-lib"
 A2A_BRIDGE_PKG = "a2a-bridge"
@@ -37,29 +37,26 @@ def a2a_bridge_install() -> tuple[bool, str]:
                 f"(see the Tools view). ({msg})"
             )
 
-    if shutil.which(A2A_BRIDGE_PKG):
-        r = subprocess.run(
-            ["uv", "tool", "upgrade", A2A_BRIDGE_PKG],
-            capture_output=True,
-            text=True,
-        )
-        out = (r.stdout or r.stderr or "").strip()
-        return r.returncode == 0, f"uv tool upgrade {A2A_BRIDGE_PKG} — {out or 'ok'}"
+    # Make uv's tool-bin dir visible to this process so a fresh install resolves
+    # on PATH immediately (no app restart needed to see / start the service).
+    ensure_uv_tool_bin_on_path()
 
-    source = _resolve_source()
-    r = subprocess.run(
-        ["uv", "tool", "install", "--from", source, A2A_BRIDGE_PKG],
-        capture_output=True,
-        text=True,
-    )
+    source, is_local = _resolve_source()
+    cmd = ["uv", "tool", "install", "--force", "--from", source, A2A_BRIDGE_PKG]
+    if is_local:
+        # Local checkout: force a clean, uncached rebuild so iterating on the
+        # service code always reinstalls the current source. Without this uv
+        # reuses a cached same-version (0.1.0) build and the change never lands.
+        cmd[3:3] = ["--reinstall", "--no-cache"]
+    r = subprocess.run(cmd, capture_output=True, text=True)
     out = (r.stdout or r.stderr or "").strip()
-    return r.returncode == 0, out or f"uv tool install --from {source} {A2A_BRIDGE_PKG}"
+    return r.returncode == 0, out or " ".join(cmd)
 
 
-def _resolve_source() -> str:
-    """Local checkout path if present, else the git subdirectory spec."""
+def _resolve_source() -> tuple[str, bool]:
+    """(source, is_local): local checkout path if present, else the git subdirectory spec."""
     if REPO_DIR is not None:
         local = REPO_DIR.joinpath(*_SERVICE_SUBDIR)
         if local.is_dir():
-            return str(local)
-    return _GIT_SOURCE
+            return str(local), True
+    return _GIT_SOURCE, False
