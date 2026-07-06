@@ -46,6 +46,8 @@ export A2A_BEARER_TOKEN="$(python -c 'import secrets; print(secrets.token_urlsaf
 uv run a2a-bridge serve gemini --port 8766
 # In another terminal:
 uv run a2a-bridge serve claude --port 8765
+# Or serve the Codex adapter:
+uv run a2a-bridge serve codex --port 8767
 ```
 
 ```powershell
@@ -61,6 +63,8 @@ Adapters refuse to start if `A2A_BEARER_TOKEN` is unset or shorter than 32 chara
 
 ```bash
 uv run a2a-bridge delegate gemini "Reply with the single word: pong"
+# Delegate to Codex instead (defaults to http://127.0.0.1:8767):
+uv run a2a-bridge delegate codex "Reply with the single word: pong"
 ```
 
 Exit codes: `0` completed, `1` connect refused, `2` auth fail, `3` protocol error, `4` cancelled / failed task. Streamed events print to stdout as one JSON object per line.
@@ -111,13 +115,14 @@ src/a2a_bridge/
 ├── adapters/
 │   ├── base.py            # build_app: auth + content-type middleware + dispatcher + discovery
 │   ├── claude/            # Claude-specific runner shim + server (port 8765)
-│   └── gemini/            # Gemini-specific runner shim + server (port 8766)
+│   ├── gemini/            # Gemini-specific runner shim + server (port 8766)
+│   └── codex/             # Codex-specific runner shim + server (port 8767)
 ├── client/
 │   └── delegation.py      # DelegationClient (httpx async + SSE consumer)
 └── cli.py                 # Typer entry — `serve <agent>` and `delegate <peer> <prompt>`
 ```
 
-The runner abstraction (`protocol/cli_runner.py`) is intentionally CLI-agnostic — adapters provide their `cli_command_factory(prompt) -> argv` and `parse_event(dict) -> Artifact | None`. Adding a third peer (e.g. Codex) is a new `adapters/codex/` shim with two functions; no changes to the runner or dispatcher.
+The runner abstraction (`protocol/cli_runner.py`) is intentionally CLI-agnostic — adapters provide their `cli_command_factory(prompt) -> argv` and `parse_event(dict) -> Artifact | None`. The Codex adapter (`adapters/codex/`) is exactly this: two functions wiring `codex exec --json` into the shared runner, with no changes to the runner or dispatcher. A fourth peer follows the same shape.
 
 ## Constitution gates
 
