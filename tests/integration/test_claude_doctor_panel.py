@@ -10,7 +10,16 @@ import pytest
 from textual.app import App, ComposeResult
 from textual.widgets import Static
 
+from cabal import widget_cache
 from cabal.widgets.claude_doctor_panel import ClaudeDoctorPanel
+
+
+@pytest.fixture(autouse=True)
+def isolated_cache(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Redirect the shared widget cache into tmp_path so tests never touch ~/.cabal."""
+    cache_dir = tmp_path / "cabal-cache"
+    monkeypatch.setattr(widget_cache, "_CACHE_DIR", cache_dir)
+    monkeypatch.setattr(widget_cache, "_CACHE_FILE", cache_dir / "cache.json")
 
 
 class _PanelHost(App):

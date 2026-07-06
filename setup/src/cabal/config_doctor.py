@@ -3,12 +3,17 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 
+from cabal import widget_cache
 from cabal._paths import TARGET
+
+# Bump when check logic changes so cached results from an older doctor re-run.
+DOCTOR_VERSION = 1
 
 # Tool names a PreToolUse/PostToolUse matcher can legitimately reference.
 KNOWN_TOOLS = {
@@ -281,3 +286,52 @@ def run_doctor(target: Path = TARGET, project: Path | None = None) -> list[Findi
     ]
     findings.sort(key=lambda f: (f.severity != "error", f.path, f.category))
     return findings
+
+
+def _checked_locations(target: Path, project: Path | None) -> list[Path]:
+    dirs = [target / "skills", target / "agents", target / "hooks", target / "commands"]
+    if project is not None:
+        dirs += [project / ".claude" / "skills", project / ".claude" / "commands"]
+    return dirs + [target / "settings.json", target / "CLAUDE.md"]
+
+
+def tree_fingerprint(target: Path = TARGET, project: Path | None = None) -> str:
+    """Cheap stat-based hash of every file the doctor looks at (path + mtime + size).
+
+    No file contents are read, so this stays fast even on large trees; any
+    deploy, edit, or deletion changes the fingerprint.
+    """
+    digest = hashlib.sha256(f"doctor-v{DOCTOR_VERSION}".encode())
+    for location in _checked_locations(target, project):
+        files = sorted(location.rglob("*")) if location.is_dir() else [location]
+        for f in files:
+            try:
+                st = f.stat()
+            except OSError:
+                continue
+            if f.is_file():
+                digest.update(f"{f}|{st.st_mtime_ns}|{st.st_size}\n".encode())
+    return digest.hexdigest()
+
+
+def run_doctor_cached(
+    target: Path = TARGET, project: Path | None = None
+) -> tuple[list[Finding], bool]:
+    """run_doctor, skipped when nothing changed since the last run.
+
+    Returns (findings, from_cache). The cached result is reused only while the
+    tree fingerprint matches; any change to the checked files re-runs the scan.
+    """
+    key = f"doctor:{target}"
+    fingerprint = tree_fingerprint(target, project)
+    payload = widget_cache.load_entry(key)
+    if isinstance(payload, dict) and payload.get("fingerprint") == fingerprint:
+        try:
+            return [Finding(**f) for f in payload.get("findings", [])], True
+        except TypeError:
+            pass  # stale/foreign shape — fall through to a fresh scan
+    findings = run_doctor(target, project)
+    widget_cache.save_entry(
+        key, {"fingerprint": fingerprint, "findings": [asdict(f) for f in findings]}
+    )
+    return findings, False

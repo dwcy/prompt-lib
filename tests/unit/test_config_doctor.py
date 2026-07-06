@@ -6,7 +6,19 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from cabal.config_doctor import run_doctor
+import pytest
+
+from cabal import widget_cache
+from cabal.config_doctor import run_doctor, run_doctor_cached, tree_fingerprint
+
+
+@pytest.fixture(autouse=True)
+def isolated_cache(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """Redirect the shared widget cache into tmp_path so tests never touch ~/.cabal."""
+    cache_dir = tmp_path / "cabal-cache"
+    monkeypatch.setattr(widget_cache, "_CACHE_DIR", cache_dir)
+    monkeypatch.setattr(widget_cache, "_CACHE_FILE", cache_dir / "cache.json")
+    return cache_dir
 
 
 def _healthy_tree(root: Path) -> Path:
@@ -188,3 +200,35 @@ def test_errors_sort_before_warnings(tmp_path: Path):
     findings = run_doctor(root)
 
     assert [f.severity for f in findings] == ["error", "warning"]
+
+
+def test_unchanged_tree_reuses_cached_findings(tmp_path: Path):
+    root = _healthy_tree(tmp_path)
+    (root / "skills" / "orphan.md").write_text("dead\n", encoding="utf-8")
+    first, first_cached = run_doctor_cached(root)
+
+    second, second_cached = run_doctor_cached(root)
+
+    assert (first_cached, second_cached, second) == (False, True, first)
+
+
+def test_changed_file_invalidates_the_cache(tmp_path: Path):
+    root = _healthy_tree(tmp_path)
+    run_doctor_cached(root)
+    (root / "skills" / "orphan.md").write_text("newly dead\n", encoding="utf-8")
+
+    findings, from_cache = run_doctor_cached(root)
+
+    assert (from_cache, [f.category for f in findings]) == (False, ["dead-flat-skill"])
+
+
+def test_garbage_cache_entry_falls_through_to_a_fresh_scan(tmp_path: Path):
+    root = _healthy_tree(tmp_path)
+    widget_cache.save_entry(
+        f"doctor:{root}",
+        {"fingerprint": tree_fingerprint(root), "findings": [{"bogus": 1}]},
+    )
+
+    findings, from_cache = run_doctor_cached(root)
+
+    assert (from_cache, findings) == (False, [])

@@ -11,7 +11,7 @@ from textual.widget import Widget
 from textual.widgets import Static
 
 from cabal._paths import TARGET
-from cabal.config_doctor import Finding, run_doctor
+from cabal.config_doctor import Finding, run_doctor_cached
 
 _MAX_SHOWN = 10
 _SEVERITY_MARK = {"error": ("✗", "red"), "warning": ("⚠", "yellow")}
@@ -69,7 +69,7 @@ class ClaudeDoctorPanel(Widget):
         try:
             project_path = getattr(self.app, "project_path", None)
             project = project_path() if callable(project_path) else None
-            findings = run_doctor(self._target, project=project)
+            findings, _ = run_doctor_cached(self._target, project=project)
         except Exception as exc:  # never let a doctor bug take down Home
             self.app.call_from_thread(self._apply_error, exc)
             return
