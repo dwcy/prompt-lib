@@ -1,12 +1,11 @@
 ---
 name: executing-plans
 description: Use when you have a written implementation plan to execute in a separate session with review checkpoints. Verify completed batches with @code-plan-verifier before marking them done.
+disable-model-invocation: true
 allowed-tools: Bash, Read, Write, Edit, Glob, Grep
 ---
 
 Announce at start: "I'm using the executing-plans skill to implement this plan."
-
-Note: Tell your human partner that this skill works much better with access to subagents. The quality of its work will be significantly higher if run on a platform with subagent support (such as Claude Code or Codex).
 
 ## The Process
 

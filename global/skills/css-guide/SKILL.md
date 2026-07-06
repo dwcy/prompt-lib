@@ -6,7 +6,7 @@ allowed-tools: Read, Write, Edit, Glob, WebFetch
 
 This skill is a technique guide, not a scaffolder. It exists to push you toward solving motion, interaction, layout, and state-toggle problems in **CSS first**, reaching for JavaScript only when CSS genuinely cannot express the behavior. Modern CSS (2024–2025) has absorbed a large share of what used to require JS: keyframes, transitions, scroll-driven animation, the `:has()` parent selector, container queries, the `popover` attribute, and View Transitions.
 
-For project-specific scaffolding (globals.css, design tokens, CSS modules) use [`/css`](../css.md). For deeper CSS architecture work, hand off to `@frontend-css`. This skill is the "which technique, and why CSS over JS" layer that sits on top of both.
+For project-specific scaffolding (globals.css, design tokens, CSS modules) use [`/css`](../css/SKILL.md). For deeper CSS architecture work, hand off to `@frontend-css`. This skill is the "which technique, and why CSS over JS" layer that sits on top of both.
 
 ## The CSS-first decision rule
 
@@ -55,11 +55,11 @@ The `assets/` folder holds valid, current, token-referencing CSS you can copy an
 - [`assets/hover-underline.css`](assets/hover-underline.css) — center-out underline on hover, matching the design system's tertiary-button motion.
 - [`assets/disclosure.css`](assets/disclosure.css) — accordion/FAQ styling for native `<details>` + a `:has()`-driven open state. Replaces click-toggle JS.
 
-Every value in these snippets references a design token (`var(--color-…)`, `var(--size-…)`, `var(--radius-…)`) per this repo's convention — never hardcode hex, rem, or font names. The tokens are defined by [`/css scaffold`](../css.md); if a token you need is missing, add it to `globals.css` first.
+Every value in these snippets references a design token (`var(--color-…)`, `var(--size-…)`, `var(--radius-…)`) per this repo's convention — never hardcode hex, rem, or font names. The tokens are defined by [`/css scaffold`](../css/SKILL.md); if a token you need is missing, add it to `globals.css` first.
 
 ## How to use this skill
 
 1. Identify the effect the user wants (animation, reveal, toggle, layout, responsive component).
 2. Consult the decision rule above — default to CSS; only fall through to JS for the listed genuine cases.
 3. Point to the matching technique in the index and, if a snippet fits, copy from `assets/` and swap in the project's tokens.
-4. If the user is starting from scratch, suggest running [`/css scaffold`](../css.md) first so the tokens these techniques rely on exist.
+4. If the user is starting from scratch, suggest running [`/css scaffold`](../css/SKILL.md) first so the tokens these techniques rely on exist.

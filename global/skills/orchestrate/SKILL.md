@@ -1,6 +1,6 @@
 ---
 name: orchestrate
-description: Automatic subagent routing. Use PROACTIVELY before any non-trivial code task — when work touches multiple files, modules, or subsystems, when the request is vague but code-related ("fix this bug", "add this feature", "clean this up", "make this better"), or when the task belongs to a specialist domain such as .NET/C# architecture or testing, Python service design or pytest, React/Vue/Next.js/TanStack/CSS, Unity3D, Raspberry Pi/Arduino, GitHub repo settings, requirements scoping, API contracts, database schemas, data analysis, security review, or repo cleanup. Analyses the task, selects agents from the routing table, dispatches with worktree isolation when needed, and aggregates results.
+description: Automatic subagent routing. Use PROACTIVELY before any non-trivial code task — multi-file or multi-module work, vague code-related requests ("fix this", "clean this up"), or any specialist domain in the CLAUDE.md routing list (architecture, testing, frontend, security, data, DevOps, cleanup). Selects agents from the routing table, dispatches with worktree isolation when needed, and aggregates results.
 ---
 
 # /orchestrate — Automatic Subagent Routing

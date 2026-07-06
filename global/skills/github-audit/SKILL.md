@@ -1,7 +1,7 @@
 ---
 name: github-audit
 description: Read-only audit of a repo's GitHub hygiene — checks .github/ folder for required files, checks repo-level settings via `gh api`, reports gaps. Use before opening a PR, before a release, on freshly cloned repos, or whenever you want to know "is this repo configured properly?". Never writes — only reports. To fix gaps, hand off to /github-scaffold (files) or @github-config-manager (settings).
-allowed-tools: Read, Bash, Glob, Grep
+allowed-tools: Read, Bash(gh *), Bash(git *), Glob, Grep
 ---
 
 # What this checks

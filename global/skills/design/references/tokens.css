@@ -1,0 +1,73 @@
+/* Premium Digital Agency 2.0 — canonical design tokens.
+   Single source of truth. /css scaffold inlines this into globals.css;
+   /ui-component and /design reference it. Edit HERE, nowhere else. */
+
+:root,
+[data-theme="default"] {
+  /* Colors */
+  --color-surface:                    #161120;
+  --color-surface-container-low:      #1e1929;
+  --color-surface-container:          #221d2d;
+  --color-surface-container-high:     #2b2538;
+  --color-surface-bright:             #3c3647;
+  --color-primary:                    #fbabff;
+  --color-primary-container:          #eb6afb;
+  --color-on-primary:                 #580065;
+  --color-secondary:                  #48e351;
+  --color-tertiary-container:         #a191ff;
+  --color-on-surface:                 #e9def5;
+  --color-on-surface-muted:           #a89ec0;
+  --color-outline-variant:            #514251;
+
+  /* Glass (floating elements: navbars, tooltips, FABs) */
+  --glass-bg:   rgba(22, 17, 32, 0.60);
+  --glass-blur: 20px;
+
+  /* Typography */
+  --font-display: 'Plus Jakarta Sans', sans-serif;
+  --font-body:    'Manrope', sans-serif;
+
+  /* Spacing (0.25rem increments — Oxy-Grid) */
+  --size-1:  0.25rem;
+  --size-2:  0.5rem;
+  --size-3:  0.75rem;
+  --size-4:  1rem;
+  --size-6:  1.5rem;
+  --size-8:  2rem;
+  --size-12: 3rem;
+  --size-16: 4rem;
+  --size-24: 6rem;
+
+  /* Border radius */
+  --radius-sm:   0.25rem;
+  --radius-md:   0.75rem;
+  --radius-lg:   1.5rem;
+  --radius-full: 9999px;
+
+  /* Shadows — diffused, tinted with on-surface lavender; no default drop shadows */
+  --shadow-sm:           0 2px  12px 0 rgba(233, 222, 245, 0.04);
+  --shadow-md:           0 4px  32px 0 rgba(233, 222, 245, 0.06);
+  --shadow-lg:           0 8px  60px 0 rgba(233, 222, 245, 0.08);
+  --shadow-ambient:      0 0 50px 0 rgba(233, 222, 245, 0.06);
+  --shadow-glow-primary: 0 0 20px rgba(251, 171, 255, 0.20);
+
+  /* Z-index scale */
+  --z-base:     0;
+  --z-raised:   10;
+  --z-dropdown: 100;
+  --z-sticky:   200;
+  --z-modal:    300;
+  --z-toast:    400;
+}
+
+/* Light theme override */
+[data-theme="light"] {
+  color-scheme: light;
+
+  --color-surface:                #faf8ff;
+  --color-surface-container-low:  #f3f0fa;
+  --color-surface-container:      #ece8f4;
+  --color-surface-bright:         #ffffff;
+  --color-on-surface:             #1c1a27;
+  --color-outline-variant:        #c9c3d0;
+}
