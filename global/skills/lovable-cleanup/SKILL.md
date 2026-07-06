@@ -10,12 +10,10 @@ Remove all Lovable/GPTEngineer scaffolding from this project. Work through each 
 
 ## Step 1 — Confirm scope
 
-Run in parallel:
+Run two parallel Grep tool searches (files_with_matches mode):
 
-```bash
-grep -r "lovable\|gptengineer\|lov-" --include="*.json" --include="*.ts" --include="*.html" -l
-grep -r "data-lovable-id\|data-gptengineer-id" --include="*.tsx" --include="*.jsx" --include="*.html" -l
-```
+- pattern `lovable|gptengineer|lov-` with glob `*.{json,ts,html}`
+- pattern `data-lovable-id|data-gptengineer-id` with glob `*.{tsx,jsx,html}`
 
 Report: which files contain Lovable references, and how many attribute injections exist. Proceed without waiting for confirmation.
 
@@ -69,10 +67,7 @@ Leave all other tags untouched.
 
 Lovable-tagger injects `data-lovable-id` and `data-gptengineer-id` attributes into JSX/TSX/HTML during build. Find and remove them from all source files.
 
-```bash
-# Find all affected files
-grep -rl "data-lovable-id\|data-gptengineer-id\|lovable-id=" --include="*.tsx" --include="*.jsx" --include="*.html" .
-```
+Grep tool, files_with_matches: pattern `data-lovable-id|data-gptengineer-id|lovable-id=` with glob `*.{tsx,jsx,html}`.
 
 For each matched file, read it and remove:
 - `data-lovable-id="..."` attributes (any value)
@@ -81,10 +76,7 @@ For each matched file, read it and remove:
 
 Remove only the attribute — preserve the element, its other attributes, and surrounding whitespace.
 
-Also search for any element IDs or class names that look like generated Lovable slugs:
-```bash
-grep -rn 'id="[^"]*lov[^"]*"' --include="*.tsx" --include="*.jsx" --include="*.html" .
-```
+Also search for any element IDs or class names that look like generated Lovable slugs — Grep tool, content mode with line numbers: pattern `id="[^"]*lov[^"]*"` with glob `*.{tsx,jsx,html}`.
 
 Report what is found. If the IDs look like content IDs (e.g. `id="lov-button-1"`, `id="lovable-hero"`) and are not referenced anywhere else in the codebase via `getElementById` or CSS selectors, remove them. If they are referenced, flag them to the user instead of removing.
 
@@ -122,12 +114,10 @@ Run the matching install command to regenerate the lockfile with the removed dep
 
 ## Step 8 — Verify
 
-Run in parallel:
+Run two parallel Grep tool searches:
 
-```bash
-grep -r "lovable\|gptengineer" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html" --include="*.json" -l
-grep -r "data-lovable-id\|data-gptengineer-id" --include="*.tsx" --include="*.jsx" --include="*.html" .
-```
+- pattern `lovable|gptengineer` with glob `*.{ts,tsx,jsx,html,json}` (files_with_matches)
+- pattern `data-lovable-id|data-gptengineer-id` with glob `*.{tsx,jsx,html}` (content mode)
 
 If any matches remain, report exactly what they are and where. Do not silently ignore them.
 

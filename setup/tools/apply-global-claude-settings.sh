@@ -113,18 +113,18 @@ mkdir -p "$TARGET/rules"
 cp "$SCRIPT_DIR/rules/"*.md "$TARGET/rules/"
 echo "  Copied  rules/ ($(ls "$SCRIPT_DIR/rules/"*.md | wc -l) files)"
 
-# Copy skills — flat <name>.md files and directory-style <name>/SKILL.md bundles.
-# A dir-style skill replaces any stale flat copy of the same name in the target.
+# Copy skills — directory-style <name>/SKILL.md bundles only.
+# Claude Code never loads flat <name>.md files under skills/, so any in the
+# target are dead config from older deploys — prune them on every apply.
 mkdir -p "$TARGET/skills"
-cp "$SCRIPT_DIR/skills/"*.md "$TARGET/skills/" 2>/dev/null || true
+rm -f "$TARGET/skills/"*.md
 for dir in "$SCRIPT_DIR/skills/"*/; do
   [ -d "$dir" ] || continue
   name="$(basename "$dir")"
-  rm -f "$TARGET/skills/$name.md"
   mkdir -p "$TARGET/skills/$name"
   cp -r "$dir." "$TARGET/skills/$name/"
 done
-echo "  Copied  skills/ ($(ls "$SCRIPT_DIR/skills/"*.md 2>/dev/null | wc -l) flat + $(find "$SCRIPT_DIR/skills" -mindepth 1 -maxdepth 1 -type d | wc -l) dir skills)"
+echo "  Copied  skills/ ($(find "$SCRIPT_DIR/skills" -mindepth 1 -maxdepth 1 -type d | wc -l) dir skills; stale flat .md pruned)"
 
 # Copy keybindings
 if [ -f "$SCRIPT_DIR/keybindings.json" ]; then

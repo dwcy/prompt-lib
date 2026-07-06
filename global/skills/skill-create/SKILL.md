@@ -1,4 +1,4 @@
-﻿---
+---
 name: skill-create
 description: Create, draft, and refine a new Claude Code skill (slash command). Use this skill whenever someone wants to build a new /skill, automate a workflow into a repeatable skill, capture a process they keep doing manually, convert a conversation into a reusable command, or improve an existing skill's description, instructions, or triggering accuracy. Even if the user just says "make this a skill" or "save this as a command", use this skill.
 allowed-tools: Read, Write, Edit, Glob, Bash
@@ -111,21 +111,33 @@ This makes it obvious that the bucket exists and is intentionally empty, not for
 
 ```yaml
 ---
-name: skill-name           # kebab-case, matches the /command
+name: skill-name           # kebab-case, matches the /command (directory name wins)
 description: ...           # see "Writing the description" below
-allowed-tools: Bash, Read  # only tools this skill actually needs
+allowed-tools: Bash(git *), Read   # only tools this skill actually needs — prefer scoped Bash rules
 ---
 ```
+
+Optional fields — apply when they fit, don't add by default:
+
+| Field | When to use |
+|---|---|
+| `disable-model-invocation: true` | Side-effecting workflows the user should trigger manually (commit, deploy, push). Also removes the description from the always-loaded listing. |
+| `user-invocable: false` | Background knowledge that isn't a meaningful command for the user to run. |
+| `argument-hint: [issue-number]` | Skill takes arguments — shown at autocomplete. Use `$ARGUMENTS` / `$0`, `$1` in the body. |
+| `context: fork` + `agent: Explore` | Research/summarize tasks that don't need conversation history — runs in an isolated subagent. |
+| `model:` / `effort:` | Only when the skill genuinely needs a different tier than the session. |
+
+Dynamic context injection: a line like ``!`git status --short` `` runs **before** the model sees the skill body and is replaced by its output — use it when the skill always starts by inspecting the same state (git status, diffs, tool versions).
 
 ### Writing the description — the most important field
 
 The description is the **primary trigger mechanism**. Claude decides whether to use a skill based on this field alone. Three rules:
 
-1. **The system-reminder shows only the first 64 characters.** Anything after that is cut with `…` and invisible until the skill is already invoked. Put the most critical trigger condition — especially proactive ones — in the first 64 characters. Test it: count the first 64 chars of your description and ask "is the right trigger visible here?"
+1. **Put the key use case first.** The skill listing caps each entry (description + `when_to_use`) at 1,536 characters, and when many skills are installed the listing shares a budget (~1% of the context window) — least-used skills get shortened first. Front-load the WHAT and the strongest trigger; keep the whole description ≤1024 characters and written in third person.
 2. **Include both WHAT it does AND WHEN to use it** — all "when to use" information goes in the description, not the body.
 3. **Be pushy** — Claude tends to undertrigger skills. Write descriptions that lean toward triggering. Instead of "Generates a commit message", write "Generates a conventional commit message from staged changes. Use this whenever the user asks to commit, stage changes, write a git message, or says anything like 'commit this' or 'let's commit'."
 
-Test the description mentally: if someone typed a realistic user request, would this description match it clearly within the first 64 characters?
+Test the description mentally: if someone typed a realistic user request, would the opening sentence of this description match it clearly?
 
 ### Writing the body — explain WHY, not just WHAT
 
@@ -196,7 +208,7 @@ For the output template, copy [`assets/commit-template.md`](assets/commit-templa
 
 **Name rules:**
 - kebab-case, short, verb-first if possible: `react-review`, `git-commit`, `css-scaffold`
-- Must not conflict with an existing skill — `Glob` `~/.claude/skills/*.md` AND `~/.claude/skills/*/SKILL.md` to check both legacy single-file skills and folder skills
+- Must not conflict with an existing skill — `Glob` `~/.claude/skills/*/SKILL.md` and the project's `.claude/skills/*/SKILL.md`. Never create a flat `<name>.md` directly under a `skills/` directory — Claude Code does not load that layout; only `<name>/SKILL.md` folders (or flat files under `commands/`) are discovered.
 
 **Where to save:**
 - Global skill (available in every project) → `global/skills/<name>/` (deploys to `~/.claude/skills/<name>/`)

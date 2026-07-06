@@ -1,0 +1,73 @@
+# Current Stable React Stack - Project Rules
+
+## Stack
+React, TypeScript strict, Vite, Zustand, TanStack Query/Router/Forms, Biome, Tailwind, Zod, DOMPurify, MUI Icons
+[Add: react-i18next] [if i18n selected]
+[Add: Clerk / Auth.js] [if auth selected]
+[Add: Vitest + React Testing Library + Playwright] [if testing selected]
+
+## Package manager
+- Use only <selected-package-manager>: pnpm or bun
+- Do not use npm, npx, or yarn
+- Use pnpm dlx or bunx for one-off package executors
+- Verify latest stable package docs before adding version-specific APIs
+
+## Folder structure
+src/api/         — TanStack Query client and query/mutation hooks
+src/components/  — Pure reusable UI, no app logic
+src/components/ui/ — Design system atoms
+src/features/    — Self-contained feature modules
+src/forms/       — Shared Zod schemas and TanStack Form config
+src/hooks/       — Shared custom React hooks
+src/layouts/     — Page layout wrappers
+src/lib/         — Pure utility functions (no React)
+src/pages/       — Route-level page components
+src/router/      — TanStack Router config
+src/state/       — Zustand stores
+src/types/       — Shared TypeScript types
+src/styles/      — globals.css and Tailwind entry
+
+## State rules
+- Server data (API responses) → TanStack Query
+- Cross-feature UI state → Zustand (src/state/)
+- Local UI state → useState / useReducer
+- Form state → TanStack Forms
+- Never put server data in Zustand
+
+## Naming
+- Components: PascalCase (UserCard.tsx)
+- Hooks: camelCase, use prefix (useUserProfile.ts)
+- Zustand stores: camelCase, Store suffix (useCartStore.ts)
+- Zod schemas: camelCase, Schema suffix (loginSchema)
+- Types/interfaces: PascalCase, Props suffix for component props
+
+## Component rules
+- One component per file
+- No business logic in components — hooks only
+- Props interface named [ComponentName]Props
+- DOMPurify before any dangerouslySetInnerHTML
+- user-select: none on all non-editable interactive elements
+
+## Import style
+- Use @/ alias for all src-relative imports
+- Group: external libs → @/ paths → relative paths
+
+## TypeScript
+- strict: true always
+- No any — use unknown and narrow with Zod or type guards
+- All API response shapes typed
+
+## Biome
+- Double quotes, 2-space indent, 100-char line width
+- Run: pnpm check or bun run check, matching the selected package manager
+
+## Forms
+- TanStack Forms for form state management
+- Zod schema for all validation
+- DOMPurify for any user-generated HTML content
+
+## Environment
+- VITE_ prefix required for client-side env vars
+- .env.develop → loaded in dev (vite --mode develop)
+- .env → loaded in production
+- Never commit .env or .env.develop

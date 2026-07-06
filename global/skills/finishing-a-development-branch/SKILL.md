@@ -1,6 +1,7 @@
 ---
 name: finishing-a-development-branch
 description: Finish a feature branch — run tests, verify build, create a commit, and offer to open a PR or push. Use after all implementation tasks are done. Pre-PR gates — /dependency-audit for vulnerable packages, @owasp-security-reviewer when the branch touched auth/API/input handling, @code-plan-verifier when a written plan exists.
+disable-model-invocation: true
 allowed-tools: Bash, Read, Glob
 ---
 

@@ -1,10 +1,11 @@
 ---
 name: design
-description: Load the Premium Digital Agency 2.0 design system into context. Invoke before building UI components, reviewing designs, or making any styling decisions.
-allowed-tools: Read, Write, Edit, Glob
+description: Loads the Premium Digital Agency 2.0 design system into context. Use before building UI components, choosing colors, typography, or spacing, reviewing designs, or making any styling decision.
 ---
 
 Apply the following design system for all UI work in this session. Every decision about color, typography, spacing, elevation, and component behavior must follow these rules.
+
+The machine-readable token sheet (all CSS custom properties, including the light theme) is the single source of truth at [`references/tokens.css`](references/tokens.css) — read it when writing actual CSS; never restate token values elsewhere.
 
 ---
 

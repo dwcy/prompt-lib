@@ -19,9 +19,10 @@ When `/css` is invoked:
    - `pages/_app.tsx` → Next.js Pages Router
    - `src/main.tsx` or `src/index.tsx` → Vite / CRA
 2. Check if `styles/globals.css` exists — read it first if it does
-3. Create (or replace) `styles/globals.css` with the full template below
-4. Open the entry point file and verify `import '../styles/globals.css'` (or equivalent path) exists — add it if missing
-5. Report what was created and the CSS module convention to follow
+3. Read the canonical token sheet at `${CLAUDE_SKILL_DIR}/../design/references/tokens.css`
+4. Create (or replace) `styles/globals.css` with the template below, inlining the token sheet verbatim where marked
+5. Open the entry point file and verify `import '../styles/globals.css'` (or equivalent path) exists — add it if missing
+6. Report what was created and the CSS module convention to follow
 
 ### globals.css to write
 
@@ -58,65 +59,8 @@ p, h1, h2, h3, h4, h5, h6 {
 }
 
 /* ─── Design tokens ──────────────────────────────────────────────── */
-:root {
-  /* Colors */
-  --color-surface:                #161120;
-  --color-surface-container-low:  #1e1929;
-  --color-surface-container:      #221d2d;
-  --color-surface-bright:         #3c3647;
-  --color-primary:                #fbabff;
-  --color-primary-container:      #eb6afb;
-  --color-on-primary:             #580065;
-  --color-secondary:              #48e351;
-  --color-on-surface:             #e9def5;
-  --color-outline-variant:        #514251;
-
-  /* Typography */
-  --font-display: 'Plus Jakarta Sans', sans-serif;
-  --font-body:    'Manrope', sans-serif;
-
-  /* Spacing (0.25rem increments) */
-  --size-1:  0.25rem;
-  --size-2:  0.5rem;
-  --size-3:  0.75rem;
-  --size-4:  1rem;
-  --size-6:  1.5rem;
-  --size-8:  2rem;
-  --size-12: 3rem;
-  --size-16: 4rem;
-  --size-24: 6rem;
-
-  /* Border radius */
-  --radius-sm:   0.25rem;
-  --radius-md:   0.75rem;
-  --radius-lg:   1.5rem;
-  --radius-full: 9999px;
-
-  /* Shadows — diffused, tinted with on-surface lavender */
-  --shadow-sm: 0 2px  12px 0 rgba(233, 222, 245, 0.04);
-  --shadow-md: 0 4px  32px 0 rgba(233, 222, 245, 0.06);
-  --shadow-lg: 0 8px  60px 0 rgba(233, 222, 245, 0.08);
-
-  /* Z-index scale */
-  --z-base:     0;
-  --z-raised:   10;
-  --z-dropdown: 100;
-  --z-sticky:   200;
-  --z-modal:    300;
-  --z-toast:    400;
-}
-
-/* ─── Light theme override ───────────────────────────────────────── */
-[data-theme="light"] {
-  color-scheme: light;
-
-  --color-surface:                #faf8ff;
-  --color-surface-container-low:  #f3f0fa;
-  --color-surface-container:      #ece8f4;
-  --color-surface-bright:         #ffffff;
-  --color-on-surface:             #1c1a27;
-  --color-outline-variant:        #c9c3d0;
-}
+/* Inline the FULL contents of design/references/tokens.css here,
+   verbatim (includes the light theme override). Do not retype values. */
 
 /* ─── Base element styles ────────────────────────────────────────── */
 body {
