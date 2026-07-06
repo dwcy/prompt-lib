@@ -78,6 +78,7 @@ from cabal.tools import (
     _probe_key,
 )
 from cabal.updates import check_for_updates, do_git_pull
+from cabal.widgets.claude_doctor_panel import ClaudeDoctorPanel
 from cabal.widgets.claude_sessions_panel import ClaudeSessionsPanel
 from cabal.widgets.claude_stats_panel import ClaudeStatsPanel
 from cabal.widgets.dashboard_panel import DashboardPanel
@@ -125,6 +126,7 @@ class HomeScreen(Screen):
                     yield Button("Settings", id="btn-op-settings", variant="default")
                     yield Button("MCP Connectors", id="btn-op-mcp", variant="default")
                 yield ClaudeStatsPanel(id="claude-stats")
+                yield ClaudeDoctorPanel(id="claude-doctor")
                 yield Static(
                     "[bold]Local Claude Settings[/bold]", classes="home-section-title"
                 )
@@ -297,6 +299,10 @@ class HomeScreen(Screen):
             pass
         try:
             self.query_one("#claude-sessions", ClaudeSessionsPanel).refresh_sessions()
+        except Exception:
+            pass
+        try:
+            self.query_one("#claude-doctor", ClaudeDoctorPanel).refresh_doctor()
         except Exception:
             pass
         self._apply_drift_markers()
