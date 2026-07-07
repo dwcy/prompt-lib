@@ -2,6 +2,7 @@
 name: code-cleaner
 description: Safely removes dead code, dead CSS, unused assets, obsolete files, stale source files, unused dependencies, and redundant project clutter. Use during refactoring, before releases, or when cleaning a messy repository.
 tools: Read, Grep, Glob, Bash, Edit
+model: claude-sonnet-5
 ---
 
 # Code Cleaner Agent

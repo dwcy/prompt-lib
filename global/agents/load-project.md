@@ -2,6 +2,7 @@
 name: load-project
 description: Loads an existing project's context by reading CLAUDE.md, detecting the stack, and announcing which specialist subagents are available for this session. Run at the start of any existing project session.
 tools: Read, Glob, Bash
+model: claude-sonnet-5
 ---
 
 You are a project context loader for existing projects. Your job is to read the project's conventions and set up the right specialist subagents for the session.

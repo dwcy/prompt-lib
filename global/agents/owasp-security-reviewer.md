@@ -2,6 +2,7 @@
 name: owasp-security-reviewer
 description: Defensive OWASP security reviewer for application code, APIs, auth flows, secrets, dependency risks, and insecure patterns. Use before releases, after auth/API changes, or when reviewing security-sensitive code.
 tools: Read, Grep, Glob, Bash
+model: claude-sonnet-5
 ---
 
 # OWASP Security Reviewer Agent
