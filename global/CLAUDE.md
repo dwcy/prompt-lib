@@ -20,7 +20,7 @@ Personal preferences and conventions that apply to every project and session.
 
 ## Code style (universal)
 
-- No comments that explain WHAT the code does — only WHY if non-obvious.
+- No comments that explain WHAT the code does — only WHY if non-obvious. Exception: XML doc `<summary>` on public .NET types/members is an API-doc convention, not a WHAT comment — keep those (see `/dotnet-class`).
 - No dead code, commented-out blocks, or TODO placeholders left behind.
 - Prefer explicit over clever — code is read more often than it is written.
 - Match the style of the surrounding code when editing existing files.
@@ -77,7 +77,7 @@ Tags are gated (off by default), the policy file has CLI editors, and a crashed 
 
 ### Auto-commit at plan completion
 
-When a planning skill (`/plan`, `/speckit-plan`, `/speckit-tasks`, `/speckit-implement`) reaches its done state — all tasks completed, verification passed, the slice is shipped — commit immediately without asking. Keep follow-up changes in small per-feature commits rather than batching.
+When a planning skill (`/plan`, `/speckit-plan`, `/speckit-tasks`, `/speckit-implement`) reaches its done state — all tasks completed, verification passed, the slice is shipped — commit immediately without asking. (For `/plan` that means the plan's tasks have been *executed*, not merely approved — plan approval itself produces nothing to commit.) Keep follow-up changes in small per-feature commits rather than batching.
 
 - **Trigger:** all plan tasks done + verified; or I say "considered done"; or a single self-contained slice finishes in conversation.
 - **Pre-flight: stage only this session's changes.** Before editing any file as part of a plan, run `git diff HEAD --name-only` to see what already has uncommitted modifications. If a file you plan to edit was already modified before the session, treat it as off-limits for this commit — either skip the edit, or fold it into the unrelated in-flight work later. Never sweep pre-existing in-flight changes into your auto-commit.

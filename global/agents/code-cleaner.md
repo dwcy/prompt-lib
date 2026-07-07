@@ -204,14 +204,16 @@ rg -n "TODO|FIXME|HACK|obsolete|deprecated|remove|dead code|unused"
 JavaScript/TypeScript:
 
 ```bash
-npm run typecheck
-npm run build
-npm test
-npm run lint
-npx knip
-npx depcheck
-npx ts-prune
+pnpm typecheck
+pnpm build
+pnpm test
+pnpm lint
+pnpm dlx knip
+pnpm dlx depcheck
+pnpm dlx ts-prune
 ```
+
+Use the project's package manager (`pnpm` or `bun`/`bunx`) — never `npm`, `npx`, or `yarn`.
 
 .NET:
 

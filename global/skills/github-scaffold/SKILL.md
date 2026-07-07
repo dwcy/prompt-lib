@@ -189,7 +189,8 @@ Print a 4-line summary:
 
 Next:
   1. Review the files (especially CODEOWNERS).
-  2. Commit: git add .github && git commit -m "task: scaffold .github/ workflows + dependabot"
+  2. Commit via the git-identity wrapper (never raw git commit):
+     git add .github && python ~/.claude/scripts/git-identity.py commit -m "task: scaffold .github/ workflows + dependabot"
   3. Push, then run @github-config-manager to flip the repo-level security toggles
      (secret scanning, branch protection, Copilot code review).
 ```
