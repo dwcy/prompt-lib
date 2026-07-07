@@ -28,6 +28,19 @@ except ImportError:
 
 STATE_FILE = Path.home() / ".claude" / ".subagent_state.json"
 
+# Mirrors pretool_task_isolation.py — keep the two lists in sync.
+READ_ONLY_SUBAGENTS = {
+    "Explore",
+    "Plan",
+    "claude-code-guide",
+    "statusline-setup",
+    "code-plan-verifier",
+    "gitignore-auditor",
+    "github-config-manager",
+    "load-project",
+    "secret-auditor",
+}
+
 
 def main() -> None:
     if should_skip("subagent_start"):
@@ -43,6 +56,15 @@ def main() -> None:
     tool_input = data.get("tool_input") or {}
     name = tool_input.get("subagent_type") or "subagent"
     model = tool_input.get("model")
+
+    # If pretool_task_isolation will block this dispatch, don't record a running
+    # chip — no SubagentStop fires to clear it, leaving a stale statusline entry.
+    if (
+        tool_input.get("subagent_type") not in READ_ONLY_SUBAGENTS
+        and tool_input.get("run_in_background") is True
+        and tool_input.get("isolation") != "worktree"
+    ):
+        sys.exit(0)
 
     state = {
         "running": True,

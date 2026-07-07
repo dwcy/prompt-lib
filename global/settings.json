@@ -1,7 +1,7 @@
 {
   "autoUpdatesChannel": "latest",
   "theme": "dark",
-  "model": "opus",
+  "model": "claude-fable-5[1m]",
   "defaultMode": "plan",
   "verbose": true,
   "feedbackSurveyRate": 0,
@@ -133,7 +133,16 @@
   },
   "enabledPlugins": {
     "azure@claude-plugins-official": true,
-    "microsoft-docs@claude-plugins-official": true
+    "microsoft-docs@claude-plugins-official": true,
+    "vercel-plugin@vercel": true
+  },
+  "extraKnownMarketplaces": {
+    "vercel": {
+      "source": {
+        "source": "github",
+        "repo": "vercel/vercel-plugin"
+      }
+    }
   },
   "hooks": {
     "SessionStart": [

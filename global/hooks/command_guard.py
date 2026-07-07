@@ -41,7 +41,7 @@ PROMPT_INJECTION = [
         r"ignore\s+(previous|above|prior|all)\s+instructions",
         "ignore-instructions pattern",
     ),
-    (r"(system|assistant|human|user)\s*:\s*(?=\S)", "role-prefix injection"),
+    (r"(?im)^\s*(system|assistant|human|user)\s*:\s", "role-prefix injection"),
     (r"<\|im_start\|>|<\|im_end\|>", "ChatML token"),
     (r"\[INST\]|\[/INST\]|<<SYS>>|<</SYS>>", "Llama/Mistral instruction token"),
     (r"###\s*(Instruction|Response|Human|Assistant)\b", "instruction-marker injection"),
