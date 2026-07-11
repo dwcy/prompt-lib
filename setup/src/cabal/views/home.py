@@ -125,6 +125,10 @@ class HomeScreen(Screen):
                 with Horizontal(classes="ops-row"):
                     yield Button("Settings", id="btn-op-settings", variant="default")
                     yield Button("MCP Connectors", id="btn-op-mcp", variant="default")
+                with Horizontal(classes="ops-row"):
+                    yield Button(
+                        "Context Guard", id="btn-op-context-guard", variant="default"
+                    )
                 yield ClaudeStatsPanel(id="claude-stats")
                 yield ClaudeDoctorPanel(id="claude-doctor")
                 yield Static(
@@ -316,6 +320,7 @@ class HomeScreen(Screen):
         from cabal.views.package_security import PackageSecurityScreen
         from cabal.views.services import ServicesScreen
         from cabal.views.settings import SettingsScreen
+        from cabal.views.context_guard import ContextGuardScreen
         from cabal.views.codex_update import CodexUpdateScreen
         from cabal.views.codex_local import CodexLocalScreen
         from cabal.views.codex_conversion import CodexConversionScreen
@@ -330,6 +335,7 @@ class HomeScreen(Screen):
             "btn-op-services": ServicesScreen,
             "btn-op-pkgsecurity": PackageSecurityScreen,
             "btn-op-settings": SettingsScreen,
+            "btn-op-context-guard": ContextGuardScreen,
             "btn-op-codex-update": CodexUpdateScreen,
             "btn-op-codex-local": CodexLocalScreen,
             "btn-op-codex-conversion": CodexConversionScreen,

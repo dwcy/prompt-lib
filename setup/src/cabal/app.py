@@ -29,6 +29,7 @@ from cabal.views.clone_repo import CloneRepoScreen  # noqa: F401
 from cabal.views.codex_conversion import CodexConversionScreen  # noqa: F401
 from cabal.views.codex_local import CodexLocalScreen  # noqa: F401
 from cabal.views.codex_update import CodexUpdateScreen  # noqa: F401
+from cabal.views.context_guard import ContextGuardScreen  # noqa: F401
 from cabal.views.env import EnvScreen  # noqa: F401
 from cabal.views.folder_browser import FolderBrowserScreen  # noqa: F401
 from cabal.views.gh_accounts_modal import GhAccountsModal  # noqa: F401
