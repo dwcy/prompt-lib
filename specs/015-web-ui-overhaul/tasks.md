@@ -16,16 +16,16 @@
 
 ## Phase 1: Setup (Shared Infrastructure)
 
-**Status**: ⬜ Pending (0/7 — T001–T007)
+**Status**: ✅ Complete (7/7 — T001–T007)
 **Purpose**: Package skeletons, toolchains, and test scaffolding for backend, frontend, and shell.
 
-- [ ] T001 Create backend package skeleton setup/src/cabal/webapi/{__init__.py,routers/__init__.py} and add fastapi/uvicorn/platformdirs deps + `cabal-backend` script entry to setup/pyproject.toml — Owner: @python-architect
-- [ ] T002 [P] Scaffold apps/cabal-desktop Vite + React + TS app with pnpm (package.json, vite.config.ts incl. handshake-file dev proxy, tsconfig.json, index.html, src/main.tsx, src/App.tsx) plus Zustand/TanStack Query/Virtual/Zod deps — Owner: @react-architect — Parallel: yes
-- [ ] T003 [P] Configure Tailwind CSS v4 + Biome + base src/styles/globals.css (reset only; tokens come in T024) in apps/cabal-desktop — Owner: @frontend-css — Parallel: yes
-- [ ] T004 [P] Scaffold Tauri v2 shell in apps/cabal-desktop/src-tauri (tauri.conf.json, capabilities/default.json, Cargo.toml with shell/single-instance/window-state plugins, src/main.rs skeleton) — Owner: main
-- [ ] T005 [P] Create pytest placeholders tests/contract/test_webapi_{envelope,modules,jobs_sse,action_safety,handshake}_contract.py — Owner: @python-tester
-- [ ] T006 [P] Configure Vitest + React Testing Library + MSW in apps/cabal-desktop (vitest.config.ts, tests/setup.ts, one passing smoke test) — Owner: @frontend-tester
-- [ ] T007 [P] Configure Playwright scaffold apps/cabal-desktop/tests/e2e (playwright.config.ts, fixture-backend launcher stub) — Owner: @frontend-tester
+- [X] T001 Create backend package skeleton setup/src/cabal/webapi/{__init__.py,routers/__init__.py} and add fastapi/uvicorn/platformdirs deps + `cabal-backend` script entry to setup/pyproject.toml — Owner: @python-architect
+- [X] T002 [P] Scaffold apps/cabal-desktop Vite + React + TS app with pnpm (package.json, vite.config.ts incl. handshake-file dev proxy, tsconfig.json, index.html, src/main.tsx, src/App.tsx) plus Zustand/TanStack Query/Virtual/Zod deps — Owner: @react-architect — Parallel: yes
+- [X] T003 [P] Configure Tailwind CSS v4 + Biome + base src/styles/globals.css (reset only; tokens come in T024) in apps/cabal-desktop — Owner: @frontend-css — Parallel: yes
+- [X] T004 [P] Scaffold Tauri v2 shell in apps/cabal-desktop/src-tauri (tauri.conf.json, capabilities/default.json, Cargo.toml with shell/single-instance/window-state plugins, src/main.rs skeleton) — Owner: main
+- [X] T005 [P] Create pytest placeholders tests/contract/test_webapi_{envelope,modules,jobs_sse,action_safety,handshake}_contract.py — Owner: @python-tester
+- [X] T006 [P] Configure Vitest + React Testing Library + MSW in apps/cabal-desktop (vitest.config.ts, tests/setup.ts, one passing smoke test) — Owner: @frontend-tester
+- [X] T007 [P] Configure Playwright scaffold apps/cabal-desktop/tests/e2e (playwright.config.ts, fixture-backend launcher stub) — Owner: @frontend-tester
 
 ---
 

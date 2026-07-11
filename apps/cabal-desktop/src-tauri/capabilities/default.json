@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Baseline capability for the main Cabal window; sidecar execute permission is added in T028.",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}

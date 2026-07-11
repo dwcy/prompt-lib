@@ -29,6 +29,18 @@ build/
 setup/build/dist/
 setup/build/build/
 
+# Node / frontend (apps/cabal-desktop)
+node_modules/
+apps/cabal-desktop/dist/
+apps/cabal-desktop/coverage/
+apps/cabal-desktop/playwright-report/
+apps/cabal-desktop/test-results/
+*.tsbuildinfo
+
+# Rust / Tauri (apps/cabal-desktop/src-tauri)
+apps/cabal-desktop/src-tauri/target/
+apps/cabal-desktop/src-tauri/gen/
+
 # IDE
 .vscode/
 .idea/

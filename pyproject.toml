@@ -24,6 +24,9 @@ classifiers = [
 dependencies = [
   "textual>=0.50,<7",
   "rich>=13,<15",
+  "fastapi>=0.115,<1",
+  "uvicorn>=0.34,<1",
+  "platformdirs>=4.3,<5",
 ]
 
 [project.optional-dependencies]
@@ -36,6 +39,7 @@ Issues = "https://github.com/dwcy/prompt-lib/issues"
 
 [project.scripts]
 cabal = "cabal.__main__:main"
+cabal-backend = "cabal.webapi.__main__:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["setup/src/cabal"]
