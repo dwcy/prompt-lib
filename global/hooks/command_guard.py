@@ -8,8 +8,12 @@ Exit 2  -> block (prints JSON reason shown to Claude and user)
 """
 
 import json
+import os
 import re
+import shlex
+import subprocess
 import sys
+from pathlib import Path
 
 try:
     from _gate import should_skip
@@ -144,8 +148,122 @@ FORBIDDEN_PACKAGE_MANAGER = re.compile(
     r"(npm|npx|yarn)(?:\.(?:cmd|ps1|bat))?\b"
 )
 
+# `find ... -delete` / `-exec rm` is only flagged as destructive when it would
+# touch files that aren't safely recoverable from git — see
+# _find_delete_targets_are_versioned_and_clean() below.
+FIND_DELETE_RE = re.compile(
+    r"(?:^|[;&|`(])\s*find\b.*?(?:-delete\b|-exec\s+(?:/bin/)?rm\b)",
+    re.IGNORECASE | re.DOTALL,
+)
 
-def scan(command: str, tool_name: str = "Bash") -> list[str]:
+_CHAIN_METACHARS = re.compile(r"(?<!\\)[;&|`]|\$\(")
+
+MAX_FIND_DELETE_TARGETS = 500
+
+
+def _tool_executable(env_var: str, name: str, *win_git_relative: str) -> str:
+    override = os.environ.get(env_var)
+    if override:
+        return override
+    if sys.platform == "win32":
+        for root in (
+            os.environ.get("ProgramFiles", r"C:\Program Files"),
+            os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)"),
+        ):
+            candidate = Path(root).joinpath(*win_git_relative)
+            if candidate.exists():
+                return str(candidate)
+    return name
+
+
+GIT = _tool_executable("PROMPTLIB_GIT", "git", "Git", "cmd", "git.exe")
+FIND = _tool_executable("PROMPTLIB_FIND", "find", "Git", "usr", "bin", "find.exe")
+
+
+def _is_single_find_invocation(command: str) -> bool:
+    stripped = command.strip()
+    if not re.match(r"^find\b", stripped, re.IGNORECASE):
+        return False
+    return not _CHAIN_METACHARS.search(stripped)
+
+
+def _find_listing_variant(command: str) -> str | None:
+    """Swap the destructive action for -print, keeping every predicate
+    identical, so the dry run matches exactly the same files the real
+    command would touch."""
+    stripped = command.strip()
+
+    delete_swap = re.sub(r"-delete\b", "-print", stripped, count=1)
+    if delete_swap != stripped:
+        return delete_swap
+
+    exec_swap = re.sub(
+        r"-exec\s+(?:/bin/)?rm\b.*?(?:\\;|\+)",
+        "-print",
+        stripped,
+        count=1,
+        flags=re.DOTALL,
+    )
+    if exec_swap != stripped:
+        return exec_swap
+
+    return None
+
+
+def _run(cmd: list[str], cwd: str, timeout: int = 10) -> subprocess.CompletedProcess | None:
+    try:
+        return subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, timeout=timeout)
+    except Exception:
+        return None
+
+
+def _find_delete_targets_are_versioned_and_clean(command: str, cwd: str) -> bool:
+    """A find-delete is only safe to wave through when every file it would
+    touch is already tracked AND identical to the last commit — genuinely
+    recoverable via git, not just 'happens to live in a repo somewhere'.
+    Any ambiguity (compound command, unparseable predicates, no git repo,
+    an untracked or modified target) fails closed to "not safe"."""
+    try:
+        if not _is_single_find_invocation(command):
+            return False
+
+        listing_command = _find_listing_variant(command)
+        if listing_command is None:
+            return False
+
+        try:
+            tokens = shlex.split(listing_command)
+        except ValueError:
+            return False
+
+        listing = _run([FIND, *tokens[1:]], cwd=cwd)
+        if listing is None or listing.returncode != 0:
+            return False
+
+        targets = [line for line in listing.stdout.splitlines() if line.strip()]
+        if not targets:
+            return True  # nothing would actually be deleted
+        if len(targets) > MAX_FIND_DELETE_TARGETS:
+            return False
+
+        in_repo = _run([GIT, "rev-parse", "--is-inside-work-tree"], cwd=cwd)
+        if in_repo is None or in_repo.returncode != 0:
+            return False
+
+        tracked = _run([GIT, "ls-files", "--error-unmatch", "--", *targets], cwd=cwd)
+        if tracked is None or tracked.returncode != 0:
+            return False
+
+        clean = _run([GIT, "diff", "--quiet", "HEAD", "--", *targets], cwd=cwd)
+        if clean is None or clean.returncode != 0:
+            return False
+
+        return True
+    except Exception:
+        return False
+
+
+def scan(command: str, tool_name: str = "Bash", cwd: str | None = None) -> list[str]:
     issues = []
 
     # Hidden Unicode
@@ -187,6 +305,15 @@ def scan(command: str, tool_name: str = "Bash") -> list[str]:
             "Package manager policy: npm, npx, and yarn are forbidden; use pnpm/pnpm dlx or bun/bunx"
         )
 
+    if FIND_DELETE_RE.search(command):
+        resolved_cwd = cwd or os.getcwd()
+        if not _find_delete_targets_are_versioned_and_clean(command, resolved_cwd):
+            issues.append(
+                "Destructive pattern: find + delete/exec-rm targeting files that "
+                "are not fully tracked and committed (untracked, modified, or "
+                "unverifiable) — not safely recoverable"
+            )
+
     return issues
 
 
@@ -206,7 +333,8 @@ def main():
     if not command:
         sys.exit(0)
 
-    issues = scan(command, tool_name)
+    cwd = data.get("cwd") or os.getcwd()
+    issues = scan(command, tool_name, cwd)
     if not issues:
         sys.exit(0)
 
