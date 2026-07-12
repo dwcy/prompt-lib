@@ -26,10 +26,10 @@ _EMPTY_SECURITY_SUMMARY = {"vulnerable": 0, "outdated": 0, "deprecated": 0, "not
 T = TypeVar("T")
 
 
-def build_overview(project: Path | None) -> tuple[dict[str, Any], bool]:
-    """Return (overview_data, degraded) for the OVERVIEW_SECTION_KEYS payload."""
+def build_overview(project: Path | None) -> tuple[dict[str, Any], bool, list[str]]:
+    """Return (overview_data, degraded, failed_sections) for the OVERVIEW_SECTION_KEYS payload."""
     sections: dict[str, Any] = {}
-    degraded = False
+    failed_sections: list[str] = []
 
     for key, fallback, fn in (
         ("dashboard_summary", {"project_path": None, "sections": {}}, lambda: _dashboard_summary(project)),
@@ -42,9 +42,10 @@ def build_overview(project: Path | None) -> tuple[dict[str, Any], bool]:
     ):
         value, ok = _safe(fn, fallback)
         sections[key] = value
-        degraded = degraded or not ok
+        if not ok:
+            failed_sections.append(key)
 
-    return sections, degraded
+    return sections, bool(failed_sections), failed_sections
 
 
 def _safe(fn: Callable[[], T], fallback: T) -> tuple[T, bool]:

@@ -96,8 +96,15 @@ def diagnostics_stream(request: Request):
 @router.get("/api/overview")
 def overview(request: Request):
     project = request.app.state.project
-    data, degraded = build_overview(Path(project) if project is not None else None)
-    return envelope_response(data=data, source="overview", status="degraded" if degraded else "ok")
+    data, degraded, failed_sections = build_overview(Path(project) if project is not None else None)
+    error = (
+        {"code": "section_unavailable", "message": f"Sections unavailable: {', '.join(failed_sections)}"}
+        if degraded
+        else None
+    )
+    return envelope_response(
+        data=data, source="overview", status="degraded" if degraded else "ok", error=error
+    )
 
 
 @router.get("/api/dashboard")
