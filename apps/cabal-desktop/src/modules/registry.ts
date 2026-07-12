@@ -5,6 +5,7 @@ import { DiagnosticsModule } from "@/modules/diagnostics/DiagnosticsModule";
 import { OverviewModule } from "@/modules/overview/OverviewModule";
 import { ProjectDashboardModule } from "@/modules/project-dashboard/ProjectDashboardModule";
 import { ProjectGateModule } from "@/modules/project-gate/ProjectGateModule";
+import { ToolsModule } from "@/modules/tools/ToolsModule";
 
 export type ModuleGroup =
   | "project"
@@ -90,7 +91,13 @@ export const MODULE_REGISTRY: ModuleDefinition[] = [
     phase: 3,
     component: ProjectDashboardModule,
   },
-  { key: "tools", title: "Tools Catalog", group: "environment-setup", phase: 4, component: null },
+  {
+    key: "tools",
+    title: "Tools Catalog",
+    group: "environment-setup",
+    phase: 4,
+    component: ToolsModule,
+  },
   {
     key: "config_deploy",
     title: "Global Config Deployment",
