@@ -109,6 +109,18 @@ Consider committing or stashing before closing.
 
 **Stale locks**: if the session was killed (no SessionEnd fires), the lock stays on disk. The SessionStart hook's PID-alive check (POSIX `os.kill(pid, 0)`, Windows `tasklist`) treats it as stale and reclaims it on the next start.
 
+## SessionStart + SessionEnd — `process_cleanup.py`
+
+**Fires**: once at session start, once at session end.
+
+**What it does**: on Windows only, shells out to the sibling `claude-process-check.ps1` (the report/kill engine, versioned alongside it) with `-Kill`. That script targets only orphaned Claude-related helpers — `node.exe`, `claude.exe`, `sh.exe`, `bash.exe`, and small unix helpers (`du.exe`, `grep.exe`, `rg.exe`, `tail.exe`, `head.exe`, `uname.exe`, `cygpath.exe`) — whose parent process is gone, and explicitly never flags a `node.exe` that doesn't look Claude-related (protects real dev servers). Appends one line per run to `~/.claude/process_cleanup.log` (`event`, `orphans_found`, `orphans_killed`). Only speaks up via `additionalContext` when something was actually killed, and only on `SessionStart` — `SessionEnd` output is never read by anything.
+
+**Why session boundaries, not mid-session**: Claude Code hooks are lifecycle-driven — there's no "CPU/RAM crossed a threshold" event. A hook can't watch a single long session slowly turning into syrup; it can only sweep what's left behind when a session starts or ends. Catching true mid-session buildup would need an OS-level timer (e.g. Windows Task Scheduler) running independently of Claude Code — deliberately out of scope here. See [ADR 0002](adr/0002-process-cleanup-hook-session-boundaries-not-scheduled-task.md) for the full tradeoff.
+
+**Non-Windows**: no-op. `claude-process-check.ps1` is Windows-only (uses `Get-CimInstance Win32_Process`).
+
+**Never fails the session**: any error exits 0, same convention as every other hook here.
+
 ## Hook composition with skills
 
 Hooks are unconditional — they fire on every matching event. Skills are voluntary — you invoke them. They layer cleanly:

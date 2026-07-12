@@ -423,6 +423,60 @@ Ideas:
 - Docs freshness checks against known source files.
 - Secret/gitignore audit before release.
 
+### Remote-Hosted Skill/Agent Registry (MCP, context7-style)
+
+Goal: let a corp host `global/skills/` and `global/agents/` centrally and
+have Claude Code fetch definitions live via MCP instead of every machine
+running local file copies — gated per team, updated instantly, no
+redeploy. Status: exploratory only, not yet scoped as a spec-kit feature
+(came out of a design discussion, not a concrete ask).
+
+Two designs considered:
+- **Execution-as-a-service (rejected)** — MCP server runs the LLM loop
+  itself (`run_agent`/`run_skill`). Requires shipping the caller's local
+  repo to a remote runner on every call (exfiltration risk at corp scale),
+  loses local tool-call latency, and duplicates what Claude Code already
+  does locally. `specs/017-opencode-setup/plan.md` explicitly avoided this
+  for Claude — only Codex gets an MCP-server bridge, because
+  `codex mcp-server` is a native local subcommand.
+- **Definitions-as-a-service (the sound version)** — MCP server hosts only
+  the markdown *content*, fetched live per invocation; execution stays
+  100% local (local Bash, filesystem, git, tools).
+
+Ideas:
+- New `services/prompt-hub` package, same FastMCP/stdio/uv shape as
+  `services/mcp-bus`.
+- Tools mirroring context7: `list_skills(query?)` / `list_agents(query?)`
+  (names + one-line descriptions, filtered server-side by caller
+  entitlement) and `get_skill(name)` / `get_agent(name)` (full markdown
+  body, fetched fresh every call).
+- Claude Code's `Skill`/`Agent` tools only list what's declared in local
+  `.claude/skills/*.md` / `.claude/agents/*.md` — an MCP server can't
+  inject entries into either list. So invocation style splits handling:
+  - **Explicit invocation** (`/foo`, named `subagent_type`) needs a thin
+    local stub file (frontmatter only, plus for agents the `tools:`
+    allowlist) whose body just says "fetch and follow
+    `get_skill('foo')`/`get_agent('foo')`".
+  - **Relevance-triggered invocation** (context7-style, no explicit name)
+    needs zero local files — the MCP server's `instructions` field
+    (returned at connection time, part of the standard MCP handshake —
+    the same mechanism that surfaces context7/claude-in-chrome's
+    "MCP Server Instructions" block today) can list what's available and
+    how to fetch it, generated per authenticated caller.
+
+Hard rule if built: for agents, the `tools:` allowlist in the local stub
+is a security ceiling and must never be expandable by the remotely-fetched
+body — only the local stub's frontmatter decides tool access, regardless
+of what the fetched instructions say.
+
+Open questions:
+- Which existing skills/agents are actual corp-gated candidates, vs. fine
+  staying local/public?
+- Worth generating explicit-invocation stubs for all of them, or only the
+  ones people already muscle-memory type as `/foo`?
+- How does entitlement/auth get plumbed into the MCP server (per-user
+  token, per-team API key)?
+
 ## P3 - Developer Experience
 
 ### Better Docs Command
