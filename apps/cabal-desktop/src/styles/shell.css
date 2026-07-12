@@ -1,0 +1,228 @@
+/* App shell: header, grouped sidebar nav, connectivity health strip, per-module error boundary
+   panel, and the schema-mismatch refresh prompt. Narrow-width behavior (FR-014) collapses the
+   sidebar into an overlay drawer; see the shared `@media (max-width: 768px)` block at the bottom
+   (mirrors --bp-narrow in tokens.css). */
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: var(--bg);
+  color: var(--fg);
+}
+
+.app-shell__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+  background-color: var(--surface-1);
+  position: sticky;
+  top: 0;
+  z-index: var(--z-header);
+}
+
+.app-shell__title {
+  font-size: var(--fs-lg);
+  line-height: var(--lh-lg);
+  margin-right: auto;
+}
+
+.app-shell__sidebar-toggle {
+  flex-shrink: 0;
+}
+
+.app-shell__body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.app-shell__content {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+  padding: var(--space-6);
+}
+
+/* Schema-mismatch full-window prompt (App.tsx renders this instead of the normal shell) */
+.app-shell--refresh-prompt {
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-8);
+  text-align: center;
+}
+
+.app-shell--refresh-prompt p {
+  max-width: 32rem;
+  color: var(--muted);
+}
+
+/* ─── Sidebar nav ─────────────────────────────────────────────────────────── */
+
+.sidebar-nav {
+  flex-shrink: 0;
+  width: 15rem;
+  overflow-y: auto;
+  border-right: 1px solid var(--border);
+  background-color: var(--surface-1);
+  padding: var(--space-4) var(--space-2);
+  transition: width var(--duration-base) var(--ease-standard);
+}
+
+.sidebar-nav__group + .sidebar-nav__group {
+  margin-top: var(--space-5);
+}
+
+.sidebar-nav__group-title {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0 var(--space-2);
+  margin-bottom: var(--space-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-nav__list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.sidebar-nav__item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: var(--space-2) var(--space-2);
+  border-radius: var(--corner-md);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--fg);
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+
+.sidebar-nav__item:hover {
+  background-color: var(--surface-2);
+}
+
+.sidebar-nav__item--active {
+  background-color: var(--surface-3);
+  border-color: var(--border-strong);
+  color: var(--status-accent);
+  font-weight: 600;
+}
+
+/* Manual collapse (app-shell__sidebar-toggle) — no icon set exists yet (ModuleDefinition has no
+   icon field), so the collapsed state is an honest slim rail with truncated labels rather than a
+   fabricated icon rail. */
+.app-shell--sidebar-collapsed .sidebar-nav {
+  width: 9.5rem;
+}
+
+.app-shell--sidebar-collapsed .sidebar-nav__group-title {
+  opacity: 0.7;
+}
+
+/* ─── Health strip ────────────────────────────────────────────────────────── */
+
+.health-strip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  color: var(--muted);
+}
+
+.health-strip__version {
+  color: var(--fg);
+}
+
+.health-strip__degraded {
+  color: var(--status-warning);
+}
+
+.health-strip--reconnecting {
+  color: var(--status-danger);
+}
+
+/* ─── Module error boundary ───────────────────────────────────────────────── */
+
+.module-error-boundary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  align-items: flex-start;
+  padding: var(--space-4);
+  border: 1px solid var(--danger-border);
+  background-color: var(--danger-bg);
+  border-radius: var(--corner-md);
+  max-width: 40rem;
+}
+
+.module-error-boundary__title {
+  font-weight: 600;
+  color: var(--danger-fg);
+}
+
+.module-error-boundary__detail {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+}
+
+/* ─── Narrow-width layout (FR-014) ────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .app-shell__body {
+    position: relative;
+  }
+
+  .sidebar-nav {
+    position: fixed;
+    inset: var(--space-0) auto var(--space-0) var(--space-0);
+    top: 3.25rem;
+    width: min(20rem, 85vw);
+    z-index: var(--z-overlay);
+    box-shadow: 0.25rem 0 1.5rem rgb(0 0 0 / 45%);
+    transform: translateX(-100%);
+    transition: transform var(--duration-base) var(--ease-standard);
+  }
+
+  /* The existing collapsed/expanded toggle is reused with inverted meaning at this width: an
+     overlay drawer defaults to hidden and the "Expand" action reveals it over the content. */
+  .app-shell:not(.app-shell--sidebar-collapsed) .sidebar-nav {
+    transform: translateX(0);
+  }
+
+  .app-shell--sidebar-collapsed .sidebar-nav {
+    width: min(20rem, 85vw);
+  }
+
+  .app-shell__content {
+    padding: var(--space-4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-nav,
+  .sidebar-nav__item {
+    transition: none;
+  }
+}

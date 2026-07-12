@@ -16,7 +16,7 @@ from cabal.webapi.envelope import utc_now_iso
 
 
 def default_handshake_path() -> Path:
-    return Path(platformdirs.user_data_dir("cabal")) / "webapi-handshake.json"
+    return Path(platformdirs.user_data_dir("cabal", appauthor=False)) / "webapi-handshake.json"
 
 
 def _build_parser() -> argparse.ArgumentParser:

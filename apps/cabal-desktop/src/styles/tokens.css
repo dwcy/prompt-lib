@@ -1,0 +1,134 @@
+/* Design tokens: dark-first operational palette (FR-006), semantic state colors covering every
+   module's loading/empty/error/disabled/stale surface (FR-013), spacing/radius/type/motion scale.
+   Single source of truth referenced by raw `var(--...)` throughout src/styles/*.css; theme.css
+   re-exposes the subset Tailwind needs under its own namespaced names (--color-*, --font-*, ...)
+   so `bg-surface-2`, `text-muted`, etc. work as Tailwind utilities too. Names here are deliberately
+   NOT Tailwind-namespaced (e.g. --corner-sm not --radius-sm) to avoid a duplicate/self-referencing
+   declaration once theme.css aliases them inside `@theme`. */
+
+:root {
+  color-scheme: dark;
+
+  /* Surfaces — increasing elevation */
+  --bg: #0a0a0c;
+  --surface-1: #131316;
+  --surface-2: #1b1b1f;
+  --surface-3: #232329;
+
+  /* Borders */
+  --border: #2a2a30;
+  --border-strong: #3a3a42;
+
+  /* Foreground text */
+  --fg: #e6e6ea;
+  --muted: #9497a1;
+  --fg-inverted: #0a0a0c;
+
+  /* Base status hues — the only place a status color is ever spelled out as a literal */
+  --status-ok: #34d399;
+  --status-info: #60a5fa;
+  --status-warning: #fbbf24;
+  --status-danger: #f87171;
+  --status-neutral: #9497a1;
+  --status-accent: #a78bfa;
+  --status-stale: #c9a227;
+
+  /* Module/connectivity state palette — StatePill, HealthStrip, ModuleHealth (FR-005/012/013) */
+  --state-ok: var(--status-ok);
+  --state-loading: var(--status-info);
+  --state-degraded: var(--status-warning);
+  --state-failed: var(--status-danger);
+  --state-stale: var(--status-stale);
+  --state-unavailable: var(--status-neutral);
+
+  /* Tool/install states — data-model.md ToolStatus, defined now for the Tools module drop-in */
+  --state-installed: var(--status-ok);
+  --state-missing: var(--status-neutral);
+  --state-update-available: var(--status-info);
+  --state-manual-required: var(--status-warning);
+  --state-unsupported: var(--status-neutral);
+  --state-error: var(--status-danger);
+
+  /* Connectivity / job / stream states — HealthStrip, LogStream, JobPane */
+  --state-connecting: var(--status-info);
+  --state-open: var(--status-ok);
+  --state-closed: var(--status-neutral);
+  --state-queued: var(--status-neutral);
+  --state-running: var(--status-accent);
+  --state-succeeded: var(--status-ok);
+  --state-cancelled: var(--status-neutral);
+
+  /* Destructive / danger — ConfirmDialog removals-present styling */
+  --danger-bg: color-mix(in srgb, var(--status-danger) 12%, var(--surface-1));
+  --danger-border: color-mix(in srgb, var(--status-danger) 45%, var(--border));
+  --danger-fg: #fca5a5;
+
+  /* Focus ring */
+  --focus-ring-color: var(--status-accent);
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+
+  /* Disabled state */
+  --opacity-disabled: 0.5;
+
+  /* Spacing scale — compact, operational density over marketing-site whitespace */
+  --space-0: 0;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+
+  /* Radii */
+  --corner-sm: 0.25rem;
+  --corner-md: 0.375rem;
+  --corner-lg: 0.625rem;
+  --corner-full: 9999px;
+
+  /* Type — dense operational scale */
+  --font-family-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-family-mono:
+    ui-monospace, "Cascadia Code", "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
+
+  --fs-xs: 0.6875rem;
+  --lh-xs: 1rem;
+  --fs-sm: 0.75rem;
+  --lh-sm: 1.1rem;
+  --fs-base: 0.8125rem;
+  --lh-base: 1.3rem;
+  --fs-md: 0.875rem;
+  --lh-md: 1.35rem;
+  --fs-lg: 1rem;
+  --lh-lg: 1.4rem;
+  --fs-xl: 1.25rem;
+  --lh-xl: 1.5rem;
+  --fs-2xl: 1.5rem;
+  --lh-2xl: 1.75rem;
+
+  /* Motion — CSS transitions only; disabled wholesale under reduced-motion below */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --duration-fast: 120ms;
+  --duration-base: 180ms;
+
+  /* Stacking */
+  --z-header: 10;
+  --z-overlay: 100;
+  --z-dialog: 110;
+
+  /* Narrow-width breakpoint (FR-014). Documented as a token for parity with theme.css's
+     `--breakpoint-narrow`, but plain CSS `@media` conditions can't interpolate custom properties,
+     so component stylesheets repeat the literal `768px` value in their `@media (max-width: ...)`
+     queries — keep both in sync if this changes. */
+  --bp-narrow: 48rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-base: 0ms;
+  }
+}

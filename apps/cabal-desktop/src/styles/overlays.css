@@ -1,0 +1,199 @@
+/* Overlay components: DetailDrawer (slide-in side panel) and ConfirmDialog (modal, destructive
+   variant when EffectPreview.removals is non-empty). Both overlays share the same backdrop
+   treatment and z-index tier above the shell (--z-overlay / --z-dialog in tokens.css). */
+
+.detail-drawer-overlay,
+.confirm-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  display: flex;
+  justify-content: flex-end;
+  background-color: rgb(0 0 0 / 55%);
+}
+
+.confirm-dialog-overlay {
+  z-index: var(--z-dialog);
+  justify-content: center;
+  align-items: center;
+  padding: var(--space-4);
+}
+
+/* ─── DetailDrawer ────────────────────────────────────────────────────────── */
+
+.detail-drawer {
+  display: flex;
+  flex-direction: column;
+  width: min(28rem, 100vw);
+  height: 100%;
+  background-color: var(--surface-1);
+  border-left: 1px solid var(--border-strong);
+  box-shadow: -0.25rem 0 1.5rem rgb(0 0 0 / 45%);
+  animation: detail-drawer-in var(--duration-base) var(--ease-standard);
+}
+
+.detail-drawer:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: calc(var(--focus-ring-offset) * -1);
+}
+
+@keyframes detail-drawer-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.detail-drawer__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.detail-drawer__title {
+  font-size: var(--fs-lg);
+  line-height: var(--lh-lg);
+  margin-right: auto;
+}
+
+.detail-drawer__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4);
+}
+
+@media (max-width: 768px) {
+  .detail-drawer {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .detail-drawer {
+    animation: none;
+  }
+}
+
+/* ─── ConfirmDialog ───────────────────────────────────────────────────────── */
+
+.confirm-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: min(32rem, 100%);
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: var(--space-6);
+  background-color: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-lg);
+  box-shadow: 0 1rem 3rem rgb(0 0 0 / 55%);
+  animation: confirm-dialog-in var(--duration-fast) var(--ease-standard);
+}
+
+@keyframes confirm-dialog-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.confirm-dialog--destructive {
+  border-color: var(--danger-border);
+  background-color: var(--danger-bg);
+}
+
+.confirm-dialog__title {
+  font-size: var(--fs-lg);
+  line-height: var(--lh-lg);
+}
+
+.confirm-dialog__review-notice {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid color-mix(in srgb, var(--status-warning) 45%, var(--border));
+  background-color: color-mix(in srgb, var(--status-warning) 14%, transparent);
+  border-radius: var(--corner-md);
+  color: var(--status-warning);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+}
+
+.confirm-dialog__error {
+  color: var(--danger-fg);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+}
+
+.confirm-dialog__loading {
+  color: var(--muted);
+}
+
+.confirm-dialog__summary {
+  color: var(--fg);
+}
+
+.confirm-dialog__section + .confirm-dialog__section {
+  margin-top: var(--space-3);
+}
+
+.confirm-dialog__section-title {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: var(--space-1);
+}
+
+.confirm-dialog__list {
+  list-style: disc;
+  padding-left: var(--space-5);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+}
+
+.confirm-dialog__list--destructive {
+  color: var(--danger-fg);
+}
+
+.confirm-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.confirm-dialog__confirm--destructive {
+  background-color: var(--status-danger);
+  border-color: var(--status-danger);
+  color: var(--fg-inverted);
+}
+
+.confirm-dialog__confirm--destructive:hover:not(:disabled) {
+  background-color: var(--danger-fg);
+}
+
+@media (max-width: 768px) {
+  .confirm-dialog {
+    width: 100%;
+    max-height: 100vh;
+    height: 100%;
+    border-radius: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .confirm-dialog {
+    animation: none;
+  }
+}

@@ -66,7 +66,7 @@ _JOB_FIELDS = (
 
 
 def default_storage_path() -> Path:
-    return Path(platformdirs.user_data_dir("cabal")) / "webapi.sqlite3"
+    return Path(platformdirs.user_data_dir("cabal", appauthor=False)) / "webapi.sqlite3"
 
 
 class WriteGuard:

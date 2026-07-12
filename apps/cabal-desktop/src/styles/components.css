@@ -1,0 +1,368 @@
+/* Shared, non-overlay components: StatePill (every semantic + tool + stream variant), EmptyState,
+   DiffView, LogStream, JobPane, VirtualDataTable. Overlay components (DetailDrawer, ConfirmDialog)
+   live in overlays.css. */
+
+/* ─── StatePill ───────────────────────────────────────────────────────────── */
+
+.state-pill {
+  --pill-color: var(--state-unavailable);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--corner-full);
+  border: 1px solid color-mix(in srgb, var(--pill-color) 40%, transparent);
+  background-color: color-mix(in srgb, var(--pill-color) 16%, transparent);
+  color: var(--pill-color);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 600;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.state-pill::before {
+  content: "";
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: var(--corner-full);
+  background-color: var(--pill-color);
+  flex-shrink: 0;
+}
+
+.state-pill--ok {
+  --pill-color: var(--state-ok);
+}
+
+.state-pill--installed {
+  --pill-color: var(--state-installed);
+}
+
+.state-pill--open {
+  --pill-color: var(--state-open);
+}
+
+.state-pill--succeeded {
+  --pill-color: var(--state-succeeded);
+}
+
+.state-pill--loading {
+  --pill-color: var(--state-loading);
+}
+
+.state-pill--connecting {
+  --pill-color: var(--state-connecting);
+}
+
+.state-pill--update,
+.state-pill--update_available {
+  --pill-color: var(--state-update-available);
+}
+
+.state-pill--degraded {
+  --pill-color: var(--state-degraded);
+}
+
+.state-pill--manual_required {
+  --pill-color: var(--state-manual-required);
+}
+
+.state-pill--failed {
+  --pill-color: var(--state-failed);
+}
+
+.state-pill--error {
+  --pill-color: var(--state-error);
+}
+
+.state-pill--stale {
+  --pill-color: var(--state-stale);
+  border-style: dashed;
+}
+
+.state-pill--unavailable {
+  --pill-color: var(--state-unavailable);
+}
+
+.state-pill--closed {
+  --pill-color: var(--state-closed);
+}
+
+.state-pill--cancelled {
+  --pill-color: var(--state-cancelled);
+}
+
+.state-pill--missing {
+  --pill-color: var(--state-missing);
+}
+
+.state-pill--unsupported {
+  --pill-color: var(--state-unsupported);
+}
+
+.state-pill--queued {
+  --pill-color: var(--state-queued);
+}
+
+.state-pill--running {
+  --pill-color: var(--state-running);
+}
+
+.state-pill--loading::before,
+.state-pill--connecting::before,
+.state-pill--running::before {
+  animation: state-pill-pulse 1.2s var(--ease-standard) infinite;
+}
+
+@keyframes state-pill-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .state-pill--loading::before,
+  .state-pill--connecting::before,
+  .state-pill--running::before {
+    animation: none;
+  }
+}
+
+/* ─── EmptyState ──────────────────────────────────────────────────────────── */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-6);
+  color: var(--muted);
+}
+
+.empty-state__title {
+  font-size: var(--fs-lg);
+  line-height: var(--lh-lg);
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.empty-state__body {
+  max-width: 36rem;
+}
+
+.empty-state__action {
+  margin-top: var(--space-2);
+}
+
+/* ─── DiffView ────────────────────────────────────────────────────────────── */
+
+.diff-view {
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  background-color: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-md);
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.diff-view__empty {
+  color: var(--muted);
+  font-size: var(--fs-base);
+}
+
+.diff-view__line {
+  padding: 0 var(--space-3);
+}
+
+.diff-view__line--add {
+  background-color: color-mix(in srgb, var(--status-ok) 14%, transparent);
+  color: var(--status-ok);
+}
+
+.diff-view__line--del {
+  background-color: color-mix(in srgb, var(--status-danger) 14%, transparent);
+  color: var(--status-danger);
+}
+
+.diff-view__line--hunk {
+  color: var(--status-accent);
+  background-color: var(--surface-2);
+}
+
+.diff-view__line--meta {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.diff-view__line--context {
+  color: var(--muted);
+}
+
+/* ─── LogStream ───────────────────────────────────────────────────────────── */
+
+.log-stream {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: var(--corner-md);
+  overflow: hidden;
+}
+
+.log-stream__toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background-color: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+}
+
+.log-stream__gap {
+  color: var(--status-warning);
+}
+
+.log-stream__follow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-left: auto;
+  color: var(--muted);
+}
+
+.log-stream__body {
+  flex: 1;
+  min-height: 8rem;
+  max-height: 24rem;
+  overflow-y: auto;
+  padding: var(--space-2) var(--space-3);
+  background-color: var(--bg);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+}
+
+.log-stream__line {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ─── JobPane ─────────────────────────────────────────────────────────────── */
+
+.job-pane {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.job-pane__header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.job-pane__kind {
+  font-size: var(--fs-md);
+  line-height: var(--lh-md);
+  margin-right: auto;
+}
+
+.job-pane__cancel-confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--status-warning);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+}
+
+/* ─── VirtualDataTable ────────────────────────────────────────────────────── */
+
+.virtual-data-table {
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--corner-md);
+  max-height: 32rem;
+}
+
+.virtual-data-table__header,
+.virtual-data-table__row {
+  display: flex;
+  align-items: stretch;
+  min-width: max-content;
+}
+
+.virtual-data-table__header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-header);
+  background-color: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+
+.virtual-data-table__header-cell {
+  flex: 1 1 0;
+  min-width: 8rem;
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.virtual-data-table__row {
+  border-bottom: 1px solid var(--border);
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.virtual-data-table__row:hover {
+  background-color: var(--surface-2);
+}
+
+.virtual-data-table__row:has(input:checked) {
+  background-color: color-mix(in srgb, var(--status-accent) 12%, transparent);
+}
+
+.virtual-data-table__cell {
+  flex: 1 1 0;
+  min-width: 8rem;
+  display: flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.virtual-data-table__select-cell {
+  flex: 0 0 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .virtual-data-table__row {
+    transition: none;
+  }
+}

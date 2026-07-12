@@ -31,7 +31,7 @@
 
 ## Phase 2: Foundational (Blocking Prerequisites)
 
-**Status**: 🟡 In progress (12/21 — T008–T028)
+**Status**: ✅ Complete (21/21 — T008–T028)
 **Purpose**: Contract tests for all four surfaces, then the backend core (security, envelope, jobs, actions, audit) and frontend core (client, shell, shared components) that every module needs.
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete. T008–T011 MUST be written and observed failing before T012+.
@@ -56,18 +56,18 @@
 
 ### Frontend core lane (concurrent with backend core lane)
 
-- [ ] T020 Implement typed API client in apps/cabal-desktop/src/api/ (fetch wrapper with bearer auth + handshake config, Zod schemas for envelope v2/ModuleHealth/Job/Ticket, schema-version guard with refresh prompt) — Owner: @react-architect — Parallel: yes
-- [ ] T021 Implement Zustand stores in apps/cabal-desktop/src/stores/ (projectContext, uiPrefs w/ persisted last-module, jobTray) — Owner: @react-architect — Parallel: yes
-- [ ] T022 Implement SSE client hook in apps/cabal-desktop/src/lib/sse.ts (fetch-stream with Authorization header, Last-Event-ID reconnect, heartbeat staleness, gap surfacing) — Owner: @react-architect — Parallel: yes
-- [ ] T023 Implement app shell in apps/cabal-desktop/src/App.tsx + src/components/shell/ (grouped sidebar nav for all 22 modules, connectivity/health strip, reconnecting state, module router with per-module error boundaries + retry) — Owner: @react-architect — Parallel: yes
-- [ ] T024 Design tokens + dark operational theme in apps/cabal-desktop/src/styles/ (CSS custom properties, Tailwind v4 theme, canonical loading/empty/error/disabled/stale state visuals, density scale, narrow-width behavior) — Owner: @frontend-css — Parallel: yes
-- [ ] T025 Shared components in apps/cabal-desktop/src/components/ (VirtualDataTable via TanStack Virtual, StatePill, EmptyState, DetailDrawer, DiffView, LogStream, JobPane, ConfirmDialog rendering full EffectPreview incl. removals/backup) — Owner: @react-architect — Parallel: yes
-- [ ] T026 MSW handler library + component tests for envelope guard, ConfirmDialog prepare/execute flow (incl. 409 re-review path), JobPane stream states in apps/cabal-desktop/tests/ — Owner: @frontend-tester
+- [X] T020 Implement typed API client in apps/cabal-desktop/src/api/ (fetch wrapper with bearer auth + handshake config, Zod schemas for envelope v2/ModuleHealth/Job/Ticket, schema-version guard with refresh prompt) — Owner: @react-architect — Parallel: yes
+- [X] T021 Implement Zustand stores in apps/cabal-desktop/src/stores/ (projectContext, uiPrefs w/ persisted last-module, jobTray) — Owner: @react-architect — Parallel: yes
+- [X] T022 Implement SSE client hook in apps/cabal-desktop/src/lib/sse.ts (fetch-stream with Authorization header, Last-Event-ID reconnect, heartbeat staleness, gap surfacing) — Owner: @react-architect — Parallel: yes
+- [X] T023 Implement app shell in apps/cabal-desktop/src/App.tsx + src/components/shell/ (grouped sidebar nav for all 22 modules, connectivity/health strip, reconnecting state, module router with per-module error boundaries + retry) — Owner: @react-architect — Parallel: yes
+- [X] T024 Design tokens + dark operational theme in apps/cabal-desktop/src/styles/ (CSS custom properties, Tailwind v4 theme, canonical loading/empty/error/disabled/stale state visuals, density scale, narrow-width behavior) — Owner: @frontend-css — Parallel: yes
+- [X] T025 Shared components in apps/cabal-desktop/src/components/ (VirtualDataTable via TanStack Virtual, StatePill, EmptyState, DetailDrawer, DiffView, LogStream, JobPane, ConfirmDialog rendering full EffectPreview incl. removals/backup) — Owner: @react-architect — Parallel: yes
+- [X] T026 MSW handler library + component tests for envelope guard, ConfirmDialog prepare/execute flow (incl. 409 re-review path), JobPane stream states in apps/cabal-desktop/tests/ — Owner: @frontend-tester
 
 ### Desktop shell core (after both lanes merge)
 
-- [ ] T027 Implement sidecar lifecycle in apps/cabal-desktop/src-tauri/src/main.rs (adopt-live-backend check via handshake+health, spawn `cabal-backend` sidecar, bounded handshake wait, inject port/token into webview, shutdown ordering with grace-window kill per contracts/desktop-shell.contract.md) — Owner: main
-- [ ] T028 Wire single-instance (focus existing window) + window-state persistence + capabilities (shell sidecar execute permission) in apps/cabal-desktop/src-tauri/ — Owner: main
+- [X] T027 Implement sidecar lifecycle in apps/cabal-desktop/src-tauri/src/main.rs (adopt-live-backend check via handshake+health, spawn `cabal-backend` sidecar, bounded handshake wait, inject port/token into webview, shutdown ordering with grace-window kill per contracts/desktop-shell.contract.md) — Owner: main
+- [X] T028 Wire single-instance (focus existing window) + window-state persistence + capabilities (shell sidecar execute permission) in apps/cabal-desktop/src-tauri/ — Owner: main
 
 **Checkpoint**: Foundation ready — envelope/auth/jobs/actions/handshake contract tests green; shell opens with connectivity strip against a live backend.
 

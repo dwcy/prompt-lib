@@ -13,11 +13,12 @@ interface Handshake {
 
 const PROXIED_ROUTES = ["/api", "/brand"] as const;
 
-// Mirrors the backend's platform user-data dir resolution
+// Mirrors the backend's platform user-data dir resolution: `platformdirs.user_data_dir("cabal",
+// appauthor=False)` defaults to roaming=False, i.e. LOCALAPPDATA on Windows, NOT APPDATA (roaming)
 // (see specs/015-web-ui-overhaul/contracts/desktop-shell.contract.md).
 function userDataDir(): string {
   if (process.platform === "win32") {
-    return process.env.APPDATA ?? process.env.LOCALAPPDATA ?? join(homedir(), "AppData", "Roaming");
+    return process.env.LOCALAPPDATA ?? process.env.APPDATA ?? join(homedir(), "AppData", "Local");
   }
   if (process.platform === "darwin") {
     return join(homedir(), "Library", "Application Support");
