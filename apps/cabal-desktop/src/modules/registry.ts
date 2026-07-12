@@ -1,6 +1,10 @@
 // Static registry of all 22 feature modules: nav grouping, title, delivery phase, and page component
 // (or null pre-launch, routed to the shared ModuleUnavailable placeholder).
 import type { ComponentType } from "react";
+import { DiagnosticsModule } from "@/modules/diagnostics/DiagnosticsModule";
+import { OverviewModule } from "@/modules/overview/OverviewModule";
+import { ProjectDashboardModule } from "@/modules/project-dashboard/ProjectDashboardModule";
+import { ProjectGateModule } from "@/modules/project-gate/ProjectGateModule";
 
 export type ModuleGroup =
   | "project"
@@ -70,15 +74,21 @@ export const MODULE_REGISTRY: ModuleDefinition[] = [
     title: "Project Gate & Switcher",
     group: "project",
     phase: 3,
-    component: null,
+    component: ProjectGateModule,
   },
-  { key: "home_overview", title: "Home Overview", group: "project", phase: 3, component: null },
+  {
+    key: "home_overview",
+    title: "Home Overview",
+    group: "project",
+    phase: 3,
+    component: OverviewModule,
+  },
   {
     key: "project_dashboard",
     title: "Project Dashboard",
     group: "project",
     phase: 3,
-    component: null,
+    component: ProjectDashboardModule,
   },
   { key: "tools", title: "Tools Catalog", group: "environment-setup", phase: 4, component: null },
   {
@@ -181,7 +191,7 @@ export const MODULE_REGISTRY: ModuleDefinition[] = [
     title: "Diagnostics & Backend Health",
     group: "observability",
     phase: 3,
-    component: null,
+    component: DiagnosticsModule,
   },
 ];
 

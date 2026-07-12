@@ -68,6 +68,50 @@ export const confirmationTicketSchema = z.object({
   expires_at: z.string(),
 });
 
+export const recentProjectSchema = z.object({
+  path: z.string(),
+  name: z.string(),
+  action: z.string(),
+  last_opened: z.string(),
+});
+
+export const projectContextSchema = z.object({
+  path: z.string(),
+  name: z.string(),
+  is_git_repo: z.boolean(),
+  recents: z.array(recentProjectSchema),
+  selected_at: z.string().nullable(),
+});
+
+export const driftFlagsSchema = z.object({
+  claude: z.boolean(),
+  codex: z.boolean(),
+});
+
+// The web-api contract test only pins OVERVIEW_SECTION_KEYS (presence) and drift_flags' two
+// booleans — the internal shape of each aggregated section is not otherwise specified, so each
+// section is modeled as an open record and read via lib/unknownFields.ts's narrowing helpers
+// (same pattern as LogStream's extractLogLine narrowing an SSE frame's `data: unknown`).
+export const overviewSectionSchema = z.record(z.string(), z.unknown());
+
+export const overviewPayloadSchema = z.object({
+  dashboard_summary: overviewSectionSchema,
+  recent_sessions: z.array(overviewSectionSchema),
+  account: overviewSectionSchema,
+  doctor: overviewSectionSchema,
+  knowledge_availability: overviewSectionSchema,
+  security_summary: overviewSectionSchema,
+  drift_flags: driftFlagsSchema,
+});
+
+// Per-section /api/dashboard?section= payload — same "shape not pinned by contract" caveat as
+// overviewSectionSchema above; the `stale` flag itself already lives on the envelope.
+export const dashboardSectionSchema = z.record(z.string(), z.unknown());
+
+export const diagnosticsListSchema = z.object({
+  events: z.array(diagnosticEventSchema),
+});
+
 // Generic envelope factory: builds a Zod schema for SnapshotEnvelope<T> given T's data schema.
 export function envelopeSchema<T extends z.ZodTypeAny>(dataSchema: T) {
   return z.object({
@@ -92,6 +136,13 @@ export type JobRecord = z.infer<typeof jobRecordSchema>;
 export type EffectPreview = z.infer<typeof effectPreviewSchema>;
 export type ConfirmationTicket = z.infer<typeof confirmationTicketSchema>;
 export type EnvelopeError = z.infer<typeof envelopeErrorSchema>;
+export type RecentProject = z.infer<typeof recentProjectSchema>;
+export type ProjectContext = z.infer<typeof projectContextSchema>;
+export type DriftFlags = z.infer<typeof driftFlagsSchema>;
+export type OverviewSection = z.infer<typeof overviewSectionSchema>;
+export type OverviewPayload = z.infer<typeof overviewPayloadSchema>;
+export type DashboardSection = z.infer<typeof dashboardSectionSchema>;
+export type DiagnosticsList = z.infer<typeof diagnosticsListSchema>;
 
 export interface SnapshotEnvelope<T> {
   schema_version: string;

@@ -13,6 +13,7 @@ tauri = { version = "2", features = [] }
 tauri-plugin-shell = "2"
 tauri-plugin-single-instance = "2"
 tauri-plugin-window-state = "2"
+tauri-plugin-dialog = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 # Handshake health-check + graceful-shutdown HTTP calls only (plain http://127.0.0.1, no TLS needed).

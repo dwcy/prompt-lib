@@ -1,9 +1,16 @@
 // useEventStream: reconnecting fetch-based SSE hook with Last-Event-ID replay and heartbeat staleness.
 import { useEffect, useRef, useState } from "react";
+import type { StatePillVariant } from "@/components/StatePill";
 import { openSseConnection } from "@/lib/sseConnection";
 import type { ParsedSseFrame } from "@/lib/sseFrames";
 
 export type StreamConnectionState = "connecting" | "open" | "stale" | "closed" | "error";
+
+// Shared by every stream consumer's connection-status pill (LogStream, DiagnosticsLiveTail) so the
+// state→variant mapping isn't duplicated per consumer.
+export function streamStateToPillVariant(state: StreamConnectionState): StatePillVariant {
+  return state;
+}
 
 export interface StreamEvent {
   event: string;

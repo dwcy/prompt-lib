@@ -1,7 +1,7 @@
 // Auto-scrolling monospace log pane fed by useEventStream events, with a gap indicator and follow toggle.
 import { useEffect, useRef, useState } from "react";
-import { StatePill, type StatePillVariant } from "@/components/StatePill";
-import type { StreamConnectionState, StreamEvent } from "@/lib/sse";
+import { StatePill } from "@/components/StatePill";
+import { type StreamConnectionState, type StreamEvent, streamStateToPillVariant } from "@/lib/sse";
 
 export interface LogStreamProps {
   events: StreamEvent[];
@@ -27,7 +27,7 @@ export function LogStream({ events, connectionState, autoFollow = true }: LogStr
   return (
     <div className="log-stream">
       <div className="log-stream__toolbar select-none">
-        <StatePill variant={connectionStateToVariant(connectionState)} />
+        <StatePill variant={streamStateToPillVariant(connectionState)} />
         {gapCount > 0 ? (
           <span className="log-stream__gap" role="status">
             {gapCount} line(s) dropped — reconnect gap
@@ -63,21 +63,4 @@ function extractLogLine(event: StreamEvent): string {
   if (typeof event.data !== "object" || event.data === null) return "";
   const line = (event.data as { line?: unknown }).line;
   return typeof line === "string" ? line : "";
-}
-
-function connectionStateToVariant(state: StreamConnectionState): StatePillVariant {
-  switch (state) {
-    case "open":
-      return "open";
-    case "connecting":
-      return "connecting";
-    case "stale":
-      return "stale";
-    case "closed":
-      return "closed";
-    case "error":
-      return "error";
-    default:
-      return "unavailable";
-  }
 }

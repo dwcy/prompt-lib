@@ -6,6 +6,8 @@ import {
   buildConfirmationTicket,
   buildHealthPayload,
   buildJobRecord,
+  buildOverviewPayload,
+  buildProjectContext,
   buildSseStream,
   type SseFrameInput,
   wrapEnvelope,
@@ -27,6 +29,16 @@ export const handlers: HttpHandler[] = [
   http.get("/api/jobs/:jobId", ({ params }) =>
     HttpResponse.json(wrapEnvelope(buildJobRecord("queued", { job_id: String(params.jobId) }))),
   ),
+
+  // T032/T036 baseline: a project already selected, so <App/> renders the normal shell (not the
+  // gate) unless a test explicitly overrides this with selected_at: null.
+  http.get("/api/project", () => HttpResponse.json(wrapEnvelope(buildProjectContext()))),
+
+  http.get("/api/overview", () => HttpResponse.json(wrapEnvelope(buildOverviewPayload()))),
+
+  http.get("/api/dashboard", () => HttpResponse.json(wrapEnvelope({}))),
+
+  http.get("/api/diagnostics", () => HttpResponse.json(wrapEnvelope({ events: [] }))),
 ];
 
 export function jobStreamHandler(
@@ -35,6 +47,18 @@ export function jobStreamHandler(
   options: { keepOpen?: boolean } = {},
 ): HttpHandler {
   return http.get(`/api/jobs/${jobId}/stream`, () => {
+    const stream = buildSseStream(frames, options);
+    return new HttpResponse(stream, {
+      headers: { "Content-Type": "text/event-stream" },
+    });
+  });
+}
+
+export function diagnosticsStreamHandler(
+  frames: SseFrameInput[],
+  options: { keepOpen?: boolean } = {},
+): HttpHandler {
+  return http.get("/api/diagnostics/stream", () => {
     const stream = buildSseStream(frames, options);
     return new HttpResponse(stream, {
       headers: { "Content-Type": "text/event-stream" },

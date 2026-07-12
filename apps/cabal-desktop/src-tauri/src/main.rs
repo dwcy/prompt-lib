@@ -21,6 +21,7 @@ fn main() {
         }))
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_window_state::Builder::default().build())
+        .plugin(tauri_plugin_dialog::init())
         .manage(BackendHandle::default())
         .setup(|app| {
             let handle_for_spawn = app.handle().clone();
