@@ -15,6 +15,13 @@ import {
   SCHEMA_VERSION,
   type SnapshotEnvelope,
 } from "@/api/schemas";
+import type {
+  ToolCatalogItem,
+  ToolCatalogPayload,
+  ToolDetail,
+  ToolStatusEntry,
+  ToolStatusState,
+} from "@/api/tools";
 
 const DEFAULT_TIMESTAMP = "2026-01-01T00:00:00Z";
 
@@ -170,6 +177,66 @@ export function buildDiagnosticEvent(overrides: Partial<DiagnosticEvent> = {}): 
     occurred_at: DEFAULT_TIMESTAMP,
     kind: "data_source",
     ...overrides,
+  };
+}
+
+export function buildToolCatalogItem(overrides: Partial<ToolCatalogItem> = {}): ToolCatalogItem {
+  return {
+    key: "git",
+    label: "Git",
+    category: "System & VCS",
+    description: "Distributed version control used by nearly every project workflow.",
+    source_url: "https://git-scm.com/",
+    source_state: "verified",
+    install_channel: "package",
+    platforms: ["all"],
+    badges: [],
+    safety_notes: [],
+    backup_policy: null,
+    versions_available: ["2.44.0", "2.45.0"],
+    ...overrides,
+  };
+}
+
+export function buildToolStatusEntry(
+  key: string,
+  state: ToolStatusState,
+  overrides: Partial<ToolStatusEntry> = {},
+): ToolStatusEntry {
+  return {
+    key,
+    state,
+    current_version: state === "missing" ? null : "2.44.0",
+    latest_version: "2.45.0",
+    checked_at: DEFAULT_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export function buildToolCatalogPayload(
+  items: ToolCatalogItem[],
+  overrides: Partial<ToolCatalogPayload> = {},
+): ToolCatalogPayload {
+  const categoryCounts: Record<string, number> = {};
+  const channelCounts: Record<string, number> = {};
+  for (const item of items) {
+    categoryCounts[item.category] = (categoryCounts[item.category] ?? 0) + 1;
+    channelCounts[item.install_channel] = (channelCounts[item.install_channel] ?? 0) + 1;
+  }
+  return { items, category_counts: categoryCounts, channel_counts: channelCounts, ...overrides };
+}
+
+export function buildToolDetail(overrides: Partial<ToolDetail> = {}): ToolDetail {
+  const { status, ...itemOverrides } = overrides;
+  const item = buildToolCatalogItem(itemOverrides);
+  return {
+    ...item,
+    status: status ?? {
+      state: "missing",
+      current_version: null,
+      latest_version: item.versions_available.at(-1) ?? null,
+      checked_at: DEFAULT_TIMESTAMP,
+    },
   };
 }
 

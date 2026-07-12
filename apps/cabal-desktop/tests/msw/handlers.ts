@@ -2,6 +2,7 @@
 // The exported `handlers` array is a safe happy-path baseline; tests override per scenario via
 // `server.use(...)` with the factory functions below.
 import { type HttpHandler, HttpResponse, http } from "msw";
+import type { ToolCatalogPayload, ToolDetail, ToolStatusEntry } from "@/api/tools";
 import {
   buildConfirmationTicket,
   buildHealthPayload,
@@ -40,6 +41,18 @@ export const handlers: HttpHandler[] = [
 
   http.get("/api/diagnostics", () => HttpResponse.json(wrapEnvelope({ events: [] }))),
 ];
+
+export function toolsCatalogHandler(payload: ToolCatalogPayload): HttpHandler {
+  return http.get("/api/tools", () => HttpResponse.json(wrapEnvelope(payload)));
+}
+
+export function toolsStatusHandler(items: ToolStatusEntry[]): HttpHandler {
+  return http.get("/api/tools/status", () => HttpResponse.json(wrapEnvelope({ items })));
+}
+
+export function toolDetailHandler(key: string, detail: ToolDetail): HttpHandler {
+  return http.get(`/api/tools/${key}`, () => HttpResponse.json(wrapEnvelope(detail)));
+}
 
 export function jobStreamHandler(
   jobId: string,
