@@ -1,6 +1,6 @@
 ---
 name: orchestrate
-description: Automatic subagent routing. Use PROACTIVELY before any non-trivial code task — multi-file or multi-module work, vague code-related requests ("fix this", "clean this up"), or any specialist domain in the CLAUDE.md routing list (architecture, testing, frontend, security, data, DevOps, cleanup). Selects agents from the routing table, dispatches with worktree isolation when needed, and aggregates results.
+description: Route a task to specialist subagents. Use when the user explicitly types /orchestrate, or when the CLAUDE.md subagent-routing gate passes — delegation must buy scale (>~5 files / context-dominating work), independence (fresh-eyes review or audit), or parallelism (independent workstreams). Never invoke on domain match alone. Selects agents from the routing table, dispatches with worktree isolation when needed, and aggregates results.
 ---
 
 # /orchestrate — Automatic Subagent Routing
@@ -8,6 +8,20 @@ description: Automatic subagent routing. Use PROACTIVELY before any non-trivial 
 Route a task to the right specialist subagent(s) automatically. Analyses the task, selects agents from the registry, dispatches with worktree isolation when needed, and aggregates results.
 
 **Usage:** `/orchestrate <task description>`
+
+---
+
+## Step 0 — Should this be delegated at all?
+
+Before any routing, apply the gate from global CLAUDE.md *Subagent routing*. Delegation must buy at least one of:
+
+- **Scale** — roughly >5 files to change, or work that would dominate the main session's context
+- **Independence** — a review or audit where fresh unbiased eyes are the value
+- **Parallelism** — two or more genuinely independent workstreams
+
+Domain match alone ("it's .NET / React / pytest") never qualifies. If none apply, reply "Handled in main session — delegation wouldn't pay here", do the work directly, and skip the remaining steps. That outcome is a success, not a fallback.
+
+When the user explicitly typed `/orchestrate`, lean toward dispatching — but still handle trivially small tasks in the main session and say so.
 
 ---
 
@@ -131,7 +145,9 @@ Every dispatch prompt MUST end with this completeness brief (verbatim or tighten
 
 When an agent's result comes back half-done anyway (stubs, unimplemented in-scope items), re-dispatch it with the gaps listed — do not patch around it or present it as complete.
 
-For parallel agents, dispatch all in a single message (multiple Agent tool calls). Set `run_in_background: true` on all but the last so they run concurrently.
+For parallel agents, dispatch in a single message (multiple Agent tool calls). Set `run_in_background: true` on all but the last so they run concurrently.
+
+**Concurrency cap: at most 4 subagents live at once.** If more than 4 agents are selected, dispatch the first 4, then launch each remaining agent only as a running one completes (waves of ≤4). This protects machine resources — do not exceed it even when domains are independent.
 
 ---
 

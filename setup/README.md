@@ -29,13 +29,27 @@ test are all complete.
 
 **`cabal`** — interactive local agent control panel. Deploys `global/` config to `~/.claude/`, deploys `global/codex/` assets to `~/.codex/`, initializes machine env vars, shows inline drift markers, restores backups, and scaffolds `.claude/` or `.agents/` in other projects.
 
+### Non-interactive CLI
+
+Every install-lifecycle operation also runs headlessly (exit codes and JSON schemas: [`../specs/016-install-wizard/contracts/cli-contract.md`](../specs/016-install-wizard/contracts/cli-contract.md)):
+
+```bash
+cabal --version                                  # installed version + source mode
+cabal apply [--components a,b] [--dry-run] [--yes] [--json]
+cabal doctor [--json]                            # health check incl. manifest checks
+cabal uninstall [--restore-backups] [--dry-run] [--yes] [--legacy] [--json]
+```
+
+`apply` exits 3 when confirmation is required (no `--yes`) and 4 when a previous apply was interrupted; `doctor`/`uninstall` exit 5 on installs that predate the manifest. Nothing prompts on a non-TTY — safe for provisioning scripts.
+
 ### Modes
 
 | Mode | Purpose |
 |---|---|
-| Update global settings | Deploy `global/` → `~/.claude/` with dry-run preview, multi-select component toggles, env-var status panel, and timestamped backups. |
+| Update global settings | Deploy `global/` → `~/.claude/` with dry-run preview, multi-select component toggles, env-var status panel, timestamped backups, and an install manifest (`~/.claude/.cabal/install-manifest.json`) recording every deployed file. Interrupted applies are detected on next launch with a Resume / Roll back offer. |
 | Initialize env vars | Prompt for each var in `env/setup.env.json`, write to `setx` (Windows) or shell rc (Unix). |
 | Restore | Roll back `~/.claude/settings.json` from a timestamped backup. |
+| Uninstall | Manifest-driven removal of everything cabal deployed: preview → confirm → report, with optional restoration of pre-install backups. User-authored and hand-modified files are never removed. |
 | Local project setup | In the current cwd: scaffold `.claude/`, pick a `CLAUDE.md` template, apply git repo-init template, run `specify init` to bootstrap Spec Kit (`.specify/`). |
 | Codex setup | Deploy Codex skills to `~/.codex/skills`, scaffold project `.agents/skills`, apply an `AGENTS.md` template, and inspect conversion diffs. |
 | Tools | Install / update optional companion tools (Claude CLI, GitHub CLI, **Specify CLI** for GitHub Spec Kit, `claude-devtools`, **Headroom** context-compression CLI). Spec Kit's `specify` is installed via `uv tool install` from the upstream git repo and offers an OS-package `uv` install if missing. Headroom installs via `uv tool install "headroom-ai[mcp]"`; on Windows it builds from source and auto-provisions Rust + VS Build Tools (multi-GB first run). It also registers as an opt-in `headroom` MCP server — see [`../global/MCP.md`](../global/MCP.md). |

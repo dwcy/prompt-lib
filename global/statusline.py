@@ -484,6 +484,106 @@ def seg_subagent(data):
     return rgb(label, 180, 255, 180)
 
 
+CONTEXT_GUARD_POLICY_FILE = Path.home() / ".claude" / "context-guard-policy.json"
+
+# Same four usage fields context_guard.py sums from a transcript's most recent assistant
+# entry — duplicated (not imported) because this script and the hook are deployed to
+# separate directories and each run as an independent standalone process (matches this
+# file's existing self-contained style; see e.g. seg_branch's own git() helper).
+_CTX_GUARD_USAGE_FIELDS = (
+    "input_tokens",
+    "cache_creation_input_tokens",
+    "cache_read_input_tokens",
+    "output_tokens",
+)
+_CTX_GUARD_MAX_TAIL_BYTES = 8 * 1024 * 1024
+
+
+def _context_guard_policy():
+    try:
+        data = json.loads(CONTEXT_GUARD_POLICY_FILE.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    return data if isinstance(data, dict) else None
+
+
+def _context_guard_used_tokens(transcript_path):
+    """Estimate current context tokens from the transcript's last assistant `usage`.
+
+    No Claude Code hook or statusline payload documents a raw context-token-count
+    field, only a Claude-computed `used_percentage` against the real model window —
+    which can't be re-based against a user-configured budget. Reusing the
+    transcript-derived estimate (verified against real transcripts; see
+    docs/context-guard.md) keeps this segment consistent with context_guard.py.
+    """
+    if not transcript_path:
+        return None
+    path = Path(transcript_path)
+    if not path.is_file():
+        return None
+    try:
+        size = path.stat().st_size
+        if size == 0:
+            return None
+        chunk = min(size, 524288)
+        with path.open("rb") as fh:
+            while True:
+                fh.seek(-chunk, 2)
+                text = fh.read().decode("utf-8", errors="replace")
+                lines = text.splitlines()
+                usable = lines[1:] if chunk < size else lines
+                for line in reversed(usable):
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        entry = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+                    if entry.get("type") != "assistant":
+                        continue
+                    usage = (entry.get("message") or {}).get("usage")
+                    if isinstance(usage, dict):
+                        total = 0
+                        seen = False
+                        for field in _CTX_GUARD_USAGE_FIELDS:
+                            v = usage.get(field)
+                            if isinstance(v, (int, float)):
+                                total += v
+                                seen = True
+                        return int(total) if seen else None
+                if chunk >= size or chunk >= _CTX_GUARD_MAX_TAIL_BYTES:
+                    return None
+                chunk = min(chunk * 4, size, _CTX_GUARD_MAX_TAIL_BYTES)
+    except (OSError, ValueError):
+        return None
+
+
+def seg_context_guard(data):
+    """Opt-in warning chip when estimated context usage crosses the configured threshold.
+
+    No-op (returns None) unless ~/.claude/context-guard-policy.json has `enabled: true`
+    and the transcript-derived estimate is at or above `threshold_percent` of
+    `max_context_tokens`. Advisory only — mirrors context_guard.py's hook nudge.
+    """
+    policy = _context_guard_policy()
+    if not policy or not policy.get("enabled"):
+        return None
+    max_tokens = policy.get("max_context_tokens")
+    threshold = policy.get("threshold_percent")
+    if not isinstance(max_tokens, (int, float)) or max_tokens <= 0:
+        return None
+    if not isinstance(threshold, (int, float)) or threshold <= 0:
+        return None
+    used = _context_guard_used_tokens(data.get("transcript_path"))
+    if used is None:
+        return None
+    pct = (used / max_tokens) * 100
+    if pct < threshold:
+        return None
+    return rgb(f"🔔 ctx {pct:.0f}%", 255, 60, 160)
+
+
 def seg_activity(session_id):
     if not STATE_FILE.exists():
         return None
@@ -526,6 +626,7 @@ BUILDERS = {
     "tests": lambda c: seg_tests(c["cwd"]),
     "speckit": lambda c: seg_speckit(c["cwd"], c["branch"]),
     "subagent": lambda c: seg_subagent(c["data"]),
+    "context_guard": lambda c: seg_context_guard(c["data"]),
     "activity": lambda c: seg_activity(c["session_id"]),
 }
 

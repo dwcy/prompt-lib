@@ -29,6 +29,7 @@ from cabal.views.clone_repo import CloneRepoScreen  # noqa: F401
 from cabal.views.codex_conversion import CodexConversionScreen  # noqa: F401
 from cabal.views.codex_local import CodexLocalScreen  # noqa: F401
 from cabal.views.codex_update import CodexUpdateScreen  # noqa: F401
+from cabal.views.context_guard import ContextGuardScreen  # noqa: F401
 from cabal.views.env import EnvScreen  # noqa: F401
 from cabal.views.folder_browser import FolderBrowserScreen  # noqa: F401
 from cabal.views.gh_accounts_modal import GhAccountsModal  # noqa: F401
@@ -42,6 +43,7 @@ from cabal.views.init_project_prompt import build_init_prompt, write_init_prompt
 from cabal.views.knowledge import KnowledgeScreen  # noqa: F401
 from cabal.views.local import LocalScreen  # noqa: F401
 from cabal.views.mcp import McpScreen  # noqa: F401
+from cabal.views.opencode_setup import OpenCodeSetupScreen  # noqa: F401
 from cabal.views.package_security import PackageSecurityScreen  # noqa: F401
 from cabal.views.project_gate import ProjectGateScreen
 from cabal.views.project_mcp import ProjectMcpScreen  # noqa: F401
@@ -50,6 +52,7 @@ from cabal.views.restore import RestoreScreen  # noqa: F401
 from cabal.views.sessions import SessionsScreen  # noqa: F401
 from cabal.views.statusline import StatuslineScreen  # noqa: F401
 from cabal.views.tools import ToolsScreen  # noqa: F401
+from cabal.views.uninstall import UninstallScreen  # noqa: F401
 from cabal.views.update import UpdateScreen  # noqa: F401
 
 
@@ -363,7 +366,7 @@ def _suppress_sigint() -> None:
     """
     try:
         signal.signal(signal.SIGINT, signal.SIG_IGN)
-    except ValueError, OSError:
+    except (ValueError, OSError):
         # Not the main thread, or a platform without SIGINT — non-fatal.
         pass
 

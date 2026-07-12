@@ -44,7 +44,7 @@ This is **not** an application. It is a library of agents, hooks, skills, rules,
 
 ## Current Spec Kit feature
 
-- Active feature: [`specs/011-cabal-web-ui/plan.md`](./specs/011-cabal-web-ui/plan.md)
+- Active feature: [`specs/017-opencode-setup/plan.md`](./specs/017-opencode-setup/plan.md)
 
 ## Conventions worth knowing
 

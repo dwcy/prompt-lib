@@ -95,9 +95,14 @@ def test_requested_tools_are_in_expected_categories():
     groups = dict(tools.ENV_TOOL_GROUPS)
 
     assert {"headroom", "mcp-bus"} <= set(groups["MCP"])
-    assert {"lm-studio", "hermes-agent", "opencode", "ollama", "vllm"} <= set(
-        groups["Local AI"]
-    )
+    assert {
+        "lm-studio",
+        "hermes-agent",
+        "opencode",
+        "opencode-desktop",
+        "ollama",
+        "vllm",
+    } <= set(groups["Local AI"])
     assert {
         "zed",
         "rider",
@@ -155,6 +160,7 @@ def test_existing_tools_are_not_dropped():
         "huggingface",
         "codex",
         "opencode",
+        "opencode-desktop",
         "grok",
         "skills",
         "vercel-plugin",

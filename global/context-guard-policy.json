@@ -1,0 +1,5 @@
+{
+  "enabled": false,
+  "threshold_percent": 80,
+  "max_context_tokens": 200000
+}

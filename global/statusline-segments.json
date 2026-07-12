@@ -18,6 +18,7 @@
     { "key": "docker", "label": "Docker", "group": "Project", "row": 2, "enabled": true, "description": "Whether a Dockerfile / compose file is present in the project." },
     { "key": "tests", "label": "Tests", "group": "Project", "row": 2, "enabled": true, "description": "Latest test results parsed from dotnet / pytest / jest / playwright output." },
     { "key": "subagent", "label": "Running subagent", "group": "Claude", "row": 2, "enabled": true, "description": "Shows 🤖 <name> (<model>) while a subagent is running. Cleared on completion." },
+    { "key": "context_guard", "label": "Context guard nudge", "group": "Claude", "row": 2, "enabled": true, "description": "Opt-in 🔔 warning chip when estimated context usage crosses your configured threshold (~/.claude/context-guard-policy.json). Hidden unless enabled and the threshold is crossed." },
     { "key": "activity", "label": "Activity", "group": "Claude", "row": 2, "enabled": true, "description": "Agent and tool-call counters for the current session." }
   ]
 }

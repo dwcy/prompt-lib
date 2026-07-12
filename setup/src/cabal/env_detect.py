@@ -184,11 +184,16 @@ def _has_opencode_desktop() -> bool:
         return _path_exists_any(
             [
                 home / "AppData/Local/Programs/OpenCode/OpenCode.exe",
+                home / "AppData/Local/Programs/opencode/opencode.exe",
+                home / "AppData/Local/OpenCode/OpenCode.exe",
                 Path("C:/Program Files/OpenCode/OpenCode.exe"),
+                Path("C:/Program Files/opencode/opencode.exe"),
             ]
         )
     if sysname == "Darwin":
-        return Path("/Applications/OpenCode.app").exists()
+        return Path("/Applications/OpenCode.app").exists() or Path(
+            "/Applications/opencode.app"
+        ).exists()
     if sysname == "Linux":
         return shutil.which("opencode-desktop") is not None
     return False

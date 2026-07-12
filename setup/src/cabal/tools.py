@@ -27,7 +27,7 @@ from cabal.env_detect import (
     _has_copilot_cli,
     _has_huggingface_cli,
     _has_lm_studio,
-    _opencode_status,
+    _has_opencode_desktop,
     _probe_version,
     _has_rider,
     _has_visual_studio,
@@ -42,6 +42,7 @@ from cabal.installers.ai_clis import (
     huggingface_install,
     lm_studio_install,
     ollama_install,
+    opencode_desktop_install,
     opencode_install,
     vllm_install,
 )
@@ -193,7 +194,9 @@ def _probe_key(key: str) -> object:
     if key == "lm-studio":
         return _has_lm_studio()
     if key == "opencode":
-        return _opencode_status()
+        return shutil.which("opencode") is not None
+    if key == "opencode-desktop":
+        return _has_opencode_desktop()
     if key == "hermes-agent":
         return False
     if key == "zed":
@@ -435,6 +438,7 @@ INSTALLER_FUNCTIONS: dict[str, Callable[[], tuple[bool, str]]] = {
     "huggingface": huggingface_install,
     "codex": codex_install,
     "opencode": opencode_install,
+    "opencode-desktop": opencode_desktop_install,
     "grok": grok_install,
     "headroom": headroom_install,
     "mcp-bus": mcp_bus_install,
