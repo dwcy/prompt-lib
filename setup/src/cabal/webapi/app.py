@@ -14,6 +14,7 @@ from cabal.webapi.audit import AuditRecorder, DiagnosticsRecorder
 from cabal.webapi.envelope import ApiError, error_response, utc_now_iso
 from cabal.webapi.jobs import JobManager
 from cabal.webapi.routers import actions as actions_router
+from cabal.webapi.routers import projects as projects_router
 from cabal.webapi.routers import system as system_router
 from cabal.webapi.storage import Storage, WriteGuard
 
@@ -42,12 +43,14 @@ def create_app(
 
     app.state.token = token or security.generate_token()
     app.state.project = Path(project) if project is not None else None
+    app.state.project_selected_at = utc_now_iso() if project is not None else None
     app.state.storage = storage
     app.state.write_guard = write_guard
     app.state.diagnostics = diagnostics
     app.state.audit = audit
     app.state.jobs = JobManager(storage)
     app.state.actions = ActionRegistry(storage=storage, audit=audit)
+    app.state.actions.register(projects_router.PROJECT_SELECT_DESCRIPTOR)
     app.state.handshake_path = Path(handshake_path) if handshake_path is not None else None
     app.state.started_at = utc_now_iso()
     app.state.request_shutdown = lambda: None
@@ -59,6 +62,7 @@ def create_app(
     # Auth dependencies are declared on each APIRouter, so they travel with the routes.
     app.router.routes.extend(system_router.router.routes)
     app.router.routes.extend(actions_router.router.routes)
+    app.router.routes.extend(projects_router.router.routes)
 
     _register_exception_handlers(app)
     return app

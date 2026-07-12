@@ -1,14 +1,18 @@
-"""System routes: health with ModuleHealth rows, diagnostics, jobs, and shutdown."""
+"""System routes: health with ModuleHealth rows, diagnostics, jobs, overview/dashboard, shutdown."""
 
 from __future__ import annotations
 
 from importlib import metadata
+from pathlib import Path
+from typing import Literal
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 
 from cabal.webapi import security, sse
+from cabal.webapi.dashboard_service import get_dashboard_section
 from cabal.webapi.envelope import ApiError, ModuleHealth, envelope_response, utc_now_iso
+from cabal.webapi.overview_service import build_overview
 
 # Auth is declared at router level so routes keep the guard when flattened onto the app.
 router = APIRouter(dependencies=[Depends(security.require_bearer_token)])
@@ -87,6 +91,22 @@ def diagnostics_stream(request: Request):
         sse.diagnostics_event_stream(recorder, last_event_id),
         media_type=sse.SSE_MEDIA_TYPE,
     )
+
+
+@router.get("/api/overview")
+def overview(request: Request):
+    project = request.app.state.project
+    data, degraded = build_overview(Path(project) if project is not None else None)
+    return envelope_response(data=data, source="overview", status="degraded" if degraded else "ok")
+
+
+@router.get("/api/dashboard")
+def dashboard(request: Request, section: Literal["git", "github", "supabase", "vercel"]):
+    project = request.app.state.project
+    if project is None:
+        raise ApiError(404, "no_project_selected", "Select a project before requesting a dashboard section")
+    data, stale = get_dashboard_section(Path(project), section)
+    return envelope_response(data=data, source="dashboard", stale=stale)
 
 
 @router.get("/api/jobs")
