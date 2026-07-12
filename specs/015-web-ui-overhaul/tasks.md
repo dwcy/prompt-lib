@@ -97,19 +97,19 @@
 
 ## Phase 4: User Story 2 - Live Tool Readiness & Actions (Priority: P1)
 
-**Status**: ⬜ Pending (0/8 — T039–T046)
+**Status**: ✅ Complete (8/8 — T039–T046)
 **Goal**: Full tools catalog with definitive async statuses, filters, detail, and confirmed install/update with streamed progress.
 
 **Independent Test**: Tools statuses all terminate definitively and match TUI probes; one update runs through confirm → job stream → refreshed status.
 
-- [ ] T039 [P] [US2] Contract tests for /api/tools{,/status,/{key},/{key}/status} incl. definitive-status assertion #5 in tests/contract/test_webapi_modules_contract.py — Owner: @python-tester
-- [ ] T040 [US2] Implement routers/tools.py (catalog metadata from tool_catalog, bulk + single status probes via tools.py probe helpers run as background sweep job, detail w/ versions from installers/versions + dotnet_releases) in setup/src/cabal/webapi/routers/tools.py — Owner: @python-architect — Parallel: yes
-- [ ] T041 [US2] Register `tools.install` / `tools.update` action descriptors (version param, runtime_backups pre-action backup policy, installer subprocess as Job) in setup/src/cabal/webapi/actions_catalog/tools.py — Owner: @python-architect — Parallel: yes
-- [ ] T042 [US2] Frontend tools module in apps/cabal-desktop/src/modules/tools/ (category rail, search + status/channel/badge filters w/ live counts, VirtualDataTable, detail drawer w/ version Select, async status fill-in) — Owner: @react-architect — Parallel: yes
-- [ ] T043 [US2] Frontend install/update flow (ConfirmDialog w/ command+backup preview → JobPane stream → invalidate tool status) in apps/cabal-desktop/src/modules/tools/actions.tsx — Owner: @react-architect — Parallel: yes
-- [ ] T044 [US2] Tools module styling pass (status badges, density, drawer layout, narrow reflow) in apps/cabal-desktop/src/modules/tools/*.css tokens usage — Owner: @frontend-css — Parallel: yes
-- [ ] T045 [P] [US2] Frontend tests: filter/count logic, confirm-gated install, status fill-in in apps/cabal-desktop/tests/ — Owner: @frontend-tester
-- [ ] T046 [US2] Backend integration test: fake-installer install end-to-end (prepare→execute→job→status refresh→audit row) in tests/integration/test_webapi_tools.py — Owner: @python-tester
+- [X] T039 [P] [US2] Contract tests for /api/tools{,/status,/{key},/{key}/status} incl. definitive-status assertion #5 in tests/contract/test_webapi_modules_contract.py — Owner: @python-tester
+- [X] T040 [US2] Implement routers/tools.py (catalog metadata from tool_catalog, bulk + single status probes via tools.py probe helpers run as background sweep job, detail w/ versions from installers/versions + dotnet_releases) in setup/src/cabal/webapi/routers/tools.py — Owner: @python-architect — Parallel: yes
+- [X] T041 [US2] Register `tools.install` / `tools.update` action descriptors (version param, runtime_backups pre-action backup policy, installer subprocess as Job) in setup/src/cabal/webapi/actions_catalog/tools.py — Owner: @python-architect — Parallel: yes
+- [X] T042 [US2] Frontend tools module in apps/cabal-desktop/src/modules/tools/ (category rail, search + status/channel/badge filters w/ live counts, VirtualDataTable, detail drawer w/ version Select, async status fill-in) — Owner: @react-architect — Parallel: yes
+- [X] T043 [US2] Frontend install/update flow (ConfirmDialog w/ command+backup preview → JobPane stream → invalidate tool status) in apps/cabal-desktop/src/modules/tools/actions.tsx — Owner: @react-architect — Parallel: yes
+- [X] T044 [US2] Tools module styling pass (status badges, density, drawer layout, narrow reflow) in apps/cabal-desktop/src/modules/tools/*.css tokens usage — Owner: @frontend-css — Parallel: yes
+- [X] T045 [P] [US2] Frontend tests: filter/count logic, confirm-gated install, status fill-in in apps/cabal-desktop/tests/ — Owner: @frontend-tester
+- [X] T046 [US2] Backend integration test: fake-installer install end-to-end (prepare→execute→job→status refresh→audit row) in tests/integration/test_webapi_tools.py — Owner: @python-tester
 
 **Checkpoint**: The old web UI's biggest defect (dead statuses, no actions) is fixed.
 
