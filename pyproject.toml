@@ -32,6 +32,9 @@ dependencies = [
 [project.optional-dependencies]
 semantic = ["fastembed>=0.4,<1"]
 
+[dependency-groups]
+dev = ["pytest>=9,<10", "httpx>=0.28,<1"]
+
 [project.urls]
 Homepage = "https://github.com/dwcy/prompt-lib"
 Repository = "https://github.com/dwcy/prompt-lib"

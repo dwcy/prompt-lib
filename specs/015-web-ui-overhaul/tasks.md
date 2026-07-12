@@ -31,28 +31,28 @@
 
 ## Phase 2: Foundational (Blocking Prerequisites)
 
-**Status**: ⬜ Pending (0/21 — T008–T028)
+**Status**: 🟡 In progress (12/21 — T008–T028)
 **Purpose**: Contract tests for all four surfaces, then the backend core (security, envelope, jobs, actions, audit) and frontend core (client, shell, shared components) that every module needs.
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete. T008–T011 MUST be written and observed failing before T012+.
 
 ### Contract tests (write first, observe failing)
 
-- [ ] T008 [P] Envelope + auth contract tests per contracts/web-api.contract.md (v2 envelope shape, 401 on missing bearer, 405 on mutating verbs, redaction assertion #4) in tests/contract/test_webapi_envelope_contract.py — Owner: @python-tester
-- [ ] T009 [P] Handshake contract tests per contracts/desktop-shell.contract.md (atomic write, owner-only perms, stale-pid replacement, shutdown removes file) in tests/contract/test_webapi_handshake_contract.py — Owner: @python-tester
-- [ ] T010 [P] Action-safety contract tests per contracts/action-safety.contract.md (all 6 minimum assertions: prepare/execute, digest drift 409, ticket reuse/expiry, registry self-check, redacted previews, zero-write GET sweep) in tests/contract/test_webapi_action_safety_contract.py — Owner: @python-tester
-- [ ] T011 [P] Jobs/SSE contract tests per contracts/jobs-and-streams.contract.md (all 6 minimum assertions: lifecycle, cancel, Last-Event-ID replay/gap, stream redaction, restart persistence, job_conflict) in tests/contract/test_webapi_jobs_sse_contract.py — Owner: @python-tester
+- [X] T008 [P] Envelope + auth contract tests per contracts/web-api.contract.md (v2 envelope shape, 401 on missing bearer, 405 on mutating verbs, redaction assertion #4) in tests/contract/test_webapi_envelope_contract.py — Owner: @python-tester
+- [X] T009 [P] Handshake contract tests per contracts/desktop-shell.contract.md (atomic write, owner-only perms, stale-pid replacement, shutdown removes file) in tests/contract/test_webapi_handshake_contract.py — Owner: @python-tester
+- [X] T010 [P] Action-safety contract tests per contracts/action-safety.contract.md (all 6 minimum assertions: prepare/execute, digest drift 409, ticket reuse/expiry, registry self-check, redacted previews, zero-write GET sweep) in tests/contract/test_webapi_action_safety_contract.py — Owner: @python-tester
+- [X] T011 [P] Jobs/SSE contract tests per contracts/jobs-and-streams.contract.md (all 6 minimum assertions: lifecycle, cancel, Last-Event-ID replay/gap, stream redaction, restart persistence, job_conflict) in tests/contract/test_webapi_jobs_sse_contract.py — Owner: @python-tester
 
 ### Backend core lane
 
-- [ ] T012 Move setup/src/cabal/web/redaction.py → setup/src/cabal/redaction.py as the single shared rule set (extend patterns per action-safety contract; leave a re-export shim in web/redaction.py so legacy web keeps working) — Owner: @python-architect — Parallel: yes
-- [ ] T013 Implement SQLite bootstrap in setup/src/cabal/webapi/storage.py (platformdirs user-data dir, jobs/tickets/audit/diagnostics tables, migrations-on-open) — Owner: @python-architect — Parallel: yes
-- [ ] T014 Implement setup/src/cabal/webapi/security.py (token generation, atomic handshake file write/remove with owner-only ACL, ephemeral-port bind helper, FastAPI auth dependency, locked CORS) — Owner: @python-architect — Parallel: yes
-- [ ] T015 Implement setup/src/cabal/webapi/envelope.py (SnapshotEnvelope v2 + ModuleHealth pydantic models, precondition-digest helpers, redaction-at-boundary serializer) — Owner: @python-architect — Parallel: yes
-- [ ] T016 Implement setup/src/cabal/webapi/jobs.py (JobManager state machine, ring buffer, SSE publishers with seq/heartbeat/gap, exclusive-resource conflict, SQLite persistence via storage.py) — Owner: @python-architect — Parallel: yes
-- [ ] T017 Implement setup/src/cabal/webapi/actions.py (ActionDescriptor registry, params validation, prepare→ConfirmationTicket with EffectPreview + digest, execute with recompute/409/410/single-use, job creation) — Owner: @python-architect — Parallel: yes
-- [ ] T018 Implement setup/src/cabal/webapi/audit.py (AuditEntry writes on execute, DiagnosticEvent persistence + in-memory feed, diagnostics SSE source) — Owner: @python-architect — Parallel: yes
-- [ ] T019 Implement setup/src/cabal/webapi/app.py create_app() + routers/system.py (health with 22 ModuleHealth rows, diagnostics list/stream, jobs list/get/cancel, system.shutdown incl. service_supervisor.shutdown_all) + __main__.py entrypoint (--project, uvicorn runner, handshake lifecycle) — Owner: @python-architect — Parallel: yes
+- [X] T012 Move setup/src/cabal/web/redaction.py → setup/src/cabal/redaction.py as the single shared rule set (extend patterns per action-safety contract; leave a re-export shim in web/redaction.py so legacy web keeps working) — Owner: @python-architect — Parallel: yes
+- [X] T013 Implement SQLite bootstrap in setup/src/cabal/webapi/storage.py (platformdirs user-data dir, jobs/tickets/audit/diagnostics tables, migrations-on-open) — Owner: @python-architect — Parallel: yes
+- [X] T014 Implement setup/src/cabal/webapi/security.py (token generation, atomic handshake file write/remove with owner-only ACL, ephemeral-port bind helper, FastAPI auth dependency, locked CORS) — Owner: @python-architect — Parallel: yes
+- [X] T015 Implement setup/src/cabal/webapi/envelope.py (SnapshotEnvelope v2 + ModuleHealth pydantic models, precondition-digest helpers, redaction-at-boundary serializer) — Owner: @python-architect — Parallel: yes
+- [X] T016 Implement setup/src/cabal/webapi/jobs.py (JobManager state machine, ring buffer, SSE publishers with seq/heartbeat/gap, exclusive-resource conflict, SQLite persistence via storage.py) — Owner: @python-architect — Parallel: yes
+- [X] T017 Implement setup/src/cabal/webapi/actions.py (ActionDescriptor registry, params validation, prepare→ConfirmationTicket with EffectPreview + digest, execute with recompute/409/410/single-use, job creation) — Owner: @python-architect — Parallel: yes
+- [X] T018 Implement setup/src/cabal/webapi/audit.py (AuditEntry writes on execute, DiagnosticEvent persistence + in-memory feed, diagnostics SSE source) — Owner: @python-architect — Parallel: yes
+- [X] T019 Implement setup/src/cabal/webapi/app.py create_app() + routers/system.py (health with 22 ModuleHealth rows, diagnostics list/stream, jobs list/get/cancel, system.shutdown incl. service_supervisor.shutdown_all) + __main__.py entrypoint (--project, uvicorn runner, handshake lifecycle) — Owner: @python-architect — Parallel: yes
 
 ### Frontend core lane (concurrent with backend core lane)
 
