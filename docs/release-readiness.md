@@ -13,12 +13,18 @@ exists. Use this page as the checklist before creating any `v*.*.*` tag.
 - Publishing to PyPI requires a configured PyPI project and Trusted Publishing
   environment. Do not assume a tag is safe until that is verified.
 
+> Step-by-step first-release procedure (name decision, Trusted Publishing
+> setup, gates, tagging): [`release-runbook.md`](release-runbook.md).
+
 ## Decisions Before Publishing
 
 1. Confirm the package and command name.
-   The current name is `cabal`. If the project is renamed to `prompto` or
-   another name for product-positioning reasons, do it before the first real
-   package release.
+   **Blocker found 2026-07-11: `cabal` is already taken on PyPI** (unrelated
+   active package, v0.2.1, June 2026) — the first release cannot ship under
+   that name. Recommended: distribution name `cabal-panel` with the `cabal`
+   command kept (see the runbook). A full rename to `prompto` or another name
+   for product-positioning reasons remains possible; decide before the first
+   real package release.
 2. Confirm the release channel.
    Decide whether the first public artifact is PyPI, GitHub Releases, the
    standalone executable, or all three.

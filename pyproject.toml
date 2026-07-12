@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "cabal"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Local agent control panel for Claude Code and Codex — deploy skills, agents, hooks, MCP servers, Codex assets, and project scaffolding from one TUI."
 readme = "setup/src/cabal/README.md"
 requires-python = ">=3.14"
@@ -37,13 +37,14 @@ Issues = "https://github.com/dwcy/prompt-lib/issues"
 [project.scripts]
 cabal = "cabal.__main__:main"
 
+[tool.hatch.version]
+path = "setup/src/cabal/__init__.py"
+
 [tool.hatch.build.targets.wheel]
 packages = ["setup/src/cabal"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "global" = "cabal/_data/global"
-"setup/src/cabal/assets" = "cabal/assets"
-"setup/src/cabal/web/assets" = "cabal/web/assets"
 "setup/env" = "cabal/_data/setup/env"
 "setup/mcp-templates.json" = "cabal/_data/setup/mcp-templates.json"
 
