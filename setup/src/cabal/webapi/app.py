@@ -10,12 +10,14 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from cabal.webapi import security
 from cabal.webapi.actions import ActionRegistry
+from cabal.webapi.actions_catalog import tools as tools_actions
 from cabal.webapi.audit import AuditRecorder, DiagnosticsRecorder
 from cabal.webapi.envelope import ApiError, error_response, utc_now_iso
 from cabal.webapi.jobs import JobManager
 from cabal.webapi.routers import actions as actions_router
 from cabal.webapi.routers import projects as projects_router
 from cabal.webapi.routers import system as system_router
+from cabal.webapi.routers import tools as tools_router
 from cabal.webapi.storage import Storage, WriteGuard
 
 _HTTP_ERROR_CODES = {
@@ -51,6 +53,8 @@ def create_app(
     app.state.jobs = JobManager(storage)
     app.state.actions = ActionRegistry(storage=storage, audit=audit)
     app.state.actions.register(projects_router.PROJECT_SELECT_DESCRIPTOR)
+    app.state.actions.register(tools_actions.TOOLS_INSTALL_DESCRIPTOR)
+    app.state.actions.register(tools_actions.TOOLS_UPDATE_DESCRIPTOR)
     app.state.handshake_path = Path(handshake_path) if handshake_path is not None else None
     app.state.started_at = utc_now_iso()
     app.state.request_shutdown = lambda: None
@@ -63,6 +67,7 @@ def create_app(
     app.router.routes.extend(system_router.router.routes)
     app.router.routes.extend(actions_router.router.routes)
     app.router.routes.extend(projects_router.router.routes)
+    app.router.routes.extend(tools_router.router.routes)
 
     _register_exception_handlers(app)
     return app
