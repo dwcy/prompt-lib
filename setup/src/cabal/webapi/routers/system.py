@@ -44,7 +44,7 @@ MODULE_KEYS = (
 )
 
 # Modules whose routers are mounted; the rest honestly report "unavailable".
-IMPLEMENTED_MODULES = frozenset({"diagnostics"})
+IMPLEMENTED_MODULES = frozenset({"diagnostics", "project_gate", "home_overview", "project_dashboard"})
 
 
 def _backend_version() -> str:
