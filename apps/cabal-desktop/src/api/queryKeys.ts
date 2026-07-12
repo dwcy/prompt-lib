@@ -8,6 +8,11 @@ export const PROJECT_SCOPED_MODULES = [
   "settings",
   "security",
   "init",
+  // Home Overview aggregates dashboard_summary/recent_sessions for the CURRENT project (data-model.md
+  // doesn't list it explicitly under either the scoped or global relationship bullet, but its payload
+  // changes when the project switches, same as project_dashboard) — scoped so project.select
+  // invalidates it too (T036). Diagnostics stays global: DiagnosticEvent is keyed by module, not project.
+  "homeOverview",
 ] as const;
 
 export type ProjectScopedModule = (typeof PROJECT_SCOPED_MODULES)[number];
@@ -24,8 +29,8 @@ export const queryKeys = {
     current: () => [ROOT, "project"] as const,
     recents: () => [ROOT, "project", "recents"] as const,
   },
-  // Global modules (Tools, MCP user scope, Config Deployment, Knowledge, Services, Environment)
-  // ignore project context; each future module keys its own queries under its own name.
+  // Global modules (Tools, MCP user scope, Config Deployment, Knowledge, Services, Environment,
+  // Diagnostics) ignore project context; each module keys its own queries under its own name.
   global: (module: string, ...segments: Array<string | number>) =>
     [ROOT, "global", module, ...segments] as const,
   scoped: (

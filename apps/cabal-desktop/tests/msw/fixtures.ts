@@ -1,12 +1,17 @@
 // Envelope-v2 fixture builders matching the Zod schemas in src/api/schemas.ts exactly.
 import {
   type ConfirmationTicket,
+  type DiagnosticEvent,
+  type DriftFlags,
   type EffectPreview,
   type EnvelopeError,
   type HealthPayload,
   type JobRecord,
   type JobState,
   type ModuleHealth,
+  type OverviewPayload,
+  type ProjectContext,
+  type RecentProject,
   SCHEMA_VERSION,
   type SnapshotEnvelope,
 } from "@/api/schemas";
@@ -112,6 +117,58 @@ export function buildErrorEnvelope(
     precondition_digest: null,
     data: null,
     error,
+    ...overrides,
+  };
+}
+
+export function buildRecentProject(overrides: Partial<RecentProject> = {}): RecentProject {
+  return {
+    path: "/repos/example",
+    name: "example",
+    action: "open",
+    last_opened: DEFAULT_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+// selected_at non-null by default so <App/> renders the normal shell (not the project gate) in
+// tests that don't care about the gate flow — see useProjectContextSync's doc comment.
+export function buildProjectContext(overrides: Partial<ProjectContext> = {}): ProjectContext {
+  return {
+    path: "/repos/example",
+    name: "example",
+    is_git_repo: true,
+    recents: [buildRecentProject()],
+    selected_at: DEFAULT_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export function buildDriftFlags(overrides: Partial<DriftFlags> = {}): DriftFlags {
+  return { claude: false, codex: false, ...overrides };
+}
+
+export function buildOverviewPayload(overrides: Partial<OverviewPayload> = {}): OverviewPayload {
+  return {
+    dashboard_summary: {},
+    recent_sessions: [],
+    account: {},
+    doctor: {},
+    knowledge_availability: {},
+    security_summary: {},
+    drift_flags: buildDriftFlags(),
+    ...overrides,
+  };
+}
+
+export function buildDiagnosticEvent(overrides: Partial<DiagnosticEvent> = {}): DiagnosticEvent {
+  return {
+    id: 1,
+    severity: "info",
+    module: "config",
+    message: "nominal",
+    occurred_at: DEFAULT_TIMESTAMP,
+    kind: "data_source",
     ...overrides,
   };
 }
