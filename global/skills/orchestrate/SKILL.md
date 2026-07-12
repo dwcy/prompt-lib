@@ -145,7 +145,9 @@ Every dispatch prompt MUST end with this completeness brief (verbatim or tighten
 
 When an agent's result comes back half-done anyway (stubs, unimplemented in-scope items), re-dispatch it with the gaps listed — do not patch around it or present it as complete.
 
-For parallel agents, dispatch all in a single message (multiple Agent tool calls). Set `run_in_background: true` on all but the last so they run concurrently.
+For parallel agents, dispatch in a single message (multiple Agent tool calls). Set `run_in_background: true` on all but the last so they run concurrently.
+
+**Concurrency cap: at most 4 subagents live at once.** If more than 4 agents are selected, dispatch the first 4, then launch each remaining agent only as a running one completes (waves of ≤4). This protects machine resources — do not exceed it even when domains are independent.
 
 ---
 

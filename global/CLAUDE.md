@@ -111,7 +111,7 @@ See [`docs/parallel-isolation.md`](docs/parallel-isolation.md) for the full rule
 
 - **Scale** — the task is big enough that a fresh context pays for itself: roughly >5 files to change, or work that would dominate this session's context. Single features, bugfixes, and small refactors stay in the main session regardless of domain.
 - **Independence** — reviews and audits where fresh unbiased eyes are the value: `@owasp-security-reviewer`, `@code-plan-verifier`, `@secret-auditor`, `@gitignore-auditor`.
-- **Parallelism** — two or more genuinely independent workstreams; every writer isolated in a worktree (see *Parallel subagent isolation*).
+- **Parallelism** — two or more genuinely independent workstreams; every writer isolated in a worktree (see *Parallel subagent isolation*). **Hard cap: at most 4 subagents running concurrently** — machine resources, not just tokens. If more are selected, dispatch in waves of ≤4 and start the next wave only as agents finish; never launch a fifth while four are live.
 - **Fan-out search** — dispatch the `Explore` agent directly, not `/orchestrate`.
 
 Rules of thumb:

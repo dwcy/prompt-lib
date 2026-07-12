@@ -82,6 +82,8 @@ When multiple writing agents run concurrently, each gets its own git worktree vi
 
 Read-only agents (`gitignore-auditor`, `secret-auditor`, `code-plan-verifier`, `owasp-security-reviewer`) are exempt — they can run in parallel without isolation.
 
+**Concurrency cap:** at most 4 subagents run at the same time, regardless of isolation. Larger selections are dispatched in waves of ≤4, with the next agent launched only as a running one finishes — this bounds CPU/RAM pressure on the machine, not just token spend.
+
 See [`docs/parallel-isolation.md`](parallel-isolation.md) for the full isolation rules.
 
 ## When routing fires
