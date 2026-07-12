@@ -101,6 +101,18 @@ if [ -f "$SCRIPT_DIR/git/git-policy.default.json" ]; then
   fi
 fi
 
+# Seed context-guard-policy.json from default (idempotent — never overwrites user edits).
+# enabled: false by default — this opt-in /compact nudge stays off until turned on via
+# the cabal TUI's Context Guard screen or by hand-editing the file.
+if [ -f "$SCRIPT_DIR/context-guard-policy.json" ]; then
+  if [ ! -f "$TARGET/context-guard-policy.json" ]; then
+    cp "$SCRIPT_DIR/context-guard-policy.json" "$TARGET/context-guard-policy.json"
+    echo "  Seeded  context-guard-policy.json (new file — disabled by default)"
+  else
+    echo "  Kept    context-guard-policy.json (existing user file preserved)"
+  fi
+fi
+
 # Copy scripts/ (git-identity helper invoked by the commit rule in CLAUDE.md)
 if [ -d "$SCRIPT_DIR/scripts" ]; then
   mkdir -p "$TARGET/scripts"

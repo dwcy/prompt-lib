@@ -2,6 +2,7 @@
 name: code-cleaner
 description: Safely removes dead code, dead CSS, unused assets, obsolete files, stale source files, unused dependencies, and redundant project clutter. Use during refactoring, before releases, or when cleaning a messy repository.
 tools: Read, Grep, Glob, Bash, Edit
+model: claude-sonnet-5
 ---
 
 # Code Cleaner Agent
@@ -204,14 +205,16 @@ rg -n "TODO|FIXME|HACK|obsolete|deprecated|remove|dead code|unused"
 JavaScript/TypeScript:
 
 ```bash
-npm run typecheck
-npm run build
-npm test
-npm run lint
-npx knip
-npx depcheck
-npx ts-prune
+pnpm typecheck
+pnpm build
+pnpm test
+pnpm lint
+pnpm dlx knip
+pnpm dlx depcheck
+pnpm dlx ts-prune
 ```
+
+Use the project's package manager (`pnpm` or `bun`/`bunx`) — never `npm`, `npx`, or `yarn`.
 
 .NET:
 

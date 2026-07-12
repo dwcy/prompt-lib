@@ -1,7 +1,7 @@
 {
   "autoUpdatesChannel": "latest",
   "theme": "dark",
-  "model": "opus",
+  "model": "claude-fable-5[1m]",
   "defaultMode": "plan",
   "verbose": true,
   "feedbackSurveyRate": 0,
@@ -15,6 +15,9 @@
       "WebSearch(*)",
       "WebFetch(*)",
       "Fetch(*)",
+      "Read",
+      "Grep",
+      "Glob",
       "Bash(git status:*)",
       "Bash(git diff:*)",
       "Bash(git log:*)",
@@ -29,6 +32,10 @@
       "Bash(git switch:*)",
       "Bash(git restore:*)",
       "Bash(git stash:*)",
+      "Bash(git blame:*)",
+      "Bash(git ls-files:*)",
+      "Bash(git describe:*)",
+      "Bash(git ls-remote:*)",
       "Bash(pnpm:*)",
       "Bash(bun:*)",
       "Bash(bunx:*)",
@@ -86,6 +93,10 @@
       "PowerShell(git switch:*)",
       "PowerShell(git restore:*)",
       "PowerShell(git stash:*)",
+      "PowerShell(git blame:*)",
+      "PowerShell(git ls-files:*)",
+      "PowerShell(git describe:*)",
+      "PowerShell(git ls-remote:*)",
       "PowerShell(dotnet:*)",
       "PowerShell(pnpm:*)",
       "PowerShell(bun:*)",
@@ -133,7 +144,16 @@
   },
   "enabledPlugins": {
     "azure@claude-plugins-official": true,
-    "microsoft-docs@claude-plugins-official": true
+    "microsoft-docs@claude-plugins-official": true,
+    "vercel-plugin@vercel": true
+  },
+  "extraKnownMarketplaces": {
+    "vercel": {
+      "source": {
+        "source": "github",
+        "repo": "vercel/vercel-plugin"
+      }
+    }
   },
   "hooks": {
     "SessionStart": [
@@ -142,6 +162,16 @@
           {
             "type": "command",
             "command": "python \"$USERPROFILE/.claude/hooks/session_start.py\""
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$USERPROFILE/.claude/hooks/context_guard.py\""
           }
         ]
       }

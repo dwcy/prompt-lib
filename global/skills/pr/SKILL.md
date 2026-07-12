@@ -43,7 +43,7 @@ Incoming main changes are someone's landed work — they are never noise to be c
    - `git merge --abort` and then pushing the un-synced branch anyway
    - force-push or history rewrites to make the conflict disappear
 4. **Not sure which side should win, or the two sides genuinely contradict?** STOP and ask the user. Show the conflicting hunks and suggest a manual diff they can run themselves, e.g. `git diff HEAD...origin/main -- <file>` — do not guess.
-5. **After resolving:** run the relevant test suite, then `git commit` the merge (never `--no-verify`).
+5. **After resolving:** run the relevant test suite, then commit the merge via the git-identity wrapper (never raw `git commit`, never `--no-verify`): `python ~/.claude/scripts/git-identity.py commit --repo <repo> -m "task: merge origin/main into <feature-branch>"`.
 
 ## 2 — Gather context
 

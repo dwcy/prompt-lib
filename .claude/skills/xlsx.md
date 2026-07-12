@@ -57,7 +57,7 @@ Use this skill any time a spreadsheet file is the primary input or output. This 
 
 ### Important Requirements
 
-**LibreOffice Required for Formula Recalculation**: LibreOffice is available for recalculating formula values using the `scripts/recalc.py` script located at `C:\Users\Dawid\.claude\skills\xlsx\scripts\recalc.py`.
+**LibreOffice Required for Formula Recalculation**: LibreOffice is available for recalculating formula values using the `scripts/recalc.py` script located at `.claude/skills/xlsx/scripts/recalc.py` (project root).
 
 ### Data Analysis with Pandas
 
@@ -149,12 +149,12 @@ wb.save('modified.xlsx')
 ### Recalculating Formulas
 
 ```bash
-python "C:\Users\Dawid\.claude\skills\xlsx\scripts\recalc.py" <excel_file> [timeout_seconds]
+python .claude/skills/xlsx/scripts/recalc.py <excel_file> [timeout_seconds]
 ```
 
 Example:
 ```bash
-python "C:\Users\Dawid\.claude\skills\xlsx\scripts\recalc.py" output.xlsx 30
+python .claude/skills/xlsx/scripts/recalc.py output.xlsx 30
 ```
 
 The script:

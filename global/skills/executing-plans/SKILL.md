@@ -64,4 +64,4 @@ Don't force through blockers — stop and ask.
 ## Integration
 
 - **finishing-a-development-branch** skill — invoked in Step 3 to verify, commit, and complete the branch
-- **`/plan` command** — use this to write the plan before running this skill
+- **`/speckit-plan`** (or a project-local `/plan` command where one exists) — use this to write the plan before running this skill

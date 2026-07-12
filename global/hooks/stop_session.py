@@ -6,8 +6,10 @@ when the working tree is dirty. Never fails the session: any error exits 0.
 """
 
 import json
+import os
 import subprocess
 import sys
+from pathlib import Path
 
 try:
     from _gate import should_skip
@@ -17,8 +19,23 @@ except ImportError:
         return False
 
 
+def _git_executable() -> str:
+    override = os.environ.get("PROMPTLIB_GIT")
+    if override:
+        return override
+    if sys.platform == "win32":
+        for root in (
+            os.environ.get("ProgramFiles", r"C:\Program Files"),
+            os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)"),
+        ):
+            candidate = Path(root) / "Git" / "cmd" / "git.exe"
+            if candidate.exists():
+                return str(candidate)
+    return "git"
+
+
 def git(*args: str) -> subprocess.CompletedProcess:
-    return subprocess.run(["git", *args], capture_output=True, text=True)
+    return subprocess.run([_git_executable(), *args], capture_output=True, text=True)
 
 
 def main() -> None:

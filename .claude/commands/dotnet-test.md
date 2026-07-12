@@ -275,7 +275,7 @@ global using MyApi.Tests.Infrastructure;
 
 Before finishing, review the test class:
 
-- If a test class exceeds **~150 lines**, it is likely covering more than one use-case. Stop and ask:
+- If a test class exceeds **~300 lines** (the soft cap from the test-module size budget), it is likely covering more than one use-case. Stop and ask:
   > "This test class is getting large. Should we split it by use-case before continuing?"
 
 - If `InitSetup` exceeds **~80 lines**, it is accumulating too many concerns. Stop and ask:
