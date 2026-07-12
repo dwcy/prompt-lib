@@ -223,7 +223,14 @@ TOOL_CATEGORIES: tuple[ToolCategory, ...] = (
     ToolCategory(
         "Local AI",
         "local-ai",
-        ("ollama", "vllm", "lm-studio", "opencode", "hermes-agent"),
+        (
+            "ollama",
+            "vllm",
+            "lm-studio",
+            "opencode",
+            "opencode-desktop",
+            "hermes-agent",
+        ),
     ),
     ToolCategory(
         "AI Editors / IDEs",
@@ -602,10 +609,19 @@ TOOL_DEFINITIONS: tuple[ToolDefinition, ...] = (
     ),
     _t(
         "opencode",
-        "OpenCode",
+        "OpenCode CLI",
         "Local AI",
-        "AI coding agent available as terminal CLI and desktop app signals.",
+        "Terminal CLI for the OpenCode AI coding agent, installed with the "
+        "opencode-ai npm package.",
         "https://opencode.ai/docs",
+    ),
+    _t(
+        "opencode-desktop",
+        "OpenCode Desktop",
+        "Local AI",
+        "Beta desktop app for OpenCode, separate from the terminal CLI.",
+        "https://opencode.ai/download",
+        install_channel=InstallChannel.DESKTOP_APP,
     ),
     _t(
         "hermes-agent",

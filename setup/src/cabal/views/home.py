@@ -225,6 +225,24 @@ class HomeScreen(Screen):
                         id="btn-op-codex-conversion",
                         variant="default",
                     )
+            with Vertical(id="opencode-settings-panel", classes="home-section"):
+                yield Static(
+                    "[bold]OpenCode Setup (~/.config/opencode)[/bold]",
+                    id="opencode-settings-title",
+                    classes="home-section-title",
+                )
+                yield Static(
+                    "[dim]Install OpenCode CLI/desktop app, convert prompt-lib "
+                    "global assets, "
+                    "and wire Codex/Claude/Gemini/Antigravity bridge tools.[/dim]",
+                    classes="home-section-desc",
+                )
+                with Horizontal(classes="ops-row"):
+                    yield Button(
+                        "OpenCode Setup",
+                        id="btn-op-opencode-setup",
+                        variant="default",
+                    )
         yield Footer(show_command_palette=False)
 
     def on_mount(self) -> None:
@@ -311,6 +329,23 @@ class HomeScreen(Screen):
             btn.label = label
         except Exception:
             pass
+        try:
+            from cabal.opencode_setup.conversion import has_opencode_deploy_drift
+
+            opencode_drift = has_opencode_deploy_drift()
+        except Exception:
+            opencode_drift = False
+        try:
+            btn = self.query_one("#btn-op-opencode-setup", Button)
+            label = Text("OpenCode Setup")
+            if opencode_drift:
+                label.append("  ⚠ update available", style="yellow")
+                btn.tooltip = "Repo has OpenCode assets not yet deployed."
+            else:
+                btn.tooltip = None
+            btn.label = label
+        except Exception:
+            pass
 
     def on_screen_resume(self) -> None:
         try:
@@ -341,6 +376,7 @@ class HomeScreen(Screen):
         from cabal.views.codex_update import CodexUpdateScreen
         from cabal.views.codex_local import CodexLocalScreen
         from cabal.views.codex_conversion import CodexConversionScreen
+        from cabal.views.opencode_setup import OpenCodeSetupScreen
 
         bid = event.button.id or ""
         op_screens = {
@@ -357,6 +393,7 @@ class HomeScreen(Screen):
             "btn-op-codex-update": CodexUpdateScreen,
             "btn-op-codex-local": CodexLocalScreen,
             "btn-op-codex-conversion": CodexConversionScreen,
+            "btn-op-opencode-setup": OpenCodeSetupScreen,
         }
         if bid == "btn-git":
             self.action_go("git")

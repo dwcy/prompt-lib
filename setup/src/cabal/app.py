@@ -43,6 +43,7 @@ from cabal.views.init_project_prompt import build_init_prompt, write_init_prompt
 from cabal.views.knowledge import KnowledgeScreen  # noqa: F401
 from cabal.views.local import LocalScreen  # noqa: F401
 from cabal.views.mcp import McpScreen  # noqa: F401
+from cabal.views.opencode_setup import OpenCodeSetupScreen  # noqa: F401
 from cabal.views.package_security import PackageSecurityScreen  # noqa: F401
 from cabal.views.project_gate import ProjectGateScreen
 from cabal.views.project_mcp import ProjectMcpScreen  # noqa: F401
@@ -365,7 +366,7 @@ def _suppress_sigint() -> None:
     """
     try:
         signal.signal(signal.SIGINT, signal.SIG_IGN)
-    except ValueError, OSError:
+    except (ValueError, OSError):
         # Not the main thread, or a platform without SIGINT — non-fatal.
         pass
 
