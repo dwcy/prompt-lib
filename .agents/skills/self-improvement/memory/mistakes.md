@@ -164,3 +164,10 @@ Concrete failures from past sessions, recorded so they aren't repeated. Each ent
 - **Root cause**: I checked adjacent widget regions but missed blank space inside the logo widget from `#banner` bottom padding.
 - **Future rule**: For Cabal logo-to-panel spacing, verify both mounted regions and the banner widget's internal padding.
 - **Example**: `#banner { padding: 1 2 0 2; }` keeps the top breathing room while removing the blank row below the logo.
+
+### M-20260712-01 - Answered repository inventory instead of current Codex capabilities
+- **Date**: 2026-07-12
+- **Situation**: User asked what agents and skills I have accessible, but I listed `global/agents` and `global/skills` from the repository.
+- **Root cause**: I interpreted "accessible" through the repo context instead of the active Codex session capabilities.
+- **Future rule**: When asked what I have accessible, answer from the current tool/skill/session surface first; only inspect repo files when the user asks about repo contents.
+- **Example**: Say "I can use these Codex skills/tools..." instead of "this repo contains these Claude agents...".
