@@ -162,6 +162,10 @@
           {
             "type": "command",
             "command": "python \"$USERPROFILE/.claude/hooks/session_start.py\""
+          },
+          {
+            "type": "command",
+            "command": "python \"$USERPROFILE/.claude/hooks/process_cleanup.py\""
           }
         ]
       }
@@ -298,6 +302,10 @@
           {
             "type": "command",
             "command": "python \"$USERPROFILE/.claude/hooks/session_end_release_lock.py\""
+          },
+          {
+            "type": "command",
+            "command": "python \"$USERPROFILE/.claude/hooks/process_cleanup.py\""
           }
         ]
       }
