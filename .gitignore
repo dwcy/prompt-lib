@@ -46,10 +46,6 @@ Thumbs.db
 .claude/settings.local.json
 .claude/worktrees/
 
-# Self-improvement memory accrues per-session and diverges across deployment
-# surfaces (.agents / .claude / global/codex) — local state, not versioned content.
-**/self-improvement/memory/mistakes.md
-
 # Spec-kit local install state (declared config in .specify/extensions.yml IS committed)
 .specify/extensions/.registry
 
