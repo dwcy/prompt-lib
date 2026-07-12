@@ -75,21 +75,21 @@
 
 ## Phase 3: User Story 1 - One Desktop Workspace for Everything (Priority: P1) 🎯 MVP
 
-**Status**: ⬜ Pending (0/10 — T029–T038)
+**Status**: ✅ Complete (10/10 — T029–T038)
 **Goal**: Project gate, full navigation, aggregated overview, project dashboard, diagnostics — every module reachable (stubs show honest empty states until their phase lands).
 
 **Independent Test**: Launch desktop app → gate offers recents/browse/clone/new → workspace opens with all 22 nav entries, live overview/dashboard/diagnostics, per-module independent loading, auto-reconnect after backend kill.
 
-- [ ] T029 [P] [US1] Contract tests for /api/project (+recents), /api/overview, /api/dashboard sections, project.select action in tests/contract/test_webapi_modules_contract.py — Owner: @python-tester
-- [ ] T030 [US1] Implement routers/projects.py core: recents via cabal.recent_projects (dead-path pruning), project context get, `project.select` action descriptor in setup/src/cabal/webapi/routers/projects.py — Owner: @python-architect — Parallel: yes
-- [ ] T031 [US1] Implement /api/overview aggregation + /api/dashboard per-section endpoints (dashboard_git/github/supabase/vercel services, widget_cache cache-first + stale flag, drift flags via diff_apply.has_deploy_drift + codex equivalent) in setup/src/cabal/webapi/routers/system.py — Owner: @python-architect — Parallel: yes
-- [ ] T032 [US1] Frontend project-gate module in apps/cabal-desktop/src/modules/project-gate/ (recents table, path input w/ Tauri dialog when available, gate-before-workspace flow) — Owner: @react-architect — Parallel: yes
-- [ ] T033 [US1] Frontend overview module in apps/cabal-desktop/src/modules/overview/ (summary cards for dashboard/sessions/account/doctor/knowledge/security, drift badges, deep links) — Owner: @react-architect — Parallel: yes
-- [ ] T034 [US1] Frontend project-dashboard module in apps/cabal-desktop/src/modules/project-dashboard/ (four sections, per-section refresh, external links, hidden-when-unlinked) — Owner: @react-architect — Parallel: yes
-- [ ] T035 [US1] Frontend diagnostics module in apps/cabal-desktop/src/modules/diagnostics/ (persisted history w/ severity filter, live stream tail, per-source retry) — Owner: @react-architect — Parallel: yes
-- [ ] T036 [US1] Project-switch invalidation wiring (TanStack Query cache keys scoped by project, switch without restart) in apps/cabal-desktop/src/api/queryKeys.ts + stores — Owner: @react-architect — Parallel: yes
-- [ ] T037 [P] [US1] Frontend tests: gate flow, overview render from MSW fixtures, module-isolation on one failing section in apps/cabal-desktop/tests/ — Owner: @frontend-tester
-- [ ] T038 [US1] Backend integration test: project switch invalidates project-scoped snapshots; overview degrades per-section (one collector failing) in tests/integration/test_webapi_overview.py — Owner: @python-tester
+- [X] T029 [P] [US1] Contract tests for /api/project (+recents), /api/overview, /api/dashboard sections, project.select action in tests/contract/test_webapi_modules_contract.py — Owner: @python-tester
+- [X] T030 [US1] Implement routers/projects.py core: recents via cabal.recent_projects (dead-path pruning), project context get, `project.select` action descriptor in setup/src/cabal/webapi/routers/projects.py — Owner: @python-architect — Parallel: yes
+- [X] T031 [US1] Implement /api/overview aggregation + /api/dashboard per-section endpoints (dashboard_git/github/supabase/vercel services, widget_cache cache-first + stale flag, drift flags via diff_apply.has_deploy_drift + codex equivalent) in setup/src/cabal/webapi/routers/system.py — Owner: @python-architect — Parallel: yes
+- [X] T032 [US1] Frontend project-gate module in apps/cabal-desktop/src/modules/project-gate/ (recents table, path input w/ Tauri dialog when available, gate-before-workspace flow) — Owner: @react-architect — Parallel: yes
+- [X] T033 [US1] Frontend overview module in apps/cabal-desktop/src/modules/overview/ (summary cards for dashboard/sessions/account/doctor/knowledge/security, drift badges, deep links) — Owner: @react-architect — Parallel: yes
+- [X] T034 [US1] Frontend project-dashboard module in apps/cabal-desktop/src/modules/project-dashboard/ (four sections, per-section refresh, external links, hidden-when-unlinked) — Owner: @react-architect — Parallel: yes
+- [X] T035 [US1] Frontend diagnostics module in apps/cabal-desktop/src/modules/diagnostics/ (persisted history w/ severity filter, live stream tail, per-source retry) — Owner: @react-architect — Parallel: yes
+- [X] T036 [US1] Project-switch invalidation wiring (TanStack Query cache keys scoped by project, switch without restart) in apps/cabal-desktop/src/api/queryKeys.ts + stores — Owner: @react-architect — Parallel: yes
+- [X] T037 [P] [US1] Frontend tests: gate flow, overview render from MSW fixtures, module-isolation on one failing section in apps/cabal-desktop/tests/ — Owner: @frontend-tester
+- [X] T038 [US1] Backend integration test: project switch invalidates project-scoped snapshots; overview degrades per-section (one collector failing) in tests/integration/test_webapi_overview.py — Owner: @python-tester
 
 **Checkpoint**: MVP — usable desktop workspace over live data.
 
