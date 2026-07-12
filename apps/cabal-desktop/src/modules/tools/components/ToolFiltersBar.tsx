@@ -85,7 +85,11 @@ export function ToolFiltersBar({
             key={badge}
             type="button"
             aria-pressed={filters.badge === badge}
-            className={filters.badge === badge ? "tools-filters-bar__badge--active" : undefined}
+            className={
+              filters.badge === badge
+                ? "tools-filters-bar__badge tools-filters-bar__badge--active"
+                : "tools-filters-bar__badge"
+            }
             onClick={() => {
               const nextBadge = filters.badge === badge ? null : badge;
               onChange((current) => ({ ...current, badge: nextBadge }));

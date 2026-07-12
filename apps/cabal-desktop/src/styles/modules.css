@@ -303,3 +303,291 @@
   font-family: var(--font-family-mono);
   flex-shrink: 0;
 }
+
+/* ─── Tools (T044) ─────────────────────────────────────────────────────────
+   Category rail + filters bar + the catalog's virtualized table + detail
+   drawer content (description/status/badges/safety-notes/action panel).
+   Status badges reuse StatePill's variants as-is (components.css); density
+   and column layout are scoped to `.tools-table` so they don't leak onto
+   other VirtualDataTable consumers. */
+
+.tools-module {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-6);
+}
+
+.tools-module__main {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.tools-module__result-count {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+}
+
+/* ─── Category rail ───────────────────────────────────────────────────── */
+
+.tools-category-rail {
+  flex-shrink: 0;
+  width: 12rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.tools-category-rail__item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--corner-md);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--fg);
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+
+.tools-category-rail__item:hover {
+  background-color: var(--surface-2);
+}
+
+.tools-category-rail__item--active {
+  background-color: var(--surface-3);
+  border-color: var(--border-strong);
+  color: var(--status-accent);
+  font-weight: 600;
+}
+
+/* ─── Filters bar ─────────────────────────────────────────────────────── */
+
+.tools-filters-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.tools-filters-bar__search {
+  flex: 1 1 14rem;
+  min-width: 10rem;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--corner-md);
+  border: 1px solid var(--border-strong);
+  background-color: var(--surface-1);
+}
+
+.tools-filters-bar select {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--corner-md);
+  border: 1px solid var(--border-strong);
+  background-color: var(--surface-1);
+  color: var(--fg);
+}
+
+.tools-filters-bar__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.tools-filters-bar__badge {
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--corner-full);
+  border: 1px solid var(--border-strong);
+  background-color: var(--surface-2);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+
+.tools-filters-bar__badge--active {
+  background-color: var(--surface-3);
+  border-color: var(--border-strong);
+  color: var(--status-accent);
+}
+
+/* ─── Catalog table ───────────────────────────────────────────────────── */
+
+.tools-table__open-detail {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--status-accent);
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tools-table__open-detail:hover {
+  text-decoration: underline;
+}
+
+/* Tool label gets more room; status/version columns are short values that
+   don't need a full flex-1 share — widen the highest-signal column instead
+   of leaving every column equally (and often awkwardly) sized. */
+.tools-table .virtual-data-table__header-cell:nth-child(1),
+.tools-table .virtual-data-table__cell:nth-child(1) {
+  flex: 2 1 0;
+  min-width: 11rem;
+}
+
+.tools-table .virtual-data-table__header-cell:nth-child(4),
+.tools-table .virtual-data-table__cell:nth-child(4),
+.tools-table .virtual-data-table__header-cell:nth-child(5),
+.tools-table .virtual-data-table__cell:nth-child(5),
+.tools-table .virtual-data-table__header-cell:nth-child(6),
+.tools-table .virtual-data-table__cell:nth-child(6) {
+  flex: 0 1 7rem;
+  min-width: 6rem;
+}
+
+/* ─── Tool detail content ─────────────────────────────────────────────── */
+
+.tool-detail-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.tool-detail-content__description {
+  color: var(--muted);
+  line-height: var(--lh-base);
+  overflow-wrap: break-word;
+}
+
+.tool-detail-content__status {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+}
+
+.tool-detail-content__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  list-style: none;
+}
+
+.tool-detail-content__badges li {
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--corner-full);
+  border: 1px solid var(--border);
+  background-color: var(--surface-2);
+  color: var(--status-accent);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+}
+
+.tool-detail-content__safety-notes {
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-6);
+  border: 1px solid color-mix(in srgb, var(--status-warning) 40%, var(--border));
+  background-color: color-mix(in srgb, var(--status-warning) 10%, transparent);
+  border-radius: var(--corner-md);
+  color: var(--status-warning);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  list-style: disc;
+}
+
+.tool-detail-content__safety-notes li + li {
+  margin-top: var(--space-1);
+}
+
+.tool-detail-content__backup-policy {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+}
+
+/* ─── Tool action panel ───────────────────────────────────────────────── */
+
+.tool-action-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+.tool-action-panel__version {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+}
+
+.tool-action-panel__version select {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--corner-md);
+  border: 1px solid var(--border-strong);
+  background-color: var(--surface-1);
+  color: var(--fg);
+}
+
+.tool-action-panel__unavailable {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+}
+
+/* ─── Narrow-width layout (FR-014) ────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .tools-module {
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .tools-category-rail {
+    width: 100%;
+    flex-direction: row;
+    overflow-x: auto;
+    padding-bottom: var(--space-1);
+  }
+
+  .tools-category-rail__item {
+    flex-shrink: 0;
+    width: auto;
+  }
+
+  .tools-filters-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tools-filters-bar__search,
+  .tools-filters-bar select {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tools-category-rail__item,
+  .tools-filters-bar__badge {
+    transition: none;
+  }
+}

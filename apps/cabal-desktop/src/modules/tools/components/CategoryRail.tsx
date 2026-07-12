@@ -17,7 +17,11 @@ export function CategoryRail({ categories, total, selected, onSelect }: Category
       <button
         type="button"
         aria-pressed={selected === null}
-        className={selected === null ? "tools-category-rail__item--active" : undefined}
+        className={
+          selected === null
+            ? "tools-category-rail__item tools-category-rail__item--active"
+            : "tools-category-rail__item"
+        }
         onClick={() => onSelect(null)}
       >
         All ({total})
@@ -27,7 +31,11 @@ export function CategoryRail({ categories, total, selected, onSelect }: Category
           key={category.name}
           type="button"
           aria-pressed={selected === category.name}
-          className={selected === category.name ? "tools-category-rail__item--active" : undefined}
+          className={
+            selected === category.name
+              ? "tools-category-rail__item tools-category-rail__item--active"
+              : "tools-category-rail__item"
+          }
           onClick={() => onSelect(category.name)}
         >
           {category.name} ({category.count})

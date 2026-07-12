@@ -63,5 +63,9 @@ export function ToolsTable({ rows, onSelectRow }: ToolsTableProps) {
     },
   ];
 
-  return <VirtualDataTable rows={rows} columns={columns} getRowId={(row) => row.key} />;
+  return (
+    <div className="tools-table">
+      <VirtualDataTable rows={rows} columns={columns} getRowId={(row) => row.key} />
+    </div>
+  );
 }
