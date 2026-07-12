@@ -107,37 +107,20 @@ See [`docs/parallel-isolation.md`](docs/parallel-isolation.md) for the full rule
 
 ## Subagent routing
 
-Before starting any non-trivial code task, decide whether specialist delegation is useful. Treat `/orchestrate` as the default preflight for work that may need architecture, tests, security review, data modelling, API design, frontend/UX judgement, cleanup, or cross-file coordination.
+**Default: handle the task in the main session.** A subagent dispatch costs a full fresh context (system prompt + CLAUDE.md + re-reading files the main session already has), a round-trip, and — for writing agents — worktree setup and a merge. Delegate only when it buys something the main session can't provide:
 
-When a task clearly belongs to a specialist domain, invoke `/orchestrate` proactively — do not wait to be asked. The user should not need to know which agent exists.
+- **Scale** — the task is big enough that a fresh context pays for itself: roughly >5 files to change, or work that would dominate this session's context. Single features, bugfixes, and small refactors stay in the main session regardless of domain.
+- **Independence** — reviews and audits where fresh unbiased eyes are the value: `@owasp-security-reviewer`, `@code-plan-verifier`, `@secret-auditor`, `@gitignore-auditor`.
+- **Parallelism** — two or more genuinely independent workstreams; every writer isolated in a worktree (see *Parallel subagent isolation*). **Hard cap: at most 4 subagents running concurrently** — machine resources, not just tokens. If more are selected, dispatch in waves of ≤4 and start the next wave only as agents finish; never launch a fifth while four are live.
+- **Fan-out search** — dispatch the `Explore` agent directly, not `/orchestrate`.
 
-**Invoke `/orchestrate` automatically when:**
-- The task touches more than one file, module, service, package, or subsystem
-- The task is vague but likely code-related, such as "fix this bug", "add this feature", "improve this repo", "clean this up", or "make this better"
-- The task involves refactoring, behavior changes, performance, reliability, release readiness, or unclear implementation scope
-- The task involves .NET / C# architecture or testing
-- The task involves Python service design or pytest authoring
-- The task involves React, Vue, Next.js, TanStack, or CSS architecture
-- The task involves Unity3D scene or MonoBehaviour design
-- The task involves Raspberry Pi or Arduino hardware
-- The task involves GitHub repo settings configuration
-- The task involves Docker, docker-compose, CI/CD pipelines, GitHub Actions, or release engineering — routes to `@devops-engineer`
-- The task spans services or subsystems, or needs cross-cutting design (boundaries, queues, caching, scalability, tech selection) — routes to `@solution-architect`
-- The user says "write tests", "architect this", "design the UX", or "verify the implementation"
-- The user asks for a security review, mentions OWASP/vulnerabilities, or ships auth/API/upload changes toward a release — routes to `@owasp-security-reviewer` (review-only report)
-- The user asks to clean the repo, remove dead code / unused CSS / unused dependencies — routes to `@code-cleaner`
-- The user asks to start, initialise, scaffold, or set up a **new project** (empty dir / no CLAUDE.md) — routes to `@init-project`
-- The task is full-stack (two or more domains) — dispatch parallel agents
+Rules of thumb:
 
-**Do not invoke `/orchestrate` for:**
-- Quick one-line questions or explanations
-- File reads, git commands, or simple edits that need no specialist
-- Tiny single-file edits with obvious intent and low blast radius
-- Tasks the user has explicitly asked to handle in the main session
-
-When auto-routing, tell the user: "This looks like a [domain] task — routing to `@<agent>`." before dispatching.
-
-When skipping `/orchestrate` for a non-trivial-looking task, proceed without ceremony only if the task is clearly small and low risk; otherwise invoke `/orchestrate`.
+- **Domain match alone is never a reason to delegate.** "It's .NET / React / pytest" doesn't need a specialist; a genuinely hard *design decision* in that domain might. When in doubt, do it in the main session.
+- **Vague requests get clarified or analysed in the main session first** — never dispatched vague.
+- **Multi-agent pipelines** (requirements → architect → tester → verifier; the designer/UX/CSS trio) run only when I explicitly invoke `/orchestrate` or a Spec Kit flow — never automatically.
+- When you do delegate, say what the dispatch buys ("parallel + isolated", "fresh-eyes review", "keeps this context clean") — not just the domain.
+- `/orchestrate` stays available on demand: when I type it, run its routing table as written.
 
 See [`docs/orchestration.md`](docs/orchestration.md) for the full routing table and agent registry.
 
