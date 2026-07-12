@@ -84,9 +84,9 @@ Read-only agents (`gitignore-auditor`, `secret-auditor`, `code-plan-verifier`, `
 
 See [`docs/parallel-isolation.md`](parallel-isolation.md) for the full isolation rules.
 
-## Proactive routing
+## When routing fires
 
-`global/CLAUDE.md` instructs the main session to invoke `/orchestrate` automatically when a task clearly belongs to a specialist domain — the user does not need to type `/orchestrate` explicitly. When auto-routing fires, the session announces which agent was selected and why.
+The main session handles tasks itself by default. `global/CLAUDE.md` gates delegation on what it buys — **scale** (roughly >5 files or context-dominating work), **independence** (fresh-eyes review or audit), or **parallelism** (independent isolated workstreams) — never on domain match alone. `/orchestrate` runs its full routing table when explicitly invoked; auto-routing fires only when the gate passes, and the session announces which agent was selected and what the dispatch buys. Multi-agent pipelines run only on explicit `/orchestrate` or Spec Kit invocation.
 
 ## Inter-agent communication (mcp-bus)
 
