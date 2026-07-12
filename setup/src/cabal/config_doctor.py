@@ -54,6 +54,11 @@ class Finding:
     hint: str  # what to review / how to fix
 
 
+def finding_order(finding: Finding) -> tuple[bool, str, str]:
+    """Shared sort key for finding lists: errors first, then path, then category."""
+    return (finding.severity != "error", finding.path, finding.category)
+
+
 def _rel(path: Path, root: Path) -> str:
     try:
         return str(path.relative_to(root.parent))
@@ -284,7 +289,7 @@ def run_doctor(target: Path = TARGET, project: Path | None = None) -> list[Findi
         *check_claude_md_refs(target / "CLAUDE.md", skill_sources, target),
         *check_foreign_user_paths([skills, agents], target),
     ]
-    findings.sort(key=lambda f: (f.severity != "error", f.path, f.category))
+    findings.sort(key=finding_order)
     return findings
 
 

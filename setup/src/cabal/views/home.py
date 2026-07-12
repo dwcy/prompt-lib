@@ -129,6 +129,7 @@ class HomeScreen(Screen):
                     yield Button(
                         "Context Guard", id="btn-op-context-guard", variant="default"
                     )
+                    yield Button("Uninstall", id="btn-op-uninstall", variant="default")
                 yield ClaudeStatsPanel(id="claude-stats")
                 yield ClaudeDoctorPanel(id="claude-doctor")
                 yield Static(
@@ -229,6 +230,21 @@ class HomeScreen(Screen):
     def on_mount(self) -> None:
         self.query_one("#btn-op-update", Button).focus()
         self._apply_drift_markers()
+        self._offer_interrupted_recovery()
+
+    def _offer_interrupted_recovery(self) -> None:
+        """Wizard-launch check: an interrupted apply raises the recovery modal."""
+        from cabal.install_manifest import ManifestError
+        from cabal.views.recovery_modal import push_recovery_if_interrupted
+
+        try:
+            push_recovery_if_interrupted(
+                self, lambda _v: self._apply_drift_markers()
+            )
+        except ManifestError as exc:
+            self.notify(
+                str(exc), title="Install manifest", severity="error", timeout=8
+            )
 
     def action_readme(self) -> None:
         self.action_go("readme")
@@ -321,6 +337,7 @@ class HomeScreen(Screen):
         from cabal.views.services import ServicesScreen
         from cabal.views.settings import SettingsScreen
         from cabal.views.context_guard import ContextGuardScreen
+        from cabal.views.uninstall import UninstallScreen
         from cabal.views.codex_update import CodexUpdateScreen
         from cabal.views.codex_local import CodexLocalScreen
         from cabal.views.codex_conversion import CodexConversionScreen
@@ -336,6 +353,7 @@ class HomeScreen(Screen):
             "btn-op-pkgsecurity": PackageSecurityScreen,
             "btn-op-settings": SettingsScreen,
             "btn-op-context-guard": ContextGuardScreen,
+            "btn-op-uninstall": UninstallScreen,
             "btn-op-codex-update": CodexUpdateScreen,
             "btn-op-codex-local": CodexLocalScreen,
             "btn-op-codex-conversion": CodexConversionScreen,

@@ -51,6 +51,7 @@ from cabal.views.restore import RestoreScreen  # noqa: F401
 from cabal.views.sessions import SessionsScreen  # noqa: F401
 from cabal.views.statusline import StatuslineScreen  # noqa: F401
 from cabal.views.tools import ToolsScreen  # noqa: F401
+from cabal.views.uninstall import UninstallScreen  # noqa: F401
 from cabal.views.update import UpdateScreen  # noqa: F401
 
 
