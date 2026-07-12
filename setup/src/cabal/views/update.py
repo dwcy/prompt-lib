@@ -3,89 +3,28 @@
 
 from __future__ import annotations
 
-import filecmp
-import json
-import os
-import platform
-import re
-import shutil
-import subprocess
-import sys
-from datetime import datetime
 from pathlib import Path
-from typing import Callable
 
-from rich.markup import escape as escape_markup
-from rich.text import Text
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import (
-    Center,
-    Container,
-    Horizontal,
-    ScrollableContainer,
-    Vertical,
-    VerticalScroll,
-)
-from textual.coordinate import Coordinate
-from textual.screen import ModalScreen, Screen
-from textual.widgets import (
-    Button,
-    Checkbox,
-    DataTable,
-    Footer,
-    Header,
-    Input,
-    Label,
-    MarkdownViewer,
-    OptionList,
-    RadioButton,
-    RadioSet,
-    Rule,
-    Select,
-    Static,
-)
-from textual.widgets.option_list import Option
-from textual.widget import Widget
+from textual.containers import Horizontal, VerticalScroll
+from textual.screen import Screen
+from textual.widgets import Button, DataTable, Footer, Static
 
-from cabal._paths import GLOBAL_DIR, TARGET, REPO_DIR, ENV_DIR, ENV_FILE, RESOURCE_ROOT
+from cabal._paths import GLOBAL_DIR, TARGET
 from cabal.app_widgets import AppHeader
-from cabal.banner import HexBanner, render_banner
-from cabal.components import COMPONENTS, Component, ENV_DESCRIPTIONS, FileStatus
+from cabal.apply_service import apply_plan, build_plan, outcome_summary
+from cabal.components import COMPONENTS, Component, FileStatus
 from cabal.diff_apply import (
-    apply_statuses,
     backup_settings,
     diff_component,
     find_extras,
     prune_backups,
 )
-from cabal.env_detect import detect_env, find_env_vars
-from cabal.env_summary import render_env_summary
-from cabal.git_config import apply_git_line_endings, recommended_autocrlf
-from cabal.installers.gh import gh_device_init, gh_device_poll, gh_fetch_token
-from cabal.mcp_ops import (
-    claude_mcp_add_from_template,
-    claude_mcp_remove,
-    enumerate_mcp_servers,
-)
-from cabal.tools import (
-    ENV_INSTALLERS,
-    ENV_TOOL_GROUPS,
-    TOOLS,
-    Tool,
-    VERSION_FLOORS,
-    WINGET_IDS,
-    _below_floor,
-    _installer_for,
-    _outdated_packages,
-    _probe_key,
-)
 from cabal.settings_helpers import _effective_settings_text, _is_settings_json
-from cabal.updates import check_for_updates, do_git_pull
+from cabal.views.recovery_modal import push_recovery_if_interrupted
 from cabal.views.restore import RestoreScreen
-from cabal.widgets.env_panel import EnvPanel
 from cabal.widgets.file_viewer import FileViewerModal
-from cabal.widgets.update_panel import UpdatePanel
 
 
 class UpdateScreen(Screen):
@@ -339,6 +278,8 @@ class UpdateScreen(Screen):
         self._refresh_preview()
 
     def action_apply(self) -> None:
+        if push_recovery_if_interrupted(self, lambda _v: self._refresh_preview()):
+            return
         selected = [(c, self._selected_statuses(c)) for c in COMPONENTS]
         selected = [(c, sts) for c, sts in selected if sts]
         if not selected:
@@ -351,11 +292,15 @@ class UpdateScreen(Screen):
                 msgs.append(f"[dim]Backed up settings.json → {bk.name}[/dim]")
             prune_backups(10)
         TARGET.mkdir(parents=True, exist_ok=True)
+        chosen = {c.key: [Path(s.rel).as_posix() for s in sts] for c, sts in selected}
+        outcome = apply_plan(build_plan(list(chosen), chosen))
         for c, sts in selected:
-            copied, skipped = apply_statuses(sts)
+            copied = sum(1 for s in sts if s.state != "UNCHANGED")
             msgs.append(
-                f"  [green]✓[/green] {c.label}: {copied} copied, {skipped} unchanged"
+                f"  [green]✓[/green] {c.label}: {copied} copied, "
+                f"{len(sts) - copied} unchanged"
             )
+        msgs += [f"[dim]{line}[/dim]" for line in outcome_summary(outcome)]
         msgs.append(
             "[bold green]✓ Apply complete.[/bold green]  [bold]→ Restart Claude Code.[/bold]"
         )
