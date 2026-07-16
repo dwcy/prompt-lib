@@ -245,3 +245,13 @@ The evaluation questions:
 - **To remember**:
   - P-20260629-01 (default Python support baseline is 3.14)
 - **To unlearn**: nothing.
+
+### E-20260716-01 — Add Claude forwarding and release intelligence
+- **Task**: Audit all global Claude agents for forwarded subagent output, then add a live Claude Code changelog with Added entries visible, other categories disclosed on demand, and highlighted service health.
+- **Constraints followed?** Yes — audited all 29 agent definitions, placed the shared opt-in at the harness/settings boundaries, preserved unrelated documentation work, and used only official Claude sources.
+- **Unverified assumptions?** Minimal — selected the existing Claude Info screen as the discoverable UI surface after inspecting its callers and verified both live feed formats before implementing parsers.
+- **Verified current facts?** Yes — checked Claude Code 2.1.211 help, parsed the live official changelog and status summary, ran the full 433-test setup suite under Python 3.14, and ran the 213-test A2A suite.
+- **Requested format?** Yes — Added entries are expanded per version, other categories are collapsed behind a click, and Claude Code health is color-coded with active incident context.
+- **To remember**:
+  - M-20260716-01 (invoke root Cabal tests through the project Python interpreter)
+- **To unlearn**: nothing.

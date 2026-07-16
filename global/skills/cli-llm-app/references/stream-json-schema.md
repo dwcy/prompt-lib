@@ -80,6 +80,29 @@ A typical turn produces roughly this sequence:
 - For non-streaming UIs: ignore these and read `result.result` instead — simpler and less error-prone.
 - For streaming UIs: consume the `text` fields in order. Combined with `--include-partial-messages` you get token-by-token.
 
+### Forwarded subagent messages (Claude Code 2.1.211+)
+
+Add `--forward-subagent-text` when a stream-json host must expose nested-agent progress. If the harness cannot change argv, set `CLAUDE_CODE_FORWARD_SUBAGENT_TEXT=1`. Forwarded assistant/user messages carry a non-empty `parent_tool_use_id`, which distinguishes them from the parent conversation:
+
+```json
+{
+  "type": "assistant",
+  "parent_tool_use_id": "toolu_...",
+  "message": {
+    "role": "assistant",
+    "content": [
+      {"type": "thinking", "thinking": "Inspect the shared launcher first."},
+      {"type": "text", "text": "The launcher is the common integration point."}
+    ]
+  }
+}
+```
+
+- Preserve block order if the UI displays both text and thinking.
+- Keep forwarded messages visually distinct from the parent assistant's answer.
+- Continue using the top-level `result` event as the turn-completion signal.
+- The reference persistent-session implementation disables all tools, so it cannot spawn subagents and does not need this opt-in.
+
 ### `system/init` — useful for verification
 
 The init event lists the resolved `model`. After spawning, the first turn will trigger an init event whose `model` field tells you what the CLI actually picked. Log it. This is how to catch silent alias fallbacks (e.g. `--model haiku` resolving to Sonnet without complaint).

@@ -66,7 +66,7 @@ class ClaudeStatsPanel(Widget):
     }
     ClaudeStatsPanel #cs-titlebar { height: 3; align-vertical: middle; }
     ClaudeStatsPanel #cs-title { content-align: left middle; height: auto; width: 1fr; }
-    ClaudeStatsPanel #cs-info { min-width: 18; height: 3; margin: 0; }
+    ClaudeStatsPanel #cs-info { min-width: 24; height: 3; margin: 0; }
     ClaudeStatsPanel #cs-models { min-width: 14; height: 3; margin: 0 0 0 1; }
     ClaudeStatsPanel #cs-body { height: auto; padding: 0 0 0 0; }
     """
@@ -81,7 +81,7 @@ class ClaudeStatsPanel(Widget):
                 "[bold bright_magenta]✦ Claude account[/bold bright_magenta]",
                 id="cs-title",
             )
-            yield Button("ⓘ  Claude info", id="cs-info", variant="primary")
+            yield Button("ⓘ  Changelog & status", id="cs-info", variant="primary")
             yield Button("⚙  Models", id="cs-models")
         yield Static("[dim]Loading…[/dim]", id="cs-body")
 

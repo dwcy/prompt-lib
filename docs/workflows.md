@@ -142,7 +142,7 @@ For: turning a repeated workflow into a `/skill`.
 3. /skill-create drafts the markdown, asks about trigger phrasing
 4. Test it in the same session ("type /your-new-skill and tell me what happened")
 5. Iterate description until autonomous routing fires reliably
-6. python setup/settings-configurator-ui.py
+6. `./run` (or `.\run.cmd` on Windows) — the cabal wizard deploys `global/` to `~/.claude/`; `python setup/settings-configurator-ui.py` is the direct-source fallback
 7. Restart Claude Code → skill is live in every project
 ```
 

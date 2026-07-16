@@ -1,10 +1,11 @@
 """Claude-specific bindings for the generic CLI runner (T031).
 
 The Claude Code CLI emits NDJSON envelopes on stdout when invoked with
-``--output-format stream-json --verbose``; only the assistant's text content
-blocks become A2A artifacts. ``--bare`` strips the developer's ambient
-context (MCP servers, hooks, project ``CLAUDE.md``) so the adapter is
-deterministic regardless of where it runs (research.md R3).
+``--output-format stream-json --verbose``. The adapter also opts into
+``--forward-subagent-text`` so nested-agent text and thinking remain visible
+to A2A clients. ``--bare`` strips the developer's ambient context (MCP
+servers, hooks, project ``CLAUDE.md``) so the adapter is deterministic
+regardless of where it runs (research.md R3).
 """
 
 from __future__ import annotations
@@ -29,10 +30,10 @@ def parse_claude_event(event: dict) -> Artifact | None:
         {"type":"user","message":{...}, ...}                      # tool_result, skip
         {"type":"result","subtype":"success", ...}                # final summary, skip
 
-    Assistant ``content`` is always an array of typed blocks; only blocks with
-    ``type == "text"`` carry a non-empty ``text`` field intended for the user.
-    Tool-use / tool-result / thinking blocks are intentionally dropped — they
-    are CLI-internal scaffolding, not part of the A2A artifact stream.
+    Normal assistant events contribute their non-empty ``text`` blocks. Events
+    forwarded from a subagent are identified by ``parent_tool_use_id``; their
+    ``text`` and ``thinking`` blocks both become artifacts. Other thinking,
+    tool-use, and tool-result blocks remain internal and are dropped.
     """
     if event.get("type") != "assistant":
         return None
@@ -46,19 +47,29 @@ def parse_claude_event(event: dict) -> Artifact | None:
         return None
 
     text_parts: list[str] = []
+    is_forwarded_subagent = bool(event.get("parent_tool_use_id"))
     for block in content:
         if not isinstance(block, dict):
             continue
-        if block.get("type") != "text":
-            continue
-        text = block.get("text")
-        if isinstance(text, str) and text:
-            text_parts.append(text)
+        block_type = block.get("type")
+        if block_type == "text":
+            text = block.get("text")
+            if isinstance(text, str) and text:
+                text_parts.append(text)
+        elif block_type == "thinking" and is_forwarded_subagent:
+            thinking = block.get("thinking")
+            if isinstance(thinking, str) and thinking:
+                text_parts.append(f"[subagent thinking]\n{thinking}")
 
     if not text_parts:
         return None
 
-    return Artifact(kind="text", mime_type="text/plain", content="".join(text_parts))
+    separator = "\n" if is_forwarded_subagent else ""
+    return Artifact(
+        kind="text",
+        mime_type="text/plain",
+        content=separator.join(text_parts),
+    )
 
 
 def claude_command_factory(prompt: str) -> list[str]:
@@ -71,4 +82,13 @@ def claude_command_factory(prompt: str) -> list[str]:
     (``asyncio.create_subprocess_exec`` does not honour ``PATHEXT``).
     """
     resolved = shutil.which("claude") or "claude"
-    return [resolved, "-p", prompt, "--bare", "--output-format", "stream-json", "--verbose"]
+    return [
+        resolved,
+        "-p",
+        prompt,
+        "--bare",
+        "--output-format",
+        "stream-json",
+        "--verbose",
+        "--forward-subagent-text",
+    ]
