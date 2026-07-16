@@ -1,0 +1,242 @@
+<mxfile host="app.diagrams.net" agent="prompt-lib docs" version="24.0.0">
+  <diagram name="Master Flowchart" id="master-flowchart">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1680" pageHeight="3140" math="0" shadow="0" background="#FFFFFF">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Explicit white background so the diagram never inherits a viewer's dark theme -->
+        <mxCell id="bg" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=none;movable=0;resizable=0;editable=0;locked=1;" vertex="1" parent="1">
+          <mxGeometry x="-20" y="-20" width="1700" height="3170" as="geometry" />
+        </mxCell>
+
+        <!-- Scope banner: everything below is one local process; MCP servers are external -->
+        <mxCell id="scopeBanner" value="Everything below runs inside ONE local Claude Code process on this machine. MCP servers (context7, mcp-bus, playwright, etc.) are external tool providers any step may call into — see the MCP panel, bottom right — they don't add separate execution contexts to this chain." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#999999;fontSize=11;fontStyle=2;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="60" y="0" width="1080" height="26" as="geometry" />
+        </mxCell>
+
+        <!-- Band 1: Session Bootstrap -->
+        <mxCell id="band1" value="Band 1 — Session Bootstrap" style="text;html=1;fontSize=13;fontStyle=1;align=left;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="60" y="32" width="400" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="n1" value="Claude Code session launches" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="470" y="30" width="300" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="n2" value="SessionStart hooks fire:&lt;br&gt;session_start.py detects stack + claims branch lock&lt;br&gt;process_cleanup.py sweeps orphan processes" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="430" y="120" width="380" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="d1" value="CLAUDE.md exists?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="500" y="240" width="240" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="L1" value="Ask the user to describe the project;&lt;br&gt;create CLAUDE.md later if they decline" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="60" y="240" width="300" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="R1" value="Detect stack, invoke @load-project&lt;br&gt;to brief available specialists" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="900" y="240" width="320" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="d2" value="Second session lands on same&lt;br&gt;branch while first is alive?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="480" y="380" width="280" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="R2" value="session_start.py auto-creates a sibling&lt;br&gt;worktree &lt;branch&gt;-sN, tells user to switch.&lt;br&gt;Opt out via CLAUDE_WORKTREE_AUTO=0" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="900" y="380" width="340" height="110" as="geometry" />
+        </mxCell>
+
+        <!-- Band 2: Task Intake -->
+        <mxCell id="band2" value="Band 2 — Task Intake" style="text;html=1;fontSize=13;fontStyle=1;align=left;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="60" y="500" width="400" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="n3" value="User gives Claude a task" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="490" y="530" width="260" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="d3" value="First edit of this task on&lt;br&gt;main or master?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="480" y="620" width="280" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="L3" value="pretool_branch_guard.py BLOCKS&lt;br&gt;until: git checkout -b &lt;type&gt;/&lt;slug&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="60" y="620" width="320" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="n4" value="Subagent routing gate:&lt;br&gt;handle in main session by default" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="470" y="760" width="300" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Band 3: Execution Strategy (three lanes) -->
+        <mxCell id="band3" value="Band 3 — Execution Strategy (three lanes: direct / sequential / isolated-parallel)" style="text;html=1;fontSize=13;fontStyle=1;align=left;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="60" y="860" width="700" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="d4" value="Delegate? needs Scale &amp;gt;5 files,&lt;br&gt;OR Independence review/audit,&lt;br&gt;OR Parallelism, OR explicit&lt;br&gt;/orchestrate or Spec Kit" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="470" y="890" width="300" height="140" as="geometry" />
+        </mxCell>
+
+        <mxCell id="laneA" value="Lane A — direct" style="text;html=1;fontSize=11;fontStyle=2;align=center;fontColor=#999999;" vertex="1" parent="1">
+          <mxGeometry x="60" y="1033" width="320" height="16" as="geometry" />
+        </mxCell>
+        <mxCell id="L4" value="Main session does the work directly" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="60" y="1050" width="320" height="90" as="geometry" />
+        </mxCell>
+
+        <mxCell id="laneB" value="Lane B — sequential" style="text;html=1;fontSize=11;fontStyle=2;align=center;fontColor=#999999;" vertex="1" parent="1">
+          <mxGeometry x="480" y="1033" width="280" height="16" as="geometry" />
+        </mxCell>
+        <mxCell id="n5" value="/orchestrate routing table selects&lt;br&gt;specialist agent(s) by domain + phase" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="480" y="1050" width="280" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="d5" value="2+ writing agents dispatched&lt;br&gt;concurrently?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="480" y="1180" width="280" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="R5b" value="Single Agent call, sequential —&lt;br&gt;no isolation needed" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="480" y="1320" width="280" height="90" as="geometry" />
+        </mxCell>
+
+        <mxCell id="laneC" value="Lane C — isolated parallel" style="text;html=1;fontSize=11;fontStyle=2;align=center;fontColor=#999999;" vertex="1" parent="1">
+          <mxGeometry x="900" y="1290" width="360" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="n6hook" value="pretool_task_isolation.py BLOCKS if:&lt;br&gt;writing agent + run_in_background&lt;br&gt;+ no isolation set to worktree" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="900" y="1320" width="360" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="n6" value="Every concurrent writer gets&lt;br&gt;isolation: worktree — harness creates a&lt;br&gt;temp worktree+branch per agent,&lt;br&gt;max 4 concurrent, rest wave" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="900" y="1470" width="360" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="dexit" value="Agent made changes?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="980" y="1640" width="200" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="Clean" value="Worktree auto-cleaned" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="820" y="1780" width="220" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="Return" value="Path + branch returned to caller" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1080" y="1780" width="240" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="n6c" value="Main session merges each branch back&lt;br&gt;sequentially — conflicts reported to&lt;br&gt;the user, never auto-resolved" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="900" y="1890" width="360" height="110" as="geometry" />
+        </mxCell>
+
+        <mxCell id="mcpBus" value="MCP (informational, not a control-flow gate):&lt;br&gt;while isolated, workers coordinate over&lt;br&gt;mcp-bus (services/mcp-bus, local SQLite) —&lt;br&gt;bus_post/bus_read for a shared channel,&lt;br&gt;mem_set/mem_get for shared memory" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6f5ff;strokeColor=#6699cc;fontSize=11;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="1300" y="1490" width="280" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="eMcp" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#6699cc;dashed=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;startArrow=none;" edge="1" parent="1" source="n6" target="mcpBus"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <mxCell id="n7" value="Run relevant tests — per CLAUDE.md,&lt;br&gt;after every code change. Tester agents&lt;br&gt;scope to changed files, unit-first,&lt;br&gt;sized timeout" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="480" y="2040" width="300" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- Band 4: Test / Verify -->
+        <mxCell id="band4" value="Band 4 — Test &amp; Verify" style="text;html=1;fontSize=13;fontStyle=1;align=left;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="60" y="2160" width="400" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="n8" value="@code-plan-verifier — read-only&lt;br&gt;drift check vs plan/tasks, spec-kit flows" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="470" y="2180" width="320" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="n9" value="@gitignore-auditor + @secret-auditor —&lt;br&gt;read-only staged-files scan, BEFORE commit" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="450" y="2300" width="360" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- Band 5: Commit -->
+        <mxCell id="band5" value="Band 5 — Commit" style="text;html=1;fontSize=13;fontStyle=1;align=left;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="60" y="2400" width="400" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="d6" value="Plan-completion checkpoint —&lt;br&gt;all tasks done + verified, or user&lt;br&gt;says considered done?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="470" y="2420" width="320" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="L6" value="Show proposed commit message,&lt;br&gt;wait for explicit user OK" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="60" y="2440" width="300" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="R6" value="Auto-commit immediately via&lt;br&gt;git-identity wrapper, no ask" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="900" y="2440" width="300" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="n10" value="git-identity wrapper commits:&lt;br&gt;enforces type colon subject, refuses&lt;br&gt;main/master, local-only identity override" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="460" y="2590" width="340" height="110" as="geometry" />
+        </mxCell>
+
+        <!-- Band 6: Push / PR + wrap-up -->
+        <mxCell id="band6" value="Band 6 — Push / PR + Wrap-up" style="text;html=1;fontSize=13;fontStyle=1;align=left;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="60" y="2720" width="400" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="d7" value="User explicitly asked to&lt;br&gt;push or open a PR?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="480" y="2740" width="280" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="L7" value="Stop — never push or PR&lt;br&gt;without explicit ask" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="80" y="2760" width="300" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="R7" value="git push, then /pr drafts&lt;br&gt;title+body, then gh pr create" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="900" y="2760" width="300" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="n11" value="Stop hook nags on uncommitted changes.&lt;br&gt;SessionEnd releases the branch lock&lt;br&gt;+ sweeps orphan processes" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="460" y="2880" width="340" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="n12" value="After merge: delete merged local&lt;br&gt;branches, prune stale worktrees" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="470" y="3020" width="320" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- Legend -->
+        <mxCell id="legTitle" value="Legend" style="text;html=1;fontSize=14;fontStyle=1;align=left;" vertex="1" parent="1">
+          <mxGeometry x="1360" y="30" width="220" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="legProcess" value="Workflow step" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1360" y="70" width="240" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="legDecision" value="Decision point" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1360" y="140" width="240" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="legHook" value="Hook enforcement — blocks at runtime" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1360" y="220" width="240" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="legTerminal" value="Session start / end" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1360" y="300" width="240" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="legNote" value="Full detail:&lt;br&gt;docs/hooks.md&lt;br&gt;docs/orchestration.md&lt;br&gt;docs/parallel-isolation.md&lt;br&gt;docs/workflows.md&lt;br&gt;docs/speckit.md" style="text;html=1;fontSize=11;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1360" y="370" width="260" height="140" as="geometry" />
+        </mxCell>
+
+        <mxCell id="mcpPanelTitle" value="MCP servers (external, all local)" style="text;html=1;fontSize=13;fontStyle=1;align=left;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="1360" y="530" width="280" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="mcpPanel" value="Callable from any step above; they don't&lt;br&gt;add execution contexts to the chain:&lt;br&gt;&lt;br&gt;• mcp-bus — this repo, services/mcp-bus,&lt;br&gt;&amp;nbsp;&amp;nbsp;local SQLite. Inter-agent bus + shared&lt;br&gt;&amp;nbsp;&amp;nbsp;memory + registry. Used in Lane C above.&lt;br&gt;• context7 — live library/framework docs&lt;br&gt;• microsoft-docs — Azure / MS Learn docs&lt;br&gt;• claude-in-chrome, playwright — browser&lt;br&gt;• Slack, Vercel, Azure — team/cloud plugins&lt;br&gt;&lt;br&gt;Full registration: global/MCP.md" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6f5ff;strokeColor=#6699cc;fontSize=11;align=left;verticalAlign=top;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="1360" y="560" width="280" height="230" as="geometry" />
+        </mxCell>
+
+        <!-- Edges: every edge has explicit exit/entry points so drawio's auto-router -->
+        <!-- never has to guess a path through unrelated nodes. -->
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="n1" target="n2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="n2" target="d1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e3" value="No" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#666666;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="d1" target="L1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e4" value="Yes" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#666666;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="d1" target="R1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.15;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="L1" target="d2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.85;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="R1" target="d2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e7" value="Yes" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#666666;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="d2" target="R2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e8" value="No" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.3;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="d2" target="n3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.9;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="R2" target="n3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="n3" target="d3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e11" value="Yes" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#666666;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="d3" target="L3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e12" value="No" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.3;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="d3" target="n4"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.7;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="L3" target="n4"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="n4" target="d4"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e15" value="No" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#666666;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="d4" target="L4"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e16" value="Yes" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="d4" target="n5"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="L4" target="n7"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e18" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="n5" target="d5"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e19" value="No" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="d5" target="R5b"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e20" value="Yes" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#666666;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;" edge="1" parent="1" source="d5" target="n6hook"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e21" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="R5b" target="n7"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e22" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="n6hook" target="n6"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e23" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="n6" target="dexit"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e24" value="No" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#666666;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="dexit" target="Clean"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e25" value="Yes" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#666666;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="dexit" target="Return"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e26" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.2;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="Clean" target="n6c"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e27" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.8;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="Return" target="n6c"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e28" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#666666;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="n6c" target="n7"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e29" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="n7" target="n8"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e30" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="n8" target="n9"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e31" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="n9" target="d6"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e32" value="No" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#666666;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="d6" target="L6"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e33" value="Yes" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#666666;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="d6" target="R6"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e34" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.15;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="L6" target="n10"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e35" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.85;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="R6" target="n10"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e36" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="n10" target="d7"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e37" value="No" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#666666;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="d7" target="L7"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e38" value="Yes" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#666666;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="d7" target="R7"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e39" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.15;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="L7" target="n11"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e40" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.85;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="R7" target="n11"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e41" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="n11" target="n12"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

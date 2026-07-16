@@ -31,6 +31,7 @@ See [`references/flag-cookbook.md`](references/flag-cookbook.md) for the full ta
 
 - `--model haiku` (alias) is **silently ignored** by claude. Use the full ID `claude-haiku-4-5`. Always test with a "what model are you?" probe to confirm.
 - `--output-format stream-json` requires `--verbose` when combined with `--print`. Errors with `When using --print, --output-format=stream-json requires --verbose`.
+- When the host needs nested-agent observability, add `--forward-subagent-text`. It emits subagent text and thinking as stream-json assistant/user messages with `parent_tool_use_id`; use `CLAUDE_CODE_FORWARD_SUBAGENT_TEXT=1` when the harness cannot add flags. Requires Claude Code 2.1.211+.
 - `--bare` strips startup overhead but **breaks OAuth** — requires `ANTHROPIC_API_KEY` env var. Don't use it if the user's auth is OAuth/keychain.
 - To trim startup without breaking OAuth: `--strict-mcp-config --disable-slash-commands --tools ""` saves ~5s.
 - Codex `gpt-5-mini` and `gpt-5` are **blocked under ChatGPT-subscription auth**. Default (`gpt-5`) works on ChatGPT auth; API-tier models require `codex logout` then `codex login` with an API key (billed separately).
@@ -68,6 +69,7 @@ The event types claude emits and accepts are documented in [`references/stream-j
 Minimum you need to know:
 - **Send**: `{"type":"user","message":{"role":"user","content":"<text>"}}\n`
 - **Wait for**: `{"type":"result","subtype":"success","result":"<reply text>", …}`
+- If `--forward-subagent-text` is enabled, distinguish nested-agent messages by their non-empty `parent_tool_use_id`; do not present them as the parent assistant's final answer.
 - Ignore all `system/*`, `assistant`, and `rate_limit_event` events for control flow — they're useful for streaming UIs but not required.
 
 ## Fallbacks
