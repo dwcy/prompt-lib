@@ -2,6 +2,8 @@
    sibling files (tokens.css, theme.css, shell.css, components.css, overlays.css, modules.css) —
    this file stays the reset + base-element layer per T003/T024. */
 @import "tailwindcss";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
 @import "./tokens.css";
 @import "./theme.css";
 @import "./shell.css";

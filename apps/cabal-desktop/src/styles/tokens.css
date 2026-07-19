@@ -1,45 +1,59 @@
 /* Design tokens: dark-first operational palette (FR-006), semantic state colors covering every
    module's loading/empty/error/disabled/stale surface (FR-013), spacing/radius/type/motion scale.
-   Single source of truth referenced by raw `var(--...)` throughout src/styles/*.css; theme.css
-   re-exposes the subset Tailwind needs under its own namespaced names (--color-*, --font-*, ...)
-   so `bg-surface-2`, `text-muted`, etc. work as Tailwind utilities too. Names here are deliberately
-   NOT Tailwind-namespaced (e.g. --corner-sm not --radius-sm) to avoid a duplicate/self-referencing
-   declaration once theme.css aliases them inside `@theme`. */
+   Values follow the "Cabal Console" design (Claude Designer, web-ui-part-2): violet-tinted dark
+   surfaces, pink primary accent, Geist type. Single source of truth referenced by raw `var(--...)`
+   throughout src/styles/*.css; theme.css re-exposes the subset Tailwind needs under its own
+   namespaced names (--color-*, --font-*, ...) so `bg-surface-2`, `text-muted`, etc. work as
+   Tailwind utilities too. Names here are deliberately NOT Tailwind-namespaced (e.g. --corner-sm
+   not --radius-sm) to avoid a duplicate/self-referencing declaration once theme.css aliases them
+   inside `@theme`. */
 
 :root {
   color-scheme: dark;
 
   /* Surfaces — increasing elevation */
-  --bg: #0a0a0c;
-  --surface-1: #131316;
-  --surface-2: #1b1b1f;
-  --surface-3: #232329;
+  --bg: #0e0d12;
+  --surface-deep: #0b0a0f; /* log panes, graph canvases — darker than the page */
+  --surface-1: #14131b; /* cards */
+  --surface-2: #17151f; /* inputs, buttons, sidebar search */
+  --surface-3: #1d1b27; /* chips, hover, inner tiles */
 
   /* Borders */
-  --border: #2a2a30;
-  --border-strong: #3a3a42;
+  --border: #232130; /* card outlines */
+  --border-strong: #262433; /* inputs, buttons */
+  --divider: #201e28; /* section rules, row separators */
+  --divider-faint: #1a1822; /* dense table row separators */
 
   /* Foreground text */
-  --fg: #e6e6ea;
-  --muted: #9497a1;
-  --fg-inverted: #0a0a0c;
+  --fg: #e9e7f0;
+  --muted: #7c7790;
+  --muted-2: #6f6a82; /* group titles, column headers */
+  --muted-3: #55506a; /* faintest — timestamps, not-found */
+  --fg-inverted: #0e0d12;
 
   /* Base status hues — the only place a status color is ever spelled out as a literal */
-  --status-ok: #34d399;
-  --status-info: #60a5fa;
-  --status-warning: #fbbf24;
-  --status-danger: #f87171;
-  --status-neutral: #9497a1;
-  --status-accent: #5eead4;
+  --status-ok: #5fd38d;
+  --status-info: #75c7ff;
+  --status-warning: #f0c774;
+  --status-danger: #ff8f9a;
+  --status-neutral: #7c7790;
+  --status-accent: #f4569d;
   --status-stale: #c9a227;
 
+  /* Primary accent surfaces — active nav, selected rails, accent buttons */
+  --accent: var(--status-accent);
+  --accent-bg: #221626;
+  --accent-bg-gradient: linear-gradient(180deg, #221626, #1e1420);
+  --accent-border: #3c2038;
+  --accent-muted: #b44b8c;
+
   /* Purpose-group accents: navigation and workspace-map colors stay consistent everywhere. */
-  --group-workspace: #5eead4;
-  --group-setup: #60a5fa;
-  --group-configuration: #fbbf24;
-  --group-intelligence: #c084fc;
-  --group-runtime: #fb7185;
-  --group-observe: #4ade80;
+  --group-workspace: #f4569d;
+  --group-setup: #75c7ff;
+  --group-configuration: #f0c774;
+  --group-intelligence: #bb9af7;
+  --group-runtime: #ff8f9a;
+  --group-observe: #5fd38d;
 
   /* Module/connectivity state palette — StatePill, HealthStrip, ModuleHealth (FR-005/012/013) */
   --state-ok: var(--status-ok);
@@ -51,7 +65,7 @@
 
   /* Tool/install states — data-model.md ToolStatus, defined now for the Tools module drop-in */
   --state-installed: var(--status-ok);
-  --state-missing: var(--status-neutral);
+  --state-missing: var(--status-warning);
   --state-update-available: var(--status-info);
   --state-manual-required: var(--status-warning);
   --state-unsupported: var(--status-neutral);
@@ -69,7 +83,7 @@
   /* Destructive / danger — ConfirmDialog removals-present styling */
   --danger-bg: color-mix(in srgb, var(--status-danger) 12%, var(--surface-1));
   --danger-border: color-mix(in srgb, var(--status-danger) 45%, var(--border));
-  --danger-fg: #fca5a5;
+  --danger-fg: #ffb3bb;
 
   /* Focus ring */
   --focus-ring-color: var(--status-accent);
@@ -91,16 +105,16 @@
   --space-10: 2.5rem;
   --space-12: 3rem;
 
-  /* Radii */
-  --corner-sm: 0.25rem;
-  --corner-md: 0.375rem;
-  --corner-lg: 0.625rem;
+  /* Radii — 12px cards, 8px controls, 6px chips per the console design */
+  --corner-sm: 0.375rem;
+  --corner-md: 0.5rem;
+  --corner-lg: 0.75rem;
   --corner-full: 9999px;
 
-  /* Type — dense operational scale */
-  --font-family-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  /* Type — dense operational scale, Geist first (bundled via @fontsource-variable) */
+  --font-family-sans: "Geist Variable", ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
   --font-family-mono:
-    ui-monospace, "Cascadia Code", "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
+    "Geist Mono Variable", ui-monospace, "Cascadia Code", "SFMono-Regular", Consolas, monospace;
 
   --fs-xs: 0.6875rem;
   --lh-xs: 1rem;
@@ -116,6 +130,12 @@
   --lh-xl: 1.5rem;
   --fs-2xl: 1.5rem;
   --lh-2xl: 1.75rem;
+  --fs-3xl: 1.875rem; /* KPI values */
+  --lh-3xl: 2rem;
+
+  /* Letter-spacing — uppercase group titles / column headers */
+  --tracking-wide: 0.12em;
+  --tracking-wider: 0.14em;
 
   /* Motion — CSS transitions only; disabled wholesale under reduced-motion below */
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
@@ -132,6 +152,27 @@
      so component stylesheets repeat the literal `768px` value in their `@media (max-width: ...)`
      queries — keep both in sync if this changes. */
   --bp-narrow: 48rem;
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@keyframes fade-in-line {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -3,13 +3,18 @@
    directly in JSX, alongside raw `var(--...)` usage in src/styles/*.css. Import after tokens.css. */
 @theme {
   --color-bg: var(--bg);
+  --color-surface-deep: var(--surface-deep);
   --color-surface-1: var(--surface-1);
   --color-surface-2: var(--surface-2);
   --color-surface-3: var(--surface-3);
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);
+  --color-divider: var(--divider);
+  --color-divider-faint: var(--divider-faint);
   --color-fg: var(--fg);
   --color-muted: var(--muted);
+  --color-muted-2: var(--muted-2);
+  --color-muted-3: var(--muted-3);
   --color-fg-inverted: var(--fg-inverted);
 
   --color-ok: var(--status-ok);
@@ -19,6 +24,9 @@
   --color-neutral: var(--status-neutral);
   --color-accent: var(--status-accent);
   --color-stale: var(--status-stale);
+  --color-accent-bg: var(--accent-bg);
+  --color-accent-border: var(--accent-border);
+  --color-accent-muted: var(--accent-muted);
 
   --color-danger-bg: var(--danger-bg);
   --color-danger-border: var(--danger-border);
@@ -46,6 +54,11 @@
   --text-xl--line-height: var(--lh-xl);
   --text-2xl: var(--fs-2xl);
   --text-2xl--line-height: var(--lh-2xl);
+  --text-3xl: var(--fs-3xl);
+  --text-3xl--line-height: var(--lh-3xl);
+
+  --tracking-wide: var(--tracking-wide);
+  --tracking-wider: var(--tracking-wider);
 
   /* Tailwind emits this value inside @media, where runtime custom properties are invalid. */
   --breakpoint-narrow: 48rem;

@@ -595,3 +595,113 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ─── Sparkline / Gauge / KpiCard (console redesign primitives) ───────────── */
+
+.sparkline {
+  display: block;
+  overflow: visible;
+  color: var(--accent);
+}
+
+.gauge__track {
+  stroke: var(--border);
+}
+
+.gauge--accent .gauge__fill {
+  stroke: var(--accent);
+}
+
+.gauge--ok .gauge__fill {
+  stroke: var(--status-ok);
+}
+
+.gauge--info .gauge__fill {
+  stroke: var(--status-info);
+}
+
+.gauge--warning .gauge__fill {
+  stroke: var(--status-warning);
+}
+
+.gauge--danger .gauge__fill {
+  stroke: var(--status-danger);
+}
+
+.gauge__value {
+  fill: var(--fg);
+  font-family: var(--font-family-sans);
+  font-weight: 600;
+}
+
+.gauge__caption {
+  fill: var(--muted);
+  font-family: var(--font-family-sans);
+  font-size: 11px;
+}
+
+.kpi-card {
+  min-width: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  background-color: var(--surface-1);
+}
+
+.kpi-card__top {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.kpi-card__delta--ok {
+  color: var(--status-ok);
+}
+
+.kpi-card__delta--info {
+  color: var(--status-info);
+}
+
+.kpi-card__delta--warning {
+  color: var(--status-warning);
+}
+
+.kpi-card__delta--danger {
+  color: var(--status-danger);
+}
+
+.kpi-card__delta--neutral {
+  color: var(--muted);
+}
+
+.kpi-card__row {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-3);
+  margin: var(--space-2) 0 0;
+}
+
+.kpi-card__value {
+  font-size: var(--fs-3xl);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.kpi-card__unit {
+  color: var(--muted);
+  font-size: var(--fs-lg);
+  font-weight: 400;
+}
+
+.kpi-card__aside {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.kpi-card__hint {
+  margin-top: var(--space-2);
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}

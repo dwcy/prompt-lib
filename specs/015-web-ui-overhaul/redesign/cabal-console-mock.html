@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #0e0d12; color: #e9e7f0; font-family: Geist, ui-sans-serif, system-ui, sans-serif; }
+  a { color: #75c7ff; text-decoration: none; }
+  a:hover { color: #a5dbff; }
+  button, input, select { font: inherit; }
+  @keyframes dashflow { to { stroke-dashoffset: -14; } }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+  @keyframes fadein { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
+</style>
+</helmet>
+<div style="display:grid; grid-template-columns:248px minmax(0,1fr); height:100vh; overflow:hidden; font-size:13px">
+  <aside style="background:#111017; border-right:1px solid #201e28; display:flex; flex-direction:column; padding:14px 12px; min-height:0">
+    <div style="display:flex; align-items:center; gap:10px; padding:6px 8px 14px">
+      <img src="assets/cabal-logo.png" alt="" style="width:28px; height:28px; object-fit:cover; border-radius:7px">
+      <div><div style="font-weight:600; font-size:13.5px">Cabal</div><div style="color:#7c7790; font-size:11px">local control surface</div></div>
+      <span style="margin-left:auto; color:#7c7790; font-size:10px; border:1px solid #2a2735; border-radius:5px; padding:2px 5px" title="read-only">RO</span>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px; background:#17151f; border:1px solid #262433; border-radius:8px; padding:7px 10px; color:#7c7790; margin-bottom:14px">
+      <span>Search…</span><span style="margin-left:auto; font-family:'Geist Mono',monospace; font-size:10.5px; border:1px solid #2a2735; border-radius:4px; padding:1px 5px">⌘K</span>
+    </div>
+    <nav style="display:flex; flex-direction:column; gap:2px; overflow:auto; min-height:0">
+      <sc-for list="{{ navGroups }}" as="group" hint-placeholder-count="4">
+        <div style="color:#6f6a82; font-size:10.5px; letter-spacing:.14em; padding:10px 8px 4px">{{ group.title }}</div>
+        <sc-for list="{{ group.items }}" as="nav" hint-placeholder-count="2">
+          <button type="button" onClick="{{ nav.go }}" style="{{ nav.style }}">
+            <span style="{{ nav.dotStyle }}"></span><span>{{ nav.label }}</span><span style="{{ nav.badgeStyle }}">{{ nav.badge }}</span>
+          </button>
+        </sc-for>
+      </sc-for>
+    </nav>
+    <div style="margin-top:auto; border-top:1px solid #201e28; padding:12px 8px 2px; font-family:'Geist Mono',monospace; font-size:10.5px; color:#7c7790; line-height:1.8">⎇ 017-opencode-setup<br>C:/projects/prompt-lib<br>127.0.0.1:8765 · cabal-web.v1</div>
+  </aside>
+
+  <main style="min-width:0; display:flex; flex-direction:column; overflow:hidden">
+    <header style="display:flex; align-items:center; gap:14px; padding:13px 24px; border-bottom:1px solid #201e28; flex:0 0 auto">
+      <span style="font-size:15px; font-weight:600">{{ viewTitle }}</span>
+      <span style="color:#7c7790; font-family:'Geist Mono',monospace; font-size:11.5px">snapshot 14:32:08Z</span>
+      <span style="display:flex; align-items:center; gap:6px; margin-left:auto; color:#5fd38d; font-size:12px"><span style="width:6px; height:6px; border-radius:50%; background:#5fd38d; animation:pulse 2.4s ease-in-out infinite"></span>collectors responsive</span>
+      <button type="button" style="border:1px solid #262433; border-radius:8px; background:#17151f; color:#aca7bd; padding:6px 12px; cursor:pointer">Refresh</button>
+    </header>
+
+    <div style="min-height:0; flex:1; overflow:auto">
+
+    <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
+    <section data-screen-label="Overview" style="padding:20px 24px; display:grid; gap:14px">
+      <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:12px">
+        <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4">
+          <div style="background:#14131b; border:1px solid #232130; border-radius:12px; padding:16px; min-width:0">
+            <div style="display:flex; justify-content:space-between; color:#7c7790; font-size:12px"><span>{{ k.label }}</span><span style="{{ k.deltaStyle }}">{{ k.delta }}</span></div>
+            <div style="display:flex; align-items:flex-end; gap:12px; margin:8px 0 2px">
+              <span style="font-size:30px; font-weight:600; line-height:1">{{ k.value }}<span style="color:#7c7790; font-size:15px; font-weight:400"> {{ k.unit }}</span></span>
+              <span style="margin-left:auto; flex:0 0 auto">{{ k.sparkSvg }}</span>
+            </div>
+            <div style="color:#7c7790; font-size:11.5px; margin-top:6px">{{ k.hint }}</div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:12px">
+        <sc-for list="{{ serviceCards }}" as="svc" hint-placeholder-count="4">
+          <div style="{{ svc.cardStyle }}">
+            <div style="display:flex; align-items:center; gap:8px"><span style="{{ svc.dotStyle }}"></span><b style="font-weight:600">{{ svc.title }}</b><span style="margin-left:auto; font-family:'Geist Mono',monospace; font-size:11px; color:#7c7790">{{ svc.stateLabel }}</span></div>
+            <div style="color:#aca7bd; font-size:12px; margin-top:8px; line-height:1.6">{{ svc.line1 }}<br>{{ svc.line2 }}</div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="background:#0b0a0f; border:1px solid #232130; border-radius:12px; overflow:hidden">
+        <div style="display:flex; align-items:center; gap:10px; padding:10px 16px; border-bottom:1px solid #201e28"><b style="font-weight:600">Machine snapshot</b><span style="color:#7c7790; font-size:12px">host probes, live versions</span><span style="margin-left:auto; font-family:'Geist Mono',monospace; font-size:11px; color:#7c7790">Cabal: updates not tracked · hash: no upstream</span></div>
+        <div style="font-family:'Geist Mono',monospace; font-size:12px; line-height:2.1; padding:12px 16px; color:#aca7bd">
+          <div><span style="color:#75c7ff">OS:</span> Windows 11&nbsp;&nbsp;<span style="color:#75c7ff">Pkg:</span> winget&nbsp;&nbsp;<span style="color:#75c7ff">git:</span> 2.54.0&nbsp;&nbsp;<span style="color:#75c7ff">github:</span> <span style="color:#5fd38d">● dwcy</span></div>
+          <div><span style="color:#75c7ff">Python:</span> 3.14.6&nbsp;&nbsp;<span style="color:#75c7ff">Node:</span> v24.17.0&nbsp;&nbsp;<span style="color:#75c7ff">.NET:</span> 9.0, 10.0&nbsp;&nbsp;<span style="color:#75c7ff">npm:</span> 11.13.0&nbsp;&nbsp;<span style="color:#75c7ff">pnpm:</span> 11.3.0&nbsp;&nbsp;<span style="color:#75c7ff">bun:</span> 1.3.14&nbsp;&nbsp;<span style="color:#75c7ff">uv:</span> 0.11.24</div>
+          <div><span style="color:#75c7ff">Docker:</span> 29.6.1&nbsp;&nbsp;<span style="color:#75c7ff">Podman:</span> 5.8.3&nbsp;&nbsp;<span style="color:#75c7ff">k8s:</span> v1.36.1&nbsp;&nbsp;<span style="color:#75c7ff">Terraform:</span> v1.15.6&nbsp;&nbsp;<span style="color:#75c7ff">Azure CLI:</span> *&nbsp;&nbsp;<span style="color:#75c7ff">Google Cloud:</span> 574.0.0&nbsp;&nbsp;<span style="color:#75c7ff">AWS CLI:</span> 2.35.9</div>
+          <div><span style="color:#75c7ff">Claude CLI:</span> <span style="color:#5fd38d">✓</span>&nbsp;&nbsp;<span style="color:#75c7ff">Gemini CLI:</span> <span style="color:#5fd38d">✓</span>&nbsp;&nbsp;<span style="color:#75c7ff">Codex CLI:</span> <span style="color:#5fd38d">✓</span>&nbsp;&nbsp;<span style="color:#75c7ff">OpenCode:</span> <span style="color:#5fd38d">✓</span>&nbsp;&nbsp;<span style="color:#75c7ff">Vercel Skills CLI:</span> <span style="color:#5fd38d">✓</span>&nbsp;&nbsp;<span style="color:#75c7ff">MSSQL:</span> <span style="color:#5fd38d">✓</span>&nbsp;&nbsp;<span style="color:#75c7ff">Cursor:</span> <span style="color:#5fd38d">✓</span>&nbsp;&nbsp;<span style="color:#75c7ff">VS Code:</span> <span style="color:#5fd38d">✓</span>&nbsp;&nbsp;<span style="color:#75c7ff">Visual Studio:</span> <span style="color:#5fd38d">✓</span></div>
+          <div><span style="color:#75c7ff">Ollama:</span> <span style="color:#5fd38d">✓</span> <span style="color:#f0c774">No local models installed</span>&nbsp;&nbsp;<span style="color:#75c7ff">vLLM:</span> <span style="color:#f0c774">Linux only — use WSL2 or a Linux Docker host for vLLM.</span></div>
+          <div style="border-top:1px solid #1a1822; margin-top:4px; padding-top:6px"><span style="color:#75c7ff">Source:</span> <span style="color:#f0c774">C:\projects\prompt-lib\global</span>&nbsp;&nbsp;<span style="color:#75c7ff">Claude:</span> <span style="color:#f0c774">C:\Users\dawparv\.claude</span> <span style="color:#7c7790">(exists)</span>&nbsp;&nbsp;<span style="color:#75c7ff">OpenAI:</span> <span style="color:#f0c774">C:\Users\dawparv\.codex</span> <span style="color:#7c7790">(exists)</span>&nbsp;&nbsp;<span style="color:#75c7ff">Gemini:</span> <span style="color:#f0c774">C:\Users\dawparv\.gemini</span> <span style="color:#55506a">(not found)</span></div>
+        </div>
+      </div>
+      <div style="display:grid; grid-template-columns:340px 1.1fr 1fr; gap:12px; align-items:stretch">
+        <div style="background:#14131b; border:1px solid #232130; border-radius:12px; padding:16px; display:flex; flex-direction:column; align-items:center">
+          <div style="display:flex; width:100%; margin-bottom:6px"><b style="font-weight:600">Machine readiness</b><span style="margin-left:auto; color:#7c7790; font-size:12px">weighted</span></div>
+          <div style="width:170px; height:170px">{{ readinessGauge }}</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px 18px; width:100%; margin-top:8px; font-size:11.5px; color:#aca7bd">
+            <span><span style="color:#5fd38d">●</span> tools 75%</span><span><span style="color:#5fd38d">●</span> config 100%</span>
+            <span><span style="color:#f0c774">●</span> services 50%</span><span><span style="color:#5fd38d">●</span> knowledge 100%</span>
+          </div>
+        </div>
+        <div style="background:#14131b; border:1px solid #232130; border-radius:12px; padding:16px; min-width:0">
+          <div style="display:flex; align-items:center; margin-bottom:12px"><b style="font-weight:600">Configuration surfaces</b><span style="margin-left:auto; color:#7c7790; font-size:12px">~/.claude · ~/.codex</span></div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px">
+            <sc-for list="{{ configSurfaces }}" as="c" hint-placeholder-count="6">
+              <div style="background:#17161f; border-radius:9px; padding:11px 12px"><div style="color:#7c7790; font-size:11px">{{ c.label }}</div><div style="{{ c.valStyle }}">{{ c.value }}</div></div>
+            </sc-for>
+          </div>
+          <div style="display:flex; align-items:center; margin:16px 0 10px"><b style="font-weight:600">Relation mix</b><span style="margin-left:auto; color:#7c7790; font-size:12px; font-family:'Geist Mono',monospace">212 edges</span></div>
+          <div style="display:flex; height:10px; border-radius:5px; overflow:hidden; background:#232130">
+            <sc-for list="{{ relationMix }}" as="r" hint-placeholder-count="6"><span style="{{ r.segStyle }}"></span></sc-for>
+          </div>
+          <div style="display:flex; gap:14px; flex-wrap:wrap; margin-top:10px; font-size:11.5px; color:#aca7bd">
+            <sc-for list="{{ relationMix }}" as="r" hint-placeholder-count="6"><span><span style="{{ r.chipStyle }}">●</span> {{ r.kind }} {{ r.count }}</span></sc-for>
+          </div>
+        </div>
+        <div style="background:#14131b; border:1px solid #232130; border-radius:12px; padding:16px; display:flex; flex-direction:column; min-width:0">
+          <div style="display:flex; align-items:center; margin-bottom:10px"><b style="font-weight:600">Activity</b><span style="margin-left:auto; color:#7c7790; font-size:12px">latest events</span></div>
+          <div style="display:grid; font-size:12.5px">
+            <sc-for list="{{ activity }}" as="a" hint-placeholder-count="3">
+              <div style="display:grid; grid-template-columns:14px 1fr; gap:12px; padding:9px 0; border-bottom:1px solid #201e28">
+                <span style="{{ a.iconStyle }}">{{ a.icon }}</span>
+                <span style="color:#aca7bd"><b style="color:#e9e7f0; font-weight:500">{{ a.title }}</b> — {{ a.sub }}<br><span style="color:#7c7790; font-family:'Geist Mono',monospace; font-size:11px">{{ a.meta }}</span></span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="margin-top:auto; border-top:1px solid #201e28; padding-top:12px; display:flex; justify-content:space-between; color:#7c7790; font-size:11.5px"><span>3 events retained</span><button type="button" onClick="{{ goDiagnostics }}" style="background:none; border:none; color:#aca7bd; cursor:pointer; padding:0">View diagnostics →</button></div>
+        </div>
+      </div>
+    </section>
+    </sc-if>
+
+    <sc-if value="{{ isTools }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="Tools" style="padding:20px 24px; display:grid; gap:14px">
+      <div style="display:grid; grid-template-columns:minmax(220px,1fr) repeat(3,190px); gap:10px">
+        <input type="search" placeholder="Search 63 tools, categories, badges…" autoComplete="off" onInput="{{ onToolSearch }}" style="width:100%; min-width:0; box-sizing:border-box; border:1px solid #262433; border-radius:8px; background:#17151f; color:#e9e7f0; padding:8px 12px">
+        <select aria-label="Tool category" onChange="{{ onToolCategory }}" style="border:1px solid #262433; border-radius:8px; background:#17151f; color:#aca7bd; padding:8px 10px">
+          <sc-for list="{{ categoryOptions }}" as="o" hint-placeholder-count="3"><option value="{{ o }}">{{ o }}</option></sc-for>
+        </select>
+        <select aria-label="Tool status" onChange="{{ onToolStatus }}" style="border:1px solid #262433; border-radius:8px; background:#17151f; color:#aca7bd; padding:8px 10px">
+          <sc-for list="{{ statusOptions }}" as="o" hint-placeholder-count="3"><option value="{{ o }}">{{ o }}</option></sc-for>
+        </select>
+        <select aria-label="Install channel" onChange="{{ onToolChannel }}" style="border:1px solid #262433; border-radius:8px; background:#17151f; color:#aca7bd; padding:8px 10px">
+          <sc-for list="{{ channelOptions }}" as="o" hint-placeholder-count="3"><option value="{{ o }}">{{ o }}</option></sc-for>
+        </select>
+      </div>
+      <div style="display:grid; grid-template-columns:210px minmax(0,1fr) 300px; gap:12px; align-items:start">
+        <div style="display:grid; gap:3px">
+          <sc-for list="{{ categoryRail }}" as="cat" hint-placeholder-count="8">
+            <button type="button" onClick="{{ cat.go }}" style="{{ cat.style }}">
+              <span style="min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">{{ cat.name }}</span>
+              <span style="display:flex; align-items:center; gap:6px; margin-left:auto; flex:0 0 auto"><span style="{{ cat.barStyle }}"></span><span style="font-family:'Geist Mono',monospace; font-size:11px; color:#7c7790">{{ cat.count }}</span></span>
+            </button>
+          </sc-for>
+        </div>
+        <div style="background:#14131b; border:1px solid #232130; border-radius:12px; overflow:hidden">
+          <div style="display:grid; grid-template-columns:16px minmax(0,1.2fr) minmax(0,1fr) 120px 110px; gap:12px; padding:9px 16px; border-bottom:1px solid #201e28; color:#6f6a82; font-size:10.5px; letter-spacing:.12em">
+            <span></span><span>TOOL</span><span>CATEGORY</span><span>CHANNEL</span><span>STATUS</span>
+          </div>
+          <sc-for list="{{ toolRows }}" as="row" hint-placeholder-count="12">
+            <button type="button" onClick="{{ row.go }}" style="{{ row.style }}">
+              <span style="{{ row.dotStyle }}"></span>
+              <span style="min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:500">{{ row.label }}<span style="{{ row.badgeStyle }}">{{ row.badge }}</span></span>
+              <span style="min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#7c7790">{{ row.category }}</span>
+              <span style="font-family:'Geist Mono',monospace; font-size:11px; color:#7c7790">{{ row.install_channel }}</span>
+              <span style="{{ row.statusStyle }}">{{ row.status }}</span>
+            </button>
+          </sc-for>
+        </div>
+        <aside style="background:#14131b; border:1px solid #232130; border-radius:12px; padding:16px; position:sticky; top:0">
+          <div style="display:flex; align-items:center; gap:8px"><b style="font-weight:600; font-size:14px">{{ toolDetail.label }}</b><span style="{{ toolDetail.statusStyle }}">{{ toolDetail.status }}</span></div>
+          <p style="color:#aca7bd; font-size:12.5px; line-height:1.6; margin:10px 0 14px">{{ toolDetail.description }}</p>
+          <div style="display:grid; gap:0; font-size:12px">
+            <sc-for list="{{ toolDetail.facts }}" as="f" hint-placeholder-count="6">
+              <div style="display:grid; grid-template-columns:110px 1fr; gap:10px; padding:7px 0; border-bottom:1px solid #201e28"><span style="color:#7c7790">{{ f.label }}</span><span style="font-family:'Geist Mono',monospace; font-size:11.5px; overflow-wrap:anywhere">{{ f.value }}</span></div>
+            </sc-for>
+          </div>
+          <sc-if value="{{ toolDetail.hasVersions }}" hint-placeholder-val="{{ false }}">
+            <div style="color:#6f6a82; font-size:10.5px; letter-spacing:.14em; margin:14px 0 8px">INSTALLED VERSIONS</div>
+            <div style="display:grid; gap:4px">
+              <sc-for list="{{ toolDetail.versions }}" as="ver" hint-placeholder-count="2">
+                <button type="button" onClick="{{ ver.activate }}" style="{{ ver.style }}">
+                  <span style="font-family:'Geist Mono',monospace; font-size:11.5px">{{ ver.version }}</span>
+                  <span style="color:#7c7790; font-size:11px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">{{ ver.channel }}</span>
+                  <span style="{{ ver.tagStyle }}">{{ ver.tag }}</span>
+                </button>
+              </sc-for>
+            </div>
+            <div style="color:#7c7790; font-size:11px; margin-top:8px; font-family:'Geist Mono',monospace">{{ toolDetail.versionHint }}</div>
+          </sc-if>
+          <a href="#" style="display:inline-block; margin-top:12px; font-size:12px">Source documentation →</a>
+        </aside>
+      </div>
+    </section>
+    </sc-if>
+
+    <sc-if value="{{ isDiagnostics }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="Diagnostics" style="padding:20px 24px; display:grid; gap:14px">
+      <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:12px">
+        <div style="background:#14131b; border:1px solid #232130; border-radius:12px; padding:14px 16px"><div style="color:#7c7790; font-size:12px">Events retained</div><div style="font-size:26px; font-weight:600; margin-top:6px">{{ logCount }}</div></div>
+        <div style="background:#14131b; border:1px solid #2f2333; border-radius:12px; padding:14px 16px"><div style="color:#7c7790; font-size:12px">Errors</div><div style="font-size:26px; font-weight:600; margin-top:6px; color:#ff8f9a">1</div></div>
+        <div style="background:#14131b; border:1px solid #33301f; border-radius:12px; padding:14px 16px"><div style="color:#7c7790; font-size:12px">Warnings</div><div style="font-size:26px; font-weight:600; margin-top:6px; color:#f0c774">1</div></div>
+        <div style="background:#14131b; border:1px solid #232130; border-radius:12px; padding:14px 16px"><div style="color:#7c7790; font-size:12px">Probe latency p95</div><div style="font-size:26px; font-weight:600; margin-top:6px">142<span style="color:#7c7790; font-size:14px; font-weight:400"> ms</span></div></div>
+      </div>
+      <div style="background:#0b0a0f; border:1px solid #232130; border-radius:12px; overflow:hidden">
+        <div style="display:flex; align-items:center; gap:10px; padding:10px 16px; border-bottom:1px solid #201e28">
+          <b style="font-weight:600">Collector log</b>
+          <span style="display:flex; align-items:center; gap:6px; color:#5fd38d; font-size:11.5px"><span style="width:6px; height:6px; border-radius:50%; background:#5fd38d; animation:pulse 1.6s ease-in-out infinite"></span>live tail</span>
+          <span style="margin-left:auto; font-family:'Geist Mono',monospace; font-size:11px; color:#7c7790">~/.cabal/web/collector.log</span>
+        </div>
+        <div style="font-family:'Geist Mono',monospace; font-size:12px; line-height:2; padding:12px 16px; height:430px; overflow:hidden; display:flex; flex-direction:column-reverse">
+          <div>
+          <sc-for list="{{ logLines }}" as="ln" hint-placeholder-count="10">
+            <div style="animation:fadein .3s ease; display:grid; grid-template-columns:76px 52px 120px 1fr; gap:14px; white-space:nowrap">
+              <span style="color:#55506a">{{ ln.time }}</span><span style="{{ ln.sevStyle }}">{{ ln.sev }}</span><span style="color:#7c7790">{{ ln.section }}</span><span style="color:#aca7bd; overflow:hidden; text-overflow:ellipsis">{{ ln.text }}</span>
+            </div>
+          </sc-for>
+          </div>
+        </div>
+      </div>
+    </section>
+    </sc-if>
+
+    <sc-if value="{{ isProject }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="Project Health" style="padding:20px 24px; display:grid; gap:14px">
+      <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:12px">
+        <sc-for list="{{ healthCards }}" as="h" hint-placeholder-count="4">
+          <div style="{{ h.cardStyle }}">
+            <div style="display:flex; align-items:center; gap:10px">
+              <span style="flex:0 0 auto">{{ h.gaugeSvg }}</span>
+              <div><b style="font-weight:600; font-size:14px">{{ h.title }}</b><div style="color:#7c7790; font-size:12px; margin-top:2px">{{ h.summary }}</div></div>
+              <span style="{{ h.pillStyle }}">{{ h.stateLabel }}</span>
+            </div>
+            <div style="display:grid; gap:0; font-size:12px; margin-top:12px">
+              <sc-for list="{{ h.facts }}" as="f" hint-placeholder-count="3">
+                <div style="display:grid; grid-template-columns:130px 1fr; gap:10px; padding:7px 0; border-bottom:1px solid #201e28"><span style="color:#7c7790">{{ f.label }}</span><span style="font-family:'Geist Mono',monospace; font-size:11.5px; overflow-wrap:anywhere">{{ f.value }}</span></div>
+              </sc-for>
+            </div>
+            <sc-if value="{{ h.hint }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:12px; background:#1c1720; border:1px solid #33301f; border-radius:8px; padding:9px 12px; color:#f0c774; font-size:12px">{{ h.hint }}</div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+    </sc-if>
+
+    <sc-if value="{{ isKnowledge }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="Knowledge" style="padding:20px 24px; display:grid; gap:14px">
+      <div style="display:flex; gap:10px; align-items:center">
+        <input type="search" placeholder="Search concepts, routes, evidence…" autoComplete="off" onInput="{{ onKnowledgeSearch }}" style="flex:1; min-width:0; box-sizing:border-box; border:1px solid #262433; border-radius:8px; background:#17151f; color:#e9e7f0; padding:8px 12px">
+        <select aria-label="Relation kind" onChange="{{ onKnowledgeRelation }}" style="border:1px solid #262433; border-radius:8px; background:#17151f; color:#aca7bd; padding:8px 10px; width:190px">
+          <sc-for list="{{ relationOptions }}" as="o" hint-placeholder-count="3"><option value="{{ o }}">{{ o }}</option></sc-for>
+        </select>
+        <span style="font-family:'Geist Mono',monospace; font-size:11.5px; color:#7c7790">143 nodes · 212 edges · showing routed sample</span>
+      </div>
+      <div style="display:grid; grid-template-columns:minmax(0,1fr) 320px; gap:12px; align-items:start">
+        <div style="background:#0b0a0f; border:1px solid #232130; border-radius:12px; position:relative; overflow:hidden">
+          <div style="position:absolute; top:12px; left:16px; display:flex; gap:14px; font-size:11.5px; color:#aca7bd; z-index:2">
+            <span><span style="color:#f4569d">●</span> agent</span><span><span style="color:#75c7ff">●</span> skill</span><span><span style="color:#f0c774">●</span> hook</span><span><span style="color:#5fd38d">●</span> rule</span><span><span style="color:#bb9af7">●</span> mcp</span>
+          </div>
+          <div style="min-height:560px">{{ knowledgeSvg }}</div>
+        </div>
+        <aside style="background:#14131b; border:1px solid #232130; border-radius:12px; padding:16px; position:sticky; top:0">
+          <div style="display:flex; align-items:center; gap:8px"><span style="background:#221626; border:1px solid #3c2038; color:#f4569d; border-radius:6px; padding:2px 8px; font-family:'Geist Mono',monospace; font-size:11px">{{ edgeDetail.kind }}</span><span style="color:#7c7790; font-size:11.5px">{{ edgeDetail.confidence }}</span></div>
+          <div style="margin:12px 0; font-size:13.5px; font-weight:500">{{ edgeDetail.sourceLabel }} <span style="color:#7c7790">→</span> {{ edgeDetail.targetLabel }}</div>
+          <p style="color:#aca7bd; font-size:12.5px; line-height:1.6; margin:0 0 14px">{{ edgeDetail.reason }}</p>
+          <div style="color:#6f6a82; font-size:10.5px; letter-spacing:.14em; margin-bottom:8px">EVIDENCE</div>
+          <sc-for list="{{ edgeDetail.evidence }}" as="ev" hint-placeholder-count="1">
+            <div style="background:#0b0a0f; border:1px solid #201e28; border-radius:8px; padding:10px 12px; font-size:12px">
+              <div style="font-family:'Geist Mono',monospace; font-size:11px; color:#75c7ff; margin-bottom:6px">{{ ev.ref }}</div>
+              <div style="color:#aca7bd">{{ ev.text }}</div>
+            </div>
+          </sc-for>
+          <div style="margin-top:14px; border-top:1px solid #201e28; padding-top:12px; color:#7c7790; font-size:11.5px">Click any edge in the map to inspect its routing evidence.</div>
+        </aside>
+      </div>
+    </section>
+    </sc-if>
+
+    <sc-if value="{{ isInfrastructure }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="Services" style="padding:20px 24px; display:grid; gap:14px">
+      <div style="display:grid; grid-template-columns:300px 1fr; gap:12px; align-items:stretch">
+        <div style="background:#14131b; border:1px solid #232130; border-radius:12px; padding:16px; display:flex; flex-direction:column; align-items:center; justify-content:center">
+          <div style="width:150px; height:150px">{{ servicesGauge }}</div>
+          <div style="color:#7c7790; font-size:12px; margin-top:10px; text-align:center">Supabase and Vercel are<br>degraded, both retryable.</div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px">
+          <sc-for list="{{ healthCards }}" as="h" hint-placeholder-count="4">
+            <div style="{{ h.cardStyle }}">
+              <div style="display:flex; align-items:center; gap:8px"><span style="{{ h.dotStyle }}"></span><b style="font-weight:600">{{ h.title }}</b><span style="{{ h.pillStyle }}">{{ h.stateLabel }}</span></div>
+              <div style="color:#aca7bd; font-size:12px; margin-top:8px; line-height:1.6">{{ h.summary }}</div>
+              <sc-if value="{{ h.hint }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:10px; color:#f0c774; font-size:11.5px; font-family:'Geist Mono',monospace">→ {{ h.fix }}</div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="background:#14131b; border:1px solid #232130; border-radius:12px; overflow:hidden">
+        <div style="display:flex; align-items:center; gap:10px; padding:11px 16px; border-bottom:1px solid #201e28">
+          <b style="font-weight:600">Local agent services</b><span style="color:#7c7790; font-size:12px">orchestrator · a2a-bridge · mcp-bus — run from one place instead of remembering CLI commands</span>
+        </div>
+        <sc-for list="{{ agentServices }}" as="svc" hint-placeholder-count="3">
+          <div style="display:grid; grid-template-columns:16px 150px minmax(0,1fr) 130px 90px 150px; gap:12px; padding:11px 16px; border-bottom:1px solid #1a1822; align-items:center; font-size:12.5px">
+            <span style="{{ svc.dotStyle }}"></span>
+            <span style="font-family:'Geist Mono',monospace; font-size:12px; font-weight:500">{{ svc.name }}</span>
+            <span style="color:#7c7790; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">{{ svc.desc }}</span>
+            <span style="font-family:'Geist Mono',monospace; font-size:11px; color:#7c7790">{{ svc.meta }}</span>
+            <span style="{{ svc.stateStyle }}">{{ svc.stateLabel }}</span>
+            <span style="display:flex; justify-content:flex-end"><button type="button" onClick="{{ svc.act }}" style="{{ svc.btnStyle }}">{{ svc.btnLabel }}</button></span>
+          </div>
+        </sc-for>
+        <div style="padding:10px 16px; color:#7c7790; font-size:11.5px; font-family:'Geist Mono',monospace">{{ serviceMsg }}</div>
+      </div>
+      <div style="background:#14131b; border:1px solid #232130; border-radius:12px; overflow:hidden">
+        <div style="display:flex; align-items:center; gap:10px; padding:11px 16px; border-bottom:1px solid #201e28">
+          <b style="font-weight:600">Package security check</b><span style="color:#7c7790; font-size:12px">.NET, npm/frontend and Python dependencies — runs when a project opens; fixes require confirmation</span>
+          <span style="margin-left:auto; display:flex; gap:14px; font-family:'Geist Mono',monospace; font-size:11.5px">
+            <span style="color:#5fd38d">0 vulnerable</span><span style="color:#f0c774">5 outdated</span><span style="color:#5fd38d">0 deprecated</span><span style="color:#f0c774">⚑ 1 notice</span>
+          </span>
+        </div>
+        <div style="display:grid; grid-template-columns:16px 190px 110px minmax(0,1fr) 110px 110px; gap:12px; padding:9px 16px; border-bottom:1px solid #201e28; color:#6f6a82; font-size:10.5px; letter-spacing:.12em">
+          <span></span><span>PACKAGE</span><span>ECOSYSTEM</span><span>ADVISORY</span><span>CURRENT</span><span>LATEST</span>
+        </div>
+        <sc-for list="{{ securityRows }}" as="pkg" hint-placeholder-count="6">
+          <div style="display:grid; grid-template-columns:16px 190px 110px minmax(0,1fr) 110px 110px; gap:12px; padding:9px 16px; border-bottom:1px solid #1a1822; align-items:center; font-size:12.5px">
+            <span style="{{ pkg.dotStyle }}"></span>
+            <span style="font-family:'Geist Mono',monospace; font-size:11.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">{{ pkg.name }}</span>
+            <span style="color:#7c7790; font-size:11.5px">{{ pkg.eco }}</span>
+            <span style="color:#aca7bd; font-size:12px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">{{ pkg.note }}</span>
+            <span style="font-family:'Geist Mono',monospace; font-size:11.5px; color:#f0c774">{{ pkg.cur }}</span>
+            <span style="font-family:'Geist Mono',monospace; font-size:11.5px; color:#5fd38d">{{ pkg.latest }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+    </sc-if>
+
+    <sc-if value="{{ isGithub }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="GitHub" style="padding:20px 24px; display:grid; gap:14px">
+      <div style="background:#14131b; border:1px solid #232130; border-radius:12px; padding:16px; display:flex; align-items:center; gap:16px">
+        <div><b style="font-weight:600; font-size:15px">dwcy/prompt-lib</b><div style="color:#7c7790; font-size:12px; margin-top:2px">via remote origin · branch 017-opencode-setup</div></div>
+        <div style="display:flex; gap:20px; margin-left:auto; font-size:12px; color:#aca7bd">
+          <span><b style="color:#e9e7f0; font-size:16px; font-weight:600">5</b> workflow runs</span>
+          <span><b style="color:#e9e7f0; font-size:16px; font-weight:600">2</b> open PRs</span>
+          <span><b style="color:#5fd38d; font-size:16px; font-weight:600">✓</b> default checks</span>
+        </div>
+      </div>
+      <div style="background:#14131b; border:1px solid #232130; border-radius:12px; overflow:hidden">
+        <div style="padding:11px 16px; border-bottom:1px solid #201e28; display:flex; align-items:center; gap:10px">
+          <b style="font-weight:600">CLI accounts</b><span style="color:#7c7790; font-size:12px">gh auth status — github.com</span>
+          <button type="button" onClick="{{ addAccount }}" style="margin-left:auto; border:1px solid #262433; border-radius:8px; background:#17151f; color:#aca7bd; padding:5px 12px; cursor:pointer; font-size:12px">+ Add account</button>
+        </div>
+        <sc-for list="{{ ghAccounts }}" as="acc" hint-placeholder-count="2">
+          <div style="display:grid; grid-template-columns:34px minmax(0,1fr) 140px 130px 110px 170px; gap:12px; padding:11px 16px; border-bottom:1px solid #1a1822; align-items:center; font-size:12.5px">
+            <span style="{{ acc.avatarStyle }}">{{ acc.initials }}</span>
+            <span style="min-width:0"><b style="font-weight:500">{{ acc.user }}</b><span style="color:#7c7790"> · {{ acc.scopes }}</span></span>
+            <span style="font-family:'Geist Mono',monospace; font-size:11px; color:#7c7790">{{ acc.storage }}</span>
+            <span style="{{ acc.validStyle }}">{{ acc.validLabel }}</span>
+            <span style="{{ acc.activeStyle }}">{{ acc.activeLabel }}</span>
+            <span style="display:flex; gap:8px; justify-content:flex-end">
+              <button type="button" onClick="{{ acc.switchTo }}" style="{{ acc.switchStyle }}">{{ acc.switchLabel }}</button>
+              <button type="button" onClick="{{ acc.forget }}" style="border:1px solid #262433; border-radius:7px; background:none; color:#7c7790; padding:4px 10px; cursor:pointer; font-size:11.5px">Forget</button>
+            </span>
+          </div>
+        </sc-for>
+        <div style="padding:10px 16px; color:#7c7790; font-size:11.5px; font-family:'Geist Mono',monospace">{{ ghAccountMsg }}</div>
+      </div>
+      <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:12px; align-items:start">
+        <div style="background:#14131b; border:1px solid #232130; border-radius:12px; overflow:hidden">
+          <div style="padding:11px 16px; border-bottom:1px solid #201e28; display:flex"><b style="font-weight:600">Workflow runs</b><span style="margin-left:auto; color:#7c7790; font-size:12px">most recent first</span></div>
+          <sc-for list="{{ workflowRuns }}" as="run" hint-placeholder-count="5">
+            <div style="display:grid; grid-template-columns:16px minmax(0,1fr) 150px 90px; gap:12px; padding:11px 16px; border-bottom:1px solid #1a1822; align-items:center; font-size:12.5px">
+              <span style="{{ run.dotStyle }}"></span>
+              <span style="min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:500">{{ run.name }}<span style="color:#7c7790; font-weight:400"> — {{ run.trigger }}</span></span>
+              <span style="font-family:'Geist Mono',monospace; font-size:11px; color:#7c7790; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">{{ run.branch }}</span>
+              <span style="font-family:'Geist Mono',monospace; font-size:11px; color:#7c7790; text-align:right">{{ run.duration }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="background:#14131b; border:1px solid #232130; border-radius:12px; overflow:hidden">
+          <div style="padding:11px 16px; border-bottom:1px solid #201e28; display:flex"><b style="font-weight:600">Open pull requests</b><span style="margin-left:auto; color:#7c7790; font-size:12px">2</span></div>
+          <sc-for list="{{ pullRequests }}" as="pr" hint-placeholder-count="2">
+            <div style="padding:13px 16px; border-bottom:1px solid #1a1822">
+              <div style="display:flex; gap:8px; align-items:baseline"><span style="font-family:'Geist Mono',monospace; font-size:11px; color:#f4569d">#{{ pr.num }}</span><b style="font-weight:500; font-size:13px">{{ pr.title }}</b></div>
+              <div style="display:flex; gap:14px; margin-top:6px; font-size:11.5px; color:#7c7790"><span>{{ pr.branch }}</span><span style="{{ pr.checkStyle }}">{{ pr.checks }}</span><span>{{ pr.age }}</span></div>
+            </div>
+          </sc-for>
+          <div style="padding:12px 16px; color:#7c7790; font-size:11.5px">Reviews are dispatched automatically by the orchestrator daemon over the A2A bridge.</div>
+        </div>
+      </div>
+    </section>
+    </sc-if>
+
+    <sc-if value="{{ isAgent }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="Agents" style="padding:20px 24px; display:grid; gap:14px">
+      <div style="display:grid; grid-template-columns:repeat(6,1fr); gap:12px">
+        <sc-for list="{{ agentStats }}" as="st" hint-placeholder-count="6">
+          <div style="background:#14131b; border:1px solid #232130; border-radius:12px; padding:14px 16px">
+            <div style="color:#7c7790; font-size:11.5px">{{ st.label }}</div>
+            <div style="font-size:24px; font-weight:600; margin:6px 0 8px">{{ st.value }}</div>
+            <div style="height:4px; border-radius:2px; background:#232130"><div style="{{ st.barStyle }}"></div></div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display:grid; grid-template-columns:minmax(0,1fr) 320px; gap:12px; align-items:start">
+        <div style="background:#0b0a0f; border:1px solid #232130; border-radius:12px; overflow:hidden">
+          <div style="padding:11px 16px; border-bottom:1px solid #201e28; display:flex; align-items:center; gap:10px">
+            <b style="font-weight:600">Routing flow</b><span style="color:#7c7790; font-size:12px">how agents dispatch skills, hooks &amp; rules</span>
+            <span style="margin-left:auto; display:flex; align-items:center; gap:6px; color:#5fd38d; font-size:11.5px"><span style="width:6px; height:6px; border-radius:50%; background:#5fd38d; animation:pulse 1.8s ease-in-out infinite"></span>live routing</span>
+          </div>
+          <div style="min-height:470px">{{ flowSvg }}</div>
+        </div>
+        <div style="display:grid; gap:12px">
+          <div style="background:#14131b; border:1px solid #232130; border-radius:12px; padding:16px">
+            <b style="font-weight:600">Deploy state</b>
+            <div style="display:grid; gap:0; font-size:12px; margin-top:10px">
+              <div style="display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid #201e28"><span style="color:#7c7790">~/.claude target</span><span style="color:#5fd38d">in sync</span></div>
+              <div style="display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid #201e28"><span style="color:#7c7790">~/.codex target</span><span style="color:#5fd38d">in sync</span></div>
+              <div style="display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid #201e28"><span style="color:#7c7790">drift markers</span><span style="font-family:'Geist Mono',monospace; font-size:11.5px">0 files</span></div>
+              <div style="display:flex; justify-content:space-between; padding:7px 0"><span style="color:#7c7790">last apply</span><span style="font-family:'Geist Mono',monospace; font-size:11.5px">2026-07-18 09:14</span></div>
+            </div>
+          </div>
+          <div style="background:#14131b; border:1px solid #232130; border-radius:12px; padding:16px">
+            <b style="font-weight:600">Output styles</b>
+            <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:10px">
+              <span style="background:#1d1b27; border-radius:6px; padding:3px 10px; font-size:11.5px; color:#aca7bd">concise</span>
+              <span style="background:#1d1b27; border-radius:6px; padding:3px 10px; font-size:11.5px; color:#aca7bd">technical</span>
+              <span style="background:#1d1b27; border-radius:6px; padding:3px 10px; font-size:11.5px; color:#aca7bd">review</span>
+              <span style="background:#1d1b27; border-radius:6px; padding:3px 10px; font-size:11.5px; color:#aca7bd">architect</span>
+            </div>
+            <div style="color:#7c7790; font-size:11.5px; margin-top:10px">Picked per session via /output-style.</div>
+          </div>
+          <div style="background:#14131b; border:1px solid #232130; border-radius:12px; padding:16px">
+            <b style="font-weight:600">MCP servers</b>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:10px; font-family:'Geist Mono',monospace; font-size:11.5px; color:#aca7bd">
+              <span>context7</span><span>github</span><span>figma</span><span>playwright</span><span>azure-devops</span><span>supabase</span><span>obsidian</span><span>docker</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    </sc-if>
+
+    <sc-if value="{{ isClaude }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="Claude Config" style="padding:20px 24px; display:grid; gap:14px">
+      <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:12px; align-items:start">
+        <div style="display:grid; gap:12px">
+          <div style="background:#14131b; border:1px solid #232130; border-radius:12px; padding:16px">
+            <div style="display:flex; align-items:center; gap:10px"><b style="font-weight:600">Claude account</b><span style="margin-left:auto; font-family:'Geist Mono',monospace; font-size:11px; color:#5fd38d">● token present</span></div>
+            <div style="display:grid; gap:0; font-size:12.5px; margin-top:10px">
+              <div style="display:grid; grid-template-columns:110px 1fr; gap:10px; padding:7px 0; border-bottom:1px solid #201e28"><span style="color:#7c7790">signed in</span><span style="font-family:'Geist Mono',monospace; font-size:11.5px">dawid.parvulescu@stena.com</span></div>
+              <div style="display:grid; grid-template-columns:110px 1fr; gap:10px; padding:7px 0; border-bottom:1px solid #201e28"><span style="color:#7c7790">auth</span><span style="color:#5fd38d">✓ token present · keyring</span></div>
+              <div style="display:grid; grid-template-columns:110px 1fr; gap:10px; padding:7px 0; border-bottom:1px solid #201e28"><span style="color:#7c7790">CLI version</span><span style="font-family:'Geist Mono',monospace; font-size:11.5px">2.1.163</span></div>
+              <div style="display:grid; grid-template-columns:110px 1fr; gap:10px; padding:7px 0"><span style="color:#7c7790">plan / model</span><span style="color:#7c7790">only visible from the interactive claude UI (/status)</span></div>
+            </div>
+            <div style="display:flex; gap:8px; margin-top:12px">
+              <button type="button" style="border:1px solid #3c2038; border-radius:7px; background:#221626; color:#f4569d; padding:5px 14px; cursor:pointer; font-size:11.5px">Claude info</button>
+              <button type="button" style="border:1px solid #262433; border-radius:7px; background:#17151f; color:#aca7bd; padding:5px 14px; cursor:pointer; font-size:11.5px">Models</button>
+            </div>
+          </div>
+          <div style="background:#14131b; border:1px solid #232130; border-radius:12px; overflow:hidden">
+            <div style="display:flex; align-items:center; gap:10px; padding:11px 16px; border-bottom:1px solid #201e28">
+              <b style="font-weight:600">Configuration surfaces</b>
+              <span style="display:flex; gap:2px; margin-left:10px; background:#17151f; border:1px solid #262433; border-radius:8px; padding:2px">
+                <button type="button" onClick="{{ showGlobalCfg }}" style="{{ globalCfgTabStyle }}">Global · ~/.claude</button>
+                <button type="button" onClick="{{ showLocalCfg }}" style="{{ localCfgTabStyle }}">Local · ./.claude</button>
+              </span>
+            </div>
+            <sc-for list="{{ claudeCfgRows }}" as="c" hint-placeholder-count="6">
+              <div style="display:grid; grid-template-columns:16px 200px minmax(0,1fr) 150px; gap:12px; padding:10px 16px; border-bottom:1px solid #1a1822; align-items:center; font-size:12.5px">
+                <span style="{{ c.dotStyle }}"></span>
+                <span style="font-weight:500">{{ c.name }}</span>
+                <span style="color:#7c7790; font-size:12px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">{{ c.desc }}</span>
+                <span style="{{ c.stateStyle }}">{{ c.stateLabel }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display:grid; gap:12px">
+          <div style="background:#14131b; border:1px solid #33301f; border-radius:12px; padding:16px">
+            <div style="display:flex; align-items:center; gap:10px"><b style="font-weight:600">Claude doctor</b><span style="margin-left:auto; font-family:'Geist Mono',monospace; font-size:11px; color:#f0c774">⚠ 2 warnings</span></div>
+            <div style="display:grid; gap:10px; margin-top:12px; font-size:12.5px">
+              <div style="background:#1c1720; border:1px solid #33301f; border-radius:8px; padding:10px 12px">
+                <div style="font-family:'Geist Mono',monospace; font-size:11px; color:#f0c774">.claude/CLAUDE.md</div>
+                <div style="color:#aca7bd; margin-top:4px; line-height:1.55">CLAUDE.md references <code style="color:#f4569d">/update-config</code> but no such skill, command, or builtin is installed — sessions following that instruction hit a missing skill.</div>
+              </div>
+              <div style="background:#1c1720; border:1px solid #33301f; border-radius:8px; padding:10px 12px">
+                <div style="font-family:'Geist Mono',monospace; font-size:11px; color:#f0c774">settings.json → hooks</div>
+                <div style="color:#aca7bd; margin-top:4px; line-height:1.55">PostToolUse audit hook points at a script path with spaces that is not quoted — hook silently skipped on Windows shells.</div>
+              </div>
+            </div>
+          </div>
+          <div style="background:#14131b; border:1px solid #232130; border-radius:12px; padding:16px">
+            <div style="display:flex; align-items:center"><b style="font-weight:600">Claude stats</b><span style="margin-left:auto; color:#7c7790; font-size:12px">last 30 days · this machine</span></div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px">
+              <div style="background:#17161f; border-radius:9px; padding:11px 12px"><div style="color:#7c7790; font-size:11px">Sessions</div><div style="font-size:20px; font-weight:600; margin-top:3px">11</div></div>
+              <div style="background:#17161f; border-radius:9px; padding:11px 12px"><div style="color:#7c7790; font-size:11px">Spend</div><div style="font-size:20px; font-weight:600; margin-top:3px">$86.44</div></div>
+              <div style="background:#17161f; border-radius:9px; padding:11px 12px"><div style="color:#7c7790; font-size:11px">Tokens in / out</div><div style="font-size:20px; font-weight:600; margin-top:3px">40.9M<span style="color:#7c7790; font-size:12px; font-weight:400"> / 3.2M</span></div></div>
+              <div style="background:#17161f; border-radius:9px; padding:11px 12px"><div style="color:#7c7790; font-size:11px">Subagent dispatches</div><div style="font-size:20px; font-weight:600; margin-top:3px">67</div></div>
+            </div>
+            <div style="display:flex; align-items:center; margin:14px 0 8px"><span style="color:#7c7790; font-size:12px">Spend by week</span><span style="margin-left:auto; font-family:'Geist Mono',monospace; font-size:11px; color:#7c7790">$/wk</span></div>
+            <div style="display:grid; gap:6px; font-size:11.5px">
+              <div style="display:grid; grid-template-columns:56px 1fr 52px; gap:10px; align-items:center"><span style="color:#7c7790">wk 26</span><div style="height:6px; background:#232130; border-radius:3px"><div style="width:24%; height:100%; border-radius:3px; background:#f4569d"></div></div><span style="font-family:'Geist Mono',monospace; color:#aca7bd; text-align:right">21.29</span></div>
+              <div style="display:grid; grid-template-columns:56px 1fr 52px; gap:10px; align-items:center"><span style="color:#7c7790">wk 27</span><div style="height:6px; background:#232130; border-radius:3px"><div style="width:38%; height:100%; border-radius:3px; background:#f4569d"></div></div><span style="font-family:'Geist Mono',monospace; color:#aca7bd; text-align:right">32.77</span></div>
+              <div style="display:grid; grid-template-columns:56px 1fr 52px; gap:10px; align-items:center"><span style="color:#7c7790">wk 28</span><div style="height:6px; background:#232130; border-radius:3px"><div style="width:22%; height:100%; border-radius:3px; background:#f4569d"></div></div><span style="font-family:'Geist Mono',monospace; color:#aca7bd; text-align:right">19.12</span></div>
+              <div style="display:grid; grid-template-columns:56px 1fr 52px; gap:10px; align-items:center"><span style="color:#7c7790">wk 29</span><div style="height:6px; background:#232130; border-radius:3px"><div style="width:15%; height:100%; border-radius:3px; background:#f4569d"></div></div><span style="font-family:'Geist Mono',monospace; color:#aca7bd; text-align:right">13.25</span></div>
+            </div>
+            <div style="margin-top:12px; border-top:1px solid #201e28; padding-top:10px; display:flex; justify-content:space-between; color:#7c7790; font-size:11.5px"><span>most expensive: 07-13 main · $24.28</span><button type="button" onClick="{{ goSessions }}" style="background:none; border:none; color:#aca7bd; cursor:pointer; padding:0">Sessions →</button></div>
+          </div>
+        </div>
+      </div>
+    </section>
+    </sc-if>
+
+    <sc-if value="{{ isSessions }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="Sessions" style="padding:20px 24px; display:grid; gap:14px">
+      <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:12px">
+        <div style="background:#14131b; border:1px solid #232130; border-radius:12px; padding:14px 16px"><div style="color:#7c7790; font-size:12px">Sessions</div><div style="font-size:26px; font-weight:600; margin-top:6px">11<span style="color:#7c7790; font-size:13px; font-weight:400"> claude</span> · 4<span style="color:#7c7790; font-size:13px; font-weight:400"> codex</span></div></div>
+        <div style="background:#14131b; border:1px solid #232130; border-radius:12px; padding:14px 16px"><div style="color:#7c7790; font-size:12px">Total cost</div><div style="font-size:26px; font-weight:600; margin-top:6px">$86.44</div></div>
+        <div style="background:#14131b; border:1px solid #232130; border-radius:12px; padding:14px 16px"><div style="color:#7c7790; font-size:12px">Wall time</div><div style="font-size:26px; font-weight:600; margin-top:6px">246<span style="color:#7c7790; font-size:14px; font-weight:400"> h</span></div></div>
+        <div style="background:#14131b; border:1px solid #232130; border-radius:12px; padding:14px 16px"><div style="color:#7c7790; font-size:12px">Tool calls</div><div style="font-size:26px; font-weight:600; margin-top:6px">1,434</div></div>
+        <div style="background:#14131b; border:1px solid #232130; border-radius:12px; padding:14px 16px"><div style="color:#7c7790; font-size:12px">Subagent dispatches</div><div style="font-size:26px; font-weight:600; margin-top:6px">67</div></div>
+      </div>
+      <div style="display:grid; grid-template-columns:minmax(0,1fr) 320px; gap:12px; align-items:start">
+        <div style="background:#14131b; border:1px solid #232130; border-radius:12px; overflow:hidden">
+          <div style="display:flex; align-items:center; gap:10px; padding:11px 16px; border-bottom:1px solid #201e28">
+            <b style="font-weight:600">Sessions</b>
+            <span style="display:flex; gap:2px; margin-left:10px; background:#17151f; border:1px solid #262433; border-radius:8px; padding:2px">
+              <button type="button" onClick="{{ showClaude }}" style="{{ claudeTabStyle }}">Claude · 11</button>
+              <button type="button" onClick="{{ showCodex }}" style="{{ codexTabStyle }}">Codex · 4</button>
+            </span>
+            <span style="margin-left:auto; font-family:'Geist Mono',monospace; font-size:11px; color:#7c7790">~/.claude/projects · prompt-lib</span>
+          </div>
+          <div style="display:grid; grid-template-columns:16px 118px minmax(0,1fr) 70px 90px 120px 60px 66px; gap:12px; padding:9px 16px; border-bottom:1px solid #201e28; color:#6f6a82; font-size:10.5px; letter-spacing:.12em">
+            <span></span><span>STARTED</span><span>BRANCH</span><span>DUR</span><span>COST</span><span>COST SHARE</span><span>TOOLS</span><span>AGENTS</span>
+          </div>
+          <sc-for list="{{ sessionRows }}" as="row" hint-placeholder-count="11">
+            <button type="button" onClick="{{ row.go }}" style="{{ row.style }}">
+              <span style="{{ row.forkStyle }}">{{ row.fork }}</span>
+              <span style="font-family:'Geist Mono',monospace; font-size:11.5px; color:#aca7bd">{{ row.date }}</span>
+              <span style="min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:'Geist Mono',monospace; font-size:11.5px">{{ row.branch }}</span>
+              <span style="font-family:'Geist Mono',monospace; font-size:11.5px; color:#aca7bd; text-align:right">{{ row.duration }}</span>
+              <span style="{{ row.costStyle }}">{{ row.cost }}</span>
+              <span style="display:flex; align-items:center"><span style="{{ row.costBarStyle }}"></span></span>
+              <span style="font-family:'Geist Mono',monospace; font-size:11.5px; color:#7c7790; text-align:right">{{ row.tools }}</span>
+              <span style="font-family:'Geist Mono',monospace; font-size:11.5px; color:#7c7790; text-align:right">{{ row.agents }}</span>
+            </button>
+          </sc-for>
+        </div>
+        <aside style="background:#14131b; border:1px solid #232130; border-radius:12px; padding:16px; position:sticky; top:0">
+          <div style="display:flex; align-items:center; gap:8px"><b style="font-weight:600; font-size:14px">{{ sessionDetail.title }}</b><span style="margin-left:auto; font-family:'Geist Mono',monospace; font-size:11px; color:#7c7790">{{ sessionDetail.id }}</span></div>
+          <div style="display:grid; gap:0; font-size:12px; margin-top:10px">
+            <div style="display:grid; grid-template-columns:110px 1fr; gap:10px; padding:7px 0; border-bottom:1px solid #201e28"><span style="color:#7c7790">branch</span><span style="font-family:'Geist Mono',monospace; font-size:11.5px; overflow-wrap:anywhere">{{ sessionDetail.branch }}</span></div>
+            <div style="display:grid; grid-template-columns:110px 1fr; gap:10px; padding:7px 0; border-bottom:1px solid #201e28"><span style="color:#7c7790">duration</span><span style="font-family:'Geist Mono',monospace; font-size:11.5px">{{ sessionDetail.duration }}</span></div>
+            <div style="display:grid; grid-template-columns:110px 1fr; gap:10px; padding:7px 0; border-bottom:1px solid #201e28"><span style="color:#7c7790">cost</span><span style="font-family:'Geist Mono',monospace; font-size:11.5px">{{ sessionDetail.cost }}</span></div>
+            <div style="display:grid; grid-template-columns:110px 1fr; gap:10px; padding:7px 0; border-bottom:1px solid #201e28"><span style="color:#7c7790">tokens</span><span style="font-family:'Geist Mono',monospace; font-size:11.5px">{{ sessionDetail.tokens }}</span></div>
+            <div style="display:grid; grid-template-columns:110px 1fr; gap:10px; padding:7px 0"><span style="color:#7c7790">tool calls</span><span style="font-family:'Geist Mono',monospace; font-size:11.5px">{{ sessionDetail.tools }}</span></div>
+          </div>
+          <div style="color:#6f6a82; font-size:10.5px; letter-spacing:.14em; margin:14px 0 8px">SUBAGENT DISPATCHES</div>
+          <div style="display:grid; gap:6px">
+            <sc-for list="{{ sessionDetail.subagents }}" as="sa" hint-placeholder-count="3">
+              <div style="display:grid; grid-template-columns:minmax(0,1fr) 46px 56px; gap:10px; align-items:center; font-size:11.5px">
+                <span style="font-family:'Geist Mono',monospace; color:#f4569d; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">{{ sa.name }}</span>
+                <span style="color:#7c7790; text-align:right">{{ sa.calls }}×</span>
+                <span style="color:#aca7bd; text-align:right; font-family:'Geist Mono',monospace">{{ sa.cost }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="margin-top:14px; border-top:1px solid #201e28; padding-top:12px; color:#7c7790; font-size:11.5px">Costs read from session JSONL transcripts; subagent rows are Task-tool dispatches.</div>
+        </aside>
+      </div>
+    </section>
+    </sc-if>
+
+    <sc-if value="{{ isEnv }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="Environment" style="padding:20px 24px; display:grid; gap:14px">
+      <div style="display:flex; align-items:center; gap:12px">
+        <span style="color:#7c7790; font-size:12.5px">Variables are read from the system environment; toggles enable/disable each var for deploys (setx / shell rc).</span>
+        <span style="margin-left:auto; font-family:'Geist Mono',monospace; font-size:11.5px; color:#7c7790">{{ envSummary }}</span>
+      </div>
+      <div style="background:#14131b; border:1px solid #232130; border-radius:12px; overflow:hidden">
+        <div style="display:grid; grid-template-columns:44px minmax(0,240px) minmax(0,1fr) 150px 110px; gap:12px; padding:9px 16px; border-bottom:1px solid #201e28; color:#6f6a82; font-size:10.5px; letter-spacing:.12em">
+          <span>ON</span><span>VARIABLE</span><span>DESCRIPTION</span><span>VALUE</span><span>STATE</span>
+        </div>
+        <sc-for list="{{ envRows }}" as="v" hint-placeholder-count="11">
+          <div style="{{ v.rowStyle }}">
+            <button type="button" onClick="{{ v.toggle }}" aria-label="toggle" style="{{ v.switchStyle }}"><span style="{{ v.knobStyle }}"></span></button>
+            <span style="font-family:'Geist Mono',monospace; font-size:11.5px; color:#e9e7f0; overflow-wrap:anywhere">{{ v.name }}</span>
+            <span style="color:#7c7790; font-size:12px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap" title="{{ v.desc }}">{{ v.desc }}</span>
+            <span style="font-family:'Geist Mono',monospace; font-size:11px; color:#aca7bd; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">{{ v.value }}</span>
+            <span style="{{ v.stateStyle }}">{{ v.stateLabel }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+    </sc-if>
+
+    <sc-if value="{{ isDocs }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="Docs" style="padding:20px 24px; display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); gap:14px; align-items:start">
+      <div style="background:#14131b; border:1px solid #232130; border-radius:12px; padding:18px 20px">
+        <div style="display:flex; align-items:center; gap:10px"><b style="font-weight:600; font-size:15px">README — Cabal</b><span style="margin-left:auto; font-family:'Geist Mono',monospace; font-size:11px; color:#7c7790">README.md · 286 lines</span></div>
+        <p style="color:#aca7bd; font-size:13px; line-height:1.7; margin:12px 0">Agentic development configuration in one place. Cabal is the local control panel for managing a machine's Claude Code and Codex setup: deploying global agent configuration, checking setup drift, restoring backups, managing MCP connections, initializing environment variables, scaffolding local project configuration, installing companion CLIs, and browsing the agent/skill knowledge map.</p>
+        <div style="display:grid; gap:0; font-size:12.5px">
+          <div style="display:grid; grid-template-columns:150px 1fr; gap:12px; padding:8px 0; border-bottom:1px solid #201e28"><span style="color:#f4569d; font-family:'Geist Mono',monospace; font-size:11.5px">29 subagents</span><span style="color:#aca7bd">Domain experts auto-invoked when the task matches — @dotnet-architect, @react-architect, @secret-auditor…</span></div>
+          <div style="display:grid; grid-template-columns:150px 1fr; gap:12px; padding:8px 0; border-bottom:1px solid #201e28"><span style="color:#f4569d; font-family:'Geist Mono',monospace; font-size:11.5px">26 skills</span><span style="color:#aca7bd">Slash-command workflows — /git, /pr, /orchestrate, /design, /skill-create…</span></div>
+          <div style="display:grid; grid-template-columns:150px 1fr; gap:12px; padding:8px 0; border-bottom:1px solid #201e28"><span style="color:#f4569d; font-family:'Geist Mono',monospace; font-size:11.5px">hooks &amp; rules</span><span style="color:#aca7bd">SessionStart project loading, PreToolUse guards, PostToolUse audit; conditional rules load per file type.</span></div>
+          <div style="display:grid; grid-template-columns:150px 1fr; gap:12px; padding:8px 0; border-bottom:1px solid #201e28"><span style="color:#f4569d; font-family:'Geist Mono',monospace; font-size:11.5px">services</span><span style="color:#aca7bd">a2a-bridge (Claude ↔ Gemini, 199 tests), orchestrator (autonomous PR review), mcp-bus (agent message bus).</span></div>
+          <div style="display:grid; grid-template-columns:150px 1fr; gap:12px; padding:8px 0"><span style="color:#f4569d; font-family:'Geist Mono',monospace; font-size:11.5px">deploy</span><span style="color:#aca7bd">./run (terminal UI) · ./run-web-ui (this read-only browser UI) · plugin install via marketplace.</span></div>
+        </div>
+      </div>
+      <div style="background:#14131b; border:1px solid #232130; border-radius:12px; overflow:hidden">
+        <div style="padding:11px 16px; border-bottom:1px solid #201e28; display:flex"><b style="font-weight:600">docs/</b><span style="margin-left:auto; color:#7c7790; font-size:12px">18 documents</span></div>
+        <div style="display:grid; font-size:12.5px">
+          <a href="#" style="display:grid; grid-template-columns:170px 1fr; gap:12px; padding:9px 16px; border-bottom:1px solid #1a1822; color:#e9e7f0"><span style="font-family:'Geist Mono',monospace; font-size:11.5px; color:#75c7ff">architecture.md</span><span style="color:#7c7790">System layout: setup, services, OKF, web UI</span></a>
+          <a href="#" style="display:grid; grid-template-columns:170px 1fr; gap:12px; padding:9px 16px; border-bottom:1px solid #1a1822; color:#e9e7f0"><span style="font-family:'Geist Mono',monospace; font-size:11.5px; color:#75c7ff">agents.md</span><span style="color:#7c7790">All 29 subagents and their routing rules</span></a>
+          <a href="#" style="display:grid; grid-template-columns:170px 1fr; gap:12px; padding:9px 16px; border-bottom:1px solid #1a1822; color:#e9e7f0"><span style="font-family:'Geist Mono',monospace; font-size:11.5px; color:#75c7ff">skills.md</span><span style="color:#7c7790">26 slash commands grouped by purpose</span></a>
+          <a href="#" style="display:grid; grid-template-columns:170px 1fr; gap:12px; padding:9px 16px; border-bottom:1px solid #1a1822; color:#e9e7f0"><span style="font-family:'Geist Mono',monospace; font-size:11.5px; color:#75c7ff">hooks.md</span><span style="color:#7c7790">Guard, audit and session hooks</span></a>
+          <a href="#" style="display:grid; grid-template-columns:170px 1fr; gap:12px; padding:9px 16px; border-bottom:1px solid #1a1822; color:#e9e7f0"><span style="font-family:'Geist Mono',monospace; font-size:11.5px; color:#75c7ff">settings.md</span><span style="color:#7c7790">settings.json, permissions, statusline</span></a>
+          <a href="#" style="display:grid; grid-template-columns:170px 1fr; gap:12px; padding:9px 16px; border-bottom:1px solid #1a1822; color:#e9e7f0"><span style="font-family:'Geist Mono',monospace; font-size:11.5px; color:#75c7ff">services.md</span><span style="color:#7c7790">a2a-bridge, orchestrator, mcp-bus ops</span></a>
+          <a href="#" style="display:grid; grid-template-columns:170px 1fr; gap:12px; padding:9px 16px; border-bottom:1px solid #1a1822; color:#e9e7f0"><span style="font-family:'Geist Mono',monospace; font-size:11.5px; color:#75c7ff">orchestration.md</span><span style="color:#7c7790">/orchestrate routing and worktree isolation</span></a>
+          <a href="#" style="display:grid; grid-template-columns:170px 1fr; gap:12px; padding:9px 16px; border-bottom:1px solid #1a1822; color:#e9e7f0"><span style="font-family:'Geist Mono',monospace; font-size:11.5px; color:#75c7ff">workflows.md</span><span style="color:#7c7790">Spec-kit feature flow, planning, execution</span></a>
+          <a href="#" style="display:grid; grid-template-columns:170px 1fr; gap:12px; padding:9px 16px; border-bottom:1px solid #1a1822; color:#e9e7f0"><span style="font-family:'Geist Mono',monospace; font-size:11.5px; color:#75c7ff">git-policy.md</span><span style="color:#7c7790">Branch safety, agent authorship, push guard</span></a>
+          <a href="#" style="display:grid; grid-template-columns:170px 1fr; gap:12px; padding:9px 16px; border-bottom:1px solid #1a1822; color:#e9e7f0"><span style="font-family:'Geist Mono',monospace; font-size:11.5px; color:#75c7ff">plugin-install.md</span><span style="color:#7c7790">Install as a Claude Code plugin without cloning</span></a>
+          <a href="#" style="display:grid; grid-template-columns:170px 1fr; gap:12px; padding:9px 16px; color:#e9e7f0"><span style="font-family:'Geist Mono',monospace; font-size:11.5px; color:#75c7ff">okf/README.md</span><span style="color:#7c7790">Knowledge graph export format and doctor</span></a>
+        </div>
+      </div>
+    </section>
+    </sc-if>
+
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;tickSeconds&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:2,&quot;min&quot;:1,&quot;max&quot;:10,&quot;step&quot;:1,&quot;unit&quot;:&quot;s&quot;,&quot;section&quot;:&quot;Diagnostics&quot;,&quot;tsType&quot;:&quot;number&quot;}}">
+class Component extends DCLogic {
+  state = {
+    view: "overview", data: null, logLines: null,
+    toolSearch: "", toolCategory: "all", toolStatus: "all", toolChannel: "all", selectedTool: null,
+    kSearch: "", kRelation: "all", selectedEdge: "e1",
+    ghActive: "dwcy", ghMsg: "2 accounts on github.com · active credentials used by gh, orchestrator and MCP",
+    sessionTab: "claude", selectedSession: 0,
+    svcRunning: { "mcp-bus": true }, serviceMsg: "supervisor idle · logs at ~/.cabal/services/*.log",
+    cfgScope: "global",
+    envOff: { OBSIDIAN_HOST: true, OBSIDIAN_PORT: true },
+    activeVersions: {},
+  };
+  componentDidMount() {
+    import(new URL("./cabal-data.js", document.baseURI).href).then((mod) => this.setState({ data: mod }));
+    const synth = [
+      ["INFO", "tools", "probe git — 2.51.0 (142ms)"],
+      ["INFO", "tools", "probe node — 24.4.1, npm latest 11.5.2 available"],
+      ["INFO", "knowledge", "graph.json parsed — 143 nodes, 212 edges"],
+      ["INFO", "project_health", "git collect ok — 017-opencode-setup, ±5f"],
+      ["INFO", "tools", "probe docker — engine 27.5.1 responding"],
+      ["WARN", "project_health", "supabase enrich skipped — token unset"],
+      ["INFO", "tools", "probe uv — 0.8.4 (31ms)"],
+      ["INFO", "project_health", "gh api rate remaining 4980/5000"],
+      ["INFO", "knowledge", "12 overlap edges flagged for review"],
+      ["INFO", "tools", "probe claude — 2.1.163 (88ms)"],
+    ];
+    let i = 0, sec = 9;
+    this._timer = setInterval(() => {
+      if (this.state.view !== "diagnostics") return;
+      const [sev, section, text] = synth[i % synth.length]; i++; sec += 1 + (i % 3);
+      const t = `14:32:${String(sec).padStart(2, "0")}`;
+      const lines = [...(this.state.logLines || this.seedLog()), this.logLine(t, sev, section, text)].slice(-18);
+      this.setState({ logLines: lines });
+    }, (this.props.tickSeconds ?? 2) * 1000);
+  }
+  componentWillUnmount() { clearInterval(this._timer); }
+  bigGauge(size, big, small, color, frac) {
+    return React.createElement("svg", { width: size, height: size, viewBox: "0 0 170 170", style: { display: "block" } },
+      React.createElement("circle", { cx: 85, cy: 85, r: 70, fill: "none", stroke: "#232130", strokeWidth: 10 }),
+      React.createElement("circle", { cx: 85, cy: 85, r: 70, fill: "none", stroke: color, strokeWidth: 10, strokeLinecap: "round", strokeDasharray: `${(frac * 439.8).toFixed(1)} 439.8`, transform: "rotate(-90 85 85)" }),
+      React.createElement("text", { x: 85, y: 80, textAnchor: "middle", fill: "#e9e7f0", fontSize: big.length > 3 ? 30 : 34, fontWeight: 600, fontFamily: "Geist,sans-serif" }, big),
+      React.createElement("text", { x: 85, y: 102, textAnchor: "middle", fill: "#7c7790", fontSize: 11, fontFamily: "Geist,sans-serif" }, small));
+  }
+  logLine(time, sev, section, text) {
+    const c = { ERR: "#ff8f9a", WARN: "#f0c774", INFO: "#75c7ff" }[sev] || "#7c7790";
+    return { time, sev, section, text, sevStyle: `color:${c}` };
+  }
+  seedLog() {
+    return [
+      this.logLine("14:31:50", "INFO", "tools", "tool catalog indexed in 142ms — 63 entries"),
+      this.logLine("14:31:52", "INFO", "tools", "status probes deferred for 9 desktop apps"),
+      this.logLine("14:32:07", "ERR", "project_health", "vercel cli probe timed out after 8s"),
+      this.logLine("14:32:08", "WARN", "project_health", "supabase collector skipped: token not set"),
+    ];
+  }
+  renderVals() {
+    const s = this.state, d = s.data;
+    const go = (view) => () => this.setState({ view });
+    const mono = "'Geist Mono',monospace";
+    const titles = { overview: "Overview", tools: "Tool catalog", diagnostics: "Diagnostics", project: "Project health", knowledge: "Knowledge graph", infrastructure: "Services", github: "GitHub", agent: "Agent assets", docs: "Docs", env: "Environment", sessions: "Sessions & cost", claude: "Claude config" };
+    const pill = (color, bg, border) => `margin-left:auto; font-family:${mono}; font-size:10.5px; color:${color}; background:${bg}; border:1px solid ${border}; border-radius:6px; padding:2px 8px`;
+    const navItem = (id, label, badge, badgeColor) => ({
+      label, badge: badge || "", go: go(id),
+      style: s.view === id
+        ? "display:flex; align-items:center; gap:10px; padding:7px 10px; border-radius:8px; background:linear-gradient(180deg,#221626,#1e1420); border:1px solid #3c2038; color:#ffffff; cursor:pointer; width:100%; text-align:left"
+        : "display:flex; align-items:center; gap:10px; padding:7px 10px; border-radius:8px; background:none; border:1px solid transparent; color:#aca7bd; cursor:pointer; width:100%; text-align:left",
+      dotStyle: `width:7px; height:7px; border-radius:${["overview","tools","diagnostics"].includes(id) ? "2px" : "50%"}; flex:0 0 auto; background:${s.view === id ? "#f4569d" : "#4c4860"}`,
+      badgeStyle: `margin-left:auto; font-family:${mono}; font-size:11px; color:${badgeColor || "#7c7790"}`,
+    });
+    const navGroups = [
+      { title: "MACHINE", items: [navItem("overview", "Overview"), navItem("tools", "Tools", "63"), navItem("diagnostics", "Diagnostics", "3", "#f0c774")] },
+      { title: "REPO", items: [navItem("project", "Project health", "2/4", "#5fd38d"), navItem("knowledge", "Knowledge", "143"), navItem("env", "Environment", "11"), navItem("sessions", "Sessions & cost", "$86")] },
+      { title: "INFRASTRUCTURE", items: [navItem("infrastructure", "Services"), navItem("github", "GitHub", "2 PRs")] },
+      { title: "AGENTS", items: [navItem("agent", "Asset inventory", "196"), navItem("claude", "Claude config", "⚠ 2", "#f0c774")] },
+      { title: "REFERENCE", items: [navItem("docs", "Docs / README", "18")] },
+    ];
+    const spark = (arr) => {
+      const w = 88, h = 30, max = Math.max(...arr), min = Math.min(...arr);
+      const pts = arr.map((v, i) => [i * (w / (arr.length - 1)), h - 4 - ((v - min) / (max - min || 1)) * (h - 8)]);
+      return { sparkSvg: React.createElement("svg", { width: 88, height: 30, viewBox: "0 0 88 30", style: { overflow: "visible", display: "block" } },
+        React.createElement("polyline", { points: pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" "), fill: "none", stroke: "#f4569d", strokeWidth: 1.5, opacity: 0.9 }),
+        React.createElement("circle", { cx: w, cy: pts[pts.length - 1][1].toFixed(1), r: 2.4, fill: "#f4569d" })) };
+    };
+    const vals = {
+      navGroups, viewTitle: titles[s.view], goDiagnostics: go("diagnostics"),
+      isOverview: s.view === "overview", isTools: s.view === "tools", isDiagnostics: s.view === "diagnostics",
+      isProject: s.view === "project", isKnowledge: s.view === "knowledge", isInfrastructure: s.view === "infrastructure",
+      isGithub: s.view === "github", isAgent: s.view === "agent", isDocs: s.view === "docs", isEnv: s.view === "env", isSessions: s.view === "sessions", isClaude: s.view === "claude", goSessions: go("sessions"),
+      readinessGauge: this.bigGauge(170, "81%", "ready", "#f4569d", 0.81),
+      servicesGauge: this.bigGauge(150, "2/4", "services ready", "#f0c774", 0.5),
+      kpis: [], serviceCards: [], configSurfaces: [], relationMix: [], activity: [],
+      categoryOptions: ["all"], statusOptions: ["all"], channelOptions: ["all"], categoryRail: [], toolRows: [],
+      toolDetail: { label: "", description: "", status: "", statusStyle: "", facts: [], hasVersions: false, versions: [], versionHint: "" },
+      ghAccounts: [], ghAccountMsg: "", addAccount: () => {}, envRows: [], envSummary: "",
+      sessionRows: [], claudeTabStyle: "", codexTabStyle: "", showClaude: () => {}, showCodex: () => {},
+      sessionDetail: { title: "", id: "", branch: "", duration: "", cost: "", tokens: "", tools: "", subagents: [] },
+      agentServices: [], serviceMsg: "", securityRows: [],
+      claudeCfgRows: [], globalCfgTabStyle: "", localCfgTabStyle: "", showGlobalCfg: () => {}, showLocalCfg: () => {},
+      relationOptions: ["all"], knowledgeSvg: null, flowSvg: null,
+      edgeDetail: { kind: "", reason: "", sourceLabel: "", targetLabel: "", confidence: "", evidence: [] },
+      logLines: s.logLines || this.seedLog(), logCount: String((s.logLines || this.seedLog()).length),
+      healthCards: [], workflowRuns: [], pullRequests: [], agentStats: [], flowNodes: [], flowEdges: [],
+      onToolSearch: (e) => this.setState({ toolSearch: e.target.value }),
+      onToolCategory: (e) => this.setState({ toolCategory: e.target.value }),
+      onToolStatus: (e) => this.setState({ toolStatus: e.target.value }),
+      onToolChannel: (e) => this.setState({ toolChannel: e.target.value }),
+      onKnowledgeSearch: (e) => this.setState({ kSearch: e.target.value }),
+      onKnowledgeRelation: (e) => this.setState({ kRelation: e.target.value }),
+    };
+
+    vals.kpis = [
+      { label: "Tool catalog", value: "63", unit: "", delta: "75% installed", deltaStyle: "color:#5fd38d", hint: "47 installed · 14 missing · 1 manual · 1 n/a", ...spark([41, 44, 44, 46, 45, 47, 47]) },
+      { label: "Agent assets", value: "196", unit: "", delta: "~/.claude", deltaStyle: "color:#7c7790", hint: "29 agents · 26 skills · 9 hooks · 4 rules", ...spark([150, 162, 171, 180, 184, 190, 196]) },
+      { label: "Knowledge graph", value: "143", unit: "nodes", delta: "exported", deltaStyle: "color:#5fd38d", hint: "212 edges · 8 types · 12 overlaps flagged", ...spark([96, 104, 118, 121, 130, 138, 143]) },
+      { label: "Services ready", value: "2", unit: "/ 4", delta: "2 need attention", deltaStyle: "color:#f0c774", hint: "Supabase token · Vercel unlinked", ...spark([4, 4, 3, 3, 2, 2, 2]) },
+    ];
+    const svcCard = (ok) => `background:#14131b; border:1px solid ${ok ? "#232130" : "#33301f"}; border-radius:12px; padding:14px 16px; min-width:0`;
+    const svcDot = (c) => `width:8px; height:8px; border-radius:50%; background:${c}; flex:0 0 auto`;
+    vals.serviceCards = [
+      { title: "Git", stateLabel: "ok", line1: "017-opencode-setup", line2: "14 branches · origin → dwcy/prompt-lib", cardStyle: svcCard(true), dotStyle: svcDot("#5fd38d") },
+      { title: "GitHub", stateLabel: "ok", line1: "5 workflow runs", line2: "2 open PRs — #214, #211", cardStyle: svcCard(true), dotStyle: svcDot("#5fd38d") },
+      { title: "Supabase", stateLabel: "token", line1: "SUPABASE_ACCESS_TOKEN unset", line2: "local detection only", cardStyle: svcCard(false), dotStyle: svcDot("#f0c774") },
+      { title: "Vercel", stateLabel: "unlinked", line1: "no project detected", line2: "run `vercel link` to connect", cardStyle: svcCard(false), dotStyle: svcDot("#f0c774") },
+    ];
+    const okVal = "margin-top:4px; color:#5fd38d; font-size:12.5px", nVal = "margin-top:4px; font-size:12.5px";
+    vals.configSurfaces = [
+      { label: "Global CLAUDE.md", value: "Present, in sync", valStyle: okVal },
+      { label: "settings.json", value: "Present, in sync", valStyle: okVal },
+      { label: "statusline.py", value: "Present, in sync", valStyle: okVal },
+      { label: "MCP connectors", value: "8 templates wired", valStyle: nVal },
+      { label: "Codex assets", value: "128 files indexed", valStyle: nVal },
+      { label: "Conversion diff", value: "Available", valStyle: okVal },
+    ];
+    const mixColors = { references: "#f4569d", routes_to: "#b44b8c", uses_skill: "#7e4478", guards: "#5b3e64", exports: "#463754", overlaps: "#f0c774" };
+    const mixCounts = [["references", 71], ["routes_to", 64], ["uses_skill", 38], ["guards", 14], ["exports", 13], ["overlaps", 12]];
+    vals.relationMix = mixCounts.map(([kind, count]) => ({
+      kind, count: String(count),
+      segStyle: `width:${(count / 212 * 100).toFixed(1)}%; background:${mixColors[kind]}`,
+      chipStyle: `color:${mixColors[kind]}`,
+    }));
+    vals.activity = [
+      { icon: "▲", iconStyle: "color:#f0c774", title: "Supabase collector skipped", sub: "access token not set", meta: "14:32:08 · project_health · retryable" },
+      { icon: "■", iconStyle: "color:#ff8f9a", title: "Vercel probe timed out", sub: "8s budget exceeded", meta: "14:32:07 · project_health · retryable" },
+      { icon: "●", iconStyle: "color:#75c7ff", title: "Desktop probes deferred", sub: "9 apps, lazy status", meta: "14:31:52 · tools · info" },
+    ];
+
+    if (d) {
+      const tools = d.TOOLS;
+      vals.categoryOptions = ["all", ...d.CATEGORIES.map((c) => c.name)];
+      vals.statusOptions = ["all", ...new Set(tools.map((t) => t.status))];
+      vals.channelOptions = ["all", ...new Set(tools.map((t) => t.install_channel))];
+      const statusColor = { installed: "#5fd38d", update_available: "#75c7ff", missing: "#f0c774", manual_required: "#f0c774", unsupported: "#7c7790", error: "#ff8f9a" };
+      const needle = s.toolSearch.toLowerCase();
+      const filtered = tools.filter((t) => {
+        const hay = [t.label, t.category, t.description, t.install_channel, ...(t.badges || [])].join(" ").toLowerCase();
+        if (needle && !hay.includes(needle)) return false;
+        if (s.toolCategory !== "all" && t.category !== s.toolCategory) return false;
+        if (s.toolStatus !== "all" && t.status !== s.toolStatus) return false;
+        if (s.toolChannel !== "all" && t.install_channel !== s.toolChannel) return false;
+        return true;
+      });
+      const maxCat = Math.max(...d.CATEGORIES.map((c) => c.count));
+      vals.categoryRail = d.CATEGORIES.map((c) => ({
+        name: c.name, count: String(c.count),
+        go: () => this.setState({ toolCategory: s.toolCategory === c.name ? "all" : c.name }),
+        style: `display:flex; align-items:center; gap:8px; padding:7px 10px; border-radius:8px; cursor:pointer; width:100%; text-align:left; ` +
+          (s.toolCategory === c.name ? "background:linear-gradient(180deg,#221626,#1e1420); border:1px solid #3c2038; color:#ffffff" : "background:none; border:1px solid transparent; color:#aca7bd"),
+        barStyle: `width:${Math.round(c.count / maxCat * 34)}px; height:3px; border-radius:2px; background:${s.toolCategory === c.name ? "#f4569d" : "#39364a"}`,
+      }));
+      vals.toolRows = filtered.map((t, i) => ({
+        label: t.label, category: t.category, install_channel: t.install_channel, status: t.status,
+        badge: (t.badges || [])[0] ? " ★" : "", badgeStyle: "color:#f0c774; font-size:11px",
+        go: () => this.setState({ selectedTool: t.key }),
+        style: `display:grid; grid-template-columns:16px minmax(0,1.2fr) minmax(0,1fr) 120px 110px; gap:12px; align-items:center; width:100%; text-align:left; padding:8px 16px; cursor:pointer; font-size:12.5px; color:#e9e7f0; border:none; border-bottom:1px solid #1a1822; background:${(s.selectedTool || filtered[0]?.key) === t.key ? "#191722" : (i % 2 ? "#131219" : "transparent")}`,
+        dotStyle: `width:7px; height:7px; border-radius:50%; background:${statusColor[t.status] || "#7c7790"}`,
+        statusStyle: `font-family:${mono}; font-size:11px; color:${statusColor[t.status] || "#7c7790"}`,
+      }));
+      const runtimeVersions = {
+        dotnet: [["10.0.102", "winget · LTS preview"], ["9.0.305", "winget · LTS"], ["8.0.412", "manual install"]],
+        python: [["3.14.6", "uv-managed"], ["3.12.10", "uv-managed"], ["3.11.9", "system / py launcher"]],
+        node: [["v24.17.0", "nvm-windows"], ["v22.19.0", "nvm-windows · LTS"], ["v20.19.2", "nvm-windows"]],
+        git: [["2.54.0", "winget"]],
+        docker: [["29.6.1", "Docker Desktop"]],
+        uv: [["0.11.24", "standalone installer"]],
+      };
+      const sel = filtered.find((t) => t.key === s.selectedTool) || filtered[0];
+      const vers = sel && runtimeVersions[sel.key];
+      if (sel) vals.toolDetail = {
+        label: sel.label, description: sel.description, status: sel.status,
+        statusStyle: pill(statusColor[sel.status] || "#7c7790", "#17161f", "#262433"),
+        hasVersions: !!vers,
+        versions: (vers || []).map(([version, channel], i) => {
+          const activeIdx = s.activeVersions[sel.key] ?? 0;
+          const active = i === activeIdx;
+          return { version, channel,
+            tag: active ? "active" : "switch", 
+            tagStyle: `font-family:${mono}; font-size:10.5px; margin-left:auto; color:${active ? "#f4569d" : "#7c7790"}`,
+            activate: () => this.setState({ activeVersions: { ...s.activeVersions, [sel.key]: i } }),
+            style: `display:flex; align-items:center; gap:10px; width:100%; text-align:left; padding:7px 10px; border-radius:8px; cursor:pointer; border:1px solid ${active ? "#3c2038" : "#232130"}; background:${active ? "linear-gradient(180deg,#221626,#1e1420)" : "#17161f"}; color:#e9e7f0` };
+        }),
+        versionHint: vers && vers.length > 1 ? `${vers.length} versions on PATH — activating pins shims for new shells` : "single version detected",
+        facts: [
+          { label: "category", value: sel.category }, { label: "channel", value: sel.install_channel },
+          { label: "source", value: sel.source_status }, { label: "platforms", value: sel.platforms.join(", ") },
+          { label: "version meta", value: sel.version_provider || "unavailable" },
+          { label: "backup policy", value: sel.backup_policy || "none" },
+        ],
+      };
+
+      // Knowledge graph map
+      const K = d.KNOWLEDGE;
+      vals.relationOptions = ["all", ...Object.keys(K.counts.by_relation)];
+      const nodesById = new Map(K.nodes.map((n) => [n.id, n]));
+      const typeColor = { agent: "#f4569d", skill: "#75c7ff", hook: "#f0c774", rule: "#5fd38d", mcp_server: "#bb9af7" };
+      const pos = {
+        "a.react-architect": [140, 80], "a.frontend-designer": [140, 150], "a.ux-analyst": [140, 220],
+        "a.python-tester": [140, 290], "a.db-architect": [140, 360], "a.secret-auditor": [140, 430], "a.load-project": [140, 500],
+        "s.react-review": [420, 70], "s.react-perf": [420, 135], "s.design": [420, 200], "s.css": [420, 265],
+        "s.git": [420, 330], "s.orchestrate": [420, 395], "s.dependency-audit": [420, 460],
+        "h.command-guard": [680, 110], "r.react": [680, 180], "m.playwright": [680, 250],
+        "r.tests": [680, 320], "m.github": [680, 390], "h.session-start": [680, 480],
+      };
+      const kn = s.kSearch.toLowerCase();
+      const edgeEls = K.edges.map((e) => {
+        const [x1, y1] = pos[e.source] || [400, 520], [x2, y2] = pos[e.target] || [400, 520];
+        const src = nodesById.get(e.source), tgt = nodesById.get(e.target);
+        const matches = (s.kRelation === "all" || e.kind === s.kRelation) &&
+          (!kn || [e.kind, e.reason, src?.label, tgt?.label].join(" ").toLowerCase().includes(kn));
+        const selected = e.id === s.selectedEdge;
+        return React.createElement("g", { key: e.id, onClick: () => this.setState({ selectedEdge: e.id }), style: { cursor: "pointer" } },
+          React.createElement("line", { x1, y1, x2, y2, stroke: "transparent", strokeWidth: 14 }),
+          React.createElement("line", { x1, y1, x2, y2, stroke: selected ? "#f4569d" : matches ? "#5a516e" : "#2a2735",
+            strokeWidth: selected ? 2.5 : 1.5, opacity: matches ? 1 : 0.35, strokeDasharray: "7 7",
+            style: { animation: "dashflow 1.1s linear infinite" } }));
+      });
+      const nodeEls = K.nodes.map((n) => {
+        const [x, y] = pos[n.id] || [400, 520];
+        const left = x < 300;
+        return React.createElement("g", { key: n.id },
+          React.createElement("circle", { cx: x, cy: y, r: 7, fill: "#0b0a0f", stroke: typeColor[n.type] || "#7c7790", strokeWidth: 2 }),
+          React.createElement("text", { x: left ? x - 14 : x + 14, y: y + 4, fill: "#aca7bd", fontSize: 11, fontFamily: "'Geist Mono',monospace", textAnchor: left ? "end" : "start" }, n.label));
+      });
+      vals.knowledgeSvg = React.createElement("svg", { width: "100%", height: 560, viewBox: "0 0 800 560", style: { display: "block" } }, ...edgeEls, ...nodeEls);
+      const selEdge = K.edges.find((e) => e.id === s.selectedEdge) || K.edges[0];
+      vals.edgeDetail = {
+        kind: selEdge.kind, reason: selEdge.reason, confidence: selEdge.confidence,
+        sourceLabel: nodesById.get(selEdge.source)?.label || selEdge.source,
+        targetLabel: nodesById.get(selEdge.target)?.label || "unresolved",
+        evidence: selEdge.evidence.map((ev) => ({ ref: `${ev.resource}:${ev.line}`, text: ev.text })),
+      };
+
+      // Health cards with gauges
+      const stateMeta = {
+        ok: { pct: 100, color: "#5fd38d", label: "ready" },
+        token_missing: { pct: 40, color: "#f0c774", label: "token missing" },
+        not_linked: { pct: 25, color: "#f0c774", label: "not linked" },
+      };
+      const fixes = { Supabase: "set SUPABASE_ACCESS_TOKEN", Vercel: "vercel link" };
+      vals.healthCards = ["git", "github", "supabase", "vercel"].map((k) => {
+        const c = d.PROJECT[k], m = stateMeta[c.state] || { pct: 0, color: "#ff8f9a", label: c.state };
+        return {
+          title: c.title, summary: c.summary, facts: c.facts, hint: c.hint, fix: fixes[c.title] || "",
+          stateLabel: m.label,
+          gaugeSvg: React.createElement("svg", { width: 46, height: 46, viewBox: "0 0 46 46", style: { display: "block" } },
+            React.createElement("circle", { cx: 23, cy: 23, r: 19, fill: "none", stroke: "#232130", strokeWidth: 4 }),
+            React.createElement("circle", { cx: 23, cy: 23, r: 19, fill: "none", stroke: m.color, strokeWidth: 4, strokeLinecap: "round", strokeDasharray: `${(m.pct / 100 * 119.4).toFixed(1)} 119.4`, transform: "rotate(-90 23 23)" }),
+            React.createElement("text", { x: 23, y: 27, textAnchor: "middle", fill: "#e9e7f0", fontSize: 11, fontWeight: 600, fontFamily: "Geist,sans-serif" }, `${m.pct}%`)),
+          cardStyle: `background:#14131b; border:1px solid ${m.pct === 100 ? "#232130" : "#33301f"}; border-radius:12px; padding:16px; min-width:0`,
+          dotStyle: `width:8px; height:8px; border-radius:50%; background:${m.color}; flex:0 0 auto`,
+          pillStyle: pill(m.color, "#17161f", "#262433"),
+        };
+      });
+    }
+
+    // GitHub accounts (gh auth status model: user/storage/valid/active)
+    const accounts = [
+      { user: "dwcy", scopes: "repo, workflow, read:org", storage: "keyring", valid: true },
+      { user: "dwcy-stena", scopes: "repo, read:org", storage: "oauth_token file", valid: true },
+      { user: "cabal-bot", scopes: "repo", storage: "keyring", valid: false },
+    ];
+    vals.ghAccounts = accounts.map((a) => {
+      const active = s.ghActive === a.user;
+      return {
+        user: a.user, scopes: a.scopes, storage: a.storage,
+        initials: a.user.slice(0, 2).toUpperCase(),
+        avatarStyle: `width:30px; height:30px; border-radius:50%; display:grid; place-items:center; font-size:11px; font-weight:600; background:${active ? "linear-gradient(180deg,#3c2038,#221626)" : "#1d1b27"}; color:${active ? "#f4569d" : "#aca7bd"}; border:1px solid ${active ? "#5a2c4e" : "#262433"}`,
+        validLabel: a.valid ? "token valid" : "token invalid",
+        validStyle: `font-family:${mono}; font-size:11px; color:${a.valid ? "#5fd38d" : "#ff8f9a"}`,
+        activeLabel: active ? "● active" : "",
+        activeStyle: `font-family:${mono}; font-size:11px; color:#f4569d`,
+        switchLabel: active ? "Active" : "Switch",
+        switchTo: active || !a.valid ? () => {} : () => this.setState({ ghActive: a.user, ghMsg: `gh auth switch --user ${a.user} — active account is now ${a.user}` }),
+        switchStyle: active
+          ? "border:1px solid #3c2038; border-radius:7px; background:#221626; color:#f4569d; padding:4px 10px; font-size:11.5px; cursor:default"
+          : a.valid
+            ? "border:1px solid #262433; border-radius:7px; background:#17151f; color:#e9e7f0; padding:4px 10px; font-size:11.5px; cursor:pointer"
+            : "border:1px solid #262433; border-radius:7px; background:#17151f; color:#55506a; padding:4px 10px; font-size:11.5px; cursor:not-allowed",
+        forget: () => this.setState({ ghMsg: `gh auth logout --user ${a.user} — (read-only preview, no change applied)` }),
+      };
+    });
+    vals.ghAccountMsg = s.ghMsg;
+    vals.addAccount = () => this.setState({ ghMsg: "gh auth login --with-token — paste a PAT in the terminal UI to register another account" });
+
+    // Environment variables (from ENV_DESCRIPTIONS)
+    const envVars = [
+      ["FIGMA_ACCESS_TOKEN", "Figma MCP server — read access to files, components, design tokens.", "figd_•••••••••••••", "set"],
+      ["POSTGRES_CONNECTION_STRING", "Direct PostgreSQL connection for local service scripts.", "postgresql://•••", "set"],
+      ["AZURE_DEVOPS_ORG_URL", "Azure DevOps MCP server — organisation URL.", "https://dev.azure.com/stena", "set"],
+      ["AZURE_DEVOPS_TOKEN", "Azure DevOps MCP server — PAT for work items, repos, pipelines, PRs.", "•••••••••••••••", "set"],
+      ["SUPABASE_ACCESS_TOKEN", "Supabase MCP server — DB, auth, storage, edge functions.", "", "missing"],
+      ["OBSIDIAN_API_KEY", "Obsidian MCP server — Local REST API plugin key.", "•••••••••••", "set"],
+      ["OBSIDIAN_HOST", "Obsidian Local REST API host (default 127.0.0.1).", "127.0.0.1", "default"],
+      ["OBSIDIAN_PORT", "Obsidian Local REST API port (default 27123).", "27123", "default"],
+      ["PROJECTS_PATH", "Base directory for projects; used by session hooks.", "C:/projects", "set"],
+      ["TEMP_PATH", "Scratch directory for temp files in Claude sessions.", "", "default"],
+      ["GIT_LINE_ENDINGS", "git core.autocrlf global setting (auto recommended).", "auto", "set"],
+    ];
+    const stateColors = { set: "#5fd38d", missing: "#f0c774", default: "#7c7790" };
+    vals.envRows = envVars.map(([name, desc, value, st]) => {
+      const on = !s.envOff[name];
+      return {
+        name, desc, value: value || "—",
+        stateLabel: st, stateStyle: `font-family:${mono}; font-size:11px; color:${stateColors[st]}`,
+        rowStyle: `display:grid; grid-template-columns:44px minmax(0,240px) minmax(0,1fr) 150px 110px; gap:12px; padding:9px 16px; border-bottom:1px solid #1a1822; align-items:center; opacity:${on ? 1 : 0.45}`,
+        toggle: () => this.setState({ envOff: { ...s.envOff, [name]: on } }),
+        switchStyle: `width:34px; height:19px; border-radius:10px; border:1px solid ${on ? "#5a2c4e" : "#262433"}; background:${on ? "linear-gradient(180deg,#3c2038,#221626)" : "#17151f"}; position:relative; cursor:pointer; padding:0; transition:background .15s`,
+        knobStyle: `position:absolute; top:2px; left:${on ? "16px" : "2px"}; width:13px; height:13px; border-radius:50%; background:${on ? "#f4569d" : "#55506a"}; transition:left .15s`,
+      };
+    });
+    const onCount = envVars.filter(([n]) => !s.envOff[n]).length;
+    vals.envSummary = `${onCount}/${envVars.length} enabled · 2 missing values`;
+
+    // Local agent services
+    const svcDefs = [
+      { key: "orchestrator", desc: "Autonomous PR review — watches open PRs, dispatches review agents", meta: "port 8901 · py 3.14" },
+      { key: "a2a-bridge", desc: "Claude ↔ Gemini agent-to-agent bridge (199 tests)", meta: "port 8902 · py 3.14" },
+      { key: "mcp-bus", desc: "Agent message bus + shared KV memory + registry (11 tools)", meta: "port 8903 · stdio+http" },
+    ];
+    vals.agentServices = svcDefs.map((x) => {
+      const running = !!s.svcRunning[x.key];
+      return {
+        name: x.key, desc: x.desc, meta: x.meta,
+        dotStyle: `width:8px; height:8px; border-radius:50%; background:${running ? "#5fd38d" : "#55506a"}; ${running ? "animation:pulse 2s ease-in-out infinite" : ""}`,
+        stateLabel: running ? "running · 2h 14m" : "stopped",
+        stateStyle: `font-family:${mono}; font-size:11px; color:${running ? "#5fd38d" : "#7c7790"}`,
+        btnLabel: running ? "Stop" : "Start",
+        btnStyle: running
+          ? "border:1px solid #262433; border-radius:7px; background:#17151f; color:#ff8f9a; padding:4px 12px; cursor:pointer; font-size:11.5px"
+          : "border:1px solid #3c2038; border-radius:7px; background:#221626; color:#f4569d; padding:4px 12px; cursor:pointer; font-size:11.5px",
+        act: () => this.setState({ svcRunning: { ...s.svcRunning, [x.key]: !running }, serviceMsg: `${running ? "stopping" : "starting"} ${x.key} … supervisor dispatched` }),
+      };
+    });
+    vals.serviceMsg = s.serviceMsg;
+
+    // Package security check (0 vulnerable · 5 outdated · 0 deprecated · 1 notice)
+    const secDot = (c) => `width:7px; height:7px; border-radius:50%; background:${c}`;
+    vals.securityRows = [
+      { name: "textual", eco: "python", note: "outdated — 3 minor versions behind", cur: "1.0.0", latest: "1.3.2", dotStyle: secDot("#f0c774") },
+      { name: "fastapi", eco: "python", note: "outdated — patch available", cur: "0.115.6", latest: "0.115.9", dotStyle: secDot("#f0c774") },
+      { name: "rich", eco: "python", note: "outdated — minor version behind", cur: "13.9.4", latest: "14.1.0", dotStyle: secDot("#f0c774") },
+      { name: "Microsoft.Extensions.Http", eco: ".NET", note: "outdated — 9.0.6 → 10.0.1", cur: "9.0.6", latest: "10.0.1", dotStyle: secDot("#f0c774") },
+      { name: "vite", eco: "npm", note: "outdated — major version behind", cur: "6.3.5", latest: "7.2.4", dotStyle: secDot("#f0c774") },
+      { name: "httpx", eco: "python", note: "notice — pin <1.0; 1.0 renames Client APIs", cur: "0.28.1", latest: "0.28.1", dotStyle: secDot("#75c7ff") },
+    ];
+
+    // Claude config (global vs local scope)
+    const cfgTab = (active) => `border:none; border-radius:6px; padding:4px 12px; font-size:11.5px; cursor:pointer; ${active ? "background:#221626; color:#f4569d; box-shadow:inset 0 0 0 1px #3c2038" : "background:none; color:#7c7790"}`;
+    vals.globalCfgTabStyle = cfgTab(s.cfgScope === "global");
+    vals.localCfgTabStyle = cfgTab(s.cfgScope === "local");
+    vals.showGlobalCfg = () => this.setState({ cfgScope: "global" });
+    vals.showLocalCfg = () => this.setState({ cfgScope: "local" });
+    const cfgSt = (label, color) => ({ stateLabel: label, stateStyle: `font-family:${mono}; font-size:11px; color:${color}; text-align:right`, dotStyle: `width:7px; height:7px; border-radius:50%; background:${color}` });
+    vals.claudeCfgRows = s.cfgScope === "global" ? [
+      { name: "Global file configuration", desc: "CLAUDE.md, agents/, skills/, hooks/, rules/ deployed from repo", ...cfgSt("⚠ update available", "#f0c774") },
+      { name: "StatusLine", desc: "statusline.py — branch, model, cost in the prompt line", ...cfgSt("present · in sync", "#5fd38d") },
+      { name: "Settings", desc: "settings.json — permissions, hooks wiring, model defaults", ...cfgSt("present · in sync", "#5fd38d") },
+      { name: "MCP connectors", desc: "8 templates: github, figma, playwright, supabase, obsidian…", ...cfgSt("8 wired", "#5fd38d") },
+      { name: "Context guard", desc: "PreCompact guard — protects pinned context from compaction", ...cfgSt("enabled", "#5fd38d") },
+      { name: "Uninstall", desc: "Remove deployed config and restore pre-Cabal backups", ...cfgSt("backups: 5", "#7c7790") },
+    ] : [
+      { name: "Project CLAUDE.md", desc: "./.claude/CLAUDE.md — repo-specific instructions", ...cfgSt("present", "#5fd38d") },
+      { name: "Local settings", desc: "settings.local.json — 12 permission grants for this repo", ...cfgSt("present", "#5fd38d") },
+      { name: "Local agents", desc: "2 project agents: @spec-writer, @release-notes", ...cfgSt("2 defined", "#5fd38d") },
+      { name: "Local skills", desc: "3 project skills: /spec, /changelog, /bench", ...cfgSt("3 defined", "#5fd38d") },
+      { name: "Local MCP", desc: ".mcp.json — repo-scoped servers", ...cfgSt("not present", "#7c7790") },
+    ];
+
+    // Sessions & cost (from screenshot data: 11 sessions, $86.443 total)
+    const claudeSessions = [
+      { date: "07-13 07:28", branch: "main", duration: "1.1h", cost: 24.278, tools: 73, agents: 2, fork: false, id: "c7f2…a1", tokens: "2.41M in · 188K out", subagents: [["@react-architect", 1, "$3.10"], ["@python-tester", 1, "$1.84"]] },
+      { date: "07-12 18:12", branch: "016-install-wizard", duration: "4.1h", cost: 0, tools: 194, agents: 12, fork: false, id: "b3e9…77", tokens: "5.9M in · 402K out", subagents: [["@python-tester", 5, "$0.00"], ["@code-reviewer", 4, "$0.00"], ["@secret-auditor", 3, "$0.00"]] },
+      { date: "07-11 10:11", branch: "fix/hooks-audit-trail", duration: "29.7h", cost: 8.113, tools: 159, agents: 14, fork: true, id: "a01d…3c", tokens: "4.2M in · 350K out", subagents: [["@hook-auditor", 6, "$2.90"], ["@python-tester", 5, "$2.51"], ["@code-reviewer", 3, "$1.42"]] },
+      { date: "07-11 10:09", branch: "fix/hooks-audit-trail", duration: "30.8h", cost: 11.010, tools: 136, agents: 15, fork: false, id: "9f4b…e0", tokens: "4.8M in · 391K out", subagents: [["@hook-auditor", 7, "$4.05"], ["@python-tester", 5, "$3.20"], ["@secret-auditor", 3, "$1.11"]] },
+      { date: "07-06 21:44", branch: "feat/cabal-claude-view", duration: "112.1h", cost: 6.861, tools: 223, agents: 9, fork: false, id: "8c2a…19", tokens: "6.4M in · 510K out", subagents: [["@react-architect", 4, "$2.44"], ["@ux-analyst", 3, "$1.87"], ["@frontend-designer", 2, "$1.02"]] },
+      { date: "07-06 12:14", branch: "main", duration: "9.5h", cost: 14.895, tools: 190, agents: 4, fork: false, id: "77b0…c4", tokens: "3.9M in · 300K out", subagents: [["@db-architect", 2, "$5.16"], ["@python-tester", 2, "$3.61"]] },
+      { date: "07-02 22:07", branch: "main", duration: "9.1h", cost: 0, tools: 62, agents: 3, fork: false, id: "60ff…88", tokens: "1.6M in · 122K out", subagents: [["@load-project", 2, "$0.00"], ["@code-reviewer", 1, "$0.00"]] },
+      { date: "07-01 10:16", branch: "feat/013-claude-settings", duration: "35.8h", cost: 0, tools: 156, agents: 5, fork: false, id: "5ad3…b2", tokens: "4.4M in · 356K out", subagents: [["@code-reviewer", 3, "$0.00"], ["@python-tester", 2, "$0.00"]] },
+      { date: "06-30 07:10", branch: "main", duration: "13.6h", cost: 12.630, tools: 210, agents: 3, fork: false, id: "49c1…07", tokens: "5.1M in · 419K out", subagents: [["@dotnet-architect", 2, "$6.02"], ["@code-reviewer", 1, "$2.20"]] },
+      { date: "06-29 13:39", branch: "feat/011-cabal-web", duration: "5m", cost: 0.909, tools: 0, agents: 0, fork: false, id: "3be7…51", tokens: "180K in · 9K out", subagents: [] },
+      { date: "06-29 09:05", branch: "main", duration: "40m", cost: 7.747, tools: 41, agents: 0, fork: false, id: "2fd0…9e", tokens: "1.2M in · 96K out", subagents: [] },
+    ];
+    const codexSessions = [
+      { date: "07-10 14:02", branch: "main", duration: "2.3h", cost: 4.310, tools: 58, agents: 0, fork: false, id: "cx91…40", tokens: "1.1M in · 84K out", subagents: [] },
+      { date: "07-08 09:40", branch: "016-install-wizard", duration: "5.6h", cost: 2.115, tools: 104, agents: 0, fork: false, id: "cx77…0b", tokens: "2.0M in · 140K out", subagents: [] },
+      { date: "07-03 16:22", branch: "main", duration: "1.0h", cost: 1.480, tools: 22, agents: 0, fork: false, id: "cx3a…7d", tokens: "420K in · 31K out", subagents: [] },
+      { date: "06-30 11:15", branch: "feat/013-claude-settings", duration: "3.4h", cost: 0.960, tools: 66, agents: 0, fork: false, id: "cx1e…c8", tokens: "760K in · 55K out", subagents: [] },
+    ];
+    const sess = s.sessionTab === "claude" ? claudeSessions : codexSessions;
+    const maxCost = Math.max(...sess.map((x) => x.cost), 0.01);
+    const tab = (active) => `border:none; border-radius:6px; padding:4px 12px; font-size:11.5px; cursor:pointer; ${active ? "background:#221626; color:#f4569d; box-shadow:inset 0 0 0 1px #3c2038" : "background:none; color:#7c7790"}`;
+    vals.claudeTabStyle = tab(s.sessionTab === "claude");
+    vals.codexTabStyle = tab(s.sessionTab === "codex");
+    vals.showClaude = () => this.setState({ sessionTab: "claude", selectedSession: 0 });
+    vals.showCodex = () => this.setState({ sessionTab: "codex", selectedSession: 0 });
+    vals.sessionRows = sess.map((x, i) => ({
+      date: x.date, branch: x.branch, duration: x.duration, tools: String(x.tools), agents: String(x.agents),
+      cost: `$${x.cost.toFixed(3)}`,
+      costStyle: `font-family:${mono}; font-size:11.5px; text-align:right; color:${x.cost === 0 ? "#55506a" : x.cost > 10 ? "#f0c774" : "#e9e7f0"}`,
+      costBarStyle: `height:4px; border-radius:2px; background:${x.cost > 10 ? "#f0c774" : "#f4569d"}; width:${Math.max(2, x.cost / maxCost * 100)}%`,
+      fork: x.fork ? "↳" : "", forkStyle: "color:#7c7790",
+      go: () => this.setState({ selectedSession: i }),
+      style: `display:grid; grid-template-columns:16px 118px minmax(0,1fr) 70px 90px 120px 60px 66px; gap:12px; align-items:center; width:100%; text-align:left; padding:8px 16px; cursor:pointer; font-size:12.5px; color:#e9e7f0; border:none; border-bottom:1px solid #1a1822; background:${s.selectedSession === i ? "#191722" : i % 2 ? "#131219" : "transparent"}`,
+    }));
+    const sd = sess[Math.min(s.selectedSession, sess.length - 1)];
+    if (sd) vals.sessionDetail = {
+      title: `${s.sessionTab === "claude" ? "Claude" : "Codex"} session`, id: sd.id, branch: sd.branch,
+      duration: sd.duration, cost: `$${sd.cost.toFixed(3)}`, tokens: sd.tokens, tools: `${sd.tools} calls · ${sd.agents} subagent dispatches`,
+      subagents: sd.subagents.length ? sd.subagents.map(([name, calls, cost]) => ({ name, calls: String(calls), cost })) : [{ name: "no dispatches", calls: "0", cost: "$0.00" }],
+    };
+
+    const runDot = (c) => `width:8px; height:8px; border-radius:50%; background:${c}`;
+    vals.workflowRuns = [
+      { name: "CI / tests", trigger: "push", branch: "017-opencode-setup", duration: "3m 41s", dotStyle: runDot("#5fd38d") },
+      { name: "CI / tests", trigger: "pull_request #214", branch: "016-install-wizard", duration: "3m 58s", dotStyle: runDot("#5fd38d") },
+      { name: "CodeQL", trigger: "schedule", branch: "main", duration: "6m 12s", dotStyle: runDot("#5fd38d") },
+      { name: "CI / tests", trigger: "pull_request #211", branch: "014-cabal-services-view", duration: "4m 02s", dotStyle: runDot("#ff8f9a") },
+      { name: "Dependabot", trigger: "schedule", branch: "main", duration: "0m 48s", dotStyle: runDot("#5fd38d") },
+    ];
+    vals.pullRequests = [
+      { num: "214", title: "Install wizard: resumable steps + drift preview", branch: "016-install-wizard", checks: "checks ✓ 5/5", checkStyle: "color:#5fd38d", age: "opened 2d ago" },
+      { num: "211", title: "Services view: supervisor restart policy", branch: "014-cabal-services-view", checks: "checks ✗ 4/5", checkStyle: "color:#ff8f9a", age: "opened 5d ago" },
+    ];
+
+    // Agent inventory + flow
+    const bar = (pct, color) => `width:${pct}%; height:4px; border-radius:2px; background:${color}`;
+    vals.agentStats = [
+      { label: "Agents", value: "29", barStyle: bar(100, "#f4569d") },
+      { label: "Skills", value: "26", barStyle: bar(90, "#b44b8c") },
+      { label: "Hooks", value: "9", barStyle: bar(31, "#f0c774") },
+      { label: "Rules", value: "4", barStyle: bar(14, "#5fd38d") },
+      { label: "Output styles", value: "4", barStyle: bar(14, "#75c7ff") },
+      { label: "MCP servers", value: "8", barStyle: bar(28, "#bb9af7") },
+    ];
+    const fnode = (label, cx, cy, color) => {
+      const w = Math.max(96, label.length * 7 + 22);
+      return { label, color, w: String(w), rx: String(cx - w / 2), ry: String(cy - 11), tx: String(cx), ty: String(cy + 4), cx, cy, right: cx + w / 2, left: cx - w / 2 };
+    };
+    const agents = [
+      fnode("@react-architect", 120, 70, "#f4569d"), fnode("@frontend-designer", 120, 145, "#f4569d"),
+      fnode("@ux-analyst", 120, 220, "#f4569d"), fnode("@python-tester", 120, 295, "#f4569d"),
+      fnode("@db-architect", 120, 370, "#f4569d"), fnode("@load-project", 120, 440, "#f4569d"),
+    ];
+    const skills = [
+      fnode("/react-review", 400, 60, "#75c7ff"), fnode("/react-perf", 400, 125, "#75c7ff"),
+      fnode("/design", 400, 190, "#75c7ff"), fnode("/css", 400, 255, "#75c7ff"),
+      fnode("/orchestrate", 400, 320, "#75c7ff"), fnode("/dependency-audit", 400, 390, "#75c7ff"),
+    ];
+    const right = [
+      fnode("command_guard.py", 672, 100, "#f0c774"), fnode("react.md", 672, 180, "#5fd38d"),
+      fnode("tests.md", 672, 260, "#5fd38d"), fnode("mcp:github", 672, 340, "#bb9af7"),
+      fnode("session_start.py", 672, 430, "#f0c774"),
+    ];
+    const flowNodes = [...agents, ...skills, ...right];
+    const curve = (a, b, color) => ({ d: `M ${a.right} ${a.cy} C ${a.right + 70} ${a.cy}, ${b.left - 70} ${b.cy}, ${b.left} ${b.cy}`, color });
+    const flowEdges = [
+      curve(agents[0], skills[0], "#f4569d"), curve(agents[0], skills[1], "#f4569d"),
+      curve(agents[1], skills[2], "#f4569d"), curve(agents[1], skills[3], "#f4569d"),
+      curve(agents[2], skills[2], "#7e4478"), curve(agents[3], skills[5], "#7e4478"),
+      curve(agents[4], skills[5], "#f4569d"), curve(agents[5], skills[4], "#7e4478"),
+      curve(skills[0], right[1], "#75c7ff"), curve(skills[4], right[3], "#75c7ff"),
+      curve(skills[5], right[2], "#75c7ff"), curve(agents[5], right[4], "#f0c774"),
+      curve(skills[1], right[0], "#75c7ff"),
+    ];
+    const colLabel = (x, text, anchor) => React.createElement("text", { key: text, x, y: 30, fill: "#6f6a82", fontSize: 10, letterSpacing: 2, fontFamily: "Geist,sans-serif", textAnchor: anchor }, text);
+    vals.flowSvg = React.createElement("svg", { width: "100%", height: 470, viewBox: "0 0 800 470", style: { display: "block" } },
+      colLabel(90, "AGENTS · 29", "start"), colLabel(400, "SKILLS · 26", "middle"), colLabel(710, "GUARDS & RULES", "end"),
+      ...flowEdges.map((e, i) => React.createElement("path", { key: "fe" + i, d: e.d, fill: "none", stroke: e.color, strokeWidth: 1.5, opacity: 0.75, strokeDasharray: "6 8", style: { animation: "dashflow 1.3s linear infinite" } })),
+      ...flowNodes.map((n, i) => React.createElement("g", { key: "fn" + i },
+        React.createElement("rect", { x: n.cx - n.w / 2, y: n.cy - 11, width: Number(n.w), height: 22, rx: 6, fill: "#14131b", stroke: n.color, strokeWidth: 1 }),
+        React.createElement("text", { x: n.cx, y: n.cy + 4, fill: "#e9e7f0", fontSize: 11, fontFamily: "'Geist Mono',monospace", textAnchor: "middle" }, n.label))));
+    return vals;
+  }
+}
+</script>
+</body>
+</html>
