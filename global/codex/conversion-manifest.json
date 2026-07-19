@@ -654,6 +654,13 @@
                         "reason":  "Manifest consumed by the Conversion Diff panel."
                     },
                     {
+                        "source":  null,
+                        "output":  "global/codex/statusline-segments.json",
+                        "kind":  "statusline-metadata",
+                        "status":  "codex-only",
+                        "reason":  "Catalog of every native Codex TUI statusline item managed by Cabal."
+                    },
+                    {
                         "source":  "global/hooks/",
                         "output":  null,
                         "kind":  "unsupported",
@@ -679,7 +686,7 @@
                         "output":  null,
                         "kind":  "unsupported",
                         "status":  "unsupported",
-                        "reason":  "Claude Code settings are not copied into Codex config.toml."
+                        "reason":  "Claude Code settings are not copied wholesale; Cabal only manages Codex's native TUI statusline keys."
                     },
                     {
                         "source":  "global/MCP.md",

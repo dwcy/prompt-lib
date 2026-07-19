@@ -1,0 +1,33 @@
+{
+  "$schema_version": 1,
+  "target": "codex",
+  "segments": [
+    { "key": "git-branch", "label": "Git branch", "group": "Git", "enabled": true, "description": "Current Git branch; omitted when unavailable." },
+    { "key": "project-name", "label": "Project name", "group": "Project", "enabled": true, "description": "Detected project name; omitted when unavailable." },
+    { "key": "model-with-reasoning", "label": "Model + reasoning", "group": "Model", "enabled": true, "description": "Current model name with reasoning level." },
+    { "key": "context-remaining", "label": "Context remaining", "group": "Context", "enabled": true, "description": "Percentage of the context window remaining; omitted when unknown." },
+    { "key": "run-state", "label": "Run state", "group": "Session", "enabled": true, "description": "Compact session state such as Ready, Working, or Thinking." },
+    { "key": "current-dir", "label": "Current directory", "group": "Project", "enabled": true, "description": "Current working directory." },
+    { "key": "model", "label": "Model", "group": "Model", "enabled": false, "description": "Current model name without reasoning level." },
+    { "key": "reasoning", "label": "Reasoning", "group": "Model", "enabled": false, "description": "Current reasoning level." },
+    { "key": "pull-request-number", "label": "Pull request", "group": "Git", "enabled": false, "description": "Open pull request number for the current branch; omitted when unavailable." },
+    { "key": "branch-changes", "label": "Branch changes", "group": "Git", "enabled": false, "description": "Committed branch changes relative to the default branch; omitted when unavailable." },
+    { "key": "permissions", "label": "Permissions", "group": "Security", "enabled": false, "description": "Active permission profile or sandbox summary." },
+    { "key": "approval-mode", "label": "Approval mode", "group": "Security", "enabled": false, "description": "Active command approval mode." },
+    { "key": "context-used", "label": "Context used", "group": "Context", "enabled": false, "description": "Percentage of the context window used; omitted when unknown." },
+    { "key": "five-hour-limit", "label": "5-hour limit", "group": "Usage", "enabled": false, "description": "Remaining primary usage limit; omitted when unavailable." },
+    { "key": "weekly-limit", "label": "Weekly limit", "group": "Usage", "enabled": false, "description": "Remaining secondary usage limit; omitted when unavailable." },
+    { "key": "codex-version", "label": "Codex version", "group": "Runtime", "enabled": false, "description": "Codex application version." },
+    { "key": "context-window-size", "label": "Context window size", "group": "Context", "enabled": false, "description": "Total context window size in tokens; omitted when unknown." },
+    { "key": "used-tokens", "label": "Used tokens", "group": "Usage", "enabled": false, "description": "Total tokens used in the current session; omitted when zero." },
+    { "key": "total-input-tokens", "label": "Input tokens", "group": "Usage", "enabled": false, "description": "Total input tokens used in the current session." },
+    { "key": "total-output-tokens", "label": "Output tokens", "group": "Usage", "enabled": false, "description": "Total output tokens used in the current session." },
+    { "key": "thread-id", "label": "Thread ID", "group": "Session", "enabled": false, "description": "Current thread identifier; omitted until the thread starts." },
+    { "key": "fast-mode", "label": "Fast mode", "group": "Runtime", "enabled": false, "description": "Whether Fast mode is active." },
+    { "key": "raw-output", "label": "Raw output", "group": "Runtime", "enabled": false, "description": "Whether raw scrollback mode is active." },
+    { "key": "thread-title", "label": "Thread title", "group": "Session", "enabled": false, "description": "Current thread title, or thread identifier when unnamed." },
+    { "key": "workspace-headline", "label": "Workspace headline", "group": "Session", "enabled": false, "description": "Enterprise workspace notification headline; omitted when unavailable." },
+    { "key": "task-progress", "label": "Task progress", "group": "Session", "enabled": false, "description": "Latest update_plan checklist progress; omitted until available." },
+    { "key": "__use-theme-colors", "label": "Use theme colors", "group": "Appearance", "enabled": true, "option": "status_line_use_colors", "orderable": false, "description": "Apply colors from the active Codex theme." }
+  ]
+}

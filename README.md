@@ -39,6 +39,8 @@ multi-agent workflows easier to run across projects.
 
 The "tile bar" Claude Code renders at the bottom of the terminal. Script: [`global/statusline.py`](global/statusline.py). Wired up via `statusLine` in [`global/settings.json`](global/settings.json). Two rows — row 1 is session state from the stdin JSON snapshot Claude Code passes per turn, row 2 is workspace state from cheap git + filesystem probes.
 
+Codex uses its native TUI statusline rather than this script. Cabal's Statusline screen exposes all native Codex items from [`global/codex/statusline-segments.json`](global/codex/statusline-segments.json), supports individual and enable-all/disable-all toggles, preserves ordering, and updates only `[tui].status_line` plus `[tui].status_line_use_colors` in `~/.codex/config.toml`.
+
 ```
 ✦ Opus 4.7  │  ⬆ 2.1.158  │  ◐ 34%  │  💰 $0.42 · 12m  │  Δ +142 -38  │  📝 explanatory  │  ⏳ 5h:78%  │  ⊙ C:/projects/prompt-lib
 ⎇ 005-cabal-tools-polish  │  ↑3 ↓1  │  ±5f  │  ⚑ 2  │  🐳 docker  │  ✓ 47  │  🎯 P3 8/14  │  🤖 3 · 🛠 14
@@ -81,7 +83,9 @@ The "tile bar" Claude Code renders at the bottom of the terminal. Script: [`glob
 ### Customize / disable
 
 - **Disable entirely:** delete the `statusLine` block from `global/settings.json` and reapply.
-- **Hide a segment:** comment out its entry in the `row1` or `row2` list at the bottom of `global/statusline.py`.
+- **Configure interactively:** open Cabal → StatusLine, choose Codex or Claude Code, toggle/reorder items, and save.
+- **Change Claude defaults:** edit `global/statusline-segments.json`.
+- **Change Codex defaults/catalog:** edit `global/codex/statusline-segments.json`.
 - **Add a segment:** write a `seg_*` function returning a colored string (or `None` to hide), and append to `row1` / `row2`. Falsy returns are filtered before the `SEP.join`.
 - **Change colors:** every segment passes RGB tuples through the `rgb()` helper — no theme indirection, just edit the literal tuples.
 - **Change thresholds:** color bands live in `ctx_color()`, `cost_color()`, `headroom_color()` near the top of the file.
