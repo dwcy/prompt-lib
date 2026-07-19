@@ -15,13 +15,16 @@ from textual.widgets import DataTable
 
 from cabal import statusline_config
 from cabal.app import CabalApp
+from cabal.statusline_config import CLAUDE_TARGET, CODEX_TARGET
 from cabal.views.statusline import StatuslineScreen
 
 
 @pytest.fixture
 def tmp_user_config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     cfg = tmp_path / ".claude" / "statusline-config.json"
+    codex_cfg = tmp_path / ".codex" / "config.toml"
     monkeypatch.setattr(statusline_config, "USER_CONFIG_PATH", cfg)
+    monkeypatch.setattr(statusline_config, "CODEX_CONFIG_PATH", codex_cfg)
     return cfg
 
 
@@ -35,7 +38,7 @@ def test_load_layout_has_metadata():
 async def test_screen_mounts_and_builds_rows(tmp_user_config):
     app = CabalApp()
     async with app.run_test() as pilot:
-        screen = StatuslineScreen()
+        screen = StatuslineScreen(CLAUDE_TARGET)
         app.push_screen(screen)
         await pilot.pause()
 
@@ -50,7 +53,7 @@ async def test_screen_mounts_and_builds_rows(tmp_user_config):
 async def test_row_selection_toggles_enabled(tmp_user_config):
     app = CabalApp()
     async with app.run_test() as pilot:
-        screen = StatuslineScreen()
+        screen = StatuslineScreen(CLAUDE_TARGET)
         app.push_screen(screen)
         await pilot.pause()
 
@@ -67,7 +70,7 @@ async def test_row_selection_toggles_enabled(tmp_user_config):
 async def test_move_down_reorders(tmp_user_config):
     app = CabalApp()
     async with app.run_test() as pilot:
-        screen = StatuslineScreen()
+        screen = StatuslineScreen(CLAUDE_TARGET)
         app.push_screen(screen)
         await pilot.pause()
 
@@ -89,7 +92,7 @@ async def test_move_down_reorders(tmp_user_config):
 async def test_save_writes_user_config(tmp_user_config: Path):
     app = CabalApp()
     async with app.run_test() as pilot:
-        screen = StatuslineScreen()
+        screen = StatuslineScreen(CLAUDE_TARGET)
         app.push_screen(screen)
         await pilot.pause()
 
@@ -100,6 +103,22 @@ async def test_save_writes_user_config(tmp_user_config: Path):
         written = json.loads(tmp_user_config.read_text(encoding="utf-8"))
 
     assert written["segments"][0]["enabled"] is False
+
+
+@pytest.mark.asyncio
+async def test_codex_target_exposes_every_native_item(tmp_user_config):
+    app = CabalApp()
+    async with app.run_test() as pilot:
+        screen = StatuslineScreen(CODEX_TARGET)
+        app.push_screen(screen)
+        await pilot.pause()
+
+        keys = {segment["key"] for segment in screen._rows[1]}
+
+    assert "git-branch" in keys
+    assert "task-progress" in keys
+    assert "__use-theme-colors" in keys
+    assert screen._rows[2] == []
 
 
 class _FakeRowSelected:

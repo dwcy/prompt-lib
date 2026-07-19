@@ -83,4 +83,11 @@ CODEX_COMPONENTS: list[CodexComponent] = [
         "conversion-manifest.json",
         "prompt-lib/conversion-manifest.json",
     ),
+    CodexComponent(
+        "statusline_metadata",
+        "prompt-lib/statusline-segments.json",
+        "file",
+        "statusline-segments.json",
+        "prompt-lib/statusline-segments.json",
+    ),
 ]

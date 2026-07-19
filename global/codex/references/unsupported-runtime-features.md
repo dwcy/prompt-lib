@@ -14,7 +14,9 @@ hooks.
 
 `global/statusline.py` depends on Claude Code's statusline contract and stdin
 snapshot. Codex does not consume that contract, so the statusline is not copied
-as an active Codex feature.
+as an active Codex feature. Instead, Cabal's Statusline screen uses
+`global/codex/statusline-segments.json` to manage Codex's native
+`[tui].status_line` and `[tui].status_line_use_colors` settings.
 
 ## MCP And Plugin Settings
 

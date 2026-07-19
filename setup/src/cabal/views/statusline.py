@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""StatuslineScreen — reorder, toggle, and explain statusline segments.
+"""StatuslineScreen — configure Claude Code and native Codex statuslines.
 
 Segments are shown in two grouped tables (Row 1 / Row 2); `r` moves the
 highlighted segment to the other group.
@@ -16,7 +16,13 @@ from textual.screen import Screen
 from textual.widgets import Button, DataTable, Footer, Static
 
 from cabal.app_widgets import AppHeader
-from cabal.statusline_config import load_layout, reset_layout, save_layout
+from cabal.statusline_config import (
+    CLAUDE_TARGET,
+    CODEX_TARGET,
+    load_layout,
+    reset_layout,
+    save_layout,
+)
 
 
 class StatuslineScreen(Screen):
@@ -32,6 +38,8 @@ class StatuslineScreen(Screen):
 
     CSS = """
     StatuslineScreen VerticalScroll { width: 1fr; height: 1fr; padding: 0 2; }
+    StatuslineScreen #sl-targets { height: 3; margin: 1 0 0 0; }
+    StatuslineScreen #sl-targets Button { margin: 0 1 0 0; }
     StatuslineScreen #sl-actions { height: 3; margin: 1 0; }
     StatuslineScreen #sl-actions Button { margin: 0 1 0 0; }
     StatuslineScreen .sl-group-title {
@@ -55,8 +63,9 @@ class StatuslineScreen(Screen):
     StatuslineScreen #sl-status { height: auto; margin: 1 0 0 0; }
     """
 
-    def __init__(self) -> None:
+    def __init__(self, target: str = CODEX_TARGET) -> None:
         super().__init__()
+        self._target = target if target in (CLAUDE_TARGET, CODEX_TARGET) else CODEX_TARGET
         self._rows: dict[int, list[dict[str, Any]]] = {1: [], 2: []}
         self._active_row: int = 1
 
@@ -64,29 +73,30 @@ class StatuslineScreen(Screen):
         yield AppHeader()
         with VerticalScroll():
             yield Static(
-                "[bold bright_magenta]Statusline[/bold bright_magenta]\n"
-                "[dim]Pick which segments show, reorder within each row, and move segments "
-                "between Row 1 and Row 2.\n"
-                "Enter / click toggles visibility · [b]\\[[/b] / [b]][/b] move up/down · "
-                "[b]r[/b] moves a segment to the other row · Ctrl+S saves.[/dim]",
+                "",
+                id="sl-intro",
                 classes="panel",
             )
+            with Horizontal(id="sl-targets"):
+                yield Button("Codex", id="sl-target-codex", variant="success")
+                yield Button("Claude Code", id="sl-target-claude", variant="default")
             with Horizontal(id="sl-actions"):
                 yield Button("Save (Ctrl+S)", id="sl-save", variant="success")
                 yield Button("↑ Move up", id="sl-up", variant="default")
                 yield Button("↓ Move down", id="sl-down", variant="default")
                 yield Button("Move to other row", id="sl-row", variant="default")
+                yield Button("Enable all", id="sl-enable-all", variant="default")
+                yield Button("Disable all", id="sl-disable-all", variant="default")
                 yield Button("Reset to defaults", id="sl-reset", variant="warning")
-            yield Static("✦ Row 1", classes="sl-group-title")
+            yield Static("✦ Row 1", id="sl-row-1-title", classes="sl-group-title")
             yield DataTable(id="sl-table-1", classes="sl-table")
-            yield Static("✦ Row 2", classes="sl-group-title")
+            yield Static("✦ Row 2", id="sl-row-2-title", classes="sl-group-title")
             yield DataTable(id="sl-table-2", classes="sl-table")
             yield Static("", id="sl-desc")
             yield Static("", id="sl-status", classes="panel")
         yield Footer(show_command_palette=False)
 
     def on_mount(self) -> None:
-        self._split_layout(load_layout())
         for r in (1, 2):
             tbl = self.query_one(f"#sl-table-{r}", DataTable)
             tbl.cursor_type = "row"
@@ -94,9 +104,47 @@ class StatuslineScreen(Screen):
             tbl.add_column("Group", width=10)
             tbl.add_column("Segment", width=22)
             tbl.add_column("Description", width=80)
+        self._load_target(self._target)
+
+    def _intro(self) -> str:
+        if self._target == CODEX_TARGET:
+            return (
+                "[bold bright_cyan]Codex statusline[/bold bright_cyan]\n"
+                "[dim]Manage every native Codex status item in ~/.codex/config.toml. "
+                "Enter / click toggles visibility · [b]\\[[/b] / [b]][/b] reorders · "
+                "Enable all / Disable all changes every item · Ctrl+S saves.[/dim]"
+            )
+        return (
+            "[bold bright_magenta]Claude Code statusline[/bold bright_magenta]\n"
+            "[dim]Pick which segments show, reorder within each row, and move segments "
+            "between Row 1 and Row 2. Enter / click toggles visibility · "
+            "[b]\\[[/b] / [b]][/b] move up/down · [b]r[/b] moves rows · Ctrl+S saves.[/dim]"
+        )
+
+    def _load_target(self, target: str) -> None:
+        self._target = target
+        self._split_layout(load_layout(target))
+        codex = target == CODEX_TARGET
+        self.query_one("#sl-intro", Static).update(self._intro())
+        self.query_one("#sl-row-1-title", Static).update(
+            "✦ Ordered Codex status items" if codex else "✦ Row 1"
+        )
+        self.query_one("#sl-row-2-title", Static).display = not codex
+        self.query_one("#sl-table-2", DataTable).display = not codex
+        self.query_one("#sl-row", Button).display = not codex
+        self.query_one("#sl-target-codex", Button).variant = (
+            "success" if codex else "default"
+        )
+        self.query_one("#sl-target-claude", Button).variant = (
+            "default" if codex else "success"
+        )
         self._fill_tables()
-        self.query_one("#sl-table-1", DataTable).focus()
-        self._update_desc(1, 0)
+        self._active_row = 1
+        table = self.query_one("#sl-table-1", DataTable)
+        table.focus()
+        if self._rows[1]:
+            table.move_cursor(row=0)
+        self._update_desc(1, 0 if self._rows[1] else None)
 
     def _split_layout(self, layout: list[dict[str, Any]]) -> None:
         self._rows = {1: [], 2: []}
@@ -139,8 +187,10 @@ class StatuslineScreen(Screen):
             return
         s = lst[index]
         state = "[green]visible[/green]" if s["enabled"] else "[dim]hidden[/dim]"
+        position = f"row {r} · " if self._target == CLAUDE_TARGET else ""
         self.query_one("#sl-desc", Static).update(
-            f"[bold]{s['label']}[/bold]   row {r} · {state}\n[dim]{s['description']}[/dim]"
+            f"[bold]{s['label']}[/bold]   {position}{state}\n"
+            f"[dim]{s['description']}[/dim]"
         )
 
     def _move(self, delta: int) -> None:
@@ -148,6 +198,8 @@ class StatuslineScreen(Screen):
         tbl = self.query_one(f"#sl-table-{r}", DataTable)
         i = tbl.cursor_row
         lst = self._rows[r]
+        if i is not None and 0 <= i < len(lst) and not lst[i].get("orderable", True):
+            return
         j = (i if i is not None else -1) + delta
         if i is None or not (0 <= i < len(lst)) or not (0 <= j < len(lst)):
             return
@@ -163,6 +215,8 @@ class StatuslineScreen(Screen):
         self._move(1)
 
     def action_swap_group(self) -> None:
+        if self._target == CODEX_TARGET:
+            return
         r = self._active_row
         tbl = self.query_one(f"#sl-table-{r}", DataTable)
         i = tbl.cursor_row
@@ -188,11 +242,25 @@ class StatuslineScreen(Screen):
             for s in self._rows[r]:
                 s["row"] = r
                 layout.append(s)
-        path = save_layout(layout)
+        try:
+            path = save_layout(layout, self._target)
+        except (OSError, ValueError) as exc:
+            self.query_one("#sl-status", Static).update(
+                f"[red]Could not save statusline: {exc}[/red]"
+            )
+            return
+        product = "Codex" if self._target == CODEX_TARGET else "Claude Code"
         self.query_one("#sl-status", Static).update(
             f"[green]✓ Saved → {path}[/green]\n"
-            "[bold]→ Restart Claude Code to see the new statusline.[/bold]"
+            f"[bold]→ Restart {product} to see the new statusline.[/bold]"
         )
+
+    def _set_all(self, enabled: bool) -> None:
+        for row in self._rows.values():
+            for segment in row:
+                segment["enabled"] = enabled
+        self._fill_tables()
+        self._update_desc(self._active_row, 0 if self._rows[self._active_row] else None)
 
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
         r = self._table_row(event.data_table)
@@ -212,7 +280,11 @@ class StatuslineScreen(Screen):
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         bid = event.button.id or ""
-        if bid == "sl-save":
+        if bid == "sl-target-codex":
+            self._load_target(CODEX_TARGET)
+        elif bid == "sl-target-claude":
+            self._load_target(CLAUDE_TARGET)
+        elif bid == "sl-save":
             self.action_save()
         elif bid == "sl-up":
             self.action_move_up()
@@ -220,15 +292,19 @@ class StatuslineScreen(Screen):
             self.action_move_down()
         elif bid == "sl-row":
             self.action_swap_group()
+        elif bid == "sl-enable-all":
+            self._set_all(True)
+        elif bid == "sl-disable-all":
+            self._set_all(False)
         elif bid == "sl-reset":
-            self._split_layout(reset_layout())
-            self._fill_tables()
-            self._active_row = 1
-            self.query_one("#sl-table-1", DataTable).focus()
-            t1 = self.query_one("#sl-table-1", DataTable)
-            if self._rows[1]:
-                t1.move_cursor(row=0)
-            self._update_desc(1, 0 if self._rows[1] else None)
+            try:
+                reset_layout(self._target)
+            except (OSError, ValueError) as exc:
+                self.query_one("#sl-status", Static).update(
+                    f"[red]Could not reset statusline: {exc}[/red]"
+                )
+                return
+            self._load_target(self._target)
             self.query_one("#sl-status", Static).update(
-                "[yellow]Reset to defaults (user config removed).[/yellow]"
+                "[yellow]Reset to repository defaults.[/yellow]"
             )
