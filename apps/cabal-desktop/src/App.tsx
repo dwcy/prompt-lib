@@ -3,17 +3,17 @@
 // selected — see useProjectContextSync's doc comment for what "explicitly selected" means.
 import { useEffect, useState } from "react";
 import { onSchemaMismatch } from "@/api/errors";
+import { useHealth } from "@/api/health";
+import { queryClient } from "@/api/queryClient";
 import { HealthStrip } from "@/components/shell/HealthStrip";
 import { JobTray } from "@/components/shell/JobTray";
 import { ModuleOutlet } from "@/components/shell/ModuleOutlet";
-import { ModuleSwitcher } from "@/components/shell/ModuleSwitcher";
 import { SidebarNav } from "@/components/shell/SidebarNav";
 import { useProjectContextSync } from "@/hooks/useProjectContextSync";
 import { ProjectGateModule } from "@/modules/project-gate/ProjectGateModule";
 import {
   DEFAULT_MODULE_KEY,
   findModule,
-  MODULE_GROUP_LABELS,
   MODULE_OPERATION_SUMMARIES,
   type ModuleKey,
   requireModule,
@@ -133,15 +133,23 @@ export default function App() {
         >
           <span aria-hidden="true">{sidebarCollapsed ? "›" : "‹"}</span>
         </button>
-        <BrandLockup />
-        <div
-          className="app-shell__module-context select-none"
+        <h1
+          className="app-shell__view-title select-none"
           title={MODULE_OPERATION_SUMMARIES[activeModule.key]}
         >
-          <span>{MODULE_GROUP_LABELS[activeModule.group]}</span>
-          <strong>{activeModule.title}</strong>
-        </div>
-        <ModuleSwitcher activeModuleKey={activeModuleKey} onSelectModule={selectModule} />
+          {activeModule.title}
+        </h1>
+        <SnapshotStamp />
+        <div className="app-shell__header-spacer" />
+        <HealthStrip />
+        <button
+          type="button"
+          className="app-shell__refresh"
+          onClick={() => void queryClient.invalidateQueries()}
+          title="Refetch every visible data source"
+        >
+          Refresh
+        </button>
         <button
           type="button"
           className="app-shell__project-context"
@@ -152,7 +160,6 @@ export default function App() {
           <small>{selectedProject.path}</small>
         </button>
         <JobTray />
-        <HealthStrip />
       </header>
       <div className="app-shell__body">
         <SidebarNav activeModuleKey={activeModuleKey} onSelectModule={selectModule} />
@@ -172,5 +179,17 @@ function BrandLockup() {
       </span>
       <h1>{APP_NAME}</h1>
     </div>
+  );
+}
+
+function SnapshotStamp() {
+  // Last successful /api/health fetch — the freshest moment the workspace data is known-good.
+  const health = useHealth();
+  if (health.dataUpdatedAt === 0) return null;
+  const stamp = new Date(health.dataUpdatedAt).toISOString().slice(11, 19);
+  return (
+    <span className="app-shell__snapshot select-none" title="Last successful backend snapshot">
+      snapshot {stamp}Z
+    </span>
   );
 }

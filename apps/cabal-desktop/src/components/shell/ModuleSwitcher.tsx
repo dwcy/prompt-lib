@@ -172,14 +172,15 @@ export function ModuleSwitcher({ activeModuleKey, onSelectModule }: ModuleSwitch
       <button
         ref={triggerRef}
         type="button"
-        className="module-switcher-trigger"
+        className="module-switcher-trigger select-none"
         onClick={() => setIsOpen(true)}
         aria-label="Find a Cabal module"
         aria-controls="cabal-module-switcher"
         aria-expanded={isOpen}
-        title="Find a Cabal module"
+        title="Find a Cabal module (Ctrl+K)"
       >
-        Find
+        <span className="module-switcher-trigger__hint">Search…</span>
+        <kbd className="module-switcher-trigger__kbd">⌘K</kbd>
       </button>
 
       {isOpen ? (

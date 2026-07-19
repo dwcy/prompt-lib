@@ -14,6 +14,7 @@
   /* Surfaces — increasing elevation */
   --bg: #0e0d12;
   --surface-deep: #0b0a0f; /* log panes, graph canvases — darker than the page */
+  --surface-sidebar: #111017; /* nav rail — between page and cards */
   --surface-1: #14131b; /* cards */
   --surface-2: #17151f; /* inputs, buttons, sidebar search */
   --surface-3: #1d1b27; /* chips, hover, inner tiles */
@@ -26,6 +27,7 @@
 
   /* Foreground text */
   --fg: #e9e7f0;
+  --fg-soft: #aca7bd; /* secondary body text — nav items, card copy */
   --muted: #7c7790;
   --muted-2: #6f6a82; /* group titles, column headers */
   --muted-3: #55506a; /* faintest — timestamps, not-found */
@@ -48,12 +50,11 @@
   --accent-muted: #b44b8c;
 
   /* Purpose-group accents: navigation and workspace-map colors stay consistent everywhere. */
-  --group-workspace: #f4569d;
-  --group-setup: #75c7ff;
-  --group-configuration: #f0c774;
-  --group-intelligence: #bb9af7;
-  --group-runtime: #ff8f9a;
-  --group-observe: #5fd38d;
+  --group-machine: #f4569d;
+  --group-repo: #75c7ff;
+  --group-infrastructure: #f0c774;
+  --group-agents: #bb9af7;
+  --group-reference: #5fd38d;
 
   /* Module/connectivity state palette — StatePill, HealthStrip, ModuleHealth (FR-005/012/013) */
   --state-ok: var(--status-ok);
