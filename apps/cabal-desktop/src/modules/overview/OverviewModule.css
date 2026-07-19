@@ -1,0 +1,357 @@
+/* Overview console layout: KPI grid, grouped section status cards, and the
+   readiness / alignment / activity band. Co-located with OverviewModule.tsx. */
+
+.overview-console {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-6);
+}
+
+.overview-console__kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-3);
+}
+
+/* ─── Grouped section status cards ────────────────────────────────────────── */
+
+.overview-console__lane {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.overview-console__lane-title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin: 0;
+  color: var(--muted-2);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.overview-console__lane-title small {
+  color: var(--muted-3);
+  font-size: var(--fs-xs);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.overview-console__lane-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+
+.overview-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  flex: 0 0 auto;
+  border-radius: var(--corner-full);
+  background-color: var(--status-neutral);
+}
+
+.overview-dot[data-tone="ok"] {
+  background-color: var(--status-ok);
+}
+
+.overview-dot[data-tone="info"] {
+  background-color: var(--status-info);
+}
+
+.overview-dot[data-tone="warning"] {
+  background-color: var(--status-warning);
+}
+
+.overview-dot[data-tone="danger"] {
+  background-color: var(--status-danger);
+}
+
+.overview-service-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  background-color: var(--surface-1);
+  color: var(--fg-soft);
+  text-align: left;
+}
+
+.overview-service-card:hover:not(:disabled) {
+  border-color: var(--border-strong);
+  background-color: var(--surface-2);
+}
+
+.overview-service-card[data-attention="true"] {
+  border-color: color-mix(in srgb, var(--status-warning) 35%, var(--border));
+}
+
+.overview-service-card__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--fg);
+}
+
+.overview-service-card__head b {
+  overflow: hidden;
+  font-size: var(--fs-base);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.overview-service-card__state {
+  margin-left: auto;
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+}
+
+.overview-service-card__facts {
+  display: grid;
+  gap: var(--space-1);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+}
+
+.overview-service-card__meta {
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+/* ─── Readiness / alignment / activity band ───────────────────────────────── */
+
+.overview-console__band {
+  display: grid;
+  grid-template-columns: 340px 1.1fr 1fr;
+  gap: var(--space-3);
+  align-items: stretch;
+}
+
+.overview-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  background-color: var(--surface-1);
+}
+
+.overview-card__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.overview-card__header b {
+  font-weight: 600;
+}
+
+.overview-card__header > span {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.overview-readiness__gauge {
+  display: flex;
+  justify-content: center;
+}
+
+.overview-readiness__legend {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-1) var(--space-4);
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--fg-soft);
+  font-size: var(--fs-sm);
+}
+
+.overview-readiness__legend li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.overview-alignment__tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+}
+
+.overview-alignment-tile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-3);
+  border: none;
+  border-radius: var(--corner-md);
+  background-color: var(--surface-2);
+  text-align: left;
+}
+
+.overview-alignment-tile:hover:not(:disabled) {
+  background-color: var(--surface-3);
+}
+
+.overview-alignment-tile__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.overview-alignment-tile__head b {
+  font-weight: 600;
+}
+
+.overview-alignment-tile small {
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+}
+
+.overview-alignment-tile__track {
+  display: flex;
+  gap: var(--space-1);
+  margin-top: auto;
+}
+
+.overview-alignment-tile__track i {
+  height: 0.25rem;
+  flex: 1;
+  border-radius: var(--corner-full);
+  background-color: color-mix(in srgb, var(--status-ok) 65%, var(--surface-3));
+}
+
+.overview-alignment-tile__track[data-drift="true"] i {
+  background-color: color-mix(in srgb, var(--status-warning) 65%, var(--surface-3));
+}
+
+.overview-alignment__note {
+  margin: var(--space-3) 0 0;
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+}
+
+.overview-activity__list {
+  display: grid;
+  font-size: var(--fs-sm);
+}
+
+.overview-activity__row {
+  display: grid;
+  grid-template-columns: 0.875rem 1fr;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border: none;
+  border-bottom: 1px solid var(--divider);
+  border-radius: 0;
+  background: none;
+  text-align: left;
+}
+
+.overview-activity__row:hover:not(:disabled) {
+  background-color: var(--surface-2);
+}
+
+.overview-activity__glyph {
+  color: var(--status-neutral);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-sm);
+}
+
+.overview-activity__glyph[data-tone="ok"] {
+  color: var(--status-ok);
+}
+
+.overview-activity__glyph[data-tone="info"] {
+  color: var(--status-info);
+}
+
+.overview-activity__glyph[data-tone="warning"] {
+  color: var(--status-warning);
+}
+
+.overview-activity__glyph[data-tone="danger"] {
+  color: var(--status-danger);
+}
+
+.overview-activity__body {
+  color: var(--fg-soft);
+  line-height: var(--lh-sm);
+}
+
+.overview-activity__body b {
+  color: var(--fg);
+  font-weight: 500;
+}
+
+.overview-activity__meta {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+.overview-activity__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-top: auto;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--divider);
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+
+.overview-activity__link {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--fg-soft);
+  font-size: var(--fs-xs);
+}
+
+.overview-activity__link:hover:not(:disabled) {
+  background: none;
+  color: var(--fg);
+}
+
+/* ─── Narrow layout (FR-014) ──────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .overview-console__kpis {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .overview-console__lane-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .overview-console__band {
+    grid-template-columns: 1fr;
+  }
+}
