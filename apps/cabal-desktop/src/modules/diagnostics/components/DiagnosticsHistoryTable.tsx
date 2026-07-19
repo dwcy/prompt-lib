@@ -1,42 +1,36 @@
-// Persisted diagnostic evidence rendered as a chronological incident ledger. The backend bounds
-// this collection, so a semantic list is more useful than a virtualized generic table.
+// Persisted diagnostic evidence rendered as chronological console-ledger rows with per-source
+// retry. The backend bounds this collection, so plain rows beat a virtualized generic table.
 import type { DiagnosticEvent } from "@/api/schemas";
-import { StatePill, type StatePillVariant } from "@/components/StatePill";
+import { SEVERITY_LABELS } from "@/modules/diagnostics/severityLabels";
 
 export interface DiagnosticsHistoryTableProps {
   events: DiagnosticEvent[];
   onRetry: (module: string) => void;
 }
 
-function severityVariant(severity: DiagnosticEvent["severity"]): StatePillVariant {
-  if (severity === "error") return "error";
-  if (severity === "warning") return "degraded";
-  return "ok";
-}
-
 export function DiagnosticsHistoryTable({ events, onRetry }: DiagnosticsHistoryTableProps) {
   return (
-    <ol className="diagnostics-incident-ledger" aria-label="Persisted diagnostic events">
-      {events.map((event, index) => (
-        <li key={event.id} data-severity={event.severity}>
-          <div className="diagnostics-incident-ledger__sequence" aria-hidden="true">
-            <span>{String(index + 1).padStart(2, "0")}</span>
-            <i />
-          </div>
-          <article>
-            <header>
-              <StatePill variant={severityVariant(event.severity)} label={event.severity} />
-              <strong>{event.module}</strong>
-              <time dateTime={event.occurred_at}>{formatOccurredAt(event.occurred_at)}</time>
-            </header>
-            <p>{event.message}</p>
-            <footer>
-              <span>{event.kind.replace("_", " ")}</span>
-              <code>event #{event.id}</code>
-            </footer>
-          </article>
-          <button type="button" onClick={() => onRetry(event.module)}>
-            Retry source
+    <ol className="diag-ledger" aria-label="Persisted diagnostic events">
+      {events.map((event) => (
+        <li key={event.id} className="diag-ledger__row" data-severity={event.severity}>
+          <time className="diag-ledger__time" dateTime={event.occurred_at}>
+            {formatOccurredAt(event.occurred_at)}
+          </time>
+          <span className="diag-ledger__sev" data-severity={event.severity}>
+            {SEVERITY_LABELS[event.severity]}
+          </span>
+          <span className="diag-ledger__module">{event.module}</span>
+          <span className="diag-ledger__message" title={`event #${event.id} — ${event.message}`}>
+            {event.message}
+          </span>
+          <span className="diag-ledger__kind">{event.kind.replace("_", " ")}</span>
+          <button
+            type="button"
+            className="diag-ledger__retry select-none"
+            onClick={() => onRetry(event.module)}
+            aria-label={`Retry ${event.module}`}
+          >
+            Retry
           </button>
         </li>
       ))}

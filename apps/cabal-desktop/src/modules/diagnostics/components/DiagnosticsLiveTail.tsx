@@ -1,21 +1,25 @@
-// Live diagnostics tail: structured DiagnosticEvent rows from the /api/diagnostics/stream SSE feed.
-// Distinct from LogStream (built for plain-text job output) — diagnostics frames carry a full
-// DiagnosticEvent object under `event: "diagnostic"`, not a `{ line }` payload.
+// Collector log: live diagnostics tail rendered as a bottom-anchored console feed of
+// DiagnosticEvent frames from /api/diagnostics/stream. Distinct from LogStream (built for
+// plain-text job output) — diagnostics frames carry a full DiagnosticEvent object under
+// `event: "diagnostic"`, not a `{ line }` payload.
 import type { DiagnosticEvent } from "@/api/schemas";
-import { StatePill, type StatePillVariant } from "@/components/StatePill";
-import { type StreamConnectionState, type StreamEvent, streamStateToPillVariant } from "@/lib/sse";
+import type { StreamConnectionState, StreamEvent } from "@/lib/sse";
+import { SEVERITY_LABELS } from "@/modules/diagnostics/severityLabels";
 
 export interface DiagnosticsLiveTailProps {
   events: StreamEvent[];
   connectionState: StreamConnectionState;
-  module?: string | null;
 }
 
-function severityVariant(severity: string): StatePillVariant {
-  if (severity === "error") return "error";
-  if (severity === "warning") return "degraded";
-  return "ok";
-}
+const STREAM_PATH = "/api/diagnostics/stream";
+
+const TAIL_LABELS: Record<StreamConnectionState, string> = {
+  open: "live tail",
+  connecting: "connecting",
+  stale: "stale feed",
+  error: "reconnecting",
+  closed: "stream closed",
+};
 
 function extractDiagnostic(event: StreamEvent): DiagnosticEvent | null {
   if (event.event !== "diagnostic" || typeof event.data !== "object" || event.data === null) {
@@ -35,37 +39,45 @@ function extractDiagnostic(event: StreamEvent): DiagnosticEvent | null {
   return candidate as DiagnosticEvent;
 }
 
-export function DiagnosticsLiveTail({
-  events,
-  connectionState,
-  module = null,
-}: DiagnosticsLiveTailProps) {
+export function DiagnosticsLiveTail({ events, connectionState }: DiagnosticsLiveTailProps) {
   const diagnostics = events
     .map(extractDiagnostic)
-    .filter((event): event is DiagnosticEvent => event !== null)
-    .filter((event) => module === null || event.module === module);
+    .filter((event): event is DiagnosticEvent => event !== null);
+  const live = connectionState === "open";
 
   return (
-    <div className="diagnostics-live-tail">
-      <div className="diagnostics-live-tail__toolbar select-none">
-        <StatePill variant={streamStateToPillVariant(connectionState)} />
-        <span>{module === null ? "All source traffic" : `${module} traffic`}</span>
+    <section className="diag-log" aria-label="Collector log">
+      <header className="diag-log__header select-none">
+        <b className="diag-log__title">Collector log</b>
+        <span className="diag-log__tail" data-stream-state={connectionState} role="status">
+          {live ? <i className="diag-log__dot" aria-hidden="true" /> : null}
+          {TAIL_LABELS[connectionState]}
+        </span>
+        <code className="diag-log__source">{STREAM_PATH}</code>
+      </header>
+      <div className="diag-log__body">
+        <ol className="diag-log__lines" aria-label="Live diagnostic events">
+          {diagnostics.length === 0 ? (
+            <li className="diag-log__empty">Waiting for the next backend signal.</li>
+          ) : (
+            diagnostics.map((event) => (
+              <li key={event.id} className="diag-log__line">
+                <time className="diag-log__time" dateTime={event.occurred_at}>
+                  {formatSignalTime(event.occurred_at)}
+                </time>
+                <span className="diag-log__sev" data-severity={event.severity}>
+                  {SEVERITY_LABELS[event.severity]}
+                </span>
+                <span className="diag-log__section">{event.module}</span>
+                <span className="diag-log__message" title={event.message}>
+                  {event.message}
+                </span>
+              </li>
+            ))
+          )}
+        </ol>
       </div>
-      <ul className="diagnostics-live-tail__body" aria-label="Live diagnostic events">
-        {diagnostics.length === 0 ? (
-          <li className="diagnostics-live-tail__empty">Waiting for the next backend signal.</li>
-        ) : (
-          diagnostics.map((event) => (
-            <li key={event.id} className="diagnostics-live-tail__row">
-              <StatePill variant={severityVariant(event.severity)} label={event.severity} />
-              <span className="diagnostics-live-tail__module">{event.module}</span>
-              <span className="diagnostics-live-tail__message">{event.message}</span>
-              <time dateTime={event.occurred_at}>{formatSignalTime(event.occurred_at)}</time>
-            </li>
-          ))
-        )}
-      </ul>
-    </div>
+    </section>
   );
 }
 
