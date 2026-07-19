@@ -311,6 +311,28 @@ def test_restore_cleanup_missing_backup_file_reports_error(target):
     assert result.errors == {original: "Missing from backup"}
 
 
+def test_restore_cleanup_refuses_manifest_path_outside_target(tmp_path, target):
+    backup_dir = target / CLEANUP_BACKUP_DIRNAME / "20260101-000000"
+    backup_dir.mkdir(parents=True)
+    outside = tmp_path / "outside.txt"
+    (backup_dir / MANIFEST_NAME).write_text(
+        json.dumps(
+            {
+                "timestamp": "20260101-000000",
+                "target": str(target),
+                "entries": [{"relative_path": "../outside.txt", "size": 4}],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = restore_cleanup(backup_dir, target=target)
+
+    assert result.restored == []
+    assert outside.exists() is False
+    assert result.errors
+
+
 def _write_manifest(root: Path, ts: str, sizes: list[int]) -> Path:
     sub = root / CLEANUP_BACKUP_DIRNAME / ts
     sub.mkdir(parents=True)

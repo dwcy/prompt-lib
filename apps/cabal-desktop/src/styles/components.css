@@ -1,0 +1,597 @@
+/* Shared, non-overlay components: StatePill (every semantic + tool + stream variant), EmptyState,
+   DiffView, LogStream, JobPane, VirtualDataTable. Overlay components (DetailDrawer, ConfirmDialog)
+   live in overlays.css. */
+
+/* ─── StatePill ───────────────────────────────────────────────────────────── */
+
+.state-pill {
+  --pill-color: var(--state-unavailable);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--corner-full);
+  border: 1px solid color-mix(in srgb, var(--pill-color) 40%, transparent);
+  background-color: color-mix(in srgb, var(--pill-color) 16%, transparent);
+  color: var(--pill-color);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 600;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.state-pill::before {
+  content: "";
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: var(--corner-full);
+  background-color: var(--pill-color);
+  flex-shrink: 0;
+}
+
+.state-pill--ok {
+  --pill-color: var(--state-ok);
+}
+
+.state-pill--installed {
+  --pill-color: var(--state-installed);
+}
+
+.state-pill--open {
+  --pill-color: var(--state-open);
+}
+
+.state-pill--succeeded {
+  --pill-color: var(--state-succeeded);
+}
+
+.state-pill--loading {
+  --pill-color: var(--state-loading);
+}
+
+.state-pill--connecting {
+  --pill-color: var(--state-connecting);
+}
+
+.state-pill--update,
+.state-pill--update_available {
+  --pill-color: var(--state-update-available);
+}
+
+.state-pill--degraded {
+  --pill-color: var(--state-degraded);
+}
+
+.state-pill--manual_required {
+  --pill-color: var(--state-manual-required);
+}
+
+.state-pill--failed {
+  --pill-color: var(--state-failed);
+}
+
+.state-pill--error {
+  --pill-color: var(--state-error);
+}
+
+.state-pill--stale {
+  --pill-color: var(--state-stale);
+  border-style: dashed;
+}
+
+.state-pill--unavailable {
+  --pill-color: var(--state-unavailable);
+}
+
+.state-pill--closed {
+  --pill-color: var(--state-closed);
+}
+
+.state-pill--cancelled {
+  --pill-color: var(--state-cancelled);
+}
+
+.state-pill--missing {
+  --pill-color: var(--state-missing);
+}
+
+.state-pill--unsupported {
+  --pill-color: var(--state-unsupported);
+}
+
+.state-pill--queued {
+  --pill-color: var(--state-queued);
+}
+
+.state-pill--running {
+  --pill-color: var(--state-running);
+}
+
+.state-pill--loading::before,
+.state-pill--connecting::before,
+.state-pill--running::before {
+  animation: state-pill-pulse 1.2s var(--ease-standard) infinite;
+}
+
+@keyframes state-pill-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .state-pill--loading::before,
+  .state-pill--connecting::before,
+  .state-pill--running::before {
+    animation: none;
+  }
+}
+
+/* ─── EmptyState ──────────────────────────────────────────────────────────── */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-6);
+  color: var(--muted);
+}
+
+.empty-state__title {
+  font-size: var(--fs-lg);
+  line-height: var(--lh-lg);
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.empty-state__body {
+  max-width: 36rem;
+}
+
+.empty-state__action {
+  margin-top: var(--space-2);
+}
+
+/* ─── DiffView ────────────────────────────────────────────────────────────── */
+
+.diff-view-frame {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--corner-md);
+  background-color: var(--surface-1);
+}
+
+.diff-view__stats {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 2rem;
+  padding: var(--space-1) var(--space-3);
+  border-bottom: 1px solid var(--border);
+  background-color: var(--surface-2);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.diff-view__stat--add {
+  color: var(--status-ok);
+}
+
+.diff-view__stat--del {
+  color: var(--status-danger);
+}
+
+.diff-view {
+  margin: 0;
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.diff-view code {
+  font: inherit;
+}
+
+.diff-view__empty {
+  color: var(--muted);
+  font-size: var(--fs-base);
+}
+
+.diff-view__line {
+  display: block;
+  padding: 0 var(--space-3);
+}
+
+.diff-view__line--add {
+  background-color: color-mix(in srgb, var(--status-ok) 14%, transparent);
+  color: var(--status-ok);
+}
+
+.diff-view__line--del {
+  background-color: color-mix(in srgb, var(--status-danger) 14%, transparent);
+  color: var(--status-danger);
+}
+
+.diff-view__line--hunk {
+  color: var(--status-accent);
+  background-color: var(--surface-2);
+}
+
+.diff-view__line--meta {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.diff-view__line--context {
+  color: var(--muted);
+}
+
+/* ─── LogStream ───────────────────────────────────────────────────────────── */
+
+.log-stream {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: var(--corner-md);
+  overflow: hidden;
+}
+
+.log-stream__toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background-color: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+}
+
+.log-stream__gap {
+  color: var(--status-warning);
+}
+
+.log-stream__count {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.log-stream__follow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-left: auto;
+  color: var(--muted);
+}
+
+.log-stream__body {
+  flex: 1;
+  min-height: 8rem;
+  max-height: 24rem;
+  overflow-y: auto;
+  padding: var(--space-2) var(--space-3);
+  background-color: var(--bg);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+}
+
+.log-stream__line {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.log-stream__empty {
+  display: grid;
+  min-height: 7rem;
+  place-items: center;
+  color: var(--muted);
+}
+
+/* ─── JobPane ─────────────────────────────────────────────────────────────── */
+
+.job-pane {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.job-pane__header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.job-pane__identity {
+  min-width: 0;
+  margin-right: auto;
+}
+
+.job-pane__kind {
+  font-size: var(--fs-md);
+  line-height: var(--lh-md);
+}
+
+.job-pane__id {
+  display: block;
+  max-width: 18rem;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.job-pane__state {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+}
+
+.job-pane__cancel {
+  color: var(--status-warning);
+  border-color: color-mix(in srgb, var(--status-warning) 45%, var(--border));
+}
+
+.job-pane__dismiss {
+  display: inline-grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  place-items: center;
+  font-size: var(--fs-lg);
+  line-height: 1;
+}
+
+.job-pane__cancel-confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--status-warning);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+}
+
+/* ─── VirtualDataTable ────────────────────────────────────────────────────── */
+
+.virtual-data-table {
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--corner-md);
+  max-height: 32rem;
+}
+
+.virtual-data-table__header,
+.virtual-data-table__row {
+  display: flex;
+  align-items: stretch;
+  min-width: max-content;
+}
+
+.virtual-data-table__header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-header);
+  background-color: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+
+.virtual-data-table__header-cell {
+  flex: 1 1 0;
+  min-width: 8rem;
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.virtual-data-table__header-cell--static {
+  display: flex;
+  align-items: center;
+}
+
+.virtual-data-table__header-cell--sortable {
+  cursor: pointer;
+}
+
+.virtual-data-table__header-cell--sortable:hover {
+  color: var(--fg);
+  background-color: var(--surface-3);
+}
+
+.virtual-data-table__sort-mark {
+  color: var(--status-accent);
+}
+
+.virtual-data-table__body {
+  position: relative;
+  min-width: max-content;
+}
+
+.virtual-data-table__row {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  border-bottom: 1px solid var(--border);
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.virtual-data-table__empty {
+  display: grid;
+  min-width: 100%;
+  min-height: 8rem;
+  place-items: center;
+  padding: var(--space-5);
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.virtual-data-table__row:hover {
+  background-color: var(--surface-2);
+}
+
+.virtual-data-table__row:has(input:checked) {
+  background-color: color-mix(in srgb, var(--status-accent) 12%, transparent);
+}
+
+.virtual-data-table__cell {
+  flex: 1 1 0;
+  min-width: 8rem;
+  display: flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.virtual-data-table__select-cell {
+  flex: 0 0 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .virtual-data-table__row {
+    transition: none;
+  }
+}
+
+/* Job execution runway: lifecycle state and timing remain visible above the live stream. */
+
+.job-pane__runway {
+  display: grid;
+  grid-template-columns: minmax(15rem, 1fr) auto;
+  gap: var(--space-4);
+  align-items: stretch;
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--border);
+  background-color: var(--surface-1);
+}
+
+.job-pane__lifecycle {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--corner-sm);
+  background-color: var(--border);
+  list-style: none;
+}
+
+.job-pane__lifecycle li {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  background-color: var(--surface-2);
+}
+
+.job-pane__lifecycle li > span {
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+.job-pane__lifecycle li > strong {
+  overflow: hidden;
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.job-pane__lifecycle li.is-complete {
+  box-shadow: inset 0 -2px var(--status-ok);
+}
+
+.job-pane__lifecycle li.is-current {
+  box-shadow: inset 0 -2px var(--status-accent);
+}
+
+.job-pane__lifecycle li.is-current[data-state="failed"] {
+  box-shadow: inset 0 -2px var(--status-danger);
+}
+
+.job-pane__lifecycle li.is-current[data-state="cancelled"] {
+  box-shadow: inset 0 -2px var(--status-warning);
+}
+
+.job-pane__timing {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(4rem, auto));
+  gap: 1px;
+  border: 1px solid var(--border);
+  background-color: var(--border);
+}
+
+.job-pane__timing > div {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  background-color: var(--surface-2);
+}
+
+.job-pane__timing dt {
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+}
+
+.job-pane__timing dd {
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.job-pane__exit-detail {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.job-pane__exit-detail[data-state="failed"] {
+  border-left: 2px solid var(--status-danger);
+  background-color: var(--danger-bg);
+  color: var(--danger-fg);
+}
+
+@media (max-width: 768px) {
+  .job-pane__runway,
+  .job-pane__timing {
+    grid-template-columns: 1fr;
+  }
+}

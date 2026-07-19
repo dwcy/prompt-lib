@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any
 
 from cabal._paths import GLOBAL_DIR
-from cabal.views.folder_browser import GITIGNORE_BY_TEMPLATE
+from cabal.gitignore_templates import GITIGNORE_BY_TEMPLATE
 
 SETTINGS_LOCAL_STUB = '{\n  "permissions": {\n    "allow": []\n  }\n}\n'
 

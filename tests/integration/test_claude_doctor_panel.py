@@ -11,6 +11,8 @@ from textual.app import App, ComposeResult
 from textual.widgets import Static
 
 from cabal import widget_cache
+from cabal.manifest_doctor import ManifestReport
+from cabal.widgets import claude_doctor_panel
 from cabal.widgets.claude_doctor_panel import ClaudeDoctorPanel
 
 
@@ -20,6 +22,11 @@ def isolated_cache(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     cache_dir = tmp_path / "cabal-cache"
     monkeypatch.setattr(widget_cache, "_CACHE_DIR", cache_dir)
     monkeypatch.setattr(widget_cache, "_CACHE_FILE", cache_dir / "cache.json")
+    monkeypatch.setattr(
+        claude_doctor_panel,
+        "manifest_report",
+        lambda: ManifestReport(present=False, status=None, tool_version=None),
+    )
 
 
 class _PanelHost(App):

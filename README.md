@@ -26,7 +26,7 @@ multi-agent workflows easier to run across projects.
 | Always-on context bloat | Conditional rules in `global/rules/` (`csharp.md`, `typescript.md`, `react.md`, `tests.md`) load only when Claude touches a matching file |
 | Response-mode switching | Four output styles — `concise`, `technical`, `review`, `architect` — picked per session via `/output-style` |
 | External tool integrations | Eight pre-wired MCP servers: `context7`, `github`, `figma`, `playwright`, `azure-devops`, `supabase`, `obsidian`, `docker` (env vars resolved via `${VAR}` substitution) |
-| Multi-machine setup / deployment | Cabal, an interactive local agent control panel via the root launcher (`./run` on POSIX, `.\run.cmd` on Windows) — deploy, init env vars, show inline drift markers, restore from backup, local project scaffold, optional companion tools. The read-only browser UI starts with `./run-web-ui` or `.\run-web-ui.cmd`. |
+| Multi-machine setup / deployment | Cabal, an interactive local agent control panel via the root launcher (`./run` on POSIX, `.\run.cmd` on Windows) — deploy, init env vars, show inline drift markers, restore from backup, local project scaffold, optional companion tools. The supported graphical workspace lives in `apps/cabal-desktop/`. |
 | Install without cloning | `/plugin marketplace add dwcy/prompt-lib` + `/plugin install prompt-lib@prompt-lib` ships skills, agents, hooks, MCP servers, and output styles as a Claude Code plugin. The apply-script path remains the way to get the full setup (global `CLAUDE.md`, rules, permissions, theme). See [`docs/plugin-install.md`](docs/plugin-install.md). |
 | Cross-agent delegation (Claude ↔ Gemini) | [`services/a2a-bridge`](services/a2a-bridge/) — A2A protocol v1.0.0 implementation, Python 3.14 + FastAPI, 199 tests passing |
 | Autonomous PR review | [`services/orchestrator`](services/orchestrator/) — daemon that watches a GitHub repo, dispatches each PR to a peer Claude agent over the A2A bridge, posts the review back via `gh`, persists state to SQLite, pushes phone notifications via ntfy.sh, ships with a Textual dashboard |
@@ -183,8 +183,6 @@ Every command available in this project, grouped by purpose. Source links point 
 prompt-lib/
 ├── run                  ← POSIX root launcher for the setup wizard
 ├── run.cmd              ← Windows root launcher for the setup wizard
-├── run-web-ui           ← POSIX root launcher for the read-only Cabal web UI
-├── run-web-ui.cmd       ← Windows root launcher for the read-only Cabal web UI
 ├── global/              ← deploy target: ~/.claude/
 │   ├── settings.json    ← MCP servers, hooks, theme, model
 │   ├── CLAUDE.md        ← always-loaded global behaviour
@@ -219,15 +217,29 @@ Fallback (non-interactive): `bash setup/tools/apply-global-claude-settings.sh`.
 
 ## Web UI
 
-```bash
-# macOS / Linux / POSIX shells
-./run-web-ui
+The active overhaul is the Cabal desktop workspace: a Vite + React frontend, a
+local FastAPI backend, and a Tauri shell that spawns or adopts the backend as a
+sidecar. It covers the full 22-module control surface rather than the legacy
+read-only dashboard.
 
-# Windows
-.\run-web-ui.cmd
+```bash
+# Fast browser loop (backend + Vite with hot reload)
+./run-web                 # POSIX
+.\run-web.cmd             # Windows
+
+# Desktop shell
+./run-tauri               # POSIX
+.\run-tauri.cmd           # Windows
+
+# Production shape
+uv run --with pyinstaller python setup/build/build_backend.py
+cd apps/cabal-desktop
+pnpm tauri build
 ```
 
-The launcher serves the local read-only web UI at `http://127.0.0.1:8765/` by default. Override defaults with `CABAL_WEB_HOST`, `CABAL_WEB_PORT`, or `CABAL_WEB_PROJECT`, or pass normal `python -m cabal.web` flags after the launcher.
+The production bundle expects the sidecar at
+`setup/build/dist/cabal-backend-<target-triple>[.exe]`; Tauri launches it as
+`cabal-backend` and injects the per-launch bearer token into the webview.
 
 ## Development validation
 

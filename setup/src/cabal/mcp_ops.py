@@ -112,7 +112,7 @@ def _claude_mcp_list() -> list[dict]:
     so we split on `: ` (colon + space) to find the name/command boundary.
     """
     rc, out, _ = _run_claude_cli(["mcp", "list"], timeout=60)
-    if rc != 0:
+    if rc != 0 or not out:
         return []
     results = []
     for line in out.splitlines():
