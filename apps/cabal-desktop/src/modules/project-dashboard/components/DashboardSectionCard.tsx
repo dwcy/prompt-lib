@@ -1,10 +1,16 @@
-// One Project Dashboard section card: state/stale pills, summary, external link, and refresh.
+// One Project Dashboard topology lane: role, state, summary, external link, and refresh.
+import type { DashboardSectionKey } from "@/api/dashboard";
 import type { DashboardSection } from "@/api/schemas";
 import { StatePill } from "@/components/StatePill";
 import { readString } from "@/lib/unknownFields";
+import {
+  DASHBOARD_SECTION_LABELS,
+  DASHBOARD_SECTION_ROLES,
+} from "@/modules/project-dashboard/dashboardSections.constants";
 
 export interface DashboardSectionCardProps {
-  label: string;
+  sectionKey: DashboardSectionKey;
+  index: number;
   section: DashboardSection | undefined;
   stale: boolean;
   isPending: boolean;
@@ -15,7 +21,8 @@ export interface DashboardSectionCardProps {
 }
 
 export function DashboardSectionCard({
-  label,
+  sectionKey,
+  index,
   section,
   stale,
   isPending,
@@ -24,6 +31,7 @@ export function DashboardSectionCard({
   isFetching,
   onRefresh,
 }: DashboardSectionCardProps) {
+  const label = DASHBOARD_SECTION_LABELS[sectionKey];
   const state = section !== undefined ? readString(section, ["state", "status"]) : null;
   const headline =
     section !== undefined
@@ -33,27 +41,40 @@ export function DashboardSectionCard({
     section !== undefined
       ? readString(section, ["external_url", "dashboard_url", "url", "link"])
       : null;
+  const stateVariant =
+    state === "failed" || state === "error"
+      ? "failed"
+      : state === "degraded" || state === "warning"
+        ? "degraded"
+        : "ok";
 
   return (
-    <article className="dashboard-card">
-      <header className="dashboard-card__header">
-        <h3 className="dashboard-card__title">{label}</h3>
-        {stale ? <StatePill variant="stale" /> : null}
-        {state !== null ? <span className="dashboard-card__state select-none">{state}</span> : null}
+    <article className="dashboard-service-lane">
+      <span className="dashboard-service-lane__index">{String(index + 1).padStart(2, "0")}</span>
+      <header className="dashboard-service-lane__identity">
+        <span>{DASHBOARD_SECTION_ROLES[sectionKey]}</span>
+        <h3>{label}</h3>
       </header>
-      {isPending ? (
-        <p className="dashboard-card__body select-none">Loading…</p>
-      ) : isError ? (
-        <p className="dashboard-card__body dashboard-card__body--error" role="alert">
-          {errorMessage ?? "Failed to load"}
-        </p>
-      ) : (
-        <p className="dashboard-card__body">{headline ?? "No summary available"}</p>
-      )}
-      <div className="dashboard-card__actions select-none">
+      <div className="dashboard-service-lane__signal">
+        <small>Live signal</small>
+        {isPending ? (
+          <p className="select-none">Loading…</p>
+        ) : isError ? (
+          <p className="dashboard-service-lane__error" role="alert">
+            {errorMessage ?? "Failed to load"}
+          </p>
+        ) : (
+          <p>{headline ?? "No summary available"}</p>
+        )}
+      </div>
+      <div className="dashboard-service-lane__state select-none">
+        {stale ? <StatePill variant="stale" /> : null}
+        {state !== null ? <StatePill variant={stateVariant} label={state} /> : null}
+      </div>
+      <div className="dashboard-service-lane__actions select-none">
         {externalUrl !== null ? (
-          <a href={externalUrl} target="_blank" rel="noreferrer" className="dashboard-card__link">
-            Open {label}
+          <a href={externalUrl} target="_blank" rel="noreferrer">
+            Open
           </a>
         ) : null}
         <button type="button" onClick={onRefresh} disabled={isFetching}>

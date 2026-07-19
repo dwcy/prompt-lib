@@ -102,7 +102,7 @@ describe("ConfirmDialog + useAction", () => {
 
     await user.click(screen.getByRole("button", { name: "Prepare" }));
     await screen.findByText("Deploy 3 changed files to ~/.claude");
-    await user.click(screen.getByRole("button", { name: "Confirm" }));
+    await user.click(screen.getByRole("button", { name: "Apply config" }));
 
     expect(await screen.findByText("Action succeeded: job job-42")).toBeInTheDocument();
   });
@@ -137,11 +137,11 @@ describe("ConfirmDialog + useAction", () => {
 
     await user.click(screen.getByRole("button", { name: "Prepare" }));
     await screen.findByText("Deploy 3 changed files to ~/.claude");
-    await user.click(screen.getByRole("button", { name: "Confirm" }));
+    await user.click(screen.getByRole("button", { name: "Apply config" }));
 
     expect(
       await screen.findByText(
-        "State changed since this preview was prepared — re-review before confirming.",
+        "State changed since this preview was prepared. Review the updated effect before confirming.",
       ),
     ).toBeInTheDocument();
     expect(

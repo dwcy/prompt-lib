@@ -82,14 +82,24 @@ def download_tarball(ref: GitHubTemplateRef) -> Path:
             raise RuntimeError("gh not found on PATH — install GitHub CLI first") from None
         tarball_path = Path(f.name)
 
-    if proc.returncode != 0:
-        raise RuntimeError(f"gh api tarball failed: {proc.stderr.decode(errors='replace').strip()}")
+    extract_dir: Path | None = None
+    try:
+        if proc.returncode != 0:
+            raise RuntimeError(f"gh api tarball failed: {proc.stderr.decode(errors='replace').strip()}")
 
-    extract_dir = Path(tempfile.mkdtemp(prefix="cabal-tpl-"))
-    with tarfile.open(tarball_path) as tar:
-        _validate_safe(tar)
-        if sys.version_info >= (3, 12):
-            tar.extractall(extract_dir, filter="data")
-        else:
-            tar.extractall(extract_dir)
-    return extract_dir
+        extract_dir = Path(tempfile.mkdtemp(prefix="cabal-tpl-"))
+        with tarfile.open(tarball_path) as tar:
+            _validate_safe(tar)
+            if sys.version_info >= (3, 12):
+                tar.extractall(extract_dir, filter="data")
+            else:
+                tar.extractall(extract_dir)
+        return extract_dir
+    except Exception:
+        if extract_dir is not None:
+            import shutil
+
+            shutil.rmtree(extract_dir, ignore_errors=True)
+        raise
+    finally:
+        tarball_path.unlink(missing_ok=True)

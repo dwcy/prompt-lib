@@ -84,6 +84,49 @@ def test_handshake_file_is_owner_restricted(tmp_path) -> None:
         terminate_backend(proc)
 
 
+def test_read_handshake_rejects_invalid_schema_even_for_live_pid(tmp_path) -> None:
+    security = import_or_fail("cabal.webapi.security")
+    path = tmp_path / "webapi-handshake.json"
+    path.write_text(
+        json.dumps(
+            {
+                "schema": "cabal-handshake.v999",
+                "port": 54321,
+                "token": "token",
+                "pid": os.getpid(),
+                "started_at": "2026-01-01T00:00:00Z",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    assert security.read_handshake(path) is None
+
+
+def test_handshake_cleanup_does_not_remove_newer_instance_file(tmp_path) -> None:
+    security = import_or_fail("cabal.webapi.security")
+    path = tmp_path / "webapi-handshake.json"
+    security.write_handshake_atomic(
+        path,
+        port=54321,
+        token="new-instance-token",
+        pid=os.getpid(),
+        started_at="2026-01-01T00:00:00Z",
+    )
+
+    removed = security.remove_handshake(path, expected_token="old-instance-token")
+
+    assert removed is False
+    assert path.exists()
+
+
+def test_backend_cli_rejects_non_loopback_host() -> None:
+    entrypoint = import_or_fail("cabal.webapi.__main__")
+
+    with pytest.raises(SystemExit):
+        entrypoint._build_parser().parse_args(["--host", "0.0.0.0"])
+
+
 def test_wrong_token_rejected_and_correct_token_accepted(tmp_path) -> None:
     storage_path = tmp_path / "cabal.sqlite3"
     handshake_path = tmp_path / "webapi-handshake.json"

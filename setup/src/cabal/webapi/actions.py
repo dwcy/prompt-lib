@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
+from cabal.redaction import redact_value
 from cabal.webapi.audit import AuditRecorder
 from cabal.webapi.envelope import ApiError, compute_precondition_digest
 from cabal.webapi.jobs import JobConflict
@@ -15,6 +16,7 @@ from cabal.webapi.params_schema import validate_params
 from cabal.webapi.storage import Storage
 
 TICKET_TTL = timedelta(minutes=5)
+_PREVIEW_LIST_FIELDS = ("commands", "files_changed", "scopes", "removals")
 
 
 @dataclass
@@ -60,7 +62,8 @@ class ActionRegistry:
         errors = validate_params(params, descriptor.params_schema)
         if errors:
             raise ApiError(422, "params_invalid", "; ".join(errors))
-        preview = descriptor.prepare(params, state)
+        preview = redact_value(descriptor.prepare(params, state))
+        self._validate_preview(descriptor, preview)
         now = datetime.now(timezone.utc)
         ticket = {
             "ticket_id": str(uuid.uuid4()),
@@ -110,6 +113,7 @@ class ActionRegistry:
             raise ApiError(500, "execution_failed", str(exc)) from exc
         self._storage.set_ticket_state(ticket_id, "executed")
         if outcome.job_id is not None:
+            state.jobs.attach_ticket(outcome.job_id, ticket_id)
             self._audit_on_terminal(action_id, ticket_id, outcome.job_id, summary, state)
             return 202, {"job_id": outcome.job_id}
         self._record_audit(action_id, ticket_id, None, summary, "succeeded")
@@ -124,6 +128,28 @@ class ActionRegistry:
         if descriptor is None:
             raise ApiError(404, "action_not_found", f"Unknown action {action_id!r}")
         return descriptor
+
+    @staticmethod
+    def _validate_preview(descriptor: ActionDescriptor, preview: Any) -> None:
+        """Fail closed when an action cannot produce the confirmation contract."""
+        if not isinstance(preview, dict):
+            raise ApiError(500, "invalid_action_preview", "Action preview must be an object")
+        summary = preview.get("summary")
+        if not isinstance(summary, str) or not summary.strip():
+            raise ApiError(500, "invalid_action_preview", "Action preview summary must be non-empty")
+        for field in _PREVIEW_LIST_FIELDS:
+            value = preview.get(field)
+            if not isinstance(value, list) or any(not isinstance(item, str) for item in value):
+                raise ApiError(500, "invalid_action_preview", f"Action preview {field} must be a string list")
+        backup = preview.get("backup")
+        if backup is not None and not isinstance(backup, str):
+            raise ApiError(500, "invalid_action_preview", "Action preview backup must be a string or null")
+        if descriptor.destructive and (not preview["removals"] or not backup):
+            raise ApiError(
+                500,
+                "invalid_action_preview",
+                "Destructive action previews must name removals and backup or recovery behavior",
+            )
 
     def _check_ticket_state(self, ticket: dict) -> None:
         ticket_state = ticket["state"]

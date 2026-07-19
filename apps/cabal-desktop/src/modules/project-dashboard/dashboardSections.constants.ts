@@ -7,3 +7,10 @@ export const DASHBOARD_SECTION_LABELS: Record<DashboardSectionKey, string> = {
   supabase: "Supabase",
   vercel: "Vercel",
 };
+
+export const DASHBOARD_SECTION_ROLES: Record<DashboardSectionKey, string> = {
+  git: "Repository state",
+  github: "Remote collaboration",
+  supabase: "Data platform",
+  vercel: "Delivery target",
+};

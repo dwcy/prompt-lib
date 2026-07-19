@@ -1,0 +1,27 @@
+#!/usr/bin/env sh
+# Start the Cabal backend and browser UI together.
+
+set -u
+
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+APP_DIR="$SCRIPT_DIR/apps/cabal-desktop"
+BACKEND_PID=""
+
+cleanup() {
+    status=$?
+    trap - EXIT INT TERM
+    if [ -n "$BACKEND_PID" ] && kill -0 "$BACKEND_PID" 2>/dev/null; then
+        kill "$BACKEND_PID" 2>/dev/null || true
+        wait "$BACKEND_PID" 2>/dev/null || true
+    fi
+    exit "$status"
+}
+
+trap cleanup EXIT INT TERM
+
+cd "$SCRIPT_DIR" || exit 1
+uv run cabal-backend --project "$SCRIPT_DIR" &
+BACKEND_PID=$!
+
+cd "$APP_DIR" || exit 1
+pnpm dev "$@"

@@ -1,5 +1,5 @@
-// Component test: Overview renders each section's summary + the drift badges from GET
-// /api/overview, and a card's "View" button deep-links into the corresponding module (T033).
+// Component test: Overview renders each section's signal + the deployment alignment from GET
+// /api/overview, and a ledger row deep-links into the corresponding module (T033).
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
@@ -57,7 +57,7 @@ describe("OverviewModule", () => {
     expect(screen.getByText("in sync")).toBeInTheDocument();
   });
 
-  it("deep-links to the corresponding module when a card's View button is clicked", async () => {
+  it("deep-links to the corresponding module when a ledger row is clicked", async () => {
     server.use(
       http.get("/api/overview", () => HttpResponse.json(wrapEnvelope(buildOverviewPayload()))),
     );

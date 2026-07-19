@@ -2,9 +2,10 @@
 // table joining catalog metadata with async status fill-in, and a detail drawer with a version
 // Select feeding the install/update action flow (T042).
 import { useMemo, useState } from "react";
-import { useToolDetail, useToolsCatalog, useToolsStatus } from "@/api/tools";
+import { type ToolStatusState, useToolDetail, useToolsCatalog, useToolsStatus } from "@/api/tools";
 import { DetailDrawer } from "@/components/DetailDrawer";
 import { EmptyState } from "@/components/EmptyState";
+import { StatePill, type StatePillVariant } from "@/components/StatePill";
 import { CategoryRail } from "@/modules/tools/components/CategoryRail";
 import { ToolDetailContent } from "@/modules/tools/components/ToolDetailContent";
 import { ToolFiltersBar } from "@/modules/tools/components/ToolFiltersBar";
@@ -51,6 +52,7 @@ export function ToolsModule() {
     value,
     count,
   }));
+  const readiness = toolReadiness(statusCounts, rows.length, statusQuery.isPending);
 
   return (
     <div className="tools-module">
@@ -62,6 +64,27 @@ export function ToolsModule() {
       />
 
       <div className="tools-module__main">
+        <section className="tools-readiness-strip">
+          <div>
+            <span className="us3-eyebrow">Toolchain readiness</span>
+            <strong>{readiness.headline}</strong>
+            <p>{readiness.summary}</p>
+          </div>
+          <div className="tools-readiness-strip__states">
+            {readiness.states.map((state) => (
+              <button
+                key={state.status}
+                type="button"
+                onClick={() => setFilters((current) => ({ ...current, status: state.status }))}
+                disabled={state.count === 0}
+              >
+                <StatePill variant={state.variant} label={state.label} />
+                <span>{state.count}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+
         <ToolFiltersBar
           filters={filters}
           onChange={setFilters}
@@ -96,4 +119,46 @@ export function ToolsModule() {
       </DetailDrawer>
     </div>
   );
+}
+
+function toolReadiness(
+  statusCounts: Map<ToolStatusState, number>,
+  total: number,
+  isPending: boolean,
+) {
+  const installed = statusCounts.get("installed") ?? 0;
+  const updates = statusCounts.get("update_available") ?? 0;
+  const missing = statusCounts.get("missing") ?? 0;
+  const manual = statusCounts.get("manual_required") ?? 0;
+  const errors = statusCounts.get("error") ?? 0;
+  const unsupported = statusCounts.get("unsupported") ?? 0;
+  const attention = updates + missing + manual + errors;
+  return {
+    headline: isPending ? "Probing installed tools" : `${installed}/${total} ready`,
+    summary:
+      attention === 0
+        ? `${unsupported} unsupported or intentionally unavailable tool(s).`
+        : `${updates} update(s), ${missing} missing, ${manual} manual, ${errors} error(s).`,
+    states: [
+      {
+        status: "update_available" as const,
+        count: updates,
+        variant: "update" as const,
+        label: "updates",
+      },
+      { status: "missing" as const, count: missing, variant: "missing" as const, label: "missing" },
+      {
+        status: "manual_required" as const,
+        count: manual,
+        variant: "degraded" as const,
+        label: "manual",
+      },
+      { status: "error" as const, count: errors, variant: "error" as const, label: "errors" },
+    ] satisfies Array<{
+      status: ToolStatusState;
+      count: number;
+      variant: StatePillVariant;
+      label: string;
+    }>,
+  };
 }

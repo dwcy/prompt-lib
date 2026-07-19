@@ -109,11 +109,44 @@ def test_registry_self_check_destructive_descriptor_populates_removals_and_backu
         descriptor = app.state.actions.get(action_id)
         if not descriptor.destructive:
             continue
+        if descriptor.params_schema.get("required"):
+            # Required-parameter destructive actions are covered by their
+            # dedicated contract tests with valid fixture identifiers.
+            continue
         response = _prepare(client, action_id, {})
         assert response.status_code == 200, action_id
         preview = response.json()["data"]["effect_preview"]
         assert preview["removals"], f"{action_id} destructive but removals empty"
         assert preview["backup"], f"{action_id} destructive but backup empty"
+
+
+def test_prepare_fails_closed_for_invalid_destructive_preview(app_factory) -> None:
+    from cabal.webapi.actions import ActionDescriptor, ActionOutcome
+
+    app, client = build_client(app_factory)
+    app.state.actions.register(
+        ActionDescriptor(
+            action_id="test.invalid_destructive",
+            module="test",
+            destructive=True,
+            backup_policy=None,
+            params_schema={"type": "object", "additionalProperties": False},
+            prepare=lambda _params, _state: {
+                "summary": "Delete a fixture",
+                "commands": [],
+                "files_changed": ["fixture.txt"],
+                "scopes": ["test"],
+                "backup": None,
+                "removals": [],
+            },
+            execute=lambda _params, _state: ActionOutcome(data={}),
+        )
+    )
+
+    response = _prepare(client, "test.invalid_destructive")
+
+    assert response.status_code == 500
+    assert response.json()["error"]["code"] == "invalid_action_preview"
 
 
 def test_prepare_previews_are_non_empty_and_redact_seeded_secret_in_params(app_factory) -> None:
@@ -133,6 +166,19 @@ def test_prepare_previews_are_non_empty_and_redact_seeded_secret_in_params(app_f
         preview = response.json()["data"]["effect_preview"]
         assert preview["summary"]
         assert FAKE_SECRET not in json.dumps(preview)
+
+
+def test_prepare_redacts_effect_preview_before_ticket_persistence(app_factory) -> None:
+    app, client = build_client(app_factory)
+    register_fixture_actions(app)
+
+    response = _prepare(client, "test.echo", {"note": FAKE_SECRET})
+
+    assert response.status_code == 200
+    ticket_id = response.json()["data"]["ticket_id"]
+    stored = app.state.storage.load_ticket(ticket_id)
+    assert stored is not None
+    assert FAKE_SECRET not in json.dumps(stored["effect_preview"])
 
 
 def test_get_sweep_across_read_routes_performs_zero_writes(app_factory) -> None:

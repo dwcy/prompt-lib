@@ -21,17 +21,32 @@ export function DiffView({ diffText, emptyLabel = "No differences." }: DiffViewP
     return <p className="diff-view__empty select-none">{emptyLabel}</p>;
   }
 
+  const kinds = lines.map(classifyLine);
+  const additions = kinds.filter((kind) => kind === "add").length;
+  const deletions = kinds.filter((kind) => kind === "del").length;
+
   return (
-    <pre className="diff-view">
-      {lines.map((line, index) => (
-        <div
-          // biome-ignore lint/suspicious/noArrayIndexKey: diff lines are a static, non-reorderable render of diffText
-          key={index}
-          className={`diff-view__line diff-view__line--${classifyLine(line)}`}
-        >
-          {line.length > 0 ? line : " "}
-        </div>
-      ))}
-    </pre>
+    <div className="diff-view-frame">
+      <fieldset className="diff-view__stats select-none">
+        <legend className="visually-hidden">Change summary</legend>
+        <span className="diff-view__stat diff-view__stat--add">+{additions}</span>
+        <span className="diff-view__stat diff-view__stat--del">-{deletions}</span>
+      </fieldset>
+      <section aria-label="Unified diff">
+        <pre className="diff-view">
+          <code>
+            {lines.map((line, index) => (
+              <span
+                // biome-ignore lint/suspicious/noArrayIndexKey: diff lines are a static, non-reorderable render of diffText
+                key={index}
+                className={`diff-view__line diff-view__line--${kinds[index]}`}
+              >
+                {line.length > 0 ? line : " "}
+              </span>
+            ))}
+          </code>
+        </pre>
+      </section>
+    </div>
   );
 }

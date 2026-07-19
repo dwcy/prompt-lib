@@ -26,7 +26,7 @@ export function PathInput({ onSubmit, disabled = false }: PathInputProps) {
       const selected = await open({ directory: true, multiple: false });
       if (typeof selected === "string") setPath(selected);
     } catch {
-      setBrowseError("Native folder picker failed — enter the path manually.");
+      setBrowseError("Native folder picker unavailable. The path field remains editable.");
     }
   }
 
@@ -49,7 +49,9 @@ export function PathInput({ onSubmit, disabled = false }: PathInputProps) {
           className="project-gate__path-input"
           value={path}
           onChange={(event) => setPath(event.target.value)}
-          placeholder="/path/to/project"
+          placeholder="C:\\projects\\my-project"
+          autoComplete="off"
+          spellCheck={false}
           disabled={disabled}
         />
         {isTauriRuntime() ? (

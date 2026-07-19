@@ -8,6 +8,7 @@ import { type StreamConnectionState, type StreamEvent, streamStateToPillVariant 
 export interface DiagnosticsLiveTailProps {
   events: StreamEvent[];
   connectionState: StreamConnectionState;
+  module?: string | null;
 }
 
 function severityVariant(severity: string): StatePillVariant {
@@ -34,26 +35,46 @@ function extractDiagnostic(event: StreamEvent): DiagnosticEvent | null {
   return candidate as DiagnosticEvent;
 }
 
-export function DiagnosticsLiveTail({ events, connectionState }: DiagnosticsLiveTailProps) {
+export function DiagnosticsLiveTail({
+  events,
+  connectionState,
+  module = null,
+}: DiagnosticsLiveTailProps) {
   const diagnostics = events
     .map(extractDiagnostic)
-    .filter((event): event is DiagnosticEvent => event !== null);
+    .filter((event): event is DiagnosticEvent => event !== null)
+    .filter((event) => module === null || event.module === module);
 
   return (
     <div className="diagnostics-live-tail">
       <div className="diagnostics-live-tail__toolbar select-none">
         <StatePill variant={streamStateToPillVariant(connectionState)} />
-        <span>Live feed</span>
+        <span>{module === null ? "All source traffic" : `${module} traffic`}</span>
       </div>
       <ul className="diagnostics-live-tail__body" aria-label="Live diagnostic events">
-        {diagnostics.map((event) => (
-          <li key={event.id} className="diagnostics-live-tail__row">
-            <StatePill variant={severityVariant(event.severity)} label={event.severity} />
-            <span className="diagnostics-live-tail__module">{event.module}</span>
-            <span className="diagnostics-live-tail__message">{event.message}</span>
-          </li>
-        ))}
+        {diagnostics.length === 0 ? (
+          <li className="diagnostics-live-tail__empty">Waiting for the next backend signal.</li>
+        ) : (
+          diagnostics.map((event) => (
+            <li key={event.id} className="diagnostics-live-tail__row">
+              <StatePill variant={severityVariant(event.severity)} label={event.severity} />
+              <span className="diagnostics-live-tail__module">{event.module}</span>
+              <span className="diagnostics-live-tail__message">{event.message}</span>
+              <time dateTime={event.occurred_at}>{formatSignalTime(event.occurred_at)}</time>
+            </li>
+          ))
+        )}
       </ul>
     </div>
   );
+}
+
+function formatSignalTime(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleTimeString(undefined, {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
 }

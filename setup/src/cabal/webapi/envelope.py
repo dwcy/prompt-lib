@@ -86,7 +86,7 @@ def envelope_body(
         data=data,
         error=error,
     )
-    return redact_value(envelope.model_dump())
+    return redact_value(envelope.model_dump(mode="json"))
 
 
 def envelope_response(

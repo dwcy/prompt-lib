@@ -15,6 +15,7 @@ const HANDSHAKE_SCHEMA: &str = "cabal-handshake.v1";
 const HANDSHAKE_POLL_INTERVAL: Duration = Duration::from_millis(150);
 const HANDSHAKE_POLL_TIMEOUT: Duration = Duration::from_secs(15);
 const HEALTH_CHECK_TIMEOUT: Duration = Duration::from_millis(800);
+const HEALTH_CHECK_RETRIES: usize = 3;
 const SHUTDOWN_GRACE: Duration = Duration::from_secs(5);
 
 #[derive(Debug, Clone, Deserialize)]
@@ -55,9 +56,12 @@ pub fn injection_script(connection: &BackendConnection) -> String {
 /// block the calling thread (bounded, with backoff) until a fresh handshake appears.
 pub fn adopt_or_spawn(app: &AppHandle) -> Result<BackendState, String> {
     if let Some(existing) = read_handshake() {
-        if backend_is_alive(&existing) {
+        if backend_is_alive_with_retries(&existing) {
             return Ok(BackendState {
-                connection: BackendConnection { port: existing.port, token: existing.token },
+                connection: BackendConnection {
+                    port: existing.port,
+                    token: existing.token,
+                },
                 spawned_child: None,
             });
         }
@@ -69,7 +73,10 @@ pub fn adopt_or_spawn(app: &AppHandle) -> Result<BackendState, String> {
     let child = spawn_backend(app)?;
     let handshake = wait_for_handshake()?;
     Ok(BackendState {
-        connection: BackendConnection { port: handshake.port, token: handshake.token },
+        connection: BackendConnection {
+            port: handshake.port,
+            token: handshake.token,
+        },
         spawned_child: Some(child),
     })
 }
@@ -78,7 +85,10 @@ pub fn adopt_or_spawn(app: &AppHandle) -> Result<BackendState, String> {
 /// kills the process if it doesn't exit within the grace window. Adopted backends
 /// are left untouched — the shell only ever closes its own window for those.
 pub fn shutdown(state: BackendState) {
-    let BackendState { connection, spawned_child } = state;
+    let BackendState {
+        connection,
+        spawned_child,
+    } = state;
     let Some(child) = spawned_child else { return };
 
     let url = format!("http://127.0.0.1:{}/api/system/shutdown", connection.port);
@@ -149,6 +159,26 @@ fn backend_is_alive(handshake: &Handshake) -> bool {
         .call()
         .map(|response| response.status() == 200)
         .unwrap_or(false)
+}
+
+fn backend_is_alive_with_retries(handshake: &Handshake) -> bool {
+    for attempt in 0..HEALTH_CHECK_RETRIES {
+        if backend_is_alive(handshake) {
+            return true;
+        }
+        if attempt + 1 < HEALTH_CHECK_RETRIES {
+            std::thread::sleep(HANDSHAKE_POLL_INTERVAL);
+        }
+    }
+    false
+}
+
+pub fn connection_is_alive(connection: &BackendConnection) -> bool {
+    backend_is_alive(&Handshake {
+        schema: HANDSHAKE_SCHEMA.to_string(),
+        port: connection.port,
+        token: connection.token.clone(),
+    })
 }
 
 fn wait_for_handshake() -> Result<Handshake, String> {

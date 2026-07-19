@@ -12,7 +12,7 @@ from fastapi.responses import StreamingResponse
 from cabal.webapi import security, sse
 from cabal.webapi.dashboard_service import get_dashboard_section
 from cabal.webapi.envelope import ApiError, ModuleHealth, envelope_response, utc_now_iso
-from cabal.webapi.overview_service import build_overview
+from cabal.webapi.overview_service import build_overview, drift_flags
 
 # Auth is declared at router level so routes keep the guard when flattened onto the app.
 router = APIRouter(dependencies=[Depends(security.require_bearer_token)])
@@ -45,7 +45,30 @@ MODULE_KEYS = (
 
 # Modules whose routers are mounted; the rest honestly report "unavailable".
 IMPLEMENTED_MODULES = frozenset(
-    {"diagnostics", "project_gate", "home_overview", "project_dashboard", "tools"}
+    {
+        "diagnostics",
+        "project_gate",
+        "home_overview",
+        "project_dashboard",
+        "tools",
+        "config_deploy",
+        "cleanup_restore",
+        "settings",
+        "local_config",
+        "codex",
+        "sessions",
+        "account",
+        "doctor",
+        "model_assignments",
+        "knowledge",
+        "mcp",
+        "services",
+        "package_security",
+        "environment",
+        "git_identity",
+        "provider",
+        "init_wizard",
+    }
 )
 
 
@@ -71,6 +94,7 @@ def health(request: Request):
         "version": _backend_version(),
         "started_at": request.app.state.started_at,
         "modules": modules,
+        "drift_flags": drift_flags(),
     }
     return envelope_response(data=data, source="system")
 
@@ -131,15 +155,6 @@ def get_job(request: Request, job_id: str):
     return envelope_response(data=record, source="jobs")
 
 
-@router.post("/api/jobs/{job_id}/cancel")
-def cancel_job(request: Request, job_id: str):
-    manager = request.app.state.jobs
-    if not manager.cancel(job_id):
-        raise ApiError(404, "job_not_found", f"Unknown job {job_id!r}")
-    record = manager.get_record(job_id)
-    return envelope_response(data=record, source="jobs")
-
-
 @router.get("/api/jobs/{job_id}/stream")
 def stream_job(request: Request, job_id: str):
     manager = request.app.state.jobs
@@ -162,6 +177,6 @@ def shutdown(request: Request):
     service_supervisor.shutdown_all()
     handshake_path = getattr(request.app.state, "handshake_path", None)
     if handshake_path is not None:
-        security.remove_handshake(handshake_path)
+        security.remove_handshake(handshake_path, expected_token=request.app.state.token)
     request.app.state.request_shutdown()
     return envelope_response(data={"stopping": True}, source="system")

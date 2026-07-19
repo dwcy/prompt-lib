@@ -9,7 +9,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from rich.markup import escape as escape_markup
+try:
+    from rich.markup import escape as escape_markup
+except ModuleNotFoundError:
+
+    def escape_markup(value: str) -> str:
+        """Fallback for the headless web API sidecar, which intentionally excludes Rich."""
+        return value.replace("\\", "\\\\").replace("[", "\\[").replace("]", "\\]")
 
 from cabal.okf.prepare import ensure_fresh_index
 from cabal.okf.semantic import semantic_available

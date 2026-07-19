@@ -6,7 +6,7 @@ Internal HTTP contract between the frontend/shell and the local backend. Contrac
 
 - Base: `http://127.0.0.1:<ephemeral-port>` — port and bearer token come from the handshake file (see desktop-shell contract).
 - Every `/api/*` request requires `Authorization: Bearer <token>`; missing/wrong token → `401` envelope. Static assets (dev only) are exempt.
-- Read endpoints are `GET`. Mutations exist ONLY as `POST /api/actions/...` (see action-safety contract). Any other `POST/PUT/PATCH/DELETE` → `405`.
+- Read endpoints are `GET`. User mutations exist ONLY as `POST /api/actions/...` (see action-safety contract). The authenticated `POST /api/system/shutdown` endpoint is reserved for shell lifecycle control; any other `POST/PUT/PATCH/DELETE` → `405`.
 - CORS: allowed origins are exactly the Tauri origin (`tauri://localhost` / `http://tauri.localhost`) and the Vite dev origin.
 
 ## Envelope

@@ -41,6 +41,7 @@ Rules: preview MUST name exact commands/files/scopes (FR-016); destructive actio
 
 - Registry is closed: an `action_id` not in the registry → `404`. Contract test enumerates the registry and asserts every mutating capability in the spec's module table maps to a descriptor (parity guard).
 - No read endpoint may mutate state (contract test: fixture-instrumented services record zero writes across full GET sweep).
+- `POST /api/system/shutdown` is the sole control-plane exception. It is authenticated, used only by the desktop shell, and may stop app-owned processes and remove the ephemeral handshake; it does not expose a user feature mutation.
 
 ## Registered actions (initial registry)
 

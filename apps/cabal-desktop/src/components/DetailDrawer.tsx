@@ -19,6 +19,8 @@ export function DetailDrawer({ isOpen, onClose, title, children }: DetailDrawerP
     if (!isOpen) return;
     previouslyFocused.current =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     containerRef.current?.focus();
 
     function onKeyDown(event: KeyboardEvent): void {
@@ -43,6 +45,7 @@ export function DetailDrawer({ isOpen, onClose, title, children }: DetailDrawerP
     document.addEventListener("keydown", onKeyDown);
     return () => {
       document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
       previouslyFocused.current?.focus();
     };
   }, [isOpen, onClose]);
@@ -59,7 +62,7 @@ export function DetailDrawer({ isOpen, onClose, title, children }: DetailDrawerP
         className="detail-drawer"
         role="dialog"
         aria-modal="true"
-        aria-label={title}
+        aria-label={title ?? "Details"}
         tabIndex={-1}
         onClick={(event) => event.stopPropagation()}
       >
@@ -72,8 +75,9 @@ export function DetailDrawer({ isOpen, onClose, title, children }: DetailDrawerP
             className="detail-drawer__close select-none"
             onClick={onClose}
             aria-label="Close"
+            title="Close"
           >
-            Close
+            <span aria-hidden="true">×</span>
           </button>
         </div>
         <div className="detail-drawer__body">{children}</div>

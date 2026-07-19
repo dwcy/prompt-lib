@@ -1,6 +1,6 @@
 // Virtualized data table (TanStack Virtual): column defs, sticky header, row selection, click-to-sort.
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { type ReactNode, useMemo, useRef, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 
 export interface VirtualDataTableColumn<T> {
   key: string;
@@ -22,6 +22,8 @@ export interface VirtualDataTableProps<T> {
   rowHeight?: number;
   selectedIds?: ReadonlySet<string>;
   onSelectRow?: (id: string, selected: boolean) => void;
+  emptyMessage?: string;
+  ariaLabel?: string;
 }
 
 const DEFAULT_ROW_HEIGHT = 36;
@@ -33,8 +35,11 @@ export function VirtualDataTable<T>({
   rowHeight = DEFAULT_ROW_HEIGHT,
   selectedIds,
   onSelectRow,
+  emptyMessage = "No records available",
+  ariaLabel = "Data table",
 }: VirtualDataTableProps<T>) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const selectAllRef = useRef<HTMLInputElement>(null);
   const [sort, setSort] = useState<SortState | null>(null);
 
   const sortedRows = useMemo(() => sortRows(rows, columns, sort), [rows, columns, sort]);
@@ -46,33 +51,110 @@ export function VirtualDataTable<T>({
     overscan: 8,
   });
 
+  const selectedRowCount =
+    selectedIds === undefined
+      ? 0
+      : rows.reduce((count, row) => count + (selectedIds.has(getRowId(row)) ? 1 : 0), 0);
+  const allRowsSelected = rows.length > 0 && selectedRowCount === rows.length;
+
+  useEffect(() => {
+    if (selectAllRef.current === null) return;
+    selectAllRef.current.indeterminate = selectedRowCount > 0 && !allRowsSelected;
+  }, [allRowsSelected, selectedRowCount]);
+
   function toggleSort(columnKey: string): void {
     setSort((current) => nextSortState(current, columnKey));
   }
 
   return (
     // biome-ignore lint/a11y/useSemanticElements: virtualized grid uses positioned divs, not a native <table>
-    <div ref={scrollRef} className="virtual-data-table" role="table">
+    <div
+      ref={scrollRef}
+      className="virtual-data-table"
+      role="table"
+      aria-label={ariaLabel}
+      aria-rowcount={rows.length + 1}
+      aria-colcount={columns.length + (onSelectRow ? 1 : 0)}
+    >
       {/* biome-ignore lint/a11y/useSemanticElements: virtualized grid uses positioned divs, not a native <table> */}
-      <div className="virtual-data-table__header select-none" role="row" tabIndex={-1}>
-        {onSelectRow ? <span className="virtual-data-table__select-cell" /> : null}
-        {columns.map((column) => (
-          // biome-ignore lint/a11y/useSemanticElements: virtualized grid uses div/button, not a native <table>
-          <button
-            key={column.key}
-            type="button"
-            role="columnheader"
-            className="virtual-data-table__header-cell"
-            onClick={column.sortAccessor ? () => toggleSort(column.key) : undefined}
-          >
-            {column.header}
-            {sort?.key === column.key ? (
-              <span aria-hidden="true">{sort.direction === "asc" ? " ^" : " v"}</span>
-            ) : null}
-          </button>
-        ))}
+      <div
+        className="virtual-data-table__header select-none"
+        role="row"
+        aria-rowindex={1}
+        tabIndex={-1}
+      >
+        {onSelectRow ? (
+          // biome-ignore lint/a11y/useSemanticElements: virtualized grid cannot use native table cells.
+          <span className="virtual-data-table__select-cell" role="columnheader" tabIndex={-1}>
+            <input
+              ref={selectAllRef}
+              type="checkbox"
+              aria-label={allRowsSelected ? "Clear row selection" : "Select all rows"}
+              checked={allRowsSelected}
+              disabled={rows.length === 0}
+              onChange={(event) => {
+                for (const row of rows) onSelectRow(getRowId(row), event.target.checked);
+              }}
+            />
+          </span>
+        ) : null}
+        {columns.map((column) => {
+          if (column.sortAccessor === undefined) {
+            return (
+              // biome-ignore lint/a11y/useSemanticElements: virtualized grid cannot use native table cells.
+              <span
+                key={column.key}
+                role="columnheader"
+                tabIndex={-1}
+                className="virtual-data-table__header-cell virtual-data-table__header-cell--static"
+              >
+                {column.header}
+              </span>
+            );
+          }
+
+          const activeDirection = sort?.key === column.key ? sort.direction : null;
+          return (
+            // biome-ignore lint/a11y/useSemanticElements: virtualized grid uses div/button, not a native <table>
+            <button
+              key={column.key}
+              type="button"
+              role="columnheader"
+              aria-sort={
+                activeDirection === null
+                  ? "none"
+                  : activeDirection === "asc"
+                    ? "ascending"
+                    : "descending"
+              }
+              className="virtual-data-table__header-cell virtual-data-table__header-cell--sortable"
+              onClick={() => toggleSort(column.key)}
+            >
+              {column.header}
+              {activeDirection !== null ? (
+                <span className="virtual-data-table__sort-mark" aria-hidden="true">
+                  {activeDirection === "asc" ? " ↑" : " ↓"}
+                </span>
+              ) : null}
+            </button>
+          );
+        })}
       </div>
-      <div className="virtual-data-table__body" style={{ height: virtualizer.getTotalSize() }}>
+      {/* biome-ignore lint/a11y/useSemanticElements: virtualized rows require a positioned div container. */}
+      <div
+        className="virtual-data-table__body"
+        role="rowgroup"
+        style={sortedRows.length === 0 ? undefined : { height: virtualizer.getTotalSize() }}
+      >
+        {sortedRows.length === 0 ? (
+          // biome-ignore lint/a11y/useSemanticElements: virtualized grid cannot use native table rows.
+          <div className="virtual-data-table__empty" role="row" tabIndex={-1}>
+            {/* biome-ignore lint/a11y/useSemanticElements: virtualized grid cannot use native table cells. */}
+            <span role="cell" tabIndex={-1}>
+              {emptyMessage}
+            </span>
+          </div>
+        ) : null}
         {virtualizer.getVirtualItems().map((virtualRow) => {
           const row = sortedRows[virtualRow.index];
           const rowId = getRowId(row);
@@ -81,6 +163,7 @@ export function VirtualDataTable<T>({
             <div
               key={rowId}
               role="row"
+              aria-rowindex={virtualRow.index + 2}
               tabIndex={-1}
               className="virtual-data-table__row"
               style={{ transform: `translateY(${virtualRow.start}px)`, height: virtualRow.size }}
@@ -90,6 +173,7 @@ export function VirtualDataTable<T>({
                 <span className="virtual-data-table__select-cell" role="cell">
                   <input
                     type="checkbox"
+                    aria-label={`Select ${rowId}`}
                     checked={selectedIds?.has(rowId) ?? false}
                     onChange={(event) => onSelectRow(rowId, event.target.checked)}
                   />

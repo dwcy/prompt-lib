@@ -91,7 +91,7 @@ describe("Project gate", () => {
 
     await user.click(await screen.findByText("alpha"));
     await screen.findByText("Switch to alpha");
-    await user.click(screen.getByRole("button", { name: "Confirm" }));
+    await user.click(screen.getByRole("button", { name: "Switch project" }));
 
     expect(await screen.findByRole("navigation", { name: "Primary" })).toBeInTheDocument();
     expect(useProjectContextStore.getState().selected?.name).toBe("alpha");

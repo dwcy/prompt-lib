@@ -1,10 +1,11 @@
 import { existsSync, readFileSync } from "node:fs";
+import { request as httpRequest } from "node:http";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
-import { defineConfig, type ProxyOptions } from "vite";
+import { defineConfig, type Plugin } from "vite";
 
 interface Handshake {
   port: number;
@@ -45,52 +46,84 @@ function parseHandshake(raw: string): Handshake | null {
 // Dev-mode stand-in for the Tauri shell: reads the backend handshake file and
 // forwards /api and /brand to the ephemeral backend port. Missing or invalid
 // handshake means no proxy — the UI renders its disconnected state.
-function handshakeProxy(): Record<string, ProxyOptions> | undefined {
-  const handshakePath = join(userDataDir(), "cabal", "webapi-handshake.json");
+function readHandshake(): Handshake | null {
+  const handshakePath =
+    process.env.PROMPTLIB_CABAL_HANDSHAKE_PATH ??
+    join(userDataDir(), "cabal", "webapi-handshake.json");
   if (!existsSync(handshakePath)) {
-    console.warn(
-      `[cabal-desktop] No backend handshake file at ${handshakePath} — starting dev server ` +
-        "without /api and /brand proxies. Start the cabal backend, then restart `pnpm dev`; " +
-        "until then the UI shows its disconnected state.",
-    );
-    return undefined;
+    return null;
   }
 
-  let handshake: Handshake | null;
   try {
-    handshake = parseHandshake(readFileSync(handshakePath, "utf8"));
+    return parseHandshake(readFileSync(handshakePath, "utf8"));
   } catch {
-    handshake = null;
+    return null;
   }
-  if (handshake === null) {
-    console.warn(
-      `[cabal-desktop] Handshake file at ${handshakePath} is unreadable or not ` +
-        "{ port: number, token: string } — skipping /api and /brand proxies.",
-    );
-    return undefined;
-  }
+}
 
-  const target = `http://127.0.0.1:${handshake.port}`;
-  // The browser never sees the token; the dev proxy attaches it, mirroring the
-  // shell injecting { port, token } in production (contract: "behavior identical").
-  const routeOptions: ProxyOptions = {
-    target,
-    changeOrigin: true,
-    headers: { authorization: `Bearer ${handshake.token}` },
+function handshakeProxyPlugin(): Plugin {
+  return {
+    name: "cabal-handshake-proxy",
+    configureServer(server) {
+      server.middlewares.use((request, response, next) => {
+        const path = request.url ?? "";
+        const shouldProxy = PROXIED_ROUTES.some(
+          (route) => path === route || path.startsWith(`${route}/`) || path.startsWith(`${route}?`),
+        );
+        if (!shouldProxy) {
+          next();
+          return;
+        }
+
+        const handshake = readHandshake();
+        if (handshake === null) {
+          response.statusCode = 502;
+          response.end("Cabal backend handshake unavailable");
+          return;
+        }
+
+        const proxyHeaders = {
+          ...request.headers,
+          host: `127.0.0.1:${handshake.port}`,
+          authorization: `Bearer ${handshake.token}`,
+        };
+        if (process.env.PROMPTLIB_CABAL_HANDSHAKE_PATH !== undefined) {
+          delete proxyHeaders.origin;
+        }
+
+        const proxyRequest = httpRequest(
+          {
+            hostname: "127.0.0.1",
+            port: handshake.port,
+            path,
+            method: request.method,
+            headers: proxyHeaders,
+          },
+          (proxyResponse) => {
+            response.writeHead(proxyResponse.statusCode ?? 502, proxyResponse.headers);
+            proxyResponse.pipe(response);
+          },
+        );
+        proxyRequest.on("error", () => {
+          if (!response.headersSent) response.statusCode = 502;
+          response.end("Cabal backend unavailable");
+        });
+        request.pipe(proxyRequest);
+      });
+    },
   };
-  console.info(`[cabal-desktop] Proxying ${PROXIED_ROUTES.join(", ")} to ${target}`);
-  return Object.fromEntries(PROXIED_ROUTES.map((route) => [route, routeOptions]));
 }
 
 export default defineConfig(({ command }) => ({
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), ...(command === "serve" ? [handshakeProxyPlugin()] : [])],
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
     },
   },
   server: {
-    // Only resolved for `vite` dev serve — `vite build` never uses the proxy.
-    proxy: command === "serve" ? handshakeProxy() : undefined,
+    watch: {
+      ignored: ["**/src-tauri/target/**"],
+    },
   },
 }));

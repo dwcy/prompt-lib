@@ -10,12 +10,30 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from cabal.webapi import security
 from cabal.webapi.actions import ActionRegistry
+from cabal.webapi.actions_catalog import config as config_actions
+from cabal.webapi.actions_catalog import codex as codex_actions
+from cabal.webapi.actions_catalog import knowledge as knowledge_actions
+from cabal.webapi.actions_catalog import jobs as jobs_actions
+from cabal.webapi.actions_catalog import local_config as local_config_actions
+from cabal.webapi.actions_catalog import mcp as mcp_actions
+from cabal.webapi.actions_catalog import sessions as sessions_actions
+from cabal.webapi.actions_catalog import services as services_actions
 from cabal.webapi.actions_catalog import tools as tools_actions
 from cabal.webapi.audit import AuditRecorder, DiagnosticsRecorder
 from cabal.webapi.envelope import ApiError, error_response, utc_now_iso
 from cabal.webapi.jobs import JobManager
+from cabal.webapi.routers import account as account_router
 from cabal.webapi.routers import actions as actions_router
+from cabal.webapi.routers import codex as codex_router
+from cabal.webapi.routers import config as config_router
+from cabal.webapi.routers import environment as environment_router
+from cabal.webapi.routers import knowledge as knowledge_router
+from cabal.webapi.routers import local_config as local_config_router
+from cabal.webapi.routers import mcp as mcp_router
 from cabal.webapi.routers import projects as projects_router
+from cabal.webapi.routers import security_scan as security_scan_router
+from cabal.webapi.routers import sessions as sessions_router
+from cabal.webapi.routers import services as services_router
 from cabal.webapi.routers import system as system_router
 from cabal.webapi.routers import tools as tools_router
 from cabal.webapi.storage import Storage, WriteGuard
@@ -53,8 +71,29 @@ def create_app(
     app.state.jobs = JobManager(storage)
     app.state.actions = ActionRegistry(storage=storage, audit=audit)
     app.state.actions.register(projects_router.PROJECT_SELECT_DESCRIPTOR)
+    app.state.actions.register(jobs_actions.JOBS_CANCEL_DESCRIPTOR)
+    for descriptor in projects_router.PROJECT_LIFECYCLE_DESCRIPTORS:
+        app.state.actions.register(descriptor)
     app.state.actions.register(tools_actions.TOOLS_INSTALL_DESCRIPTOR)
     app.state.actions.register(tools_actions.TOOLS_UPDATE_DESCRIPTOR)
+    for descriptor in config_actions.CONFIG_DESCRIPTORS:
+        app.state.actions.register(descriptor)
+    for descriptor in local_config_actions.LOCAL_CONFIG_DESCRIPTORS:
+        app.state.actions.register(descriptor)
+    for descriptor in codex_actions.CODEX_DESCRIPTORS:
+        app.state.actions.register(descriptor)
+    for descriptor in sessions_actions.OBSERVABILITY_DESCRIPTORS:
+        app.state.actions.register(descriptor)
+    for descriptor in knowledge_actions.KNOWLEDGE_DESCRIPTORS:
+        app.state.actions.register(descriptor)
+    for descriptor in mcp_actions.MCP_DESCRIPTORS:
+        app.state.actions.register(descriptor)
+    for descriptor in services_actions.SERVICES_DESCRIPTORS:
+        app.state.actions.register(descriptor)
+    for descriptor in security_scan_router.SECURITY_DESCRIPTORS:
+        app.state.actions.register(descriptor)
+    for descriptor in environment_router.ENVIRONMENT_DESCRIPTORS:
+        app.state.actions.register(descriptor)
     app.state.handshake_path = Path(handshake_path) if handshake_path is not None else None
     app.state.started_at = utc_now_iso()
     app.state.request_shutdown = lambda: None
@@ -68,6 +107,16 @@ def create_app(
     app.router.routes.extend(actions_router.router.routes)
     app.router.routes.extend(projects_router.router.routes)
     app.router.routes.extend(tools_router.router.routes)
+    app.router.routes.extend(config_router.router.routes)
+    app.router.routes.extend(local_config_router.router.routes)
+    app.router.routes.extend(codex_router.router.routes)
+    app.router.routes.extend(sessions_router.router.routes)
+    app.router.routes.extend(account_router.router.routes)
+    app.router.routes.extend(knowledge_router.router.routes)
+    app.router.routes.extend(mcp_router.router.routes)
+    app.router.routes.extend(services_router.router.routes)
+    app.router.routes.extend(security_scan_router.router.routes)
+    app.router.routes.extend(environment_router.router.routes)
 
     _register_exception_handlers(app)
     return app

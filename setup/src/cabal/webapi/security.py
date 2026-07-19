@@ -70,14 +70,45 @@ def read_handshake(path: Path) -> dict | None:
         return None
     if not isinstance(data, dict):
         return None
+    if data.get("schema") != HANDSHAKE_SCHEMA:
+        return None
+    port = data.get("port")
+    token = data.get("token")
+    started_at = data.get("started_at")
+    if not isinstance(port, int) or not 0 < port <= 65535:
+        return None
+    if not isinstance(token, str) or not token:
+        return None
+    if not isinstance(started_at, str) or not started_at:
+        return None
     pid = data.get("pid")
     if not isinstance(pid, int) or not is_pid_alive(pid):
         return None
     return data
 
 
-def remove_handshake(path: Path) -> None:
-    Path(path).unlink(missing_ok=True)
+def remove_handshake(
+    path: Path,
+    *,
+    expected_token: str | None = None,
+    expected_pid: int | None = None,
+) -> bool:
+    """Remove a handshake only when it still belongs to the expected backend."""
+    path = Path(path)
+    if expected_token is not None or expected_pid is not None:
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return False
+        if expected_token is not None and data.get("token") != expected_token:
+            return False
+        if expected_pid is not None and data.get("pid") != expected_pid:
+            return False
+    try:
+        path.unlink(missing_ok=True)
+    except OSError:
+        return False
+    return True
 
 
 def restrict_to_owner(path: Path) -> None:

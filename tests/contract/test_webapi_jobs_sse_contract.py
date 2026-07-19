@@ -33,6 +33,21 @@ def _create_job(client, **params) -> str:
     return executed.json()["data"]["job_id"]
 
 
+def _cancel_job(client, job_id: str) -> None:
+    prepared = client.post(
+        "/api/actions/jobs.cancel/prepare",
+        json={"job_id": job_id},
+        headers=auth_headers(),
+    )
+    assert prepared.status_code == 200, prepared.text
+    executed = client.post(
+        "/api/actions/jobs.cancel/execute",
+        json={"ticket_id": prepared.json()["data"]["ticket_id"]},
+        headers=auth_headers(),
+    )
+    assert executed.status_code in {200, 202}, executed.text
+
+
 def _read_events(stream_response) -> list[dict]:
     events: list[dict] = []
     current_event = "message"
@@ -69,6 +84,28 @@ def test_job_lifecycle_reaches_terminal_state_with_monotonic_seq(app_factory) ->
     assert record.json()["data"]["state"] == "succeeded"
 
 
+def test_action_created_job_retains_confirmation_ticket_link(app_factory) -> None:
+    app, client = build_client(app_factory)
+    register_fixture_actions(app)
+    prepared = client.post(
+        "/api/actions/test.job_emitter/prepare",
+        json={"lines": 1, "delay_ms": 1},
+        headers=auth_headers(),
+    )
+    ticket_id = prepared.json()["data"]["ticket_id"]
+
+    executed = client.post(
+        "/api/actions/test.job_emitter/execute",
+        json={"ticket_id": ticket_id},
+        headers=auth_headers(),
+    )
+    job_id = executed.json()["data"]["job_id"]
+
+    record = client.get(f"/api/jobs/{job_id}", headers=auth_headers())
+    assert record.status_code == 200
+    assert record.json()["data"]["ticket_id"] == ticket_id
+
+
 def test_cancel_reflected_on_stream_and_on_job_get(app_factory) -> None:
     app, client = build_client(app_factory)
     register_fixture_actions(app)
@@ -78,11 +115,7 @@ def test_cancel_reflected_on_stream_and_on_job_get(app_factory) -> None:
         for raw_line in stream.iter_lines():
             line = raw_line if isinstance(raw_line, str) else raw_line.decode("utf-8")
             if line.startswith("event:") and line.split(":", 1)[1].strip() == "output":
-                cancel_response = client.post(
-                    f"/api/jobs/{job_id}/cancel",
-                    headers=auth_headers(),
-                )
-                assert cancel_response.status_code == 200
+                _cancel_job(client, job_id)
                 break
 
     record = client.get(f"/api/jobs/{job_id}", headers=auth_headers())

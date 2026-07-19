@@ -25,8 +25,8 @@ export interface StatePillProps {
 
 export function StatePill({ variant, label }: StatePillProps) {
   return (
-    <span className={`state-pill state-pill--${variant} select-none`} role="status">
-      {label ?? variant}
+    <span className={`state-pill state-pill--${variant} select-none`}>
+      {label ?? (variant === "ok" ? "OK" : variant)}
     </span>
   );
 }

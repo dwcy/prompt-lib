@@ -218,7 +218,7 @@ def list_cleanup_backups(target: Path = TARGET) -> list[BackupInfo]:
             continue
         try:
             data = json.loads(manifest_path.read_text(encoding="utf-8"))
-        except OSError, json.JSONDecodeError:
+        except (OSError, json.JSONDecodeError):
             continue
         entries = data.get("entries", [])
         total = sum(int(e.get("size", 0)) for e in entries)
@@ -251,10 +251,14 @@ def restore_cleanup(backup_dir: Path, target: Path = TARGET) -> RestoreResult:
 
     for entry in data.get("entries", []):
         rel = Path(str(entry.get("relative_path", "")))
-        if not rel.parts:
+        if not rel.parts or rel.is_absolute() or ".." in rel.parts:
+            result.errors[target / rel] = "Refused — invalid path in backup manifest"
             continue
         src = backup_dir / rel
         dst = target / rel
+        if not _within(src, backup_dir) or not _within(dst, target):
+            result.errors[dst] = "Refused — path escapes the backup or deploy target"
+            continue
         if not src.is_file():
             result.errors[dst] = "Missing from backup"
             continue

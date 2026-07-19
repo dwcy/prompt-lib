@@ -1,5 +1,6 @@
 // Module router: resolves the active module from the registry and renders it inside its own
 // error boundary, falling back to the shared ModuleUnavailable placeholder pre-launch.
+import { Suspense } from "react";
 import { EmptyState } from "@/components/EmptyState";
 import { ModuleErrorBoundary } from "@/components/shell/ModuleErrorBoundary";
 import { ModuleUnavailable } from "@/modules/ModuleUnavailable";
@@ -20,11 +21,13 @@ export function ModuleOutlet({ activeModuleKey }: ModuleOutletProps) {
   const ModuleComponent = module.component;
   return (
     <ModuleErrorBoundary key={module.key} moduleTitle={module.title}>
-      {ModuleComponent !== null ? (
-        <ModuleComponent />
-      ) : (
-        <ModuleUnavailable title={module.title} phase={module.phase} />
-      )}
+      <Suspense fallback={<EmptyState title={`Opening ${module.title}...`} />}>
+        {ModuleComponent !== null ? (
+          <ModuleComponent />
+        ) : (
+          <ModuleUnavailable title={module.title} phase={module.phase} />
+        )}
+      </Suspense>
     </ModuleErrorBoundary>
   );
 }

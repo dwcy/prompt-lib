@@ -68,6 +68,10 @@ describe("ToolActionPanel", () => {
         executeCallCount += 1;
         return HttpResponse.json(wrapEnvelope({ job_id: "job-git-install" }));
       }),
+      http.get("/api/jobs/job-git-install", () =>
+        HttpResponse.json(wrapEnvelope(buildJobRecord("queued", { job_id: "job-git-install" }))),
+      ),
+      jobStreamHandler("job-git-install", [], { keepOpen: true }),
     );
     const { user } = renderHarness();
 
@@ -76,9 +80,9 @@ describe("ToolActionPanel", () => {
     expect(await screen.findByText("Install Git 2.45.0")).toBeInTheDocument();
     expect(executeCallCount).toBe(0);
 
-    await user.click(screen.getByRole("button", { name: "Confirm" }));
+    await user.click(screen.getByRole("button", { name: "Install Git" }));
 
-    expect(await screen.findByText("Install Git 2.45.0")).toBeInTheDocument();
+    expect(await screen.findByText("job-git-install")).toBeInTheDocument();
     expect(executeCallCount).toBe(1);
   });
 
@@ -109,7 +113,7 @@ describe("ToolActionPanel", () => {
 
     await user.click(screen.getByRole("button", { name: "Install" }));
     await screen.findByRole("alertdialog");
-    await user.click(screen.getByRole("button", { name: "Confirm" }));
+    await user.click(screen.getByRole("button", { name: "Install Git" }));
 
     await screen.findByText("succeeded");
     await waitFor(() => expect(statusFetchCount).toBeGreaterThan(initialFetchCount));

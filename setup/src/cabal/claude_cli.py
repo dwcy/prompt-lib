@@ -35,7 +35,15 @@ def _run_claude_cli(args: list[str], timeout: int = 30) -> tuple[int, str, str]:
     """Run a `claude` CLI command with MSYS path conversion disabled (Git Bash safety)."""
     env = {**os.environ, "MSYS_NO_PATHCONV": "1"}
     try:
-        r = subprocess.run([_claude_exe(), *args], capture_output=True, text=True, timeout=timeout, env=env)
+        r = subprocess.run(
+            [_claude_exe(), *args],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=timeout,
+            env=env,
+        )
         return r.returncode, r.stdout, r.stderr
     except FileNotFoundError:
         return 127, "", "claude CLI not found in PATH"
@@ -61,6 +69,8 @@ def spawn_claude(
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
+        encoding="utf-8",
+        errors="replace",
     )
 
 
@@ -81,6 +91,8 @@ def claude_print(
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
+            encoding="utf-8",
+            errors="replace",
         )
     except FileNotFoundError:
         return ClaudeRunResult(returncode=127, stdout="", stderr="claude CLI not found in PATH")

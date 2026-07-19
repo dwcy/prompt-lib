@@ -47,5 +47,6 @@
   --text-2xl: var(--fs-2xl);
   --text-2xl--line-height: var(--lh-2xl);
 
-  --breakpoint-narrow: var(--bp-narrow);
+  /* Tailwind emits this value inside @media, where runtime custom properties are invalid. */
+  --breakpoint-narrow: 48rem;
 }

@@ -160,15 +160,45 @@
 
 /* ─── DiffView ────────────────────────────────────────────────────────────── */
 
+.diff-view-frame {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--corner-md);
+  background-color: var(--surface-1);
+}
+
+.diff-view__stats {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 2rem;
+  padding: var(--space-1) var(--space-3);
+  border-bottom: 1px solid var(--border);
+  background-color: var(--surface-2);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.diff-view__stat--add {
+  color: var(--status-ok);
+}
+
+.diff-view__stat--del {
+  color: var(--status-danger);
+}
+
 .diff-view {
+  margin: 0;
   font-family: var(--font-family-mono);
   font-size: var(--fs-sm);
   line-height: var(--lh-sm);
-  background-color: var(--surface-1);
-  border: 1px solid var(--border);
-  border-radius: var(--corner-md);
   overflow-x: auto;
   white-space: pre;
+}
+
+.diff-view code {
+  font: inherit;
 }
 
 .diff-view__empty {
@@ -177,6 +207,7 @@
 }
 
 .diff-view__line {
+  display: block;
   padding: 0 var(--space-3);
 }
 
@@ -230,6 +261,11 @@
   color: var(--status-warning);
 }
 
+.log-stream__count {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
 .log-stream__follow {
   display: inline-flex;
   align-items: center;
@@ -255,6 +291,13 @@
   overflow-wrap: anywhere;
 }
 
+.log-stream__empty {
+  display: grid;
+  min-height: 7rem;
+  place-items: center;
+  color: var(--muted);
+}
+
 /* ─── JobPane ─────────────────────────────────────────────────────────────── */
 
 .job-pane {
@@ -267,13 +310,54 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: var(--space-2);
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.job-pane__identity {
+  min-width: 0;
+  margin-right: auto;
 }
 
 .job-pane__kind {
   font-size: var(--fs-md);
   line-height: var(--lh-md);
-  margin-right: auto;
+}
+
+.job-pane__id {
+  display: block;
+  max-width: 18rem;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.job-pane__state {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+}
+
+.job-pane__cancel {
+  color: var(--status-warning);
+  border-color: color-mix(in srgb, var(--status-warning) 45%, var(--border));
+}
+
+.job-pane__dismiss {
+  display: inline-grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  place-items: center;
+  font-size: var(--fs-lg);
+  line-height: 1;
 }
 
 .job-pane__cancel-confirm {
@@ -320,17 +404,52 @@
   font-size: var(--fs-xs);
   line-height: var(--lh-xs);
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0;
   text-transform: uppercase;
-  cursor: pointer;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+.virtual-data-table__header-cell--static {
+  display: flex;
+  align-items: center;
+}
+
+.virtual-data-table__header-cell--sortable {
+  cursor: pointer;
+}
+
+.virtual-data-table__header-cell--sortable:hover {
+  color: var(--fg);
+  background-color: var(--surface-3);
+}
+
+.virtual-data-table__sort-mark {
+  color: var(--status-accent);
+}
+
+.virtual-data-table__body {
+  position: relative;
+  min-width: max-content;
+}
+
 .virtual-data-table__row {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
   border-bottom: 1px solid var(--border);
   transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.virtual-data-table__empty {
+  display: grid;
+  min-width: 100%;
+  min-height: 8rem;
+  place-items: center;
+  padding: var(--space-5);
+  color: var(--muted);
+  font-size: var(--fs-sm);
 }
 
 .virtual-data-table__row:hover {
@@ -364,5 +483,115 @@
 @media (prefers-reduced-motion: reduce) {
   .virtual-data-table__row {
     transition: none;
+  }
+}
+
+/* Job execution runway: lifecycle state and timing remain visible above the live stream. */
+
+.job-pane__runway {
+  display: grid;
+  grid-template-columns: minmax(15rem, 1fr) auto;
+  gap: var(--space-4);
+  align-items: stretch;
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--border);
+  background-color: var(--surface-1);
+}
+
+.job-pane__lifecycle {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--corner-sm);
+  background-color: var(--border);
+  list-style: none;
+}
+
+.job-pane__lifecycle li {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  background-color: var(--surface-2);
+}
+
+.job-pane__lifecycle li > span {
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+.job-pane__lifecycle li > strong {
+  overflow: hidden;
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.job-pane__lifecycle li.is-complete {
+  box-shadow: inset 0 -2px var(--status-ok);
+}
+
+.job-pane__lifecycle li.is-current {
+  box-shadow: inset 0 -2px var(--status-accent);
+}
+
+.job-pane__lifecycle li.is-current[data-state="failed"] {
+  box-shadow: inset 0 -2px var(--status-danger);
+}
+
+.job-pane__lifecycle li.is-current[data-state="cancelled"] {
+  box-shadow: inset 0 -2px var(--status-warning);
+}
+
+.job-pane__timing {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(4rem, auto));
+  gap: 1px;
+  border: 1px solid var(--border);
+  background-color: var(--border);
+}
+
+.job-pane__timing > div {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  background-color: var(--surface-2);
+}
+
+.job-pane__timing dt {
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+}
+
+.job-pane__timing dd {
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.job-pane__exit-detail {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.job-pane__exit-detail[data-state="failed"] {
+  border-left: 2px solid var(--status-danger);
+  background-color: var(--danger-bg);
+  color: var(--danger-fg);
+}
+
+@media (max-width: 768px) {
+  .job-pane__runway,
+  .job-pane__timing {
+    grid-template-columns: 1fr;
   }
 }

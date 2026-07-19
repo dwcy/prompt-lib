@@ -1,7 +1,6 @@
-// Query/mutation hooks for job records: read one job (optionally polled until terminal), cancel a
-// running/queued job.
-import { type UseQueryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiGet, apiPost, requireData } from "@/api/client";
+// Query hooks for job records, optionally polled until terminal.
+import { type UseQueryOptions, useQuery } from "@tanstack/react-query";
+import { apiGet, requireData } from "@/api/client";
 import { queryKeys } from "@/api/queryKeys";
 import { type JobRecord, jobRecordSchema } from "@/api/schemas";
 
@@ -21,19 +20,5 @@ export function useJob(jobId: string, options: UseJobOptions = {}) {
     },
     staleTime: 5_000,
     ...options,
-  });
-}
-
-export function useCancelJob() {
-  const queryClient = useQueryClient();
-  return useMutation<JobRecord, Error, string>({
-    mutationFn: async (jobId) => {
-      const envelope = await apiPost(`/api/jobs/${jobId}/cancel`, jobRecordSchema);
-      return requireData(envelope, `cancel job ${jobId}`);
-    },
-    onSuccess: (record) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.jobs.detail(record.job_id) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.jobs.all() });
-    },
   });
 }

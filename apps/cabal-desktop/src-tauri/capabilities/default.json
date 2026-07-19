@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Baseline capability for the main Cabal window, plus execute permission for the dev-mode backend launch (`uv run cabal-backend`). The production `cabal-backend` sidecar permission is added in T096 alongside its `bundle.externalBin` entry, once the PyInstaller binary exists.",
+  "description": "Baseline capability for the main Cabal window, plus execute permission for the dev-mode backend launch and the production cabal-backend sidecar.",
   "windows": ["main"],
   "permissions": [
     "core:default",
@@ -13,6 +13,11 @@
           "name": "uv",
           "cmd": "uv",
           "args": ["run", "cabal-backend"]
+        },
+        {
+          "name": "cabal-backend",
+          "cmd": "cabal-backend",
+          "sidecar": true
         }
       ]
     }

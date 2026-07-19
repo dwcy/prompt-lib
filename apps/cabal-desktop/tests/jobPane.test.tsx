@@ -36,7 +36,7 @@ describe("JobPane", () => {
     renderJobPane("job-queued");
 
     expect(await screen.findByText("queued")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cancel job" })).toBeInTheDocument();
   });
 
   it("renders streamed output lines and a gap indicator while running, with cancel available", async () => {
@@ -58,8 +58,8 @@ describe("JobPane", () => {
 
     expect(await screen.findByText("Installing dependencies…")).toBeInTheDocument();
     expect(screen.getByText("Applying config…")).toBeInTheDocument();
-    expect(screen.getByText("5 line(s) dropped — reconnect gap")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
+    expect(screen.getByText("5 lines dropped during reconnect")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cancel job" })).toBeInTheDocument();
   });
 
   it.each<JobState>([
@@ -74,7 +74,7 @@ describe("JobPane", () => {
     renderJobPane(jobId);
 
     expect(await screen.findByText(state)).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Cancel" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Cancel job" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Yes, cancel" })).not.toBeInTheDocument();
   });
 });

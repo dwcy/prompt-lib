@@ -19,21 +19,33 @@ export function HealthStrip() {
     return (
       <div className="health-strip health-strip--reconnecting select-none" role="alert">
         <StatePill variant="failed" />
-        <span>Reconnecting to backend…</span>
+        <span>Backend unavailable. Reconnecting…</span>
       </div>
     );
   }
 
-  const degradedCount = health.data.modules.filter(
-    (module) => module.state === "degraded" || module.state === "failed",
-  ).length;
+  const attentionModules = health.data.modules.filter(
+    (module) =>
+      module.state === "degraded" || module.state === "failed" || module.state === "unavailable",
+  );
+  const hasFailure = attentionModules.some(
+    (module) => module.state === "failed" || module.state === "unavailable",
+  );
+  const attentionTitle = attentionModules
+    .map((module) => `${module.module}: ${module.state}`)
+    .join("\n");
 
   return (
     <div className="health-strip health-strip--ok select-none" role="status">
-      <StatePill variant={degradedCount > 0 ? "degraded" : "ok"} />
-      <span className="health-strip__version">cabal v{health.data.version}</span>
-      {degradedCount > 0 ? (
-        <span className="health-strip__degraded">{degradedCount} module(s) degraded</span>
+      <StatePill
+        variant={attentionModules.length === 0 ? "ok" : hasFailure ? "failed" : "degraded"}
+      />
+      <span className="health-strip__version">Cabal v{health.data.version}</span>
+      {attentionModules.length > 0 ? (
+        <span className="health-strip__degraded" title={attentionTitle}>
+          {attentionModules.length} {attentionModules.length === 1 ? "module" : "modules"} need
+          attention
+        </span>
       ) : null}
     </div>
   );

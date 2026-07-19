@@ -30,8 +30,16 @@
   --status-warning: #fbbf24;
   --status-danger: #f87171;
   --status-neutral: #9497a1;
-  --status-accent: #a78bfa;
+  --status-accent: #5eead4;
   --status-stale: #c9a227;
+
+  /* Purpose-group accents: navigation and workspace-map colors stay consistent everywhere. */
+  --group-workspace: #5eead4;
+  --group-setup: #60a5fa;
+  --group-configuration: #fbbf24;
+  --group-intelligence: #c084fc;
+  --group-runtime: #fb7185;
+  --group-observe: #4ade80;
 
   /* Module/connectivity state palette — StatePill, HealthStrip, ModuleHealth (FR-005/012/013) */
   --state-ok: var(--status-ok);

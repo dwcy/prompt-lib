@@ -23,10 +23,16 @@ export const moduleHealthSchema = z.object({
   last_success_at: z.string().nullable(),
 });
 
+export const driftFlagsSchema = z.object({
+  claude: z.boolean(),
+  codex: z.boolean(),
+});
+
 export const healthPayloadSchema = z.object({
   version: z.string(),
   started_at: z.string(),
   modules: z.array(moduleHealthSchema),
+  drift_flags: driftFlagsSchema.optional(),
 });
 
 export const diagnosticEventSchema = z.object({
@@ -81,11 +87,6 @@ export const projectContextSchema = z.object({
   is_git_repo: z.boolean(),
   recents: z.array(recentProjectSchema),
   selected_at: z.string().nullable(),
-});
-
-export const driftFlagsSchema = z.object({
-  claude: z.boolean(),
-  codex: z.boolean(),
 });
 
 // The web-api contract test only pins OVERVIEW_SECTION_KEYS (presence) and drift_flags' two

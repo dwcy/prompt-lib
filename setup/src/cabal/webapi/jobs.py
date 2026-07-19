@@ -80,6 +80,10 @@ class Job:
     def request_cancel(self) -> None:
         self._cancel_event.set()
 
+    def set_ticket_id(self, ticket_id: str) -> None:
+        with self._lock:
+            self.ticket_id = ticket_id
+
     def record(self) -> dict:
         with self._lock:
             return {
@@ -181,6 +185,20 @@ class JobManager:
         if not job.is_terminal():
             self.finish(job, "cancelled")
         return True
+
+    def attach_ticket(self, job_id: str, ticket_id: str) -> None:
+        """Link an action-created job to its confirmation ticket without a finish race."""
+        job = self.get(job_id)
+        if job is None:
+            record = self._storage.load_job(job_id)
+            if record is None:
+                raise KeyError(f"unknown job {job_id}")
+            record["ticket_id"] = ticket_id
+            self._storage.save_job(record)
+            return
+        job.set_ticket_id(ticket_id)
+        if job.is_terminal():
+            self._storage.save_job(job.record())
 
     def add_terminal_callback(self, job_id: str, callback: Callable[[dict], None]) -> None:
         job = self.get(job_id)

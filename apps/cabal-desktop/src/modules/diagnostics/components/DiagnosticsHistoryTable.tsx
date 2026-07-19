@@ -1,8 +1,5 @@
-// Persisted diagnostics history with a per-row "retry this source" action. A plain semantic table,
-// not VirtualDataTable: the backend already bounds this list via GET /api/diagnostics?limit=, so
-// there's no confirmed large-N case to justify virtualization (which also can't be exercised under
-// jsdom — @tanstack/react-virtual measures a real scroll container, which jsdom always reports as
-// zero-sized).
+// Persisted diagnostic evidence rendered as a chronological incident ledger. The backend bounds
+// this collection, so a semantic list is more useful than a virtualized generic table.
 import type { DiagnosticEvent } from "@/api/schemas";
 import { StatePill, type StatePillVariant } from "@/components/StatePill";
 
@@ -19,37 +16,41 @@ function severityVariant(severity: DiagnosticEvent["severity"]): StatePillVarian
 
 export function DiagnosticsHistoryTable({ events, onRetry }: DiagnosticsHistoryTableProps) {
   return (
-    <table className="diagnostics-history-table">
-      <thead>
-        <tr>
-          <th scope="col">Severity</th>
-          <th scope="col">Module</th>
-          <th scope="col">Message</th>
-          <th scope="col">Occurred</th>
-          <th scope="col">Kind</th>
-          <th scope="col">
-            <span className="select-none">Actions</span>
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        {events.map((event) => (
-          <tr key={event.id}>
-            <td>
+    <ol className="diagnostics-incident-ledger" aria-label="Persisted diagnostic events">
+      {events.map((event, index) => (
+        <li key={event.id} data-severity={event.severity}>
+          <div className="diagnostics-incident-ledger__sequence" aria-hidden="true">
+            <span>{String(index + 1).padStart(2, "0")}</span>
+            <i />
+          </div>
+          <article>
+            <header>
               <StatePill variant={severityVariant(event.severity)} label={event.severity} />
-            </td>
-            <td>{event.module}</td>
-            <td>{event.message}</td>
-            <td>{new Date(event.occurred_at).toLocaleString()}</td>
-            <td>{event.kind}</td>
-            <td>
-              <button type="button" onClick={() => onRetry(event.module)}>
-                Retry
-              </button>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+              <strong>{event.module}</strong>
+              <time dateTime={event.occurred_at}>{formatOccurredAt(event.occurred_at)}</time>
+            </header>
+            <p>{event.message}</p>
+            <footer>
+              <span>{event.kind.replace("_", " ")}</span>
+              <code>event #{event.id}</code>
+            </footer>
+          </article>
+          <button type="button" onClick={() => onRetry(event.module)}>
+            Retry source
+          </button>
+        </li>
+      ))}
+    </ol>
   );
+}
+
+function formatOccurredAt(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }

@@ -15,8 +15,8 @@ from cabal.config_doctor import finding_order, run_doctor_cached
 from cabal.gh_accounts import list_accounts
 from cabal.manifest_doctor import manifest_report
 from cabal.package_security import service as package_security_service
-from cabal.web.serializers import serialize_knowledge_graph
 from cabal.webapi.dashboard_service import SECTIONS, get_dashboard_section
+from cabal.webapi.knowledge_service import knowledge_summary
 
 _PROJECTS_DIR = Path.home() / ".claude" / "projects"
 _MAX_RECENT_SESSIONS = 5
@@ -38,7 +38,7 @@ def build_overview(project: Path | None) -> tuple[dict[str, Any], bool, list[str
         ("doctor", {"healthy": True, "error_count": 0, "warning_count": 0, "findings": []}, lambda: _doctor_summary(project)),
         ("knowledge_availability", {"available": False, "counts": {}}, lambda: _knowledge_availability(project)),
         ("security_summary", dict(_EMPTY_SECURITY_SUMMARY), lambda: _security_summary(project) if project is not None else dict(_EMPTY_SECURITY_SUMMARY)),
-        ("drift_flags", {"claude": False, "codex": False}, _drift_flags),
+        ("drift_flags", {"claude": False, "codex": False}, drift_flags),
     ):
         value, ok = _safe(fn, fallback)
         sections[key] = value
@@ -127,8 +127,8 @@ def _doctor_summary(project: Path | None) -> dict[str, Any]:
 
 
 def _knowledge_availability(project: Path | None) -> dict[str, Any]:
-    graph = serialize_knowledge_graph(project or Path.cwd())
-    return {"available": graph["available"], "counts": graph["counts"]}
+    summary = knowledge_summary(project or Path.cwd())
+    return {"available": summary["available"], "counts": summary["counts"]}
 
 
 def _security_summary(project: Path) -> dict[str, Any]:
@@ -145,5 +145,5 @@ def _security_summary(project: Path) -> dict[str, Any]:
     return {**counts, "notices": notices}
 
 
-def _drift_flags() -> dict[str, bool]:
+def drift_flags() -> dict[str, bool]:
     return {"claude": diff_apply.has_deploy_drift(), "codex": codex_diff_apply.has_codex_deploy_drift()}

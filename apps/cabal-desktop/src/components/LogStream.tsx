@@ -24,13 +24,24 @@ export function LogStream({ events, connectionState, autoFollow = true }: LogStr
     .filter((event) => event.event === "gap")
     .reduce((total, event) => total + gapDroppedCount(event), 0);
 
+  function handleScroll(): void {
+    const container = containerRef.current;
+    if (container === null || !follow) return;
+    const distanceFromBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight;
+    if (distanceFromBottom > 16) setFollow(false);
+  }
+
   return (
     <div className="log-stream">
       <div className="log-stream__toolbar select-none">
         <StatePill variant={streamStateToPillVariant(connectionState)} />
+        <span className="log-stream__count">
+          {lines.length} {lines.length === 1 ? "line" : "lines"}
+        </span>
         {gapCount > 0 ? (
           <span className="log-stream__gap" role="status">
-            {gapCount} line(s) dropped — reconnect gap
+            {gapCount} {gapCount === 1 ? "line" : "lines"} dropped during reconnect
           </span>
         ) : null}
         <label className="log-stream__follow">
@@ -42,12 +53,25 @@ export function LogStream({ events, connectionState, autoFollow = true }: LogStr
           Follow
         </label>
       </div>
-      <div ref={containerRef} className="log-stream__body" role="log">
-        {lines.map((event, index) => (
-          <div key={event.id ?? `output-${index}`} className="log-stream__line">
-            {extractLogLine(event)}
-          </div>
-        ))}
+      <div
+        ref={containerRef}
+        className="log-stream__body"
+        role="log"
+        aria-label="Job output"
+        aria-relevant="additions text"
+        onScroll={handleScroll}
+      >
+        {lines.length === 0 ? (
+          <p className="log-stream__empty">
+            {connectionState === "open" ? "Waiting for output" : "No output received"}
+          </p>
+        ) : (
+          lines.map((event, index) => (
+            <div key={event.id ?? `output-${index}`} className="log-stream__line">
+              {extractLogLine(event)}
+            </div>
+          ))
+        )}
       </div>
     </div>
   );

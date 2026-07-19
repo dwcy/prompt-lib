@@ -3,6 +3,7 @@ project.select action-safety flow of specs/015-web-ui-overhaul/contracts/web-api
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -285,3 +286,92 @@ def test_ModuleRoute_mutating_verb_returns_405(app_factory, path: str, method: s
     assert body["schema_version"] == SCHEMA_VERSION
     assert body["status"] == "error"
     assert body["data"] is None
+
+
+def test_ServiceLogs_unknown_key_returns_404_without_resolving_arbitrary_path(app_factory) -> None:
+    _app, client = build_client(app_factory)
+
+    response = client.get("/api/services/not-a-service/logs", headers=auth_headers())
+
+    assert response.status_code == 404
+    assert response.json()["error"]["code"] == "service_not_found"
+
+
+def test_ServiceLogStream_keeps_monotonic_ids_after_log_truncation(
+    app_factory, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from cabal import service_supervisor
+    from cabal.webapi.routers import services as services_router
+
+    log_dir = tmp_path / "service-logs"
+    monkeypatch.setattr(service_supervisor, "_LOG_DIR", log_dir)
+    services_router._LOG_STATES.clear()
+    log_path = service_supervisor.log_path("a2a-bridge")
+    log_path.write_text("first run\n", encoding="utf-8")
+    _app, client = build_client(app_factory)
+    headers = {**auth_headers(), "Accept": "text/event-stream"}
+
+    first = client.get("/api/services/a2a-bridge/logs/stream", headers=headers)
+    assert first.status_code == 200
+    assert "id: 0" in first.text
+    assert "first run" in first.text
+
+    log_path.write_text("second run\n", encoding="utf-8")
+    second = client.get(
+        "/api/services/a2a-bridge/logs/stream",
+        headers={**headers, "Last-Event-ID": "0"},
+    )
+
+    assert second.status_code == 200
+    assert "id: 1" in second.text
+    assert "second run" in second.text
+
+
+def test_KnowledgeGraph_paginates_nodes_without_dropping_cross_page_edges(
+    app_factory, tmp_path: Path
+) -> None:
+    project = tmp_path / "knowledge-project"
+    bundle = project / "docs" / "okf" / "prompt-lib"
+    bundle.mkdir(parents=True)
+    nodes = [
+        {"id": f"node:{index:02d}", "type": "agent", "label": f"Node {index:02d}"}
+        for index in range(26)
+    ]
+    graph = {
+        "generated_at": "2026-07-19T10:00:00Z",
+        "nodes": nodes,
+        "edges": [
+            {
+                "id": "cross-page",
+                "source": "node:00",
+                "target": "node:25",
+                "kind": "delegates_to",
+            }
+        ],
+    }
+    (bundle / "graph.json").write_text(json.dumps(graph), encoding="utf-8")
+    _app, client = build_client(app_factory, project=project)
+
+    first = client.get("/api/knowledge/graph?limit=25", headers=auth_headers()).json()["data"]
+    second = client.get(
+        f"/api/knowledge/graph?limit=25&cursor={first['next_cursor']}",
+        headers=auth_headers(),
+    ).json()["data"]
+
+    assert len(first["nodes"]) == 25
+    assert first["edges"] == [
+        {
+            "id": "cross-page",
+            "from": "node:00",
+            "to": "node:25",
+            "target_ref": "node:25",
+            "relation": "delegates_to",
+            "confidence": "",
+            "reason": "",
+            "evidence": [],
+        }
+    ]
+    assert [node["id"] for node in second["nodes"]] == ["node:25"]
+    assert second["next_cursor"] is None
+    assert second["total_nodes"] == 26
+    assert second["total_edges"] == 1

@@ -15,6 +15,15 @@ export interface OverviewCardSummary {
   stateVariant: StatePillVariant | null;
 }
 
+export interface OverviewActionSummary {
+  key: string;
+  title: string;
+  summary: string;
+  module: ModuleKey;
+  variant: StatePillVariant;
+  label: string;
+}
+
 const KNOWN_STATE_VARIANTS: ReadonlySet<string> = new Set<StatePillVariant>([
   "ok",
   "loading",
@@ -90,3 +99,80 @@ export function deriveOverviewCards(payload: OverviewPayload): OverviewCardSumma
     },
   ];
 }
+
+export function deriveOverviewActions(
+  payload: OverviewPayload,
+  cards: OverviewCardSummary[],
+): OverviewActionSummary[] {
+  const actions: OverviewActionSummary[] = [];
+  if (payload.drift_flags.claude) {
+    actions.push({
+      key: "claude-drift",
+      title: "Claude config drift",
+      summary: "Claude deployment has repo changes waiting for review.",
+      module: "config_deploy",
+      variant: "degraded",
+      label: "review",
+    });
+  }
+  if (payload.drift_flags.codex) {
+    actions.push({
+      key: "codex-drift",
+      title: "Codex parity drift",
+      summary: "Codex assets need a deploy or conversion check.",
+      module: "codex",
+      variant: "degraded",
+      label: "review",
+    });
+  }
+  for (const card of cards) {
+    if (
+      card.stateVariant === "failed" ||
+      card.stateVariant === "unavailable" ||
+      card.stateVariant === "degraded" ||
+      card.stateVariant === "stale"
+    ) {
+      actions.push({
+        key: card.key,
+        title: card.title,
+        summary: card.headline ?? `${card.title} needs attention.`,
+        module: card.deepLinkModule,
+        variant: card.stateVariant,
+        label: card.stateVariant,
+      });
+    }
+  }
+  if (actions.length === 0) {
+    actions.push({
+      key: "dashboard",
+      title: "Project dashboard",
+      summary: "Project services are ready for a quick scan.",
+      module: "project_dashboard",
+      variant: "ok",
+      label: "steady",
+    });
+  }
+  return actions
+    .sort((left, right) => ACTION_PRIORITY[left.variant] - ACTION_PRIORITY[right.variant])
+    .slice(0, 4);
+}
+
+const ACTION_PRIORITY: Record<StatePillVariant, number> = {
+  failed: 0,
+  error: 0,
+  unavailable: 1,
+  degraded: 2,
+  stale: 3,
+  missing: 3,
+  update: 4,
+  connecting: 4,
+  loading: 4,
+  queued: 4,
+  running: 4,
+  cancelled: 4,
+  closed: 5,
+  open: 5,
+  installed: 5,
+  succeeded: 5,
+  ok: 5,
+};
