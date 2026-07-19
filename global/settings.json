@@ -5,6 +5,9 @@
   "defaultMode": "plan",
   "verbose": true,
   "feedbackSurveyRate": 0,
+  "env": {
+    "CLAUDE_CODE_FORWARD_SUBAGENT_TEXT": "1"
+  },
   "remoteControlAtStartup": true,
   "statusLine": {
     "type": "command",

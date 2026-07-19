@@ -32,6 +32,9 @@ Net effect: roughly 5s shaved off a ~12s cold start, down to ~7s. Auth still wor
 | `--verbose` | **Mandatory** when combining `--print` with `--output-format stream-json`. Error message: `When using --print, --output-format=stream-json requires --verbose`. |
 | `--system-prompt <text>` | Set the system prompt once at spawn. Conversation history is then server-side; per-turn prompts are just the user message. |
 | `--include-partial-messages` | Optional. Streams `assistant` chunks as they're generated. For block-on-result hosts: leave off. |
+| `--forward-subagent-text` | Optional (Claude Code 2.1.211+). Emit subagent text and thinking as assistant/user messages carrying `parent_tool_use_id`. Use for observable agentic harnesses, not simple block-on-result chat. |
+
+If a harness cannot add CLI flags, set `CLAUDE_CODE_FORWARD_SUBAGENT_TEXT=1` in its process environment or in the `env` object of Claude Code's `settings.json`. The environment variable is ignored outside `--print --output-format stream-json`, while the CLI flag rejects incompatible modes.
 
 ### Gotchas
 

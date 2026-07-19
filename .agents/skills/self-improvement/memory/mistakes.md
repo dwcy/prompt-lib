@@ -171,3 +171,10 @@ Concrete failures from past sessions, recorded so they aren't repeated. Each ent
 - **Root cause**: I interpreted "accessible" through the repo context instead of the active Codex session capabilities.
 - **Future rule**: When asked what I have accessible, answer from the current tool/skill/session surface first; only inspect repo files when the user asks about repo contents.
 - **Example**: Say "I can use these Codex skills/tools..." instead of "this repo contains these Claude agents...".
+
+### M-20260716-01 — Invoked pytest through the wrong Python
+- **Date**: 2026-07-16
+- **Situation**: `uv run pytest` found a system Python 3.11 pytest launcher and reported syntax errors in Cabal code that correctly targets Python 3.14.
+- **Root cause**: Pytest is not a root project dependency, so invoking its bare executable did not guarantee the project interpreter.
+- **Future rule**: Run root Cabal tests with `uv run --with pytest --with pytest-asyncio python -m pytest ...`, and verify `uv run python --version` when syntax compatibility matters.
+- **Example**: `uv run --with pytest --with pytest-asyncio python -m pytest setup/tests -q` uses the Python 3.14 project environment.
