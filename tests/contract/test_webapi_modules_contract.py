@@ -55,6 +55,23 @@ def _envelope_shape_ok(body: dict) -> bool:
     )
 
 
+def _write_session(projects_dir: Path, session_id: str, timestamp: str) -> None:
+    project_dir = projects_dir / "prompt-lib"
+    project_dir.mkdir(parents=True, exist_ok=True)
+    entry = {
+        "type": "assistant",
+        "timestamp": timestamp,
+        "gitBranch": "015-web-ui-overhaul",
+        "message": {
+            "role": "assistant",
+            "model": "claude-sonnet-4-5",
+            "content": [{"type": "text", "text": f"Session {session_id}"}],
+            "usage": {"input_tokens": 10, "output_tokens": 5},
+        },
+    }
+    (project_dir / f"{session_id}.jsonl").write_text(json.dumps(entry) + "\n", encoding="utf-8")
+
+
 def test_Project_get_returns_v2_envelope_with_context_shape(app_factory, tmp_path: Path) -> None:
     project_dir = tmp_path / "myproj"
     project_dir.mkdir()
@@ -375,3 +392,317 @@ def test_KnowledgeGraph_paginates_nodes_without_dropping_cross_page_edges(
     assert second["next_cursor"] is None
     assert second["total_nodes"] == 26
     assert second["total_edges"] == 1
+
+
+def test_Sessions_contract_paginates_with_stable_totals_and_lazy_tabs(
+    app_factory, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from cabal import session_reader
+
+    projects_dir = tmp_path / "sessions"
+    _write_session(projects_dir, "session-a", "2026-07-19T10:00:00Z")
+    _write_session(projects_dir, "session-b", "2026-07-19T11:00:00Z")
+    monkeypatch.setattr(session_reader, "_PROJECTS_DIR", projects_dir)
+    monkeypatch.setattr(session_reader, "_WRITE_AUDIT_PATH", tmp_path / "write-audit.jsonl")
+    _app, client = build_client(app_factory)
+
+    first = client.get("/api/sessions?limit=1", headers=auth_headers()).json()["data"]
+    second = client.get(
+        f"/api/sessions?limit=1&cursor={first['next_cursor']}", headers=auth_headers()
+    ).json()["data"]
+
+    assert first["totals"]["session_count"] == 2
+    assert len(first["items"]) == len(second["items"]) == 1
+    assert first["items"][0]["session_id"] != second["items"][0]["session_id"]
+    assert second["next_cursor"] is None
+    session_id = first["items"][0]["session_id"]
+    for tab in ("overview", "activity", "raw", "triggers"):
+        detail = client.get(
+            f"/api/sessions/{session_id}?tab={tab}", headers=auth_headers()
+        )
+        assert detail.status_code == 200
+        assert detail.json()["data"]["tab"] == tab
+        assert detail.json()["data"]["session_id"] == session_id
+
+
+def test_Account_observability_routes_return_their_contract_shapes(
+    app_factory, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from cabal.webapi.routers import account as account_router
+
+    monkeypatch.setattr(
+        account_router,
+        "account_payload",
+        lambda: {"authenticated": False, "identity": None, "credential_sources": []},
+    )
+    monkeypatch.setattr(
+        account_router,
+        "doctor_payload",
+        lambda _project: {
+            "findings": [],
+            "counts": {"error": 0, "warning": 0},
+            "from_cache": False,
+            "checked_target": "fixture",
+            "project": None,
+        },
+    )
+    monkeypatch.setattr(
+        account_router,
+        "models_payload",
+        lambda: {
+            "assignments": [],
+            "assignable_models": ["haiku", "sonnet", "opus"],
+            "counts": {"total": 0, "invalid": 0, "out_of_sync": 0},
+        },
+    )
+    monkeypatch.setattr(
+        account_router,
+        "claude_info_payload",
+        lambda _project: {"documents": [], "runtime": {"python": "3.14", "platform": "test", "project": None}},
+    )
+    _app, client = build_client(app_factory)
+
+    expected = {
+        "/api/account": {"authenticated", "identity", "credential_sources"},
+        "/api/doctor": {"findings", "counts", "from_cache", "checked_target", "project"},
+        "/api/models": {"assignments", "assignable_models", "counts"},
+        "/api/claude-info": {"documents", "runtime"},
+    }
+    for path, keys in expected.items():
+        response = client.get(path, headers=auth_headers())
+        assert response.status_code == 200, path
+        assert keys <= set(response.json()["data"]), path
+
+
+def test_Knowledge_routes_report_honest_missing_and_semantic_unavailable_states(
+    app_factory, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from cabal.okf import semantic
+
+    project = tmp_path / "knowledge-empty"
+    project.mkdir()
+    _app, client = build_client(app_factory, project=project)
+
+    expected_keys = {
+        "/api/knowledge": {"available", "counts", "semantic_available", "digest"},
+        "/api/knowledge/graph": {"available", "nodes", "edges", "next_cursor"},
+        "/api/knowledge/search?q=fixture": {"available", "status", "results"},
+        "/api/knowledge/context-pack?q=fixture": {"available", "status", "pack"},
+        "/api/knowledge/preflight?task=fixture": {"task", "report"},
+        "/api/knowledge/usage": {"entries", "usage_path", "total_entries"},
+    }
+    for path, keys in expected_keys.items():
+        response = client.get(path, headers=auth_headers())
+        assert response.status_code == 200, path
+        assert keys <= set(response.json()["data"]), path
+
+    index = project / ".cabal" / "okf" / "index.sqlite"
+    index.parent.mkdir(parents=True)
+    index.touch()
+    monkeypatch.setattr(semantic, "semantic_available", lambda: False)
+    # knowledge_service imported the callable directly; patch that binding too.
+    from cabal.webapi import knowledge_service
+
+    monkeypatch.setattr(knowledge_service, "semantic_available", lambda: False)
+    semantic_response = client.get(
+        "/api/knowledge/search?q=fixture&mode=semantic", headers=auth_headers()
+    )
+
+    assert semantic_response.status_code == 200
+    semantic_data = semantic_response.json()["data"]
+    assert semantic_data["available"] is False
+    assert semantic_data["status"] == "semantic_unavailable"
+    assert semantic_data["results"] == []
+
+
+def test_Mcp_and_service_routes_return_operational_contract_shapes(
+    app_factory, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from cabal.webapi.routers import mcp as mcp_router
+    from cabal.webapi.routers import services as services_router
+
+    server = {
+        "name": "fixture-mcp",
+        "scopes": ["user"],
+        "status": "connected",
+        "active": True,
+        "pending": False,
+        "command": "fixture-mcp",
+        "env_required": [],
+        "env_status": [],
+        "env_present": True,
+        "is_plugin": False,
+        "plugin_id": None,
+        "plugin_enabled": None,
+        "plugin_scope": None,
+        "removable_scopes": ["user"],
+        "actions_available": ["disable"],
+        "global_action_label": "Activate globally",
+    }
+    monkeypatch.setattr(
+        mcp_router,
+        "list_mcp_payload",
+        lambda _state: {
+            "servers": [server],
+            "counts": {"total": 1, "connected": 1, "pending": 0, "inactive": 0, "error": 0},
+            "project_dir": None,
+        },
+    )
+    monkeypatch.setattr(
+        mcp_router,
+        "mcp_row_payload",
+        lambda _state, _name: {"server": server, "project_dir": None},
+    )
+    monkeypatch.setattr(mcp_router, "mcp_digest", lambda _state, _name=None: "sha256:mcp")
+    service = {
+        "key": "fixture",
+        "label": "Fixture service",
+        "state": "stopped",
+        "prereqs": [{"key": "python", "ok": True, "message": "ready"}],
+        "log_stream_available": True,
+    }
+    monkeypatch.setattr(
+        services_router,
+        "services_payload",
+        lambda: {
+            "services": [service],
+            "counts": {"total": 1, "running": 0, "stopped": 1, "not_set_up": 0, "blocked": 0},
+        },
+    )
+    monkeypatch.setattr(services_router, "services_digest", lambda _key=None: "sha256:services")
+    _app, client = build_client(app_factory)
+
+    mcp_list = client.get("/api/mcp", headers=auth_headers())
+    mcp_status = client.get("/api/mcp/fixture-mcp/status", headers=auth_headers())
+    services = client.get("/api/services", headers=auth_headers())
+
+    assert mcp_list.status_code == mcp_status.status_code == services.status_code == 200
+    assert mcp_list.json()["data"]["servers"][0]["name"] == "fixture-mcp"
+    assert mcp_status.json()["data"]["server"]["status"] == "connected"
+    assert services.json()["data"]["services"][0]["prereqs"][0]["ok"] is True
+
+
+def test_Provider_and_init_routes_cover_login_states_repos_templates_and_plan(
+    app_factory, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from cabal.init_project_service import LocalTemplateRef
+    from cabal.webapi.routers import projects as projects_router
+
+    monkeypatch.setattr(projects_router.gh_accounts, "list_accounts", lambda *_args: [])
+    monkeypatch.setattr(projects_router, "gh_status", lambda: {"available": True})
+    monkeypatch.setattr(
+        projects_router,
+        "_list_repos",
+        lambda q=None, limit=100: [
+            {
+                "name": "prompt-lib",
+                "owner": "fixture",
+                "full_name": "fixture/prompt-lib",
+                "visibility": "private",
+                "updated_at": "2026-07-19T10:00:00Z",
+                "url": "https://github.com/fixture/prompt-lib",
+                "description": q or "fixture",
+            }
+        ][:limit],
+    )
+    template_file = tmp_path / "fixture-template.md"
+    template_file.write_text("# Fixture project\n", encoding="utf-8")
+    template_ref = LocalTemplateRef(stem="fixture", path=template_file)
+    monkeypatch.setattr(projects_router, "_local_template_refs", lambda: [template_ref])
+    monkeypatch.setattr(projects_router, "list_user_templates", lambda: [])
+    _app, client = build_client(app_factory)
+
+    for state in ("idle", "code_issued", "polling", "authenticated", "expired"):
+        _app.state.provider_login_session = None if state == "idle" else {
+            "state": state,
+            "user_code": "ABCD-1234",
+            "verification_uri": "https://github.com/login/device",
+            "expires_at": 12345,
+            "scopes": ["repo"],
+            "message": state,
+        }
+        response = client.get("/api/provider", headers=auth_headers())
+        assert response.status_code == 200
+        assert response.json()["data"]["login"]["state"] == state
+
+    repos = client.get("/api/provider/repos?q=prompt&limit=10", headers=auth_headers())
+    templates = client.get("/api/init/templates", headers=auth_headers())
+    plan = client.get(
+        "/api/init/plan",
+        params={"dest": str(tmp_path), "name": "new-project", "template": "local:fixture"},
+        headers=auth_headers(),
+    )
+
+    assert repos.status_code == templates.status_code == plan.status_code == 200
+    assert repos.json()["data"]["repos"][0]["full_name"] == "fixture/prompt-lib"
+    assert templates.json()["data"]["local"][0]["id"] == "local:fixture"
+    plan_data = plan.json()["data"]
+    assert plan_data["name_valid"] is True
+    assert plan_data["destination"] == str(tmp_path / "new-project")
+    assert any(row["rel_path"] == "CLAUDE.md" for row in plan_data["staged_files"])
+
+
+def test_Security_environment_and_git_routes_return_contract_shapes(
+    app_factory, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from cabal.webapi.routers import environment as environment_router
+    from cabal.webapi.routers import security_scan as security_router
+
+    monkeypatch.setattr(
+        security_router,
+        "_scan_payload",
+        lambda project, refresh=False: (
+            {
+                "project": str(project),
+                "scanned_at": "2026-07-19T10:00:00Z",
+                "cached": not refresh,
+                "ecosystems": ["python"],
+                "findings": [],
+                "outcomes": [],
+                "notices": [],
+                "summary": {"total": 0, "fixable": 0, "by_severity": {}, "by_ecosystem": {}},
+            },
+            not refresh,
+        ),
+    )
+    monkeypatch.setattr(security_router, "security_digest", lambda _project: "sha256:security")
+    monkeypatch.setattr(
+        environment_router,
+        "_curated_entries",
+        lambda _q=None: [
+            {
+                "name": "PROJECTS_PATH",
+                "value_redacted": str(tmp_path),
+                "default": "",
+                "is_path": True,
+                "source": "default",
+                "editable": True,
+                "description": "Projects root",
+            }
+        ],
+    )
+    monkeypatch.setattr(environment_router, "env_digest", lambda: "sha256:env")
+    monkeypatch.setattr(
+        environment_router,
+        "_identity_payload",
+        lambda _state: {"repo_root": str(tmp_path), "identities": []},
+    )
+    monkeypatch.setattr(environment_router, "identity_digest", lambda _state: "sha256:identity")
+    monkeypatch.setattr(
+        environment_router,
+        "_policy_payload",
+        lambda: {"policy": {}, "source": "fixture", "defaults": {}},
+    )
+    monkeypatch.setattr(environment_router, "policy_digest", lambda: "sha256:policy")
+    _app, client = build_client(app_factory, project=tmp_path)
+
+    expected = {
+        "/api/security/scan": {"project", "findings", "summary", "notices"},
+        "/api/env": {"scope", "entries", "count", "editable_count", "platform"},
+        "/api/git/identity": {"repo_root", "identities"},
+        "/api/git/policy": {"policy", "source", "defaults"},
+    }
+    for path, keys in expected.items():
+        response = client.get(path, headers=auth_headers())
+        assert response.status_code == 200, path
+        assert keys <= set(response.json()["data"]), path

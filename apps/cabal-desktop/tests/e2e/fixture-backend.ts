@@ -18,6 +18,7 @@ export interface FixtureBackend {
   readonly port: number;
   readonly token: string;
   readonly projectDir: string;
+  readonly startupMs: number;
   stop: () => Promise<void>;
   close: () => Promise<void>;
 }
@@ -27,6 +28,7 @@ export function fixtureHandshakePath(): string {
 }
 
 export async function launchFixtureBackend(): Promise<FixtureBackend> {
+  const startupStartedAt = performance.now();
   await rm(HANDSHAKE_FILE, { force: true });
   const projectDir = await mkdtemp(join(tmpdir(), "cabal-e2e-project-"));
   await writeFile(
@@ -77,6 +79,7 @@ export async function launchFixtureBackend(): Promise<FixtureBackend> {
       port: handshake.port,
       token: handshake.token,
       projectDir,
+      startupMs: performance.now() - startupStartedAt,
       stop,
       close: async () => {
         await stop();

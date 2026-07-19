@@ -154,9 +154,12 @@ def _looks_secret_key(key: str) -> bool:
 def _looks_secret_dict_key(key: str) -> bool:
     """Narrower than the URL-param check: envelope fields like "code" and "key" are data."""
     normalized = key.lower().replace("-", "_")
-    return normalized in {"authorization", "signature"} or any(
-        marker in normalized for marker in ("token", "secret", "password", "api_key", "apikey")
-    )
+    if normalized in {"authorization", "signature"}:
+        return True
+    # Credential variable names end in the credential kind (GITHUB_TOKEN,
+    # clientSecret, DB_PASSWORD). Metric keys such as tokens_in,
+    # input_tokens, and token_count are ordinary numeric API data.
+    return normalized.endswith(("token", "secret", "password", "api_key", "apikey"))
 
 
 def _redact_urls_in_text(text: str) -> str:

@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Python ≥3.11 with `uv` (backend runs from `setup/`)
+- Python ≥3.14 with `uv` (backend runs from `setup/`)
 - Node LTS with **pnpm** (frontend; never npm/yarn)
 - Rust stable + Tauri v2 CLI (desktop shell only — not needed for browser-mode dev)
 - Windows: MSVC Build Tools (Tauri); POSIX: webkit2gtk per Tauri docs

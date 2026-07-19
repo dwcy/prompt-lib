@@ -74,6 +74,62 @@ function installSessionHandlers(onSort?: (sort: string) => void) {
 }
 
 describe("SessionsModule", () => {
+  it("keeps a thousand-session dataset bounded to one server page", async () => {
+    const requestedCursors: Array<string | null> = [];
+    server.use(
+      http.get("/api/sessions", ({ request }) => {
+        const cursor = new URL(request.url).searchParams.get("cursor");
+        requestedCursors.push(cursor);
+        const offset = cursor === null ? 0 : Number(cursor);
+        const items = Array.from({ length: 50 }, (_, index) =>
+          buildSession({
+            session_id: `session-${offset + index}`,
+            title: `Bounded session ${offset + index}`,
+          }),
+        );
+        return HttpResponse.json(
+          wrapEnvelope({
+            totals: {
+              session_count: 1_000,
+              tokens_in: 10_000,
+              tokens_out: 5_000,
+              cache_read_tokens: 0,
+              cache_write_tokens: 0,
+              cost_usd: 0,
+              duration_seconds: 0,
+              files_written: 0,
+              agent_count: 0,
+            },
+            items,
+            next_cursor: offset < 950 ? String(offset + 50) : null,
+            page_size: 50,
+            sort: "date_desc",
+            project: null,
+          }),
+        );
+      }),
+      http.get("/api/sessions/:sessionId", ({ params }) =>
+        HttpResponse.json(
+          wrapEnvelope({
+            session_id: String(params.sessionId),
+            tab: "overview",
+            payload: { models: [] },
+            entry_count: 0,
+          }),
+        ),
+      ),
+    );
+    const { user } = renderModule();
+
+    expect(await screen.findByRole("button", { name: /Bounded session 0/ })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /Bounded session/ })).toHaveLength(50);
+    await user.click(screen.getByRole("button", { name: "Next" }));
+
+    expect(await screen.findByRole("button", { name: /Bounded session 50/ })).toBeInTheDocument();
+    expect(requestedCursors).toEqual([null, "50"]);
+    expect(screen.queryByRole("button", { name: /Bounded session 0/ })).not.toBeInTheDocument();
+  });
+
   it("exposes active lenses and requests the selected comparison sort", async () => {
     const requestedSorts: string[] = [];
     installSessionHandlers((sort) => requestedSorts.push(sort));

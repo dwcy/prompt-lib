@@ -4,6 +4,7 @@ import { userEvent } from "@testing-library/user-event";
 import { HttpResponse, http } from "msw";
 import type { ReactNode } from "react";
 import { describe, expect, it } from "vitest";
+import { LogStream } from "@/components/LogStream";
 import { McpModule } from "@/modules/mcp/McpModule";
 import { ServicesModule } from "@/modules/services/ServicesModule";
 import { buildConfirmationTicket, buildEffectPreview, wrapEnvelope } from "./msw/fixtures";
@@ -36,6 +37,24 @@ const MULTI_SCOPE_SERVER = {
 };
 
 describe("MCP and service workflows", () => {
+  it("renders service output and an explicit replay gap", () => {
+    render(
+      <LogStream
+        connectionState="open"
+        events={[
+          { event: "output", id: 4, data: { line: "service ready", seq: 4 } },
+          { event: "gap", id: null, data: { dropped: 3 } },
+          { event: "output", id: 8, data: { line: "request handled", seq: 8 } },
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("service ready")).toBeInTheDocument();
+    expect(screen.getByText("request handled")).toBeInTheDocument();
+    expect(screen.getByText("3 lines dropped during reconnect")).toBeInTheDocument();
+    expect(screen.getByText("open")).toBeInTheDocument();
+  });
+
   it("maps a multi-scope connector to one prepared ownership-layer removal", async () => {
     let preparedScope: unknown = null;
     server.use(

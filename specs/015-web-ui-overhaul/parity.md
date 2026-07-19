@@ -1,16 +1,18 @@
 # Cabal Desktop Parity Record
 
 **Feature**: 015-web-ui-overhaul
-**Last updated**: 2026-07-13
-**Status**: Implementation walkthrough and browser smoke complete; interactive safety and performance checks deferred
+**Last updated**: 2026-07-19
+**Status**: Complete — module parity, safety, performance, regression, and Windows packaging verified
 
 ## Evidence
 
 - The frontend registry exposes all 22 required modules with concrete components, grouped navigation, and a searchable keyboard-navigable workspace map.
 - The fixture-backed Playwright smoke passes across all 22 modules, including a guarded prepare/execute action, the 390 x 844 responsive frame, and backend disconnect/reconnect signaling.
-- The production frontend build completes, with the initial application chunk reduced to about 223 kB through module-level lazy loading.
+- The production frontend build completes with module-level lazy loading; the initial application chunk is 240.58 kB (74.50 kB gzip).
 - The packaged backend sidecar starts, writes a `cabal-handshake.v1` handshake, reports healthy state for all 22 modules, and shuts down cleanly.
-- Browser-mode development is live at `http://localhost:5173/` with Vite hot reload and the authenticated backend proxy.
+- Browser-mode development starts at `http://localhost:5173/` with Vite hot reload and the authenticated backend proxy.
+- `pnpm tauri dev --no-watch` compiled and launched `target/debug/cabal-desktop.exe` against the configured Vite URL, and its verification process tree was shut down cleanly.
+- The Windows production build created `Cabal_0.1.0_x64-setup.exe` through the configured NSIS bundle path with the rebuilt 20.0 MiB backend sidecar.
 - The retired read-only implementation, launchers, tests, PyInstaller entries, and README references have been removed.
 
 ## Module Walkthrough
@@ -40,13 +42,29 @@
 | 21 | Codex Parity | Deployment, scaffold blueprint, and conversion audit | Complete |
 | 22 | Diagnostics & Backend Health | Signal summary, source health, audit history, and live tail | Complete |
 
-## Pending Verification
+## Safety Verification
 
-The following checks belong to the separately deferred verification step and are not recorded as passing:
+- Stale precondition digests are rejected by the config integration tests before a deploy can execute.
+- Security-fix integration coverage asserts that the reviewed preview command is byte-for-byte identical to the command handed to execution, with the action flowing through the shared audit/job path.
+- Redaction contracts cover API envelopes and job streams. The verification pass also found and fixed over-redaction of numeric metrics such as `tokens_in`, `input_tokens`, and `token_count`, while retaining suffix-based credential redaction.
+- Destructive action contracts remain prepare-first, digest-bound, and fail closed when preview validation fails.
 
-- T098 manual stale-digest refusal, exact-command confirmation/audit, and seeded-token redaction checks.
-- T099 measured warm-start and 1,000-row/1,000-node interaction budgets.
-- T102 full backend, frontend, end-to-end, and existing TUI test suites.
-- T104 interactive Tauri development-shell walkthrough.
+## Performance Results
 
-The production Tauri bundle and sidecar packaging path have been built successfully; this does not replace the pending interactive and automated checks above.
+Measured by `tests/e2e/performance.e2e.ts` on Windows with Chromium and the real fixture backend:
+
+| Budget | Requirement | Measured | Result |
+|--------|-------------|----------|--------|
+| Backend warm start | < 3,000 ms | 940.7 ms | Pass |
+| 1,000-session interaction | < 200 ms | 30.3 ms | Pass |
+| 1,000-node graph interaction | < 200 ms | 18.9 ms | Pass |
+
+## Regression Results
+
+- `uv run pytest`: 1,375 passed, including contract, unit, integration, hooks, and the existing TUI suite.
+- `pnpm test`: 51 passed across 17 Vitest files.
+- `pnpm test:e2e`: 2 passed, covering the performance fixture and the complete 22-module workspace smoke.
+- `pnpm run build`: production TypeScript and Vite build passed.
+- Backend sidecar and `pnpm tauri build`: passed; Windows NSIS installer produced.
+
+The in-app interactive browser was unavailable in this environment, so the browser surface was verified through the repository's Chromium Playwright suite and HTTP-backed development flow. The native Tauri development executable itself was launched and its packaging path was independently built.
