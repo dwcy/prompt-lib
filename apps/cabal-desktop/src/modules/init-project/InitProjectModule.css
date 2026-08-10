@@ -1,0 +1,505 @@
+/* New Project Wizard console module: assembly runway header (target/template/files/handoff
+   progress), destination + template-staging + handoff cards, template selection grid, staged-file
+   groups with switch-style row toggles, and the MCP JSON editor — restyled to the console token
+   system established by LocalConfigModule.css / ProviderModule.css. Token-only colors; DOM
+   structure and behavior are unchanged from the pre-redesign markup, except the boolean toggles
+   are now rendered as switches via a checkbox + ::before knob (no extra DOM, no attribute change). */
+
+.init-workbench {
+  display: grid;
+  grid-template-columns: minmax(20rem, 1fr) minmax(22rem, 1.15fr) minmax(20rem, 0.85fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.init-eyebrow {
+  display: block;
+  color: var(--muted-2);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+/* ── Assembly runway header ─────────────────────────────────────────────── */
+
+.init-build-runway {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  grid-column: 1 / -1;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 10%, transparent), transparent 55%),
+    var(--surface-1);
+}
+
+.init-build-runway > div {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.init-build-runway > div > strong {
+  display: block;
+  overflow: hidden;
+  margin-top: var(--space-1);
+  color: var(--fg-soft);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-md);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.init-build-runway__steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.init-build-runway__steps li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-sm);
+  background-color: var(--surface-2);
+}
+
+.init-build-runway__steps li > span {
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+.init-build-runway__steps li > strong {
+  overflow: hidden;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.init-build-runway__steps li.is-ready {
+  border-color: color-mix(in srgb, var(--status-ok) 45%, var(--border));
+}
+
+.init-build-runway__steps li.is-ready > span {
+  color: var(--status-ok);
+}
+
+/* ── Shared panel chrome: destination / template staging / handoff ─────────── */
+
+.init-destination-panel,
+.init-template-panel,
+.init-handoff-panel {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  background-color: var(--surface-1);
+}
+
+.init-panel-heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.init-panel-heading h2 {
+  margin: 0;
+  font-size: var(--fs-lg);
+  font-weight: 600;
+}
+
+/* ── Destination panel ───────────────────────────────────────────────────── */
+
+.init-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.init-field > span {
+  color: var(--muted-2);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.init-field input {
+  width: 100%;
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-md);
+  background-color: var(--surface-2);
+  color: var(--fg);
+  font-size: var(--fs-base);
+}
+
+.init-field input::placeholder {
+  color: var(--muted);
+}
+
+.init-path-row {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.init-path-row input {
+  flex: 1 1 auto;
+}
+
+.init-path-row button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.init-error {
+  margin: 0;
+  color: var(--status-danger);
+  font-size: var(--fs-sm);
+}
+
+.init-target-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-md);
+  background-color: var(--surface-2);
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.init-target-card code {
+  overflow: hidden;
+  width: 100%;
+  color: var(--fg-soft);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Template staging panel ──────────────────────────────────────────────── */
+
+.init-template-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: var(--space-3);
+}
+
+.init-template-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-md);
+  background-color: var(--surface-2);
+  text-align: left;
+}
+
+.init-template-card:hover:not(:disabled):not(.init-template-card--selected) {
+  background-color: var(--surface-3);
+}
+
+.init-template-card > span:first-child {
+  overflow: hidden;
+  width: 100%;
+  color: var(--fg);
+  font-weight: 600;
+  font-size: var(--fs-base);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.init-template-card small {
+  overflow: hidden;
+  width: 100%;
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.init-template-card--selected {
+  border-color: var(--accent-border);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface-2));
+}
+
+.init-stage-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--divider);
+  border-radius: var(--corner-md);
+  background-color: var(--surface-2);
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+.init-file-stage {
+  display: flex;
+  max-height: 24rem;
+  flex-direction: column;
+  gap: var(--space-3);
+  overflow: auto;
+}
+
+.init-file-group {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--divider);
+  border-radius: var(--corner-md);
+  overflow: hidden;
+}
+
+.init-file-group > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background-color: var(--surface-2);
+  border-bottom: 1px solid var(--divider-faint);
+}
+
+.init-file-group > header > strong {
+  color: var(--muted-2);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.init-file-group > header > span {
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+.init-file-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background-color: var(--surface-1);
+  border-top: 1px solid var(--divider-faint);
+  cursor: pointer;
+}
+
+.init-file-group .init-file-row:first-child {
+  border-top: none;
+}
+
+.init-file-row--on {
+  background-color: color-mix(in srgb, var(--accent) 8%, var(--surface-1));
+}
+
+.init-file-row__path {
+  overflow: hidden;
+  color: var(--fg-soft);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.init-file-row__meta {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Handoff panel ────────────────────────────────────────────────────────── */
+
+.init-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  cursor: pointer;
+}
+
+.init-toggle-row span {
+  color: var(--fg-soft);
+  font-size: var(--fs-sm);
+}
+
+.init-mcp-stage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.init-mcp-stage > span {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.init-mcp-stage small {
+  color: var(--muted-2);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.init-mcp-stage code {
+  overflow: hidden;
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.init-mcp-editor {
+  min-height: 8rem;
+  padding: var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-md);
+  background-color: var(--surface-2);
+  color: var(--fg);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-sm);
+  resize: vertical;
+}
+
+.init-mcp-editor[aria-invalid="true"] {
+  border-color: color-mix(in srgb, var(--status-danger) 55%, var(--border-strong));
+}
+
+.init-warning-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border: 1px solid color-mix(in srgb, var(--status-warning) 40%, var(--border));
+  border-radius: var(--corner-md);
+  background-color: color-mix(in srgb, var(--status-warning) 10%, transparent);
+}
+
+.init-warning-stack p {
+  margin: 0;
+  color: var(--status-warning);
+  font-size: var(--fs-sm);
+}
+
+.init-primary-action {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--corner-md);
+  background: var(--accent-bg-gradient);
+  color: #ffffff;
+  font-size: var(--fs-base);
+  font-weight: 500;
+}
+
+.init-primary-action:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.init-primary-action:disabled {
+  border-color: var(--border-strong);
+  background: var(--surface-2);
+  color: var(--muted);
+}
+
+/* ── Toggle / file switches (role stays a native checkbox; ::before is the knob) ── */
+
+.init-toggle-row input[type="checkbox"],
+.init-file-row__check {
+  position: relative;
+  flex-shrink: 0;
+  width: 30px;
+  height: 17px;
+  margin: 0;
+  padding: 0;
+  appearance: none;
+  background-color: var(--surface-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-full);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.init-toggle-row input[type="checkbox"]::before,
+.init-file-row__check::before {
+  content: "";
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  width: 13px;
+  height: 13px;
+  background-color: var(--muted);
+  border-radius: var(--corner-full);
+  transition:
+    transform var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard);
+}
+
+.init-toggle-row input[type="checkbox"]:checked,
+.init-file-row__check:checked {
+  background: var(--accent-bg-gradient);
+  border-color: var(--accent-border);
+}
+
+.init-toggle-row input[type="checkbox"]:checked::before,
+.init-file-row__check:checked::before {
+  background-color: var(--accent);
+  transform: translateX(13px);
+}
+
+.init-toggle-row input[type="checkbox"]:disabled,
+.init-file-row__check:disabled {
+  cursor: default;
+  opacity: var(--opacity-disabled);
+}
+
+/* ── Narrow layouts ──────────────────────────────────────────────────────── */
+
+@media (max-width: 1200px) {
+  .init-workbench {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .init-build-runway {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .init-file-row {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .init-file-row__meta {
+    grid-column: 2;
+  }
+}

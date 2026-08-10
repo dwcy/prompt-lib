@@ -13,6 +13,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { JobPane } from "@/components/JobPane";
 import { StatePill } from "@/components/StatePill";
 import { useAction } from "@/hooks/useAction";
+import "./InitProjectModule.css";
 
 const DEFAULT_PARENT = "C:\\projects";
 const DEFAULT_MCP_JSON = '{\n  "mcpServers": {}\n}';
@@ -115,10 +116,10 @@ export function InitProjectModule() {
     <div className="init-workbench">
       <section className="init-build-runway">
         <div>
-          <span className="us3-eyebrow">Project assembly</span>
+          <span className="init-eyebrow select-none">Project assembly</span>
           <strong>{planQuery.data?.destination ?? `${parent}\\${name}`}</strong>
         </div>
-        <ol aria-label="Project creation workflow">
+        <ol className="init-build-runway__steps" aria-label="Project creation workflow">
           <li className={planQuery.data?.name_valid ? "is-ready" : ""}>
             <span>01</span>
             <strong>Target</strong>
@@ -139,11 +140,11 @@ export function InitProjectModule() {
       </section>
 
       <section className="init-destination-panel">
-        <div className="module-section-heading">
-          <span className="module-eyebrow select-none">Destination</span>
+        <div className="init-panel-heading">
+          <span className="init-eyebrow select-none">Destination</span>
           <h2>Project target</h2>
         </div>
-        <label className="provider-field">
+        <label className="init-field">
           <span>Parent folder</span>
           <div className="init-path-row">
             <input
@@ -159,8 +160,8 @@ export function InitProjectModule() {
             </button>
           </div>
         </label>
-        {browseError !== null ? <p className="inline-error">{browseError}</p> : null}
-        <label className="provider-field">
+        {browseError !== null ? <p className="init-error">{browseError}</p> : null}
+        <label className="init-field">
           <span>Project name</span>
           <input
             type="text"
@@ -182,8 +183,8 @@ export function InitProjectModule() {
       </section>
 
       <section className="init-template-panel">
-        <div className="module-section-heading">
-          <span className="module-eyebrow select-none">Template staging</span>
+        <div className="init-panel-heading">
+          <span className="init-eyebrow select-none">Template staging</span>
           <h2>{selectedTemplate?.label ?? "Choose a template"}</h2>
         </div>
         {templatesQuery.isPending ? (
@@ -249,8 +250,8 @@ export function InitProjectModule() {
       </section>
 
       <section className="init-handoff-panel">
-        <div className="module-section-heading">
-          <span className="module-eyebrow select-none">Handoff</span>
+        <div className="init-panel-heading">
+          <span className="init-eyebrow select-none">Handoff</span>
           <h2>Apply and switch</h2>
         </div>
         <label className="init-toggle-row">
@@ -285,7 +286,7 @@ export function InitProjectModule() {
               spellCheck={false}
             />
             {mcpJsonError !== null ? (
-              <p id="init-mcp-error" className="inline-error" role="alert">
+              <p id="init-mcp-error" className="init-error" role="alert">
                 {mcpJsonError}
               </p>
             ) : null}
@@ -300,7 +301,7 @@ export function InitProjectModule() {
         ) : null}
         <button
           type="button"
-          className="provider-primary-action"
+          className="init-primary-action"
           onClick={prepareApply}
           disabled={
             templateId === null ||
