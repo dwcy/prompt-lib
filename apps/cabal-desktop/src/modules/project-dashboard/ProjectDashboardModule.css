@@ -1,0 +1,149 @@
+/* Project Health console layout: 2x2 grid of section health cards (git/github/supabase/vercel)
+   per the cabal-console mock's isProject section. Co-located with ProjectDashboardModule.tsx. */
+
+.project-health {
+  display: grid;
+  padding: var(--space-5) var(--space-6);
+}
+
+.project-health__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
+}
+
+/* ─── Health card ──────────────────────────────────────────────────────────── */
+
+.health-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  background-color: var(--surface-1);
+}
+
+.health-card[data-tone="warning"] {
+  border-color: color-mix(in srgb, var(--status-warning) 35%, var(--border));
+}
+
+.health-card[data-tone="danger"] {
+  border-color: color-mix(in srgb, var(--status-danger) 35%, var(--border));
+}
+
+.health-card__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.health-card__identity {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.health-card__identity h3 {
+  margin: 0;
+  font-size: var(--fs-md);
+  font-weight: 600;
+}
+
+.health-card__identity p {
+  margin: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.health-card__summary--error {
+  color: var(--status-danger);
+}
+
+.health-card__pills {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+.health-card__pills button {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--fs-xs);
+}
+
+/* ─── Fact rows ────────────────────────────────────────────────────────────── */
+
+.health-card__facts {
+  display: grid;
+  margin-top: var(--space-3);
+  font-size: var(--fs-sm);
+}
+
+.health-card__fact {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--divider);
+}
+
+.health-card__fact:last-child {
+  border-bottom: none;
+}
+
+.health-card__fact-label {
+  color: var(--muted);
+}
+
+.health-card__fact-value {
+  overflow-wrap: anywhere;
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+/* ─── Links ────────────────────────────────────────────────────────────────── */
+
+.health-card__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin-top: var(--space-2);
+}
+
+.health-card__links a {
+  overflow-wrap: anywhere;
+  color: var(--status-info);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+/* ─── Hint banner ──────────────────────────────────────────────────────────── */
+
+.health-card__hint {
+  margin-top: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--corner-md);
+  background-color: color-mix(in srgb, var(--status-warning) 10%, var(--surface-3));
+  color: var(--status-warning);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+}
+
+/* ─── Narrow layout (FR-014) ──────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .project-health__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .health-card__fact {
+    grid-template-columns: 1fr;
+    gap: var(--space-1);
+  }
+}
