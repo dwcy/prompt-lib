@@ -1,0 +1,550 @@
+/* Codex Parity console module: command header, parity-runway progress strip, deploy-tree section
+   (shared DeployTreePanel from config-deploy), local-scaffold blueprint cards, and the conversion
+   audit pipeline diagram + ledger table — restyled to the console token system established by
+   ConfigDeployModule.css (deploy tree / apply pattern) and LocalConfigModule.css (scaffold + toggle
+   pattern). Token-only colors; DOM structure and behavior are unchanged from the pre-redesign
+   markup — only classNames/CSS changed. */
+
+.codex {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+/* ── Command header ─────────────────────────────────────────────────────── */
+
+.codex__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  background-color: var(--surface-1);
+}
+
+.codex__header h1 {
+  margin: 0;
+  font-size: var(--fs-xl);
+  font-weight: 600;
+}
+
+.codex__header p {
+  margin: 4px 0 0;
+  max-width: 46rem;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+}
+
+/* ── Parity runway strip ─────────────────────────────────────────────────── */
+
+.codex__runway {
+  display: grid;
+  grid-template-columns: minmax(14rem, 0.6fr) minmax(28rem, 1.4fr);
+  align-items: center;
+  gap: var(--space-5);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 10%, transparent), transparent 55%),
+    var(--surface-1);
+}
+
+.codex__runway-status {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.codex__runway-status strong {
+  font-size: var(--fs-lg);
+  line-height: var(--lh-lg);
+}
+
+.codex__eyebrow {
+  display: block;
+  color: var(--muted-2);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.codex__runway-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--corner-md);
+  background-color: var(--border);
+  list-style: none;
+}
+
+.codex__runway-step {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  background-color: var(--surface-2);
+}
+
+.codex__runway-step-index {
+  color: var(--muted-2);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tracking-wide);
+}
+
+.codex__runway-step strong {
+  font-size: var(--fs-sm);
+}
+
+.codex__runway-step-meta {
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+
+.codex__runway-step.is-complete {
+  box-shadow: inset 0 -2px var(--status-ok);
+}
+
+.codex__runway-step.is-current {
+  box-shadow: inset 0 -2px var(--status-warning);
+}
+
+/* ── Section card shell (deploy tree / local scaffold / conversion audit) ── */
+
+.codex__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  background-color: var(--surface-1);
+}
+
+.codex__section > h2,
+.codex__section-title {
+  margin: 0;
+  font-size: var(--fs-md);
+  font-weight: 600;
+}
+
+.codex__section-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.codex__section-header p {
+  margin: var(--space-1) 0 0;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.codex__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--muted-2);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.codex__field select {
+  padding: 8px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-md);
+  background-color: var(--surface-2);
+  color: var(--fg-soft);
+  font-size: var(--fs-base);
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+/* ── Local scaffold blueprint list ──────────────────────────────────────── */
+
+.codex__scaffold-list {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.codex__scaffold-list::before {
+  content: "";
+  position: absolute;
+  top: 1.5rem;
+  bottom: 1.5rem;
+  left: 1.5rem;
+  width: 1px;
+  background-color: var(--border-strong);
+}
+
+.codex__scaffold-stage {
+  position: relative;
+  display: grid;
+  grid-template-columns: 3rem minmax(0, 1fr);
+  gap: var(--space-3);
+}
+
+.codex__scaffold-stage-number {
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border: 1px solid var(--accent-border);
+  border-radius: var(--corner-md);
+  background-color: var(--surface-1);
+  color: var(--accent);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+.codex__scaffold-card {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  background-color: var(--surface-2);
+}
+
+.codex__scaffold-card-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.codex__scaffold-card-header h3 {
+  margin: 0;
+  font-size: var(--fs-base);
+  font-weight: 600;
+}
+
+.codex__scaffold-card-header p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.codex__scaffold-items {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--divider);
+  border-radius: var(--corner-md);
+  list-style: none;
+  overflow: hidden;
+}
+
+.codex__scaffold-items li {
+  border-top: 1px solid var(--divider-faint);
+}
+
+.codex__scaffold-items li:first-child {
+  border-top: none;
+}
+
+.codex__scaffold-item {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background-color: var(--surface-1);
+  cursor: pointer;
+}
+
+.codex__scaffold-item input[type="checkbox"] {
+  accent-color: var(--accent);
+}
+
+.codex__scaffold-item input[type="checkbox"]:disabled {
+  opacity: var(--opacity-disabled);
+}
+
+.codex__scaffold-item-path {
+  overflow: hidden;
+  flex: 1 1 auto;
+  color: var(--fg-soft);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.codex__scaffold-apply-btn {
+  align-self: flex-start;
+  padding: 6px 16px;
+  border: 1px solid var(--accent-border);
+  border-radius: var(--corner-md);
+  background: var(--accent-bg-gradient);
+  color: #ffffff;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.codex__scaffold-apply-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.codex__scaffold-apply-btn:disabled {
+  border-color: var(--border-strong);
+  background: var(--surface-2);
+  color: var(--muted);
+  cursor: default;
+  opacity: var(--opacity-disabled);
+}
+
+/* ── Conversion audit: filter bar ───────────────────────────────────────── */
+
+.codex__audit-header {
+  align-items: flex-start;
+}
+
+.codex__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.codex__filter-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 2rem;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-md);
+  background-color: var(--surface-2);
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  cursor: pointer;
+  user-select: none;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.codex__filter-btn:hover {
+  color: var(--fg-soft);
+}
+
+.codex__filter-btn.is-active {
+  border-color: var(--accent-border);
+  background-color: var(--accent-bg);
+  color: var(--fg);
+}
+
+.codex__filter-btn strong {
+  font-family: var(--font-family-mono);
+}
+
+/* ── Conversion pipeline diagram ────────────────────────────────────────── */
+
+.codex__pipeline {
+  display: grid;
+  grid-template-columns: minmax(10rem, 1fr) minmax(6rem, 0.45fr) minmax(10rem, 1fr) minmax(
+      6rem,
+      0.45fr
+    ) minmax(10rem, 1fr);
+  align-items: stretch;
+  border-top: 1px solid var(--border-strong);
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.codex__pipeline-stage {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-3);
+  background-color: var(--surface-2);
+}
+
+.codex__pipeline-stage-index {
+  color: var(--muted-2);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+.codex__pipeline-stage > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.codex__pipeline-stage small {
+  color: var(--muted-2);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.codex__pipeline-stage strong {
+  overflow: hidden;
+  font-size: var(--fs-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.codex__pipeline-stage[data-attention="true"] {
+  box-shadow: inset 0 -2px var(--status-warning);
+}
+
+.codex__pipeline-connector {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  text-align: center;
+}
+
+.codex__pipeline-connector i {
+  position: relative;
+  display: block;
+  height: 1px;
+  background-color: var(--border-strong);
+}
+
+.codex__pipeline-connector i::after {
+  position: absolute;
+  top: -3px;
+  right: 0;
+  width: 6px;
+  height: 6px;
+  border-top: 1px solid var(--border-strong);
+  border-right: 1px solid var(--border-strong);
+  content: "";
+  transform: rotate(45deg);
+}
+
+/* ── Conversion ledger table ─────────────────────────────────────────────── */
+
+.codex__ledger .virtual-data-table__header,
+.codex__ledger .virtual-data-table__row {
+  grid-template-columns: minmax(10rem, 0.65fr) minmax(24rem, 1.55fr) minmax(13rem, 0.8fr);
+}
+
+.codex__ledger .virtual-data-table__cell {
+  min-width: 0;
+}
+
+.codex__cell-identity,
+.codex__cell-decision {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.codex__cell-identity strong {
+  overflow: hidden;
+  font-size: var(--fs-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.codex__cell-identity small,
+.codex__cell-decision small,
+.codex__cell-route small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.codex__cell-route {
+  display: grid;
+  grid-template-columns: minmax(8rem, 1fr) auto minmax(8rem, 1fr);
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.codex__cell-route > span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.codex__cell-route code {
+  overflow: hidden;
+  color: var(--fg-soft);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.codex__cell-route-arrow {
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  font-style: normal;
+}
+
+.codex__cell-decision .state-pill {
+  align-self: flex-start;
+}
+
+/* ── Narrow layouts ─────────────────────────────────────────────────────── */
+
+@media (max-width: 56rem) {
+  .codex__runway {
+    grid-template-columns: 1fr;
+  }
+
+  .codex__runway-steps {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 72rem) {
+  .codex__pipeline {
+    grid-template-columns: 1fr;
+  }
+
+  .codex__pipeline-connector {
+    display: grid;
+    grid-template-columns: auto minmax(2rem, 1fr);
+    align-items: center;
+    text-align: left;
+  }
+
+  .codex__pipeline-connector i::after {
+    display: none;
+  }
+
+  .codex__ledger .virtual-data-table {
+    min-width: 52rem;
+  }
+}
