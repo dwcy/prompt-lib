@@ -60,17 +60,17 @@ export function DeployTreePanel({ target, actionId }: DeployTreePanelProps) {
       : { paths: Array.from(selectedPaths) };
 
   return (
-    <div className="deploy-tree-panel">
-      <section className="us3-summary-grid">
+    <div className="cfg-deploy__panel">
+      <section className="cfg-deploy__metrics">
         <Metric label="Changed" value={treeQuery.data.drift.changed_count} tone="update" />
         <Metric label="New" value={treeQuery.data.drift.new_count} tone="open" />
         <Metric label="Extras" value={treeQuery.data.drift.extras_count} tone="stale" />
         <Metric label="Stable" value={treeQuery.data.drift.unchanged_count} tone="ok" />
       </section>
 
-      <section className="deploy-command-strip">
-        <div className="deploy-command-strip__summary">
-          <span className="us3-eyebrow">Deploy queue</span>
+      <section className="cfg-deploy__command-strip">
+        <div className="cfg-deploy__command-summary">
+          <span className="cfg-deploy__eyebrow">Deploy queue</span>
           <strong>
             {selectedCount === 0 ? "Nothing selected" : `${selectedCount} file(s) ready`}
           </strong>
@@ -83,24 +83,36 @@ export function DeployTreePanel({ target, actionId }: DeployTreePanelProps) {
                   .join(", ")}
           </p>
         </div>
-        <ol className="deploy-command-strip__steps" aria-label="Deploy workflow">
-          <li className={diffPath === null ? "" : "deploy-command-strip__step--done"}>
+        <ol className="cfg-deploy__steps" aria-label="Deploy workflow">
+          <li
+            className={
+              diffPath === null ? "cfg-deploy__step" : "cfg-deploy__step cfg-deploy__step--done"
+            }
+          >
             Review diff
           </li>
-          <li className={selectedCount === 0 ? "" : "deploy-command-strip__step--done"}>
+          <li
+            className={
+              selectedCount === 0
+                ? "cfg-deploy__step"
+                : "cfg-deploy__step cfg-deploy__step--done"
+            }
+          >
             Build queue
           </li>
-          <li>Confirm write</li>
+          <li className="cfg-deploy__step">Confirm write</li>
         </ol>
-        <div className="us3-toolbar">
+        <div className="cfg-deploy__toolbar">
           <button
             type="button"
+            className="cfg-deploy__toolbar-btn"
             onClick={() => setSelectedPaths(new Set(actionableFiles.map((file) => file.rel_path)))}
           >
             Select drift
           </button>
           <button
             type="button"
+            className="cfg-deploy__toolbar-btn"
             onClick={() => setSelectedPaths(new Set())}
             disabled={selectedCount === 0}
           >
@@ -108,6 +120,7 @@ export function DeployTreePanel({ target, actionId }: DeployTreePanelProps) {
           </button>
           <button
             type="button"
+            className="cfg-deploy__toolbar-btn cfg-deploy__toolbar-btn--primary"
             onClick={() => action.prepare(actionParams)}
             disabled={selectedCount === 0}
           >
@@ -116,8 +129,8 @@ export function DeployTreePanel({ target, actionId }: DeployTreePanelProps) {
         </div>
       </section>
 
-      <div className="deploy-tree-panel__body">
-        <section className="deploy-tree">
+      <div className="cfg-deploy__body">
+        <section className="cfg-deploy__tree">
           {treeQuery.data.components.map((component) => {
             const files = component.files;
             const selectedInComponent = files.filter((file) =>
@@ -129,8 +142,8 @@ export function DeployTreePanel({ target, actionId }: DeployTreePanelProps) {
             const indeterminate = selectedInComponent > 0 && selectedInComponent < files.length;
 
             return (
-              <article key={component.key} className="deploy-component">
-                <label className="deploy-component__header">
+              <article key={component.key} className="cfg-deploy__component">
+                <label className="cfg-deploy__component-header">
                   <input
                     type="checkbox"
                     checked={checked}
@@ -143,20 +156,20 @@ export function DeployTreePanel({ target, actionId }: DeployTreePanelProps) {
                       )
                     }
                   />
-                  <span className="deploy-component__title-block">
-                    <span className="deploy-component__title">{component.label}</span>
-                    <span className="deploy-component__group">{component.group}</span>
+                  <span className="cfg-deploy__component-title-block">
+                    <span className="cfg-deploy__component-title">{component.label}</span>
+                    <span className="cfg-deploy__component-group">{component.group}</span>
                   </span>
-                  <span className="deploy-component__rollup">
+                  <span className="cfg-deploy__component-rollup">
                     {changedInComponent} changed · {newInComponent} new · {selectedInComponent}{" "}
                     queued
                   </span>
                 </label>
 
-                <ul className="deploy-file-list">
+                <ul className="cfg-deploy__file-list">
                   {files.map((file) => (
-                    <li key={file.rel_path} className="deploy-file-list__item">
-                      <label className="deploy-file-list__select">
+                    <li key={file.rel_path} className="cfg-deploy__file-item">
+                      <label className="cfg-deploy__file-select">
                         <input
                           type="checkbox"
                           checked={selectedPaths.has(file.rel_path)}
@@ -171,7 +184,7 @@ export function DeployTreePanel({ target, actionId }: DeployTreePanelProps) {
                             )
                           }
                         />
-                        <span className="deploy-file-list__path">{file.rel_path}</span>
+                        <span className="cfg-deploy__file-path">{file.rel_path}</span>
                       </label>
                       <StatePill
                         variant={
@@ -181,6 +194,7 @@ export function DeployTreePanel({ target, actionId }: DeployTreePanelProps) {
                       />
                       <button
                         type="button"
+                        className="cfg-deploy__file-diff-btn"
                         onClick={() => setDiffPath(file.rel_path)}
                         disabled={!file.diff_available}
                       >
@@ -194,11 +208,11 @@ export function DeployTreePanel({ target, actionId }: DeployTreePanelProps) {
           })}
         </section>
 
-        <aside className="deploy-diff-panel">
-          <header className="deploy-diff-panel__header">
+        <aside className="cfg-deploy__diff">
+          <header className="cfg-deploy__diff-header">
             <div>
               <h2>Diff Review</h2>
-              {diffPath !== null ? <p className="deploy-diff-panel__path">{diffPath}</p> : null}
+              {diffPath !== null ? <p className="cfg-deploy__diff-path">{diffPath}</p> : null}
             </div>
             {diffFile !== null ? (
               <StatePill
@@ -268,9 +282,9 @@ function Metric({
   tone: "ok" | "open" | "stale" | "update";
 }) {
   return (
-    <div className={`us3-metric us3-metric--${tone}`}>
-      <span className="us3-metric__label">{label}</span>
-      <strong className="us3-metric__value">{value}</strong>
+    <div className={`cfg-deploy__metric cfg-deploy__metric--${tone}`}>
+      <span className="cfg-deploy__metric-label">{label}</span>
+      <strong className="cfg-deploy__metric-value">{value}</strong>
     </div>
   );
 }

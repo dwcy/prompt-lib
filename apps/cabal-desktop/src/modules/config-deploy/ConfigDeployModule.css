@@ -1,0 +1,414 @@
+/* Config Deployment console module: command header with target switcher, drift metric tiles,
+   deploy queue command strip, component/file tree, and sticky diff review panel — restyled to
+   the console token system established by ToolsModule.css / ServicesModule.css / KnowledgeModule.css.
+   Token-only colors; DOM structure and behavior are unchanged from the pre-redesign markup. */
+
+.cfg-deploy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+/* ── Command header ─────────────────────────────────────────────────────── */
+
+.cfg-deploy__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  background-color: var(--surface-1);
+}
+
+.cfg-deploy__header h1 {
+  margin: 0;
+  font-size: var(--fs-xl);
+  font-weight: 600;
+}
+
+.cfg-deploy__header p {
+  margin: 4px 0 0;
+  max-width: 46rem;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+}
+
+/* ── Target switch: segmented pills ─────────────────────────────────────── */
+
+.cfg-deploy__target-switch {
+  display: inline-flex;
+  gap: 2px;
+  margin: 0;
+  padding: 2px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-md);
+  background-color: var(--surface-2);
+}
+
+.cfg-deploy__target-switch button {
+  padding: 6px 14px;
+  border: none;
+  border-radius: var(--corner-sm);
+  background: none;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  text-transform: capitalize;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.cfg-deploy__target-switch button:hover {
+  color: var(--fg-soft);
+}
+
+.cfg-deploy__target-switch button.is-active {
+  background-color: var(--surface-3);
+  color: var(--fg);
+}
+
+/* ── Drift metric tiles ─────────────────────────────────────────────────── */
+
+.cfg-deploy__metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: var(--space-3);
+}
+
+.cfg-deploy__metric {
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  background-color: var(--surface-1);
+}
+
+.cfg-deploy__metric--update {
+  border-color: color-mix(in srgb, var(--state-update-available) 45%, var(--border));
+}
+
+.cfg-deploy__metric--open {
+  border-color: color-mix(in srgb, var(--state-open) 45%, var(--border));
+}
+
+.cfg-deploy__metric--stale {
+  border-color: color-mix(in srgb, var(--state-stale) 45%, var(--border));
+}
+
+.cfg-deploy__metric--ok {
+  border-color: color-mix(in srgb, var(--state-ok) 35%, var(--border));
+}
+
+.cfg-deploy__metric-label {
+  display: block;
+  color: var(--muted-2);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.cfg-deploy__metric-value {
+  display: block;
+  margin-top: var(--space-1);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xl);
+  line-height: var(--lh-xl);
+  font-weight: 600;
+}
+
+/* ── Deploy queue command strip ─────────────────────────────────────────── */
+
+.cfg-deploy__command-strip {
+  display: grid;
+  grid-template-columns: minmax(16rem, 1fr) auto auto;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 10%, transparent), transparent 55%),
+    var(--surface-1);
+}
+
+.cfg-deploy__eyebrow {
+  display: block;
+  color: var(--muted-2);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.cfg-deploy__command-summary strong {
+  display: block;
+  margin-top: var(--space-1);
+  font-size: var(--fs-lg);
+  line-height: var(--lh-lg);
+}
+
+.cfg-deploy__command-summary p {
+  margin-top: var(--space-1);
+  overflow: hidden;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cfg-deploy__steps {
+  display: flex;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+}
+
+.cfg-deploy__step {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.cfg-deploy__step + .cfg-deploy__step::before {
+  content: "/";
+  color: var(--border-strong);
+}
+
+.cfg-deploy__step--done {
+  color: var(--accent);
+}
+
+.cfg-deploy__toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.cfg-deploy__toolbar-btn {
+  padding: 6px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-md);
+  background-color: var(--surface-2);
+  color: var(--fg-soft);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  user-select: none;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.cfg-deploy__toolbar-btn:hover:not(:disabled) {
+  background-color: var(--surface-3);
+  color: var(--fg);
+}
+
+.cfg-deploy__toolbar-btn:disabled {
+  cursor: default;
+  opacity: var(--opacity-disabled);
+}
+
+.cfg-deploy__toolbar-btn--primary {
+  border-color: var(--accent-border);
+  background: var(--accent-bg-gradient);
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.cfg-deploy__toolbar-btn--primary:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+  color: #ffffff;
+}
+
+.cfg-deploy__toolbar-btn--primary:disabled {
+  border-color: var(--border-strong);
+  background: var(--surface-2);
+  color: var(--muted);
+}
+
+/* ── Body: tree | diff panel ────────────────────────────────────────────── */
+
+.cfg-deploy__body {
+  display: grid;
+  grid-template-columns: minmax(22rem, 1fr) minmax(20rem, 0.95fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.cfg-deploy__tree {
+  max-height: 44rem;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  background-color: var(--surface-1);
+}
+
+.cfg-deploy__component + .cfg-deploy__component {
+  border-top: 1px solid var(--divider);
+}
+
+.cfg-deploy__component-header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background-color: var(--surface-2);
+  cursor: pointer;
+  user-select: none;
+}
+
+.cfg-deploy__component-header input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+}
+
+.cfg-deploy__component-title-block {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cfg-deploy__component-title {
+  font-size: var(--fs-base);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.cfg-deploy__component-group {
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.cfg-deploy__component-rollup {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+}
+
+.cfg-deploy__file-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cfg-deploy__file-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-top: 1px solid var(--divider-faint);
+  font-size: var(--fs-base);
+}
+
+.cfg-deploy__file-select {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+
+.cfg-deploy__file-select input[type="checkbox"] {
+  accent-color: var(--accent);
+}
+
+.cfg-deploy__file-select input[type="checkbox"]:disabled {
+  opacity: var(--opacity-disabled);
+}
+
+.cfg-deploy__file-path {
+  overflow: hidden;
+  color: var(--fg-soft);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cfg-deploy__file-diff-btn {
+  padding: 4px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-sm);
+  background-color: var(--surface-2);
+  color: var(--fg-soft);
+  font-size: var(--fs-xs);
+  cursor: pointer;
+}
+
+.cfg-deploy__file-diff-btn:hover:not(:disabled) {
+  background-color: var(--surface-3);
+  color: var(--fg);
+}
+
+.cfg-deploy__file-diff-btn:disabled {
+  cursor: default;
+  opacity: var(--opacity-disabled);
+}
+
+/* ── Diff review panel ───────────────────────────────────────────────────── */
+
+.cfg-deploy__diff {
+  position: sticky;
+  top: 0;
+  max-height: 44rem;
+  overflow: auto;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  background-color: var(--surface-1);
+}
+
+.cfg-deploy__diff-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.cfg-deploy__diff-header h2 {
+  margin: 0;
+  font-size: var(--fs-md);
+  font-weight: 600;
+}
+
+.cfg-deploy__diff-path {
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+/* ── Narrow layouts ──────────────────────────────────────────────────────── */
+
+@media (max-width: 56rem) {
+  .cfg-deploy__command-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .cfg-deploy__steps {
+    flex-wrap: wrap;
+  }
+
+  .cfg-deploy__body {
+    grid-template-columns: 1fr;
+  }
+
+  .cfg-deploy__diff {
+    position: static;
+  }
+}
