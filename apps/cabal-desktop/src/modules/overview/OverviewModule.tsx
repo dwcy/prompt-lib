@@ -9,7 +9,11 @@ import { AlignmentCard } from "./components/AlignmentCard";
 import { ReadinessGaugeCard } from "./components/ReadinessGaugeCard";
 import { SectionStatusCard } from "./components/SectionStatusCard";
 import { deriveActivityItems, deriveOverviewKpis, SIGNAL_LANES } from "./overviewConsole";
-import { deriveOverviewActions, deriveOverviewCards, type OverviewCardSummary } from "./overviewSummary";
+import {
+  deriveOverviewActions,
+  deriveOverviewCards,
+  type OverviewCardSummary,
+} from "./overviewSummary";
 import "./OverviewModule.css";
 
 export function OverviewModule() {

@@ -1,12 +1,7 @@
 // Totals row: five KPI stat cards computed from the sessions totals payload.
 import type { SessionTotals } from "@/api/observability";
 import { KpiCard } from "@/components/KpiCard";
-import {
-  formatCount,
-  formatMoney,
-  formatTokens,
-  formatWallHours,
-} from "../sessionsPresentation";
+import { formatCount, formatMoney, formatTokens, formatWallHours } from "../sessionsPresentation";
 
 export interface SessionsTotalsProps {
   totals: SessionTotals;

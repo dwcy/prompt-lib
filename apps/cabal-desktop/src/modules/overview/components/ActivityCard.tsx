@@ -39,7 +39,11 @@ export function ActivityCard({ items, onOpen, onOpenDiagnostics }: ActivityCardP
         <span>
           {items.length} {items.length === 1 ? "action" : "actions"} queued
         </span>
-        <button type="button" className="overview-activity__link select-none" onClick={onOpenDiagnostics}>
+        <button
+          type="button"
+          className="overview-activity__link select-none"
+          onClick={onOpenDiagnostics}
+        >
           View diagnostics →
         </button>
       </footer>

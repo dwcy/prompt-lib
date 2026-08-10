@@ -268,7 +268,10 @@ function ModelDistribution({ assignments }: { assignments: ModelAssignment[] }) 
             <small>{count}</small>
           </span>
           <i className="ma-distribution__track">
-            <span className="ma-distribution__fill" style={{ width: `${(count / total) * 100}%` }} />
+            <span
+              className="ma-distribution__fill"
+              style={{ width: `${(count / total) * 100}%` }}
+            />
           </i>
         </div>
       ))}

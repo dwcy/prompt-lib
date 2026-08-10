@@ -34,6 +34,6 @@ export function systemEntryLabel(entry: EnvEntry): string {
   return "value";
 }
 
-export function countActive(entries: EnvEntry[], valueOf: (entry: EnvEntry) => string): number {
-  return entries.filter((entry) => valueOf(entry).trim() !== "").length;
+export function countActive(entries: EnvEntry[], getValue: (entry: EnvEntry) => string): number {
+  return entries.filter((entry) => getValue(entry).trim() !== "").length;
 }

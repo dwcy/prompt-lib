@@ -37,7 +37,12 @@ export function Sparkline({ points, width = 88, height = 30 }: SparklineProps) {
         strokeWidth={1.5}
         opacity={0.9}
       />
-      <circle cx={last[0].toFixed(1)} cy={last[1].toFixed(1)} r={END_DOT_RADIUS} fill="currentColor" />
+      <circle
+        cx={last[0].toFixed(1)}
+        cy={last[1].toFixed(1)}
+        r={END_DOT_RADIUS}
+        fill="currentColor"
+      />
     </svg>
   );
 }

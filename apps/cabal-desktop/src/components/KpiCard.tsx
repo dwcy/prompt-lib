@@ -31,14 +31,18 @@ export function KpiCard({
     <div className="kpi-card">
       <div className="kpi-card__top">
         <span className="kpi-card__label">{label}</span>
-        {delta ? <span className={`kpi-card__delta kpi-card__delta--${deltaTone}`}>{delta}</span> : null}
+        {delta ? (
+          <span className={`kpi-card__delta kpi-card__delta--${deltaTone}`}>{delta}</span>
+        ) : null}
       </div>
       <div className="kpi-card__row">
         <span className="kpi-card__value">
           {value}
           {unit ? <span className="kpi-card__unit"> {unit}</span> : null}
         </span>
-        <span className="kpi-card__aside">{aside ?? (trend ? <Sparkline points={trend} /> : null)}</span>
+        <span className="kpi-card__aside">
+          {aside ?? (trend ? <Sparkline points={trend} /> : null)}
+        </span>
       </div>
       {hint ? <div className="kpi-card__hint">{hint}</div> : null}
     </div>

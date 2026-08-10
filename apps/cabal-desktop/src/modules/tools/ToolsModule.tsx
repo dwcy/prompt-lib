@@ -83,7 +83,11 @@ export function ToolsModule() {
         {visibleRows.length === 0 ? (
           <EmptyState title="No tools match these filters" body="Try clearing search or filters." />
         ) : (
-          <ToolsTable rows={visibleRows} selectedKey={visibleSelection} onSelectRow={setSelectedKey} />
+          <ToolsTable
+            rows={visibleRows}
+            selectedKey={visibleSelection}
+            onSelectRow={setSelectedKey}
+          />
         )}
 
         <ToolDetailPane toolKey={visibleSelection} />

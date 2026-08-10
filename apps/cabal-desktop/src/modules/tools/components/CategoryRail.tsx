@@ -54,14 +54,20 @@ function RailItem({ label, count, barWidth, active, onClick }: RailItemProps) {
       type="button"
       aria-pressed={active}
       className={
-        active ? "tools-console__rail-item tools-console__rail-item--active" : "tools-console__rail-item"
+        active
+          ? "tools-console__rail-item tools-console__rail-item--active"
+          : "tools-console__rail-item"
       }
       onClick={onClick}
     >
       <span className="tools-console__rail-name">{label}</span>
       <span className="tools-console__rail-meter">
         {/* Width is proportional to the live count — runtime-computed, so inline by necessity. */}
-        <span className="tools-console__rail-bar" style={{ width: `${barWidth}px` }} aria-hidden="true" />
+        <span
+          className="tools-console__rail-bar"
+          style={{ width: `${barWidth}px` }}
+          aria-hidden="true"
+        />
         <span className="tools-console__rail-count">{count}</span>
       </span>
     </button>

@@ -59,7 +59,9 @@ export function ToolsTable({ rows, selectedKey, onSelectRow }: ToolsTableProps) 
       header: "Channel",
       sortAccessor: (row) => row.install_channel,
       render: (row) => (
-        <span className="tools-console__cell-mono">{formatInstallChannel(row.install_channel)}</span>
+        <span className="tools-console__cell-mono">
+          {formatInstallChannel(row.install_channel)}
+        </span>
       ),
     },
     {
@@ -72,7 +74,9 @@ export function ToolsTable({ rows, selectedKey, onSelectRow }: ToolsTableProps) 
             checking…
           </span>
         ) : (
-          <span className={`tools-console__cell-status tools-console__cell-status--${row.status.state}`}>
+          <span
+            className={`tools-console__cell-status tools-console__cell-status--${row.status.state}`}
+          >
             {row.status.state}
           </span>
         ),

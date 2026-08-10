@@ -104,12 +104,16 @@ export function EnvironmentModule() {
 
       <EnvTable
         rows={rows}
-        ariaLabel={scope === "curated" ? "Curated environment variables" : "System environment variables"}
+        ariaLabel={
+          scope === "curated" ? "Curated environment variables" : "System environment variables"
+        }
       />
 
       {scope === "curated" ? (
         <div className="env-footer">
-          <span>{profile.dirtyCount === 0 ? "Profile unchanged" : `${profile.dirtyCount} staged`}</span>
+          <span>
+            {profile.dirtyCount === 0 ? "Profile unchanged" : `${profile.dirtyCount} staged`}
+          </span>
           <button type="button" disabled={profile.dirtyCount === 0} onClick={profile.revertAll}>
             Revert all
           </button>

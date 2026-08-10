@@ -18,7 +18,11 @@ export function SectionStatusCard({ card, onOpen }: SectionStatusCardProps) {
       aria-label={`View ${card.title}`}
     >
       <span className="overview-service-card__head">
-        <span className="overview-dot" data-tone={variantTone(card.stateVariant)} aria-hidden="true" />
+        <span
+          className="overview-dot"
+          data-tone={variantTone(card.stateVariant)}
+          aria-hidden="true"
+        />
         <b>{card.title}</b>
         <span className="overview-service-card__state">{card.stateVariant ?? "live"}</span>
       </span>

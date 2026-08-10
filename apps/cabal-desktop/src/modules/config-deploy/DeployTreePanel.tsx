@@ -93,9 +93,7 @@ export function DeployTreePanel({ target, actionId }: DeployTreePanelProps) {
           </li>
           <li
             className={
-              selectedCount === 0
-                ? "cfg-deploy__step"
-                : "cfg-deploy__step cfg-deploy__step--done"
+              selectedCount === 0 ? "cfg-deploy__step" : "cfg-deploy__step cfg-deploy__step--done"
             }
           >
             Build queue

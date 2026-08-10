@@ -81,16 +81,12 @@ export function CodexModule() {
           </strong>
         </div>
         <ol className="codex__runway-steps" aria-label="Codex parity workflow">
-          <li
-            className={`codex__runway-step ${deployDrift === 0 ? "is-complete" : "is-current"}`}
-          >
+          <li className={`codex__runway-step ${deployDrift === 0 ? "is-complete" : "is-current"}`}>
             <span className="codex__runway-step-index">01</span>
             <strong>Deploy shared assets</strong>
             <small className="codex__runway-step-meta">{deployDrift} drifted</small>
           </li>
-          <li
-            className={`codex__runway-step ${localPending === 0 ? "is-complete" : "is-current"}`}
-          >
+          <li className={`codex__runway-step ${localPending === 0 ? "is-complete" : "is-current"}`}>
             <span className="codex__runway-step-index">02</span>
             <strong>Scaffold project</strong>
             <small className="codex__runway-step-meta">{localPending} pending</small>

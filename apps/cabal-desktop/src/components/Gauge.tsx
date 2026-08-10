@@ -30,7 +30,14 @@ export function Gauge({ fraction, value, caption, size = 170, tone = "accent" }:
       role="img"
       aria-label={`${value} ${caption}`}
     >
-      <circle className="gauge__track" cx={85} cy={85} r={RADIUS} fill="none" strokeWidth={STROKE} />
+      <circle
+        className="gauge__track"
+        cx={85}
+        cy={85}
+        r={RADIUS}
+        fill="none"
+        strokeWidth={STROKE}
+      />
       <circle
         className="gauge__fill"
         cx={85}

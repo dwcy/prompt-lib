@@ -29,7 +29,11 @@ export function ReadinessGaugeCard({ cards }: ReadinessGaugeCardProps) {
       <ul className="overview-readiness__legend">
         {cards.map((card) => (
           <li key={card.key}>
-            <span className="overview-dot" data-tone={variantTone(card.stateVariant)} aria-hidden="true" />
+            <span
+              className="overview-dot"
+              data-tone={variantTone(card.stateVariant)}
+              aria-hidden="true"
+            />
             {card.title}
           </li>
         ))}

@@ -58,7 +58,11 @@ export function AlignmentCard({ driftFlags, onOpen }: AlignmentCardProps) {
                 />
               </span>
               <small>{lane.detail}</small>
-              <span className="overview-alignment-tile__track" data-drift={hasDrift} aria-hidden="true">
+              <span
+                className="overview-alignment-tile__track"
+                data-drift={hasDrift}
+                aria-hidden="true"
+              >
                 <i />
                 <i />
                 <i />

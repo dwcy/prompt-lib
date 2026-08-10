@@ -74,8 +74,8 @@ export function SessionDrawer({ session, onDelete }: SessionDrawerProps) {
       ) : null}
 
       <p className="sess-drawer__note">
-        Costs estimated from token usage in ~/.claude/projects JSONL transcripts; dispatch rows
-        are Task-tool invocations.
+        Costs estimated from token usage in ~/.claude/projects JSONL transcripts; dispatch rows are
+        Task-tool invocations.
       </p>
 
       <div className="sess-drawer__actions">

@@ -62,8 +62,7 @@ export function SessionsModule() {
   const data = sessionsQuery.data;
   const active = selected ?? visibleSessions[0] ?? null;
   const maxCost = visibleSessions.reduce((max, session) => Math.max(max, session.cost_usd), 0);
-  const sourceHint =
-    data.project === null ? SESSIONS_ROOT : `${SESSIONS_ROOT} · ${data.project}`;
+  const sourceHint = data.project === null ? SESSIONS_ROOT : `${SESSIONS_ROOT} · ${data.project}`;
 
   return (
     <div className="sess-module">

@@ -7,7 +7,12 @@ export interface EnvToggleSwitchProps {
   onToggle?: () => void;
 }
 
-export function EnvToggleSwitch({ checked, label, disabled = false, onToggle }: EnvToggleSwitchProps) {
+export function EnvToggleSwitch({
+  checked,
+  label,
+  disabled = false,
+  onToggle,
+}: EnvToggleSwitchProps) {
   return (
     <button
       type="button"

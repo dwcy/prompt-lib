@@ -2,12 +2,7 @@
 // proportional cost-share bar (width is runtime-computed from session cost / page max cost).
 import type { CSSProperties } from "react";
 import type { SessionSummary } from "@/api/observability";
-import {
-  compactId,
-  formatDuration,
-  formatMoney,
-  formatSessionTime,
-} from "../sessionsPresentation";
+import { compactId, formatDuration, formatMoney, formatSessionTime } from "../sessionsPresentation";
 
 export interface SessionRowProps {
   session: SessionSummary;
