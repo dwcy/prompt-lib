@@ -22,33 +22,33 @@ export function RecentProjectsList({
   const lanes = groupByRecency(recents);
 
   return (
-    <div className="project-gate__recent-lanes">
+    <div className="gate-lanes">
       {lanes.map((lane) => (
-        <section key={lane.label}>
-          <header>
+        <section key={lane.label} className="gate-lane">
+          <header className="gate-lane__header">
             <span>{lane.label}</span>
             <small>{lane.projects.length}</small>
           </header>
-          <ul className="project-gate__recents-list">
+          <ul className="gate-recents-list">
             {lane.projects.map((recent) => (
               <li key={recent.path}>
                 <button
                   type="button"
-                  className="project-gate__recents-item"
+                  className="gate-recents-item"
                   onClick={() => onSelect(recent.path)}
                   disabled={disabled}
                 >
-                  <span className="project-gate__recents-mark" aria-hidden="true">
+                  <span className="gate-recents-mark" aria-hidden="true">
                     {projectInitial(recent.name)}
                   </span>
-                  <span className="project-gate__recents-main">
-                    <span className="project-gate__recents-name">{recent.name}</span>
-                    <span className="project-gate__recents-path">{recent.path}</span>
+                  <span className="gate-recents-main">
+                    <span className="gate-recents-name">{recent.name}</span>
+                    <span className="gate-recents-path">{recent.path}</span>
                   </span>
-                  <span className="project-gate__recents-meta select-none">
+                  <span className="gate-recents-meta select-none">
                     {formatLastOpened(recent.last_opened)}
                   </span>
-                  <span className="project-gate__recents-enter" aria-hidden="true">
+                  <span className="gate-recents-enter" aria-hidden="true">
                     ›
                   </span>
                 </button>

@@ -38,15 +38,15 @@ export function PathInput({ onSubmit, disabled = false }: PathInputProps) {
   }
 
   return (
-    <form className="project-gate__path-form" onSubmit={handleSubmit}>
-      <label className="project-gate__path-label select-none" htmlFor="project-gate-path">
+    <form className="gate-path-form" onSubmit={handleSubmit}>
+      <label className="gate-path-label select-none" htmlFor="project-gate-path">
         Project folder path
       </label>
-      <div className="project-gate__path-row">
+      <div className="gate-path-row">
         <input
           id="project-gate-path"
           type="text"
-          className="project-gate__path-input"
+          className="gate-path-input"
           value={path}
           onChange={(event) => setPath(event.target.value)}
           placeholder="C:\\projects\\my-project"
@@ -64,7 +64,7 @@ export function PathInput({ onSubmit, disabled = false }: PathInputProps) {
         </button>
       </div>
       {browseError !== null ? (
-        <p className="project-gate__path-error" role="alert">
+        <p className="gate-path-error" role="alert">
           {browseError}
         </p>
       ) : null}
