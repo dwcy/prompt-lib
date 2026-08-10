@@ -1,13 +1,20 @@
+// GitHub provider console screen: repo/org header stats, CLI accounts + device-login table, and
+// a repo browser + clone runway in place of the mock's CI/PR panels (the gh CLI payload carries
+// no workflow-run or pull-request data) — per the cabal-console mock's isGithub section.
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useJob } from "@/api/jobs";
+import { useProjectContext } from "@/api/project";
 import { type ProviderRepo, useProviderRepos, useProviderState } from "@/api/projectLifecycle";
 import { queryKeys } from "@/api/queryKeys";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
-import { JobPane } from "@/components/JobPane";
-import { StatePill } from "@/components/StatePill";
 import { useAction } from "@/hooks/useAction";
+import { ProviderAccountsCard } from "@/modules/provider/components/ProviderAccountsCard";
+import { ProviderClonePanel } from "@/modules/provider/components/ProviderClonePanel";
+import { ProviderHeaderCard } from "@/modules/provider/components/ProviderHeaderCard";
+import { ProviderRepoListCard } from "@/modules/provider/components/ProviderRepoListCard";
+import "./ProviderModule.css";
 
 const DEFAULT_PARENT = "C:\\projects";
 const TERMINAL_STATES = new Set(["succeeded", "failed", "cancelled"]);
@@ -15,6 +22,7 @@ const TERMINAL_STATES = new Set(["succeeded", "failed", "cancelled"]);
 export function ProviderModule() {
   const queryClient = useQueryClient();
   const providerQuery = useProviderState();
+  const projectQuery = useProjectContext();
   const [repoQueryText, setRepoQueryText] = useState("");
   const reposQuery = useProviderRepos(repoQueryText);
   const [selectedRepo, setSelectedRepo] = useState<ProviderRepo | null>(null);
@@ -89,226 +97,59 @@ export function ProviderModule() {
     }
   }
 
+  const projectName = projectQuery.data?.is_git_repo === true ? projectQuery.data.name : null;
+
   return (
-    <div className="provider-workbench">
-      <section className="provider-auth-panel">
-        <div className="module-section-heading">
-          <span className="module-eyebrow select-none">GitHub provider</span>
-          <h2>Accounts and device login</h2>
-        </div>
-        {providerQuery.isPending ? (
-          <EmptyState title="Checking GitHub CLI..." />
-        ) : providerQuery.isError ? (
-          <EmptyState title="Provider status failed" body={providerQuery.error.message} />
-        ) : (
-          <>
-            <div className="provider-auth-panel__status">
-              <StatePill
-                variant={providerQuery.data.authenticated ? "ok" : "unavailable"}
-                label={providerQuery.data.authenticated ? "authenticated" : "login needed"}
-              />
-              <span>{providerQuery.data.gh_status}</span>
-            </div>
-            <div className="provider-account-stack">
-              {providerQuery.data.accounts.length === 0 ? (
-                <EmptyState
-                  title="No GitHub accounts detected"
-                  body="GitHub CLI has no stored account for this machine."
-                />
-              ) : (
-                providerQuery.data.accounts.map((account, index) => (
-                  <article
-                    key={`${account.host}:${account.user}`}
-                    className={`provider-account-card${
-                      account.active ? " provider-account-card--active" : ""
-                    }`}
-                  >
-                    <span className="provider-account-card__index">
-                      {String(index + 1).padStart(2, "0")}
-                    </span>
-                    <span className="provider-account-card__identity">
-                      <strong>{account.user}</strong>
-                      <small>{account.host}</small>
-                    </span>
-                    <StatePill
-                      variant={account.valid ? "ok" : "failed"}
-                      label={account.active ? "active" : account.valid ? "valid" : "invalid"}
-                    />
-                    <code>{account.storage || "credential store"}</code>
-                    <span className="provider-account-card__actions">
-                      {!account.active ? (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            switchAction.prepare({ user: account.user, host: account.host })
-                          }
-                          disabled={!account.valid}
-                        >
-                          Make active
-                        </button>
-                      ) : null}
-                      <button
-                        type="button"
-                        className="danger-button"
-                        onClick={() =>
-                          forgetAction.prepare({ user: account.user, host: account.host })
-                        }
-                      >
-                        Forget
-                      </button>
-                    </span>
-                  </article>
-                ))
-              )}
-            </div>
-            {providerQuery.data.login.user_code ? (
-              <div className="provider-device-code">
-                <span>
-                  <small>Device code</small>
-                  <strong>{providerQuery.data.login.user_code}</strong>
-                  <button type="button" onClick={() => void copyDeviceCode()}>
-                    {copyState === "copied"
-                      ? "Copied"
-                      : copyState === "failed"
-                        ? "Copy failed"
-                        : "Copy code"}
-                  </button>
-                </span>
-                <span>
-                  <small>Verification</small>
-                  <a href={normalizeExternalUrl(verificationUri)} target="_blank" rel="noreferrer">
-                    {verificationUri}
-                  </a>
-                </span>
-                <StatePill variant="connecting" label={providerQuery.data.login.state} />
-              </div>
-            ) : null}
-            <button
-              type="button"
-              className="provider-primary-action"
-              onClick={startLogin}
-              disabled={loginAction.phase === "preparing" || loginAction.phase === "executing"}
-            >
-              {loginAction.phase === "preparing"
-                ? "Preparing code..."
-                : loginAction.phase === "executing"
-                  ? "Starting login..."
-                  : "Start device login"}
-            </button>
-            {loginAction.jobId !== null ? <JobPane jobId={loginAction.jobId} /> : null}
-          </>
-        )}
-      </section>
-
-      <section className="provider-repo-panel">
-        <div className="provider-repo-panel__toolbar">
-          <div className="module-section-heading">
-            <span className="module-eyebrow select-none">Clone source</span>
-            <h2>Repositories</h2>
-          </div>
-          <input
-            type="search"
-            aria-label="Filter repositories"
-            value={repoQueryText}
-            onChange={(event) => setRepoQueryText(event.target.value)}
-            placeholder="Filter owner/name or description"
-            autoComplete="off"
-            spellCheck={false}
+    <div className="provider-console">
+      {providerQuery.isPending ? (
+        <EmptyState title="Checking GitHub CLI..." />
+      ) : providerQuery.isError ? (
+        <EmptyState title="Provider status failed" body={providerQuery.error.message} />
+      ) : (
+        <>
+          <ProviderHeaderCard
+            projectName={projectName}
+            ghStatus={providerQuery.data.gh_status}
+            accountsCount={providerQuery.data.accounts.length}
+            reposCount={reposQuery.data?.count ?? null}
+            authenticated={providerQuery.data.authenticated}
           />
-          {reposQuery.data !== undefined ? (
-            <span className="provider-repo-panel__count select-none">
-              {visibleRepos.length}
-              {repos.length > visibleRepos.length ? ` of ${repos.length}` : ""}
-            </span>
-          ) : null}
-        </div>
-        {reposQuery.isPending ? (
-          <EmptyState title="Loading repositories..." />
-        ) : reposQuery.isError ? (
-          <EmptyState title="Repository list unavailable" body={reposQuery.error.message} />
-        ) : visibleRepos.length === 0 ? (
-          <EmptyState title="No repositories matched" />
-        ) : (
-          <div className="provider-repo-grid">
-            {visibleRepos.map((repo) => (
-              <button
-                type="button"
-                key={repo.full_name}
-                className={`provider-repo-card${
-                  selectedRepo?.full_name === repo.full_name ? " provider-repo-card--selected" : ""
-                }`}
-                aria-pressed={selectedRepo?.full_name === repo.full_name}
-                onClick={() => setSelectedRepo(repo)}
-              >
-                <span className="provider-repo-card__name">{repo.full_name}</span>
-                <span className="provider-repo-card__meta">
-                  {repo.visibility} / {formatDate(repo.updated_at)}
-                </span>
-                <span className="provider-repo-card__description">
-                  {repo.description || "No description"}
-                </span>
-              </button>
-            ))}
-          </div>
-        )}
-      </section>
+          <ProviderAccountsCard
+            accounts={providerQuery.data.accounts}
+            login={providerQuery.data.login}
+            loginPhase={loginAction.phase}
+            loginJobId={loginAction.jobId}
+            copyState={copyState}
+            verificationUri={verificationUri}
+            onAddAccount={startLogin}
+            onCopyDeviceCode={() => void copyDeviceCode()}
+            onSwitch={(user, host) => switchAction.prepare({ user, host })}
+            onForget={(user, host) => forgetAction.prepare({ user, host })}
+          />
+        </>
+      )}
 
-      <section className="provider-clone-panel">
-        <div className="module-section-heading">
-          <span className="module-eyebrow select-none">Clone runway</span>
-          <h2>{selectedRepo?.full_name ?? "Select a repository"}</h2>
-        </div>
-        <ol className="provider-clone-runway" aria-label="Clone and switch workflow">
-          <li className={selectedRepo === null ? "" : "is-ready"}>
-            <span>01</span>
-            <div>
-              <small>Source</small>
-              <strong>{selectedRepo?.full_name ?? "Select a repository"}</strong>
-              <p>{selectedRepo?.url ?? "Repository metadata will appear here."}</p>
-            </div>
-          </li>
-          <li className={destination.trim().length === 0 ? "" : "is-ready"}>
-            <span>02</span>
-            <label className="provider-field">
-              <small>Destination</small>
-              <input
-                type="text"
-                value={destination}
-                onChange={(event) => setDestination(event.target.value)}
-                autoComplete="off"
-                spellCheck={false}
-                placeholder="C:\\projects\\repo"
-              />
-            </label>
-          </li>
-          <li className={selectedRepo !== null && destination.trim().length > 0 ? "is-ready" : ""}>
-            <span>03</span>
-            <div>
-              <small>Workspace handoff</small>
-              <strong>Clone, register, and switch context</strong>
-              <p>The new checkout becomes the active Cabal project after the job succeeds.</p>
-            </div>
-          </li>
-        </ol>
-        <button
-          type="button"
-          className="provider-primary-action"
-          onClick={startClone}
-          disabled={
-            selectedRepo === null ||
-            destination.trim().length === 0 ||
-            cloneAction.phase === "preparing" ||
-            cloneAction.phase === "executing"
-          }
-        >
-          {cloneAction.phase === "preparing"
-            ? "Preparing clone..."
-            : cloneAction.phase === "executing"
-              ? "Starting clone..."
-              : "Clone and switch workspace"}
-        </button>
-        {cloneAction.jobId !== null ? <JobPane jobId={cloneAction.jobId} /> : null}
-      </section>
+      <div className="provider-console__repos-row">
+        <ProviderRepoListCard
+          repos={visibleRepos}
+          totalCount={reposQuery.data?.count ?? visibleRepos.length}
+          queryText={repoQueryText}
+          onQueryChange={setRepoQueryText}
+          selectedRepo={selectedRepo}
+          onSelectRepo={setSelectedRepo}
+          isPending={reposQuery.isPending}
+          isError={reposQuery.isError}
+          error={reposQuery.error ?? null}
+        />
+        <ProviderClonePanel
+          selectedRepo={selectedRepo}
+          destination={destination}
+          onDestinationChange={setDestination}
+          onClone={startClone}
+          clonePhase={cloneAction.phase}
+          cloneJobId={cloneAction.jobId}
+        />
+      </div>
 
       <ConfirmDialog
         isOpen={loginAction.phase !== "idle" && loginAction.phase !== "succeeded"}
@@ -352,15 +193,4 @@ export function ProviderModule() {
       />
     </div>
   );
-}
-
-function formatDate(value: string): string {
-  if (value.trim().length === 0) return "unknown";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
-}
-
-function normalizeExternalUrl(value: string): string {
-  return /^https?:\/\//i.test(value) ? value : `https://${value}`;
 }
