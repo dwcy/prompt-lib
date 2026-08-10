@@ -1,0 +1,472 @@
+/* GitHub provider console styles: header stat card, CLI accounts table, and the repo-browser +
+   clone-runway row that replaces the mock's workflow-run / PR panels (no CI data in this payload)
+   per specs/015-web-ui-overhaul/redesign/cabal-console-mock.html (isGithub). Token-only colors. */
+
+.provider-console {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+
+/* --- Header card --------------------------------------------------------- */
+
+.provider-header-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+}
+
+.provider-header-card__identity strong {
+  font-size: var(--fs-lg);
+  font-weight: 600;
+}
+
+.provider-header-card__subline {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.provider-header-card__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-left: auto;
+  color: var(--fg-soft);
+  font-size: var(--fs-sm);
+}
+
+.provider-header-card__stats strong {
+  color: var(--fg);
+  font-size: var(--fs-md);
+  font-weight: 600;
+}
+
+.provider-header-card__stat--ok strong {
+  color: var(--status-ok);
+}
+
+.provider-header-card__stat--warning strong {
+  color: var(--status-warning);
+}
+
+/* --- CLI accounts card --------------------------------------------------- */
+
+.provider-accounts-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  overflow: hidden;
+}
+
+.provider-accounts-card__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--divider);
+}
+
+.provider-accounts-card__header > div {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.provider-accounts-card__subtitle {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.provider-accounts-card__add {
+  margin-left: auto;
+  padding: 5px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-md);
+  color: var(--fg-soft);
+  font-size: var(--fs-sm);
+}
+
+.provider-accounts-card__rows {
+  display: grid;
+}
+
+.provider-accounts-card__row {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 140px 130px 110px 170px;
+  gap: 12px;
+  align-items: center;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--divider-faint);
+  font-size: var(--fs-base);
+}
+
+.provider-accounts-card__row:last-child {
+  border-bottom: none;
+}
+
+.provider-accounts-card__avatar {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  background: var(--accent-bg-gradient);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--corner-full);
+  color: var(--accent);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+.provider-accounts-card__identity {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.provider-accounts-card__identity strong {
+  overflow: hidden;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.provider-accounts-card__identity small {
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+
+.provider-accounts-card__storage {
+  overflow: hidden;
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.provider-accounts-card__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.provider-accounts-card__actions button {
+  padding: 4px 10px;
+  font-size: var(--fs-xs);
+}
+
+.provider-accounts-card__footer {
+  padding: 10px 16px;
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+.provider-accounts-card .job-pane {
+  margin: 0 16px 14px;
+}
+
+/* --- Device login banner --- */
+
+.provider-device-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 20px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--divider);
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+
+.provider-device-banner__field {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.provider-device-banner__field small {
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+.provider-device-banner__field strong {
+  font-family: var(--font-family-mono);
+}
+
+.provider-device-banner__field a {
+  color: var(--accent);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.provider-device-banner__field button {
+  width: max-content;
+  margin-top: 2px;
+  padding: 3px 10px;
+  font-size: var(--fs-xs);
+}
+
+/* --- Repos row: repo browser + clone runway (replaces the mock's runs/PRs row) --- */
+
+.provider-console__repos-row {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.provider-repo-list-card,
+.provider-clone-panel {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  overflow: hidden;
+}
+
+.provider-repo-list-card__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--divider);
+}
+
+.provider-repo-list-card__header input[type="search"] {
+  width: 100%;
+  max-width: 20rem;
+  min-width: 0;
+  padding: 6px 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-md);
+  color: var(--fg);
+  font-size: var(--fs-sm);
+}
+
+.provider-repo-list-card__header input[type="search"]::placeholder {
+  color: var(--muted);
+}
+
+.provider-repo-list-card__count {
+  flex: 0 0 auto;
+  margin-left: auto;
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.provider-repo-list-card__rows {
+  max-height: 26rem;
+  overflow: auto;
+}
+
+.provider-repo-list-card__row {
+  display: grid;
+  width: 100%;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 12px;
+  padding: 10px 16px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--divider-faint);
+  border-radius: 0;
+  text-align: left;
+}
+
+.provider-repo-list-card__row:last-child {
+  border-bottom: none;
+}
+
+.provider-repo-list-card__row:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+
+.provider-repo-list-card__row--selected,
+.provider-repo-list-card__row--selected:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface-2));
+  border-color: var(--accent-border);
+}
+
+.provider-repo-list-card__name {
+  overflow: hidden;
+  font-weight: 500;
+  font-size: var(--fs-base);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.provider-repo-list-card__meta {
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+}
+
+.provider-repo-list-card__description {
+  grid-column: 1 / -1;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- Clone runway panel --- */
+
+.provider-clone-panel__header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--divider);
+}
+
+.provider-clone-panel__target {
+  overflow: hidden;
+  margin-left: auto;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.provider-clone-panel__runway {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 12px 16px;
+  list-style: none;
+}
+
+.provider-clone-panel__runway li {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: start;
+  padding: var(--space-3);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-sm);
+}
+
+.provider-clone-panel__runway li > span {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-sm);
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+.provider-clone-panel__runway li.is-ready > span {
+  border-color: color-mix(in srgb, var(--status-ok) 50%, var(--border));
+  color: var(--status-ok);
+}
+
+.provider-clone-panel__runway li > div,
+.provider-clone-panel__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.provider-clone-panel__runway small,
+.provider-clone-panel__field small {
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.provider-clone-panel__runway p {
+  overflow: hidden;
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.provider-clone-panel__field input {
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-1);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-md);
+  color: var(--fg);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-sm);
+}
+
+.provider-clone-panel__action {
+  justify-content: center;
+  width: calc(100% - 32px);
+  margin: 0 16px 16px;
+  padding: var(--space-2) var(--space-4);
+  background: var(--accent-bg-gradient);
+  border: 1px solid var(--accent-border);
+  color: #ffffff;
+  font-size: var(--fs-base);
+  font-weight: 500;
+}
+
+.provider-clone-panel__action:hover:not(:disabled) {
+  background: var(--accent-bg);
+  border-color: var(--accent);
+}
+
+.provider-clone-panel .job-pane {
+  margin: 0 16px 16px;
+}
+
+/* --- Narrow layouts ------------------------------------------------------- */
+
+@media (max-width: 1200px) {
+  .provider-accounts-card__row {
+    grid-template-columns: 30px minmax(0, 1fr) 110px 100px 170px;
+  }
+
+  .provider-accounts-card__storage {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .provider-header-card {
+    flex-wrap: wrap;
+  }
+
+  .provider-header-card__stats {
+    margin-left: 0;
+  }
+
+  .provider-console__repos-row {
+    grid-template-columns: 1fr;
+  }
+
+  .provider-accounts-card__row {
+    grid-template-columns: 30px minmax(0, 1fr) 100px 170px;
+  }
+
+  .provider-accounts-card__validity {
+    display: none;
+  }
+}
