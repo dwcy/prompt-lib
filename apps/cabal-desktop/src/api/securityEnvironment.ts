@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { apiGet, requireData } from "@/api/client";
 import { queryKeys } from "@/api/queryKeys";
@@ -89,8 +89,34 @@ export const gitPolicyPayloadSchema = z.object({
   defaults: gitPolicySchema,
 });
 
+export const advisorVerdictSchema = z.enum(["good", "caution", "bad"]);
+export const advisorAlternativeSchema = z.object({ name: z.string(), reason: z.string() });
+export const advisorDocsSchema = z.object({
+  url: z.string().nullable(),
+  confident: z.boolean(),
+  description: z.string(),
+});
+export const advisorPayloadSchema = z.object({
+  verdict: advisorVerdictSchema,
+  verdict_summary: z.string(),
+  what_it_solves: z.string(),
+  official_docs: advisorDocsSchema,
+  alternatives: z.array(advisorAlternativeSchema),
+  warning: z.string().nullable(),
+});
+export const securityAdvisorAnswerSchema = z.object({
+  finding_key: z.string(),
+  ok: z.boolean(),
+  model: z.string(),
+  error: z.string().nullable(),
+  answer: advisorPayloadSchema.nullable(),
+});
+
 export type SecurityFinding = z.infer<typeof securityFindingSchema>;
 export type SecurityScan = z.infer<typeof securityScanSchema>;
+export type AdvisorVerdict = z.infer<typeof advisorVerdictSchema>;
+export type AdvisorPayload = z.infer<typeof advisorPayloadSchema>;
+export type SecurityAdvisorAnswer = z.infer<typeof securityAdvisorAnswerSchema>;
 export type EnvScope = z.infer<typeof envScopeSchema>;
 export type EnvEntry = z.infer<typeof envEntrySchema>;
 export type EnvPayload = z.infer<typeof envPayloadSchema>;
@@ -109,6 +135,19 @@ export function useSecurityScan(refreshToken: number) {
     },
     placeholderData: (previous) => previous,
     staleTime: refreshToken > 0 ? 0 : 15_000,
+  });
+}
+
+export function useAskAboutPackage() {
+  return useMutation({
+    mutationFn: async (findingKey: string) => {
+      const params = new URLSearchParams({ finding_key: findingKey });
+      const envelope = await apiGet(
+        `/api/security/ask?${params.toString()}`,
+        securityAdvisorAnswerSchema,
+      );
+      return requireData(envelope, "package security advisor");
+    },
   });
 }
 

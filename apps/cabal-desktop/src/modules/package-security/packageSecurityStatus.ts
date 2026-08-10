@@ -5,12 +5,25 @@ import type { SecurityFinding } from "@/api/securityEnvironment";
 
 export type SeverityTone = "ok" | "warning" | "danger" | "neutral";
 
-export function severityTone(severity: string): SeverityTone {
+// A "vulnerable" finding must never render as ok/green, even when the scanner couldn't grade its
+// severity (pip-audit reports no severity at all, so python_scanner.py defaults it to "info" —
+// which, for an "outdated" or "deprecated" finding, correctly means "nothing to worry about").
+// Ungraded/unknown severity on a real vulnerability defaults to danger, not ok, since the absence
+// of a grade is not evidence of low risk.
+export function severityTone(severity: string, kind: SecurityFinding["kind"]): SeverityTone {
   const value = severity.toLowerCase();
   if (value === "critical" || value === "high") return "danger";
-  if (value === "moderate" || value === "medium") return "warning";
-  if (value === "low" || value === "info") return "ok";
-  return "neutral";
+  if (value === "moderate" || value === "medium")
+    return kind === "vulnerable" ? "danger" : "warning";
+  if (value === "low") return kind === "vulnerable" ? "warning" : "ok";
+  if (value === "info") return kind === "vulnerable" ? "danger" : "ok";
+  return kind === "vulnerable" ? "danger" : "neutral";
+}
+
+const PIP_AUDIT_MISSING_PREFIX = "pip-audit not installed";
+
+export function isPipAuditMissingNotice(notice: string): boolean {
+  return notice.startsWith(PIP_AUDIT_MISSING_PREFIX);
 }
 
 export interface KindCounts {
