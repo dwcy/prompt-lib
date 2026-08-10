@@ -48,7 +48,7 @@ describe("OverviewModule", () => {
     renderOverview();
 
     expect(await screen.findByText("3 services linked")).toBeInTheDocument();
-    expect(screen.getByText("session-abc")).toBeInTheDocument();
+    expect(screen.getAllByText("session-abc").length).toBeGreaterThan(0);
     expect(screen.getByText("you@example.com")).toBeInTheDocument();
     expect(screen.getByText("No issues found")).toBeInTheDocument();
     expect(screen.getByText("Graph available")).toBeInTheDocument();

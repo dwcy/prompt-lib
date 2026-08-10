@@ -212,7 +212,7 @@ describe("KnowledgeModule", () => {
       "aria-pressed",
       "true",
     );
-    expect(await screen.findByRole("heading", { name: "React architect" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "React architect" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /Search/ }));
     expect(screen.getByRole("button", { name: "Semantic" })).toBeDisabled();

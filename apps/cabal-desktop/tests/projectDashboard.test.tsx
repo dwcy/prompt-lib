@@ -33,24 +33,30 @@ describe("ProjectDashboardModule", () => {
         const section = sectionOf(request);
         if (section === "git") {
           return HttpResponse.json(
-            wrapEnvelope({ linked: true, state: "ok", summary: "Clean working tree" }),
+            wrapEnvelope({ state: "ok", current_branch: "main", detached: false }),
           );
         }
         if (section === "github") {
           githubCallCount += 1;
-          return HttpResponse.json(wrapEnvelope({ linked: false }));
+          return HttpResponse.json(wrapEnvelope({ state: "ok", connected: false }));
         }
         if (section === "supabase") {
           return HttpResponse.json(wrapEnvelope({ state: "not_set_up" }));
         }
-        return HttpResponse.json(wrapEnvelope({ linked: true, summary: "Deployed" }));
+        return HttpResponse.json(
+          wrapEnvelope({
+            state: "ok",
+            project_name: "my-app",
+            latest_deployment_status: "READY",
+          }),
+        );
       }),
     );
 
     renderDashboard();
 
-    expect(await screen.findByText("Clean working tree")).toBeInTheDocument();
-    expect(screen.getByText("Deployed")).toBeInTheDocument();
+    expect(await screen.findByText("On main")).toBeInTheDocument();
+    expect(screen.getByText("my-app · READY")).toBeInTheDocument();
     expect(screen.queryByText("GitHub")).not.toBeInTheDocument();
     expect(screen.queryByText("Supabase")).not.toBeInTheDocument();
     expect(githubCallCount).toBe(1);
@@ -64,19 +70,18 @@ describe("ProjectDashboardModule", () => {
         if (section === "git") {
           gitCallCount += 1;
           return HttpResponse.json(
-            wrapEnvelope({ linked: true, summary: `Git call ${gitCallCount}` }),
+            wrapEnvelope({ state: "ok", current_branch: `call-${gitCallCount}` }),
           );
         }
-        return HttpResponse.json(wrapEnvelope({ linked: true, summary: "ok" }));
+        return HttpResponse.json(wrapEnvelope({ state: "ok", connected: true }));
       }),
     );
     const { user } = renderDashboard();
 
-    await screen.findByText("Git call 1");
-    const refreshButtons = screen.getAllByRole("button", { name: "Refresh" });
-    await user.click(refreshButtons[0]);
+    await screen.findByText("On call-1");
+    await user.click(screen.getByRole("button", { name: "Refresh Git" }));
 
     await waitFor(() => expect(gitCallCount).toBe(2));
-    expect(await screen.findByText("Git call 2")).toBeInTheDocument();
+    expect(await screen.findByText("On call-2")).toBeInTheDocument();
   });
 });

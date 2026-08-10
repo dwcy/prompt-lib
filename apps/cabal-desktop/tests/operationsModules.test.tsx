@@ -102,7 +102,10 @@ describe("MCP and service workflows", () => {
       "true",
     );
 
-    await user.click(screen.getByRole("button", { name: "Disable" }));
+    // Both the table row and the detail panel now expose a Disable action (T3 redesign); either
+    // triggers the same prepare/confirm flow, so the row's action (listed first in the DOM) is
+    // the one this test drives.
+    await user.click(screen.getAllByRole("button", { name: "Disable" })[0]);
 
     expect(
       await screen.findByRole("dialog", { name: "Remove one workspace-files scope" }),
@@ -136,16 +139,13 @@ describe("MCP and service workflows", () => {
         ),
       ),
     );
-    const { user } = renderModule(<ServicesModule />);
+    renderModule(<ServicesModule />);
 
+    // Action buttons are per-row and gated on that row's own prereqs (not on selection): the
+    // blocked service exposes no Start action, while the ready service's is present and enabled.
     expect(await screen.findByText("Python runtime is missing")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Start service" })).not.toBeInTheDocument();
-
-    const readyService = screen.getByRole("button", { name: /Event bus/ });
-    await user.click(readyService);
-
-    expect(readyService).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByRole("button", { name: "Start service" })).toBeEnabled();
+    expect(screen.getAllByRole("button", { name: "Start" })).toHaveLength(1);
+    expect(screen.getByRole("button", { name: "Start" })).toBeEnabled();
   });
 });
 

@@ -38,7 +38,7 @@ export function SessionDrawer({ session, onDelete }: SessionDrawerProps) {
   return (
     <aside className="sess-drawer" aria-label="Selected session detail">
       <div className="sess-drawer__head">
-        <b className="sess-drawer__title">{sessionTitle(session)}</b>
+        <h2 className="sess-drawer__title">{sessionTitle(session)}</h2>
         <span className="sess-drawer__id">{compactId(session.session_id)}</span>
       </div>
 

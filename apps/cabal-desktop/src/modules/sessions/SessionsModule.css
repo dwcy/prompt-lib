@@ -276,6 +276,7 @@
 .sess-drawer__title {
   overflow: hidden;
   min-width: 0;
+  margin: 0;
   font-size: var(--fs-md);
   font-weight: 600;
   text-overflow: ellipsis;

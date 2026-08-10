@@ -53,6 +53,7 @@ function RailItem({ label, count, barWidth, active, onClick }: RailItemProps) {
     <button
       type="button"
       aria-pressed={active}
+      aria-label={`${label} (${count})`}
       className={
         active
           ? "tools-console__rail-item tools-console__rail-item--active"

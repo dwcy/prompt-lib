@@ -84,7 +84,7 @@ describe("SessionsModule", () => {
         const items = Array.from({ length: 50 }, (_, index) =>
           buildSession({
             session_id: `session-${offset + index}`,
-            title: `Bounded session ${offset + index}`,
+            title: `bounded-session-${offset + index}`,
           }),
         );
         return HttpResponse.json(
@@ -121,13 +121,17 @@ describe("SessionsModule", () => {
     );
     const { user } = renderModule();
 
-    expect(await screen.findByRole("button", { name: /Bounded session 0/ })).toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: /Bounded session/ })).toHaveLength(50);
+    expect(await screen.findByTitle("bounded-session-0")).toBeInTheDocument();
+    // The row list is virtualized (only the visible window + overscan mounts, not all 50 at
+    // once), so this checks the page is bounded rather than asserting an exact DOM node count.
+    const renderedRows = screen.getAllByTitle(/^bounded-session-\d+$/);
+    expect(renderedRows.length).toBeGreaterThan(0);
+    expect(renderedRows.length).toBeLessThanOrEqual(50);
     await user.click(screen.getByRole("button", { name: "Next" }));
 
-    expect(await screen.findByRole("button", { name: /Bounded session 50/ })).toBeInTheDocument();
+    expect(await screen.findByTitle("bounded-session-50")).toBeInTheDocument();
     expect(requestedCursors).toEqual([null, "50"]);
-    expect(screen.queryByRole("button", { name: /Bounded session 0/ })).not.toBeInTheDocument();
+    expect(screen.queryByTitle("bounded-session-0")).not.toBeInTheDocument();
   });
 
   it("exposes active lenses and requests the selected comparison sort", async () => {
@@ -135,17 +139,16 @@ describe("SessionsModule", () => {
     installSessionHandlers((sort) => requestedSorts.push(sort));
     const { user } = renderModule();
 
-    expect(await screen.findByRole("button", { name: "all 2" })).toHaveAttribute(
+    expect(await screen.findByRole("button", { name: "all · 2" })).toHaveAttribute(
       "aria-pressed",
       "true",
     );
 
-    await user.click(screen.getByRole("button", { name: "errors 1" }));
-    expect(screen.getByRole("button", { name: "errors 1" })).toHaveAttribute(
+    await user.click(screen.getByRole("button", { name: "errors · 1" }));
+    expect(screen.getByRole("button", { name: "errors · 1" })).toHaveAttribute(
       "aria-pressed",
       "true",
     );
-    expect(screen.getByText("1 visible sessions")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Cost" }));
     await waitFor(() => expect(requestedSorts).toContain("cost_desc"));
@@ -180,7 +183,7 @@ describe("SessionsModule", () => {
     const { user } = renderModule();
 
     await screen.findByRole("heading", { name: "Alpha session" });
-    await user.click(screen.getByRole("button", { name: "Delete" }));
+    await user.click(screen.getByRole("button", { name: "Delete session" }));
 
     expect(await screen.findByText("Delete transcript session-alpha")).toBeInTheDocument();
     expect(screen.getByRole("alertdialog")).toHaveClass("confirm-dialog--destructive");

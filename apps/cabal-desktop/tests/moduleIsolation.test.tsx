@@ -27,12 +27,14 @@ function githubFailingDashboardHandler() {
       );
     }
     if (section === "git") {
-      return HttpResponse.json(wrapEnvelope({ linked: true, summary: "Clean working tree" }));
+      return HttpResponse.json(wrapEnvelope({ state: "ok", current_branch: "main" }));
     }
     if (section === "supabase") {
-      return HttpResponse.json(wrapEnvelope({ linked: true, summary: "2 projects linked" }));
+      return HttpResponse.json(wrapEnvelope({ state: "ok", project_ref: "abcd1234" }));
     }
-    return HttpResponse.json(wrapEnvelope({ linked: true, summary: "Deployed" }));
+    return HttpResponse.json(
+      wrapEnvelope({ state: "ok", project_name: "my-app", latest_deployment_status: "READY" }),
+    );
   });
 }
 
@@ -54,9 +56,9 @@ describe("Module isolation: one dashboard section failing", () => {
       </QueryClientProvider>,
     );
 
-    expect(await screen.findByText("Clean working tree")).toBeInTheDocument();
-    expect(screen.getByText("2 projects linked")).toBeInTheDocument();
-    expect(screen.getByText("Deployed")).toBeInTheDocument();
+    expect(await screen.findByText("On main")).toBeInTheDocument();
+    expect(screen.getByText("abcd1234")).toBeInTheDocument();
+    expect(screen.getByText("my-app · READY")).toBeInTheDocument();
     expect(await screen.findByRole("alert")).toHaveTextContent("GitHub API timed out");
   });
 
@@ -77,7 +79,7 @@ describe("Module isolation: one dashboard section failing", () => {
 
       await user.click(await screen.findByRole("button", { name: "Project Dashboard" }));
 
-      expect(await screen.findByText("Clean working tree")).toBeInTheDocument();
+      expect(await screen.findByText("On main")).toBeInTheDocument();
       expect(await screen.findByRole("alert")).toHaveTextContent("GitHub API timed out");
 
       await user.click(screen.getByRole("button", { name: "Home Overview" }));

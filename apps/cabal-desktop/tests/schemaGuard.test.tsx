@@ -41,7 +41,9 @@ describe("App schema-version guard", () => {
 
     renderApp();
 
-    expect(await screen.findByText(/Cabal v0\.0\.0-test/)).toBeInTheDocument();
+    expect(
+      await screen.findByText((_, element) => element?.textContent === "v0.0.0-test"),
+    ).toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 });

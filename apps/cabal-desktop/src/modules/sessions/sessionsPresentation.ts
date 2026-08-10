@@ -28,16 +28,21 @@ export function sessionTitle(session: SessionSummary): string {
     : compactId(session.session_id);
 }
 
+// Pinned to en-US: this is a local dev tool, and number/currency formatting must stay stable
+// across host machines regardless of OS locale (Intl.NumberFormat(undefined, ...) would silently
+// render "1 000" / "0,00 US$" style output on non-English-locale systems).
+const FORMAT_LOCALE = "en-US";
+
 export function formatTokens(value: number): string {
-  return Intl.NumberFormat(undefined, { notation: "compact" }).format(value);
+  return Intl.NumberFormat(FORMAT_LOCALE, { notation: "compact" }).format(value);
 }
 
 export function formatCount(value: number): string {
-  return Intl.NumberFormat().format(value);
+  return Intl.NumberFormat(FORMAT_LOCALE).format(value);
 }
 
 export function formatMoney(value: number): string {
-  return Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }).format(value);
+  return Intl.NumberFormat(FORMAT_LOCALE, { style: "currency", currency: "USD" }).format(value);
 }
 
 export function formatDuration(value: number): string {
@@ -55,7 +60,7 @@ export function formatSessionTime(value: string | null): string {
   if (value === null) return "—";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleString(undefined, {
+  return date.toLocaleString(FORMAT_LOCALE, {
     month: "short",
     day: "numeric",
     hour: "2-digit",
