@@ -15,6 +15,7 @@ import { VirtualDataTable, type VirtualDataTableColumn } from "@/components/Virt
 import { useAction } from "@/hooks/useAction";
 import { DeployTreePanel } from "@/modules/config-deploy/DeployTreePanel";
 import { useProjectContextStore } from "@/stores/projectContext";
+import "./CodexModule.css";
 
 type SelectionState = Record<string, Set<string>>;
 type ConversionState = "converted" | "not-converted" | "codex-only" | "stale" | "unsupported";
@@ -62,51 +63,61 @@ export function CodexModule() {
     (deployQuery.data?.drift.changed_count ?? 0) + (deployQuery.data?.drift.new_count ?? 0);
 
   return (
-    <div className="us3-module codex-module">
-      <header className="us3-module__header">
+    <div className="codex">
+      <header className="codex__header">
         <div>
           <h1>Codex Parity</h1>
           <p>Deploy Codex assets, scaffold local agent files, and audit conversion coverage.</p>
         </div>
       </header>
 
-      <section className="codex-parity-runway">
-        <div>
-          <span className="us3-eyebrow">Parity runway</span>
+      <section className="codex__runway">
+        <div className="codex__runway-status">
+          <span className="codex__eyebrow">Parity runway</span>
           <strong>
             {deployDrift + localPending + conversionCounts.attention === 0
               ? "Codex surface aligned"
               : `${deployDrift + localPending + conversionCounts.attention} item(s) need attention`}
           </strong>
         </div>
-        <ol aria-label="Codex parity workflow">
-          <li className={deployDrift === 0 ? "is-complete" : "is-current"}>
-            <span>01</span>
+        <ol className="codex__runway-steps" aria-label="Codex parity workflow">
+          <li
+            className={`codex__runway-step ${deployDrift === 0 ? "is-complete" : "is-current"}`}
+          >
+            <span className="codex__runway-step-index">01</span>
             <strong>Deploy shared assets</strong>
-            <small>{deployDrift} drifted</small>
+            <small className="codex__runway-step-meta">{deployDrift} drifted</small>
           </li>
-          <li className={localPending === 0 ? "is-complete" : "is-current"}>
-            <span>02</span>
+          <li
+            className={`codex__runway-step ${localPending === 0 ? "is-complete" : "is-current"}`}
+          >
+            <span className="codex__runway-step-index">02</span>
             <strong>Scaffold project</strong>
-            <small>{localPending} pending</small>
+            <small className="codex__runway-step-meta">{localPending} pending</small>
           </li>
-          <li className={conversionCounts.attention === 0 ? "is-complete" : "is-current"}>
-            <span>03</span>
+          <li
+            className={`codex__runway-step ${
+              conversionCounts.attention === 0 ? "is-complete" : "is-current"
+            }`}
+          >
+            <span className="codex__runway-step-index">03</span>
             <strong>Audit translation</strong>
-            <small>{conversionCounts.attention} exceptions</small>
+            <small className="codex__runway-step-meta">
+              {conversionCounts.attention} exceptions
+            </small>
           </li>
         </ol>
       </section>
 
-      <section className="codex-section">
+      <section className="codex__section">
         <h2>Deploy Tree</h2>
         <DeployTreePanel target="codex" actionId="codex.apply" />
       </section>
 
-      <section className="codex-section">
-        <header className="codex-section__header">
+      <section className="codex__section">
+        <header className="codex__section-header">
           <h2>Local Scaffold</h2>
-          <label className="us3-field">
+          <label className="codex__field">
             Template
             <select
               value={template ?? ""}
@@ -129,7 +140,7 @@ export function CodexModule() {
         ) : localQuery.isError ? (
           <EmptyState title="Could not load Codex local plan" body={localQuery.error.message} />
         ) : (
-          <div className="codex-scaffold-blueprint">
+          <div className="codex__scaffold-list">
             {localQuery.data.actions.map((item, index) => (
               <CodexLocalCard
                 key={item.key}
@@ -150,22 +161,24 @@ export function CodexModule() {
         )}
       </section>
 
-      <section className="codex-section">
-        <header className="codex-section__header codex-audit-header">
+      <section className="codex__section">
+        <header className="codex__section-header codex__audit-header">
           <div>
             <h2>Conversion Audit</h2>
             <p>
               {conversionCounts.converted} translated, {conversionCounts.attention} exceptions.
             </p>
           </div>
-          <div className="codex-conversion-filters">
+          <div className="codex__filters">
             {(
               ["all", "converted", "not-converted", "codex-only", "stale", "unsupported"] as const
             ).map((state) => (
               <button
                 key={state}
                 type="button"
-                className={conversionFilter === state ? "is-active" : undefined}
+                className={
+                  conversionFilter === state ? "codex__filter-btn is-active" : "codex__filter-btn"
+                }
                 onClick={() => setConversionFilter(state)}
               >
                 <span>{state}</span>
@@ -185,7 +198,7 @@ export function CodexModule() {
             body={conversionQuery.error.message}
           />
         ) : (
-          <div className="codex-conversion-ledger">
+          <div className="codex__ledger">
             <VirtualDataTable
               rows={visibleConversionRows}
               getRowId={(row) => row.asset}
@@ -219,7 +232,7 @@ const conversionColumns: Array<VirtualDataTableColumn<ConversionRow>> = [
     key: "asset",
     header: "Asset",
     render: (row) => (
-      <span className="codex-conversion-identity">
+      <span className="codex__cell-identity">
         <strong>{row.asset}</strong>
         <small>{row.kind}</small>
       </span>
@@ -230,12 +243,14 @@ const conversionColumns: Array<VirtualDataTableColumn<ConversionRow>> = [
     key: "route",
     header: "Translation route",
     render: (row) => (
-      <span className="codex-conversion-route">
+      <span className="codex__cell-route">
         <span>
           <small>Claude source</small>
           <code>{row.source_path ?? "Codex native"}</code>
         </span>
-        <i aria-hidden="true">-&gt;</i>
+        <i className="codex__cell-route-arrow" aria-hidden="true">
+          -&gt;
+        </i>
         <span>
           <small>Codex output</small>
           <code>{row.output_path ?? "No output"}</code>
@@ -248,7 +263,7 @@ const conversionColumns: Array<VirtualDataTableColumn<ConversionRow>> = [
     key: "gate",
     header: "Conversion gate",
     render: (row) => (
-      <span className="codex-conversion-decision">
+      <span className="codex__cell-decision">
         <StatePill variant={conversionVariant(row.state)} label={row.state} />
         <small>{row.reason || conversionDecisionCopy(row.state)}</small>
       </span>
@@ -265,31 +280,31 @@ function ConversionPipeline({ rows }: { rows: ConversionRow[] }) {
   const exceptions = rows.length - converted - native;
 
   return (
-    <section className="codex-conversion-pipeline" aria-label="Codex conversion pipeline">
-      <div className="codex-conversion-pipeline__stage">
-        <span>01</span>
+    <section className="codex__pipeline" aria-label="Codex conversion pipeline">
+      <div className="codex__pipeline-stage">
+        <span className="codex__pipeline-stage-index">01</span>
         <div>
           <small>Source inventory</small>
           <strong>{sourced} Claude assets</strong>
         </div>
       </div>
-      <div className="codex-conversion-pipeline__connector">
+      <div className="codex__pipeline-connector">
         <span>{converted} translated</span>
         <i aria-hidden="true" />
       </div>
-      <div className="codex-conversion-pipeline__stage" data-attention={exceptions > 0}>
-        <span>02</span>
+      <div className="codex__pipeline-stage" data-attention={exceptions > 0}>
+        <span className="codex__pipeline-stage-index">02</span>
         <div>
           <small>Conversion gate</small>
           <strong>{exceptions === 0 ? "No exceptions" : `${exceptions} exceptions`}</strong>
         </div>
       </div>
-      <div className="codex-conversion-pipeline__connector">
+      <div className="codex__pipeline-connector">
         <span>{native} Codex native</span>
         <i aria-hidden="true" />
       </div>
-      <div className="codex-conversion-pipeline__stage">
-        <span>03</span>
+      <div className="codex__pipeline-stage">
+        <span className="codex__pipeline-stage-index">03</span>
         <div>
           <small>Output inventory</small>
           <strong>{emitted} Codex assets</strong>
@@ -315,10 +330,10 @@ function CodexLocalCard({
   const counts = countPreviewItems(action);
 
   return (
-    <article className="codex-scaffold-stage">
-      <span className="codex-scaffold-stage__number">{String(step).padStart(2, "0")}</span>
-      <div className="local-config-card">
-        <header className="local-config-card__header">
+    <article className="codex__scaffold-stage">
+      <span className="codex__scaffold-stage-number">{String(step).padStart(2, "0")}</span>
+      <div className="codex__scaffold-card">
+        <header className="codex__scaffold-card-header">
           <div>
             <h3>{action.label}</h3>
             <p>
@@ -327,17 +342,17 @@ function CodexLocalCard({
           </div>
           <StatePill variant={action.applicable ? "update" : "ok"} label={action.applied_state} />
         </header>
-        <ul className="local-config-card__items">
+        <ul className="codex__scaffold-items">
           {action.preview_items.map((item) => (
             <li key={item.key}>
-              <label className="local-config-card__item">
+              <label className="codex__scaffold-item">
                 <input
                   type="checkbox"
                   checked={selectedKeys.has(item.key)}
                   disabled={item.state === "skip"}
                   onChange={(event) => onToggle(item.key, event.currentTarget.checked)}
                 />
-                <span>{item.rel_path}</span>
+                <span className="codex__scaffold-item-path">{item.rel_path}</span>
                 <StatePill
                   variant={
                     item.state === "changed" ? "update" : item.state === "new" ? "open" : "ok"
@@ -348,7 +363,12 @@ function CodexLocalCard({
             </li>
           ))}
         </ul>
-        <button type="button" onClick={onApply} disabled={selectedKeys.size === 0}>
+        <button
+          type="button"
+          className="codex__scaffold-apply-btn"
+          onClick={onApply}
+          disabled={selectedKeys.size === 0}
+        >
           Review {selectedKeys.size}
         </button>
       </div>
