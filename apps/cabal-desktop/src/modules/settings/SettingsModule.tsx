@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { StatePill } from "@/components/StatePill";
 import { useAction } from "@/hooks/useAction";
 import { useProjectContextStore } from "@/stores/projectContext";
+import "./SettingsModule.css";
 
 type SourceFilter = "all" | SettingEntry["source"];
 
@@ -53,10 +54,10 @@ export function SettingsModule() {
   }
 
   return (
-    <div className="settings-workspace">
+    <div className="settings-console">
       <section className="settings-command-center">
-        <div>
-          <span className="module-eyebrow select-none">Resolution map</span>
+        <div className="settings-command-center__intro">
+          <span className="settings-eyebrow select-none">Resolution map</span>
           <h1>Settings</h1>
           <p>
             Trace each value from its upstream origin through the project layer to the effective
@@ -66,19 +67,21 @@ export function SettingsModule() {
         <div className="settings-command-panel">
           <ol className="settings-inheritance-flow" aria-label="Settings resolution order">
             <li className="is-active">
-              <span>01</span>
-              <strong>Origin</strong>
-              <small>global or catalog</small>
+              <span className="settings-inheritance-flow__step">01</span>
+              <strong className="settings-inheritance-flow__label">Origin</strong>
+              <small className="settings-inheritance-flow__detail">global or catalog</small>
             </li>
             <li className={groupedEntries.overrides.length > 0 ? "is-active" : ""}>
-              <span>02</span>
-              <strong>Project layer</strong>
-              <small>{groupedEntries.overrides.length} override(s)</small>
+              <span className="settings-inheritance-flow__step">02</span>
+              <strong className="settings-inheritance-flow__label">Project layer</strong>
+              <small className="settings-inheritance-flow__detail">
+                {groupedEntries.overrides.length} override(s)
+              </small>
             </li>
             <li className="is-effective">
-              <span>03</span>
-              <strong>Effective value</strong>
-              <small>runtime result</small>
+              <span className="settings-inheritance-flow__step">03</span>
+              <strong className="settings-inheritance-flow__label">Effective value</strong>
+              <small className="settings-inheritance-flow__detail">runtime result</small>
             </li>
           </ol>
           <button
@@ -102,8 +105,8 @@ export function SettingsModule() {
           placeholder="Find a setting or key"
           aria-label="Find a setting"
         />
-        <fieldset className="segmented-control">
-          <legend className="visually-hidden">Setting provenance</legend>
+        <fieldset className="settings-source-filter">
+          <legend className="settings-vh">Setting provenance</legend>
           <SourceButton
             label="All"
             count={settingsQuery.data.entries.length}
@@ -129,7 +132,7 @@ export function SettingsModule() {
             onClick={() => setSourceFilter("unset")}
           />
         </fieldset>
-        <span>{visibleEntries.length} visible</span>
+        <span className="settings-resolution-toolbar__count">{visibleEntries.length} visible</span>
       </section>
 
       <section className="settings-resolution-map">
@@ -255,8 +258,16 @@ function SettingResolutionRow({
       </div>
       <div className="settings-resolution-row__command">
         <small>{entry.target_file}</small>
-        <button type="button" onClick={onToggle} disabled={!projectSelected}>
-          Set {entry.value_state ? "off" : "on"}
+        <button
+          type="button"
+          role="switch"
+          aria-checked={entry.value_state}
+          aria-label={`${entry.value_state ? "Disable" : "Enable"} ${entry.label}`}
+          className={`settings-toggle${entry.value_state ? " is-on" : ""}`}
+          onClick={onToggle}
+          disabled={!projectSelected}
+        >
+          <span className="settings-toggle__knob" />
         </button>
       </div>
     </article>
@@ -274,8 +285,8 @@ function ResolutionNode({
 }) {
   return (
     <span className={active ? "is-active" : undefined}>
-      <small>{detail}</small>
-      <strong>{label}</strong>
+      <small className="settings-resolution-row__trace-detail">{detail}</small>
+      <strong className="settings-resolution-row__trace-label">{label}</strong>
     </span>
   );
 }
