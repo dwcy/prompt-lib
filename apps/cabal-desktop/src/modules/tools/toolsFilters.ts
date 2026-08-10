@@ -43,7 +43,9 @@ export function filterToolRows(rows: ToolRow[], filters: ToolFilters): ToolRow[]
     if (filters.status !== null && row.status?.state !== filters.status) return false;
     if (filters.badge !== null && !row.badges.includes(filters.badge)) return false;
     if (search.length === 0) return true;
-    const haystack = `${row.label} ${row.description} ${row.key}`.toLowerCase();
+    // Haystack mirrors the search placeholder's promise: tools, categories, badges (+ channel/key).
+    const haystack =
+      `${row.label} ${row.description} ${row.key} ${row.category} ${row.install_channel} ${row.badges.join(" ")}`.toLowerCase();
     return haystack.includes(search);
   });
 }

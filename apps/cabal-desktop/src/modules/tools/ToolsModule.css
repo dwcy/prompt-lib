@@ -1,0 +1,542 @@
+/* Tools console module styles: filter bar grid, category rail | readiness table | sticky detail
+   three-pane layout per specs/015-web-ui-overhaul/redesign/cabal-console-mock.html (isTools).
+   Token-only colors; the literal #ffffff on active items mirrors shell.css's sidebar treatment. */
+
+.tools-console {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+
+/* --- Filter bar --------------------------------------------------------- */
+
+.tools-console__filters-group {
+  display: grid;
+  gap: 8px;
+}
+
+.tools-console__filters {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) repeat(3, 190px);
+  gap: 10px;
+}
+
+.tools-console__filters input[type="search"],
+.tools-console__filters select {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-md);
+  font-size: var(--fs-base);
+}
+
+.tools-console__filters input[type="search"] {
+  color: var(--fg);
+}
+
+.tools-console__filters input[type="search"]::placeholder {
+  color: var(--muted);
+}
+
+.tools-console__filters select {
+  padding: 8px 10px;
+  color: var(--fg-soft);
+}
+
+.tools-console__badge-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tools-console__badge-chip {
+  padding: 3px 10px;
+  background: var(--surface-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-full);
+  color: var(--fg-soft);
+  font-size: var(--fs-sm);
+}
+
+.tools-console__badge-chip--active,
+.tools-console__badge-chip--active:hover:not(:disabled) {
+  background: var(--accent-bg-gradient);
+  border-color: var(--accent-border);
+  color: #ffffff;
+}
+
+.tools-console__count {
+  margin: 0;
+  color: var(--muted-3);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+/* --- Three panes --------------------------------------------------------- */
+
+.tools-console__panes {
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr) 300px;
+  gap: 12px;
+  align-items: start;
+}
+
+/* --- Category rail --- */
+
+.tools-console__rail {
+  display: grid;
+  gap: 3px;
+}
+
+.tools-console__rail-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 10px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--corner-md);
+  color: var(--fg-soft);
+  font-size: var(--fs-base);
+  text-align: left;
+  cursor: pointer;
+}
+
+.tools-console__rail-item:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+
+.tools-console__rail-item--active,
+.tools-console__rail-item--active:hover:not(:disabled) {
+  background: var(--accent-bg-gradient);
+  border-color: var(--accent-border);
+  color: #ffffff;
+}
+
+.tools-console__rail-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tools-console__rail-meter {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.tools-console__rail-bar {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--muted-3);
+}
+
+.tools-console__rail-item--active .tools-console__rail-bar {
+  background: var(--accent);
+}
+
+.tools-console__rail-count {
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+/* --- Table card: re-grid the shared VirtualDataTable onto the ledger columns --- */
+
+.tools-console__table .virtual-data-table {
+  max-height: calc(100dvh - 220px);
+  min-height: 12rem;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+}
+
+.tools-console__table .virtual-data-table__header,
+.tools-console__table .virtual-data-table__row {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1.2fr) minmax(0, 1fr) 120px 110px;
+  gap: 12px;
+  align-items: center;
+  min-width: 0;
+  padding: 0 16px;
+}
+
+.tools-console__table .virtual-data-table__header {
+  background: var(--surface-1);
+  border-bottom: 1px solid var(--divider);
+}
+
+.tools-console__table .virtual-data-table__header-cell {
+  min-width: 0;
+  padding: 9px 0;
+  color: var(--muted-2);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.tools-console__table .virtual-data-table__header-cell--sortable:hover {
+  background: transparent;
+  color: var(--fg-soft);
+}
+
+.tools-console__table .virtual-data-table__body {
+  min-width: 0;
+}
+
+.tools-console__table .virtual-data-table__cell {
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+  font-size: var(--fs-base);
+}
+
+.tools-console__table .virtual-data-table__row {
+  border-bottom: 1px solid var(--divider-faint);
+}
+
+/* Subtle zebra on odd rows; virtualization may flip parity while scrolling, which is acceptable. */
+.tools-console__table .virtual-data-table__row:nth-child(odd) {
+  background-color: color-mix(in srgb, var(--surface-deep) 45%, transparent);
+}
+
+.tools-console__table .virtual-data-table__row:hover {
+  background-color: var(--surface-2);
+}
+
+.tools-console__table .virtual-data-table__row:has(.tools-console__row-open[aria-pressed="true"]) {
+  background-color: color-mix(in srgb, var(--accent) 10%, var(--surface-2));
+}
+
+/* The stretched row button suppresses its own ring; draw it on the row instead. */
+.tools-console__table .virtual-data-table__row:has(.tools-console__row-open:focus-visible) {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: -2px;
+}
+
+.tools-console__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--corner-full);
+}
+
+.tools-console__dot--installed {
+  background: var(--state-installed);
+}
+
+.tools-console__dot--update_available {
+  background: var(--state-update-available);
+}
+
+.tools-console__dot--missing {
+  background: var(--state-missing);
+}
+
+.tools-console__dot--manual_required {
+  background: var(--state-manual-required);
+}
+
+.tools-console__dot--unsupported {
+  background: var(--state-unsupported);
+}
+
+.tools-console__dot--error {
+  background: var(--state-error);
+}
+
+.tools-console__dot--pending {
+  background: var(--muted);
+  animation: pulse-dot 1.6s var(--ease-standard) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tools-console__dot--pending {
+    animation: none;
+  }
+}
+
+.tools-console__row-open {
+  max-width: 100%;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 0;
+  color: var(--fg);
+  font-size: var(--fs-base);
+  font-weight: 500;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.tools-console__row-open:hover:not(:disabled) {
+  background: none;
+}
+
+.tools-console__row-open:focus-visible {
+  outline: none;
+}
+
+/* Stretched-link pattern: the tool-name button's hit area covers the whole positioned row. */
+.tools-console__row-open::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.tools-console__badge-mark {
+  margin-left: 6px;
+  color: var(--status-warning);
+  font-size: var(--fs-xs);
+}
+
+.tools-console__cell-category {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+}
+
+.tools-console__cell-mono {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+.tools-console__cell-status {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+.tools-console__cell-status--installed {
+  color: var(--state-installed);
+}
+
+.tools-console__cell-status--update_available {
+  color: var(--state-update-available);
+}
+
+.tools-console__cell-status--missing {
+  color: var(--state-missing);
+}
+
+.tools-console__cell-status--manual_required {
+  color: var(--state-manual-required);
+}
+
+.tools-console__cell-status--unsupported {
+  color: var(--state-unsupported);
+}
+
+.tools-console__cell-status--error {
+  color: var(--state-error);
+}
+
+.tools-console__cell-status--pending {
+  color: var(--muted);
+}
+
+/* --- Detail pane (sticky third column) --- */
+
+.tools-console__detail {
+  position: sticky;
+  top: 0;
+  padding: 16px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+}
+
+.tools-console__detail-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.tools-console__detail-header h3 {
+  margin: 0;
+  font-size: var(--fs-md);
+  font-weight: 600;
+}
+
+.tools-console__detail-description {
+  margin: 10px 0 14px;
+  color: var(--fg-soft);
+  font-size: var(--fs-base);
+  line-height: 1.6;
+}
+
+.tools-console__detail-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.tools-console__detail-badges li {
+  padding: 2px 8px;
+  background: var(--surface-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-full);
+  color: var(--fg-soft);
+  font-size: var(--fs-xs);
+}
+
+.tools-console__facts {
+  display: grid;
+  margin: 0;
+  font-size: var(--fs-sm);
+}
+
+.tools-console__fact {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--divider);
+}
+
+.tools-console__fact dt {
+  color: var(--muted);
+}
+
+.tools-console__fact dd {
+  margin: 0;
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  overflow-wrap: anywhere;
+}
+
+.tools-console__safety-notes {
+  margin: 12px 0 0;
+  padding-left: var(--space-4);
+  color: var(--fg-soft);
+  font-size: var(--fs-sm);
+}
+
+.tools-console__safety-notes li::marker {
+  color: var(--status-warning);
+}
+
+.tools-console__safety-notes li + li {
+  margin-top: var(--space-1);
+}
+
+.tools-console__source-link {
+  display: inline-block;
+  margin-top: 12px;
+  color: var(--accent);
+  font-size: var(--fs-sm);
+}
+
+/* --- Install/update action flow (classes rendered by actions.tsx's ToolActionPanel) --- */
+
+.tools-console__detail .tool-action-panel {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--divider);
+}
+
+.tools-console__detail .tool-action-panel__version {
+  display: grid;
+  gap: 4px;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.tools-console__detail .tool-action-panel__version select {
+  padding: 8px 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-md);
+  color: var(--fg);
+  font-size: var(--fs-base);
+}
+
+.tools-console__detail .tool-action-panel > button {
+  justify-self: start;
+  padding: var(--space-2) var(--space-4);
+  background: var(--accent-bg-gradient);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--corner-md);
+  color: #ffffff;
+  font-size: var(--fs-base);
+  font-weight: 500;
+}
+
+.tools-console__detail .tool-action-panel > button:hover:not(:disabled) {
+  background: var(--accent-bg);
+  border-color: var(--accent);
+}
+
+.tools-console__detail .tool-action-panel__unavailable {
+  margin: 14px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--divider);
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+/* --- Narrow layouts --------------------------------------------------------- */
+
+@media (max-width: 1200px) {
+  .tools-console__filters {
+    grid-template-columns: minmax(180px, 1fr) repeat(3, minmax(130px, 1fr));
+  }
+
+  .tools-console__panes {
+    grid-template-columns: 180px minmax(0, 1fr);
+  }
+
+  .tools-console__detail {
+    position: static;
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 768px) {
+  .tools-console__filters {
+    grid-template-columns: 1fr;
+  }
+
+  .tools-console__panes {
+    grid-template-columns: 1fr;
+  }
+
+  .tools-console__detail {
+    grid-column: auto;
+  }
+
+  .tools-console__table .virtual-data-table__header,
+  .tools-console__table .virtual-data-table__row {
+    grid-template-columns: 16px minmax(0, 1.4fr) minmax(0, 1fr) 90px;
+  }
+
+  /* Category folds into the Tool column's context at phone widths; hide its cell. */
+  .tools-console__table .virtual-data-table__header-cell:nth-child(3),
+  .tools-console__table .virtual-data-table__cell:nth-child(3) {
+    display: none;
+  }
+}

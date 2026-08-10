@@ -1,4 +1,5 @@
-// Left-hand category rail: "All" plus each catalog category, with the server-provided live count.
+// Left console rail: "All" plus each catalog category as a full-width button with a proportional
+// mini count bar and mono count; the selected entry gets the sidebar's active-accent treatment.
 export interface CategoryRailEntry {
   name: string;
   count: number;
@@ -11,36 +12,65 @@ export interface CategoryRailProps {
   onSelect: (category: string | null) => void;
 }
 
+const MAX_BAR_WIDTH_PX = 34;
+const MIN_BAR_WIDTH_PX = 2;
+
 export function CategoryRail({ categories, total, selected, onSelect }: CategoryRailProps) {
+  const maxCount = categories.reduce((max, category) => Math.max(max, category.count), 1);
   return (
-    <nav className="tools-category-rail select-none" aria-label="Tool categories">
-      <button
-        type="button"
-        aria-pressed={selected === null}
-        className={
-          selected === null
-            ? "tools-category-rail__item tools-category-rail__item--active"
-            : "tools-category-rail__item"
-        }
+    <nav className="tools-console__rail select-none" aria-label="Tool categories">
+      <RailItem
+        label="All"
+        count={total}
+        barWidth={MAX_BAR_WIDTH_PX}
+        active={selected === null}
         onClick={() => onSelect(null)}
-      >
-        All ({total})
-      </button>
+      />
       {categories.map((category) => (
-        <button
+        <RailItem
           key={category.name}
-          type="button"
-          aria-pressed={selected === category.name}
-          className={
-            selected === category.name
-              ? "tools-category-rail__item tools-category-rail__item--active"
-              : "tools-category-rail__item"
-          }
+          label={category.name}
+          count={category.count}
+          barWidth={barWidth(category.count, maxCount)}
+          active={selected === category.name}
           onClick={() => onSelect(category.name)}
-        >
-          {category.name} ({category.count})
-        </button>
+        />
       ))}
     </nav>
+  );
+}
+
+interface RailItemProps {
+  label: string;
+  count: number;
+  barWidth: number;
+  active: boolean;
+  onClick: () => void;
+}
+
+function RailItem({ label, count, barWidth, active, onClick }: RailItemProps) {
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      className={
+        active ? "tools-console__rail-item tools-console__rail-item--active" : "tools-console__rail-item"
+      }
+      onClick={onClick}
+    >
+      <span className="tools-console__rail-name">{label}</span>
+      <span className="tools-console__rail-meter">
+        {/* Width is proportional to the live count — runtime-computed, so inline by necessity. */}
+        <span className="tools-console__rail-bar" style={{ width: `${barWidth}px` }} aria-hidden="true" />
+        <span className="tools-console__rail-count">{count}</span>
+      </span>
+    </button>
+  );
+}
+
+function barWidth(count: number, maxCount: number): number {
+  return Math.min(
+    MAX_BAR_WIDTH_PX,
+    Math.max(MIN_BAR_WIDTH_PX, Math.round((count / maxCount) * MAX_BAR_WIDTH_PX)),
   );
 }

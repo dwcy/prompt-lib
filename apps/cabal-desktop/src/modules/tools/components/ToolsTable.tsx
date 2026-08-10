@@ -1,114 +1,93 @@
-// Virtualized tool readiness ledger. Rows describe capability, delivery lane, version movement,
-// and live readiness instead of exposing catalog/status payload fields as a generic table.
-import { StatePill } from "@/components/StatePill";
+// Virtualized tools ledger skinned to the console mock: status dot | tool | category | channel |
+// status columns on a shared grid; the whole row (stretched button) opens the detail pane.
 import { VirtualDataTable, type VirtualDataTableColumn } from "@/components/VirtualDataTable";
-import { toStatePillVariant } from "@/modules/tools/toolStatusPresentation";
+import { formatInstallChannel } from "@/modules/tools/toolStatusPresentation";
 import type { ToolRow } from "@/modules/tools/toolsFilters";
 
 export interface ToolsTableProps {
   rows: ToolRow[];
+  selectedKey: string | null;
   onSelectRow: (key: string) => void;
 }
 
-export function ToolsTable({ rows, onSelectRow }: ToolsTableProps) {
+const ROW_HEIGHT = 34;
+
+export function ToolsTable({ rows, selectedKey, onSelectRow }: ToolsTableProps) {
   const columns: Array<VirtualDataTableColumn<ToolRow>> = [
     {
-      key: "capability",
-      header: "Capability",
+      key: "dot",
+      header: "",
+      render: (row) => (
+        <span
+          className={`tools-console__dot tools-console__dot--${row.status?.state ?? "pending"}`}
+          aria-hidden="true"
+        />
+      ),
+    },
+    {
+      key: "tool",
+      header: "Tool",
       sortAccessor: (row) => row.label,
       render: (row) => (
-        <span className="tools-ledger__identity">
-          <button
-            type="button"
-            className="tools-table__open-detail"
-            onClick={() => onSelectRow(row.key)}
-          >
-            {row.label}
-          </button>
-          <small>{row.description}</small>
-          <span>
-            <strong>{row.category}</strong>
-            {row.badges.slice(0, 2).map((badge) => (
-              <i key={badge}>{badge}</i>
-            ))}
-          </span>
-        </span>
+        <button
+          type="button"
+          className="tools-console__row-open"
+          aria-pressed={row.key === selectedKey}
+          onClick={() => onSelectRow(row.key)}
+        >
+          {row.label}
+          {row.badges.length > 0 ? (
+            <span
+              className="tools-console__badge-mark"
+              role="img"
+              aria-label={`Badges: ${row.badges.join(", ")}`}
+            >
+              ★
+            </span>
+          ) : null}
+        </button>
       ),
     },
     {
-      key: "delivery",
-      header: "Delivery lane",
+      key: "category",
+      header: "Category",
+      sortAccessor: (row) => row.category,
+      render: (row) => <span className="tools-console__cell-category">{row.category}</span>,
+    },
+    {
+      key: "channel",
+      header: "Channel",
       sortAccessor: (row) => row.install_channel,
       render: (row) => (
-        <span className="tools-ledger__delivery">
-          <small>Install channel</small>
-          <strong>{formatChannel(row.install_channel)}</strong>
-          <span>{formatSourceState(row.source_state)}</span>
-        </span>
+        <span className="tools-console__cell-mono">{formatInstallChannel(row.install_channel)}</span>
       ),
     },
     {
-      key: "versions",
-      header: "Version route",
-      sortAccessor: (row) => row.status?.current_version ?? "",
-      render: (row) => (
-        <span className="tools-ledger__versions">
-          <span>
-            <small>Current</small>
-            <strong>{row.status?.current_version ?? "not installed"}</strong>
-          </span>
-          <i aria-hidden="true">-&gt;</i>
-          <span>
-            <small>Latest</small>
-            <strong>{row.status?.latest_version ?? "not reported"}</strong>
-          </span>
-        </span>
-      ),
-    },
-    {
-      key: "readiness",
-      header: "Readiness",
+      key: "status",
+      header: "Status",
       sortAccessor: (row) => row.status?.state ?? "",
       render: (row) =>
         row.status === null ? (
-          <span className="tools-ledger__readiness">
-            <StatePill variant="loading" label="checking..." />
-            <small>Status probe in progress</small>
+          <span className="tools-console__cell-status tools-console__cell-status--pending">
+            checking…
           </span>
         ) : (
-          <span className="tools-ledger__readiness">
-            <StatePill variant={toStatePillVariant(row.status.state)} />
-            <small>{formatCheckedAt(row.status.checked_at)}</small>
+          <span className={`tools-console__cell-status tools-console__cell-status--${row.status.state}`}>
+            {row.status.state}
           </span>
         ),
     },
   ];
 
   return (
-    <div className="tools-table tools-readiness-ledger">
+    <div className="tools-console__table">
       <VirtualDataTable
         rows={rows}
         columns={columns}
         getRowId={(row) => row.key}
-        rowHeight={84}
-        ariaLabel="Toolchain readiness ledger"
+        rowHeight={ROW_HEIGHT}
+        ariaLabel="Tools catalog"
       />
     </div>
   );
-}
-
-function formatChannel(value: string) {
-  return value.replaceAll("_", " ");
-}
-
-function formatSourceState(value: string) {
-  if (value === "verified") return "Verified source";
-  if (value === "manual_required") return "Manual source review";
-  return "Source unavailable";
-}
-
-function formatCheckedAt(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Probe time unavailable";
-  return `Checked ${date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}`;
 }
