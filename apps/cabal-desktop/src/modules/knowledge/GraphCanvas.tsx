@@ -1,10 +1,15 @@
+// Radial SVG graph canvas: positions nodes by type ring, supports zoom, node selection, and
+// edge selection (click a line to inspect its routing evidence in the drawer).
 import { useMemo, useState } from "react";
-import type { KnowledgeGraph, KnowledgeNode } from "@/api/knowledge";
+import type { KnowledgeEdge, KnowledgeGraph, KnowledgeNode } from "@/api/knowledge";
+import { nodeTypeClass } from "@/modules/knowledge/graphNodeColors";
 
 interface GraphCanvasProps {
   graph: KnowledgeGraph;
   selectedId: string | null;
+  selectedEdgeId: string | null;
   onSelect: (node: KnowledgeNode) => void;
+  onSelectEdge: (edge: KnowledgeEdge) => void;
   highlight: string;
 }
 
@@ -19,7 +24,14 @@ const HEIGHT = 680;
 const CENTER_X = WIDTH / 2;
 const CENTER_Y = HEIGHT / 2;
 
-export function GraphCanvas({ graph, selectedId, onSelect, highlight }: GraphCanvasProps) {
+export function GraphCanvas({
+  graph,
+  selectedId,
+  selectedEdgeId,
+  onSelect,
+  onSelectEdge,
+  highlight,
+}: GraphCanvasProps) {
   const [scale, setScale] = useState(1);
   const layout = useMemo(() => positionNodes(graph.nodes), [graph.nodes]);
   const nodeById = useMemo(() => new Map(layout.map((node) => [node.id, node])), [layout]);
@@ -27,7 +39,7 @@ export function GraphCanvas({ graph, selectedId, onSelect, highlight }: GraphCan
 
   if (!graph.available) {
     return (
-      <div className="knowledge-graph__empty">
+      <div className="km-graph__empty">
         <strong>No OKF graph exported</strong>
         <span>Use Export bundle, then rebuild the index.</span>
       </div>
@@ -36,7 +48,7 @@ export function GraphCanvas({ graph, selectedId, onSelect, highlight }: GraphCan
 
   if (layout.length === 0) {
     return (
-      <div className="knowledge-graph__empty">
+      <div className="km-graph__empty">
         <strong>No concepts match these filters</strong>
         <span>Clear the graph filters to restore the map.</span>
       </div>
@@ -44,11 +56,8 @@ export function GraphCanvas({ graph, selectedId, onSelect, highlight }: GraphCan
   }
 
   return (
-    <div className="knowledge-graph">
-      <div className="knowledge-graph__toolbar">
-        <span>
-          {layout.length} concepts / {graph.edges.length} relations
-        </span>
+    <>
+      <div className="km-graph__zoom">
         <label>
           Zoom
           <input
@@ -62,7 +71,7 @@ export function GraphCanvas({ graph, selectedId, onSelect, highlight }: GraphCan
         </label>
       </div>
       <svg
-        className="knowledge-graph__surface"
+        className="km-graph__surface"
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
         role="img"
         aria-label="Knowledge graph"
@@ -70,25 +79,37 @@ export function GraphCanvas({ graph, selectedId, onSelect, highlight }: GraphCan
         <g
           transform={`translate(${CENTER_X} ${CENTER_Y}) scale(${scale}) translate(${-CENTER_X} ${-CENTER_Y})`}
         >
-          <g className="knowledge-graph__edges">
+          <g className="km-graph__edges">
             {graph.edges.map((edge) => {
               const from = nodeById.get(edge.from);
               const to = nodeById.get(edge.to);
               if (from === undefined || to === undefined) return null;
-              const active = selectedId === edge.from || selectedId === edge.to;
+              const active = edge.id === selectedEdgeId;
+              const touchesSelection = selectedId === edge.from || selectedId === edge.to;
               return (
+                // biome-ignore lint/a11y/useSemanticElements: SVG line cannot be a native <button>; keyboard/aria handled manually
                 <line
                   key={edge.id}
                   x1={from.x}
                   y1={from.y}
                   x2={to.x}
                   y2={to.y}
-                  className={active ? "is-active" : undefined}
+                  className={active ? "is-selected" : touchesSelection ? "is-active" : undefined}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`${edge.relation}: ${from.label} to ${to.label}`}
+                  onClick={() => onSelectEdge(edge)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      onSelectEdge(edge);
+                    }
+                  }}
                 />
               );
             })}
           </g>
-          <g className="knowledge-graph__nodes">
+          <g className="km-graph__nodes">
             {layout.map((node) => {
               const active = node.id === selectedId;
               const matched =
@@ -106,7 +127,7 @@ export function GraphCanvas({ graph, selectedId, onSelect, highlight }: GraphCan
                 >
                   <button
                     type="button"
-                    className={`knowledge-node knowledge-node--${cssType(node.type)}${active ? " is-active" : ""}${matched ? " is-matched" : ""}`}
+                    className={`km-node km-node--${nodeTypeClass(node.type)}${active ? " is-active" : ""}${matched ? " is-matched" : ""}`}
                     onClick={() => onSelect(node)}
                     aria-label={node.label}
                     style={{ width: node.radius * 2, height: node.radius * 2 }}
@@ -117,7 +138,7 @@ export function GraphCanvas({ graph, selectedId, onSelect, highlight }: GraphCan
               );
             })}
           </g>
-          <g className="knowledge-graph__labels">
+          <g className="km-graph__labels">
             {layout
               .filter((node) => node.id === selectedId || node.radius >= 16)
               .map((node) => (
@@ -128,7 +149,7 @@ export function GraphCanvas({ graph, selectedId, onSelect, highlight }: GraphCan
           </g>
         </g>
       </svg>
-    </div>
+    </>
   );
 }
 
@@ -162,8 +183,4 @@ function positionNodes(nodes: KnowledgeNode[]): PositionedNode[] {
 
 function shortLabel(label: string) {
   return label.length > 28 ? `${label.slice(0, 25)}...` : label;
-}
-
-function cssType(type: string) {
-  return type.replace(/[^a-z0-9_-]/gi, "-").toLowerCase();
 }
