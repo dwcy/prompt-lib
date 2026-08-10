@@ -137,12 +137,12 @@ test("warm start and 1,000-item interactions stay within their budgets", async (
   expect(backend.startupMs).toBeLessThan(3_000);
 
   await page.getByRole("button", { name: "Sessions Dashboard", exact: true }).click();
-  await expect(page.getByText("50 visible sessions")).toBeVisible();
-  const sessionInteractionMs = await twoFrameInteraction(page, "Filter sessions", "errors 5");
+  await expect(page.getByRole("button", { name: "all · 50" })).toBeVisible();
+  const sessionInteractionMs = await twoFrameInteraction(page, "Filter sessions", "errors · 5");
   expect(sessionInteractionMs).toBeLessThan(200);
 
   await page.getByRole("button", { name: "Knowledge & Retrieval", exact: true }).click();
-  await expect(page.getByText("1000 concepts / 0 relations")).toBeVisible();
+  await expect(page.getByText("1000 nodes · 0 edges")).toBeVisible();
   const graphInteractionMs = await page.getByLabel("Zoom").evaluate(async (input) => {
     const started = performance.now();
     const range = input as HTMLInputElement;

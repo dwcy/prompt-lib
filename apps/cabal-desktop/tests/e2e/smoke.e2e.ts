@@ -44,13 +44,14 @@ test("desktop workspace smoke: nav walk, prepare/execute, responsive frame, reco
   test.setTimeout(180_000);
   await page.goto("/");
 
-  await expect(page.getByRole("heading", { name: "Cabal" })).toBeVisible();
+  // Branding moved into the sidebar (not a header heading) in the console redesign.
+  await expect(page.locator(".sidebar-nav__brand")).toContainText("Cabal");
   await expect(page.getByRole("navigation", { name: "Primary" })).toBeVisible();
   await expect(page.locator(".health-strip--ok")).toBeVisible();
 
   for (const title of MODULE_TITLES) {
     await page.getByRole("button", { name: title, exact: true }).click();
-    await expect(page.locator(".app-shell__module-context strong")).toHaveText(title);
+    await expect(page.locator(".app-shell__view-title")).toHaveText(title);
     await expect(page.locator(".module-error-boundary")).toHaveCount(0);
     await expect(page.locator("#workspace-content")).toBeVisible();
   }
@@ -62,7 +63,7 @@ test("desktop workspace smoke: nav walk, prepare/execute, responsive frame, reco
   await expect(page.getByRole("alertdialog", { name: "Validate OKF Bundle" })).toBeHidden();
 
   await page.getByRole("button", { name: "Home Overview", exact: true }).click();
-  await expect(page.locator(".overview-brief h1")).toBeVisible();
+  await expect(page.locator(".overview-console")).toBeVisible();
   await testInfo.attach("desktop-workspace", {
     body: await page.screenshot({ fullPage: true }),
     contentType: "image/png",
