@@ -1,0 +1,294 @@
+/* Config Doctor module: console hero (title, target, error/warning/category metrics, rescan),
+   a 3-step triage route, and error/warning lanes of severity-tinted finding cards — mirrors the
+   warning-card language from account/AccountModule.css's .ccfg-doctor-card, scaled up to a
+   standalone board. Imported by DoctorModule.tsx; tokens.css vars only. */
+
+.doc-module {
+  display: grid;
+  gap: var(--space-4);
+}
+
+/* --- Hero ---------------------------------------------------------------- */
+
+.doc-hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  background-color: var(--surface-1);
+}
+
+.doc-hero__intro {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.doc-hero__eyebrow {
+  display: block;
+  color: var(--muted-2);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.doc-hero__intro h1 {
+  margin: 0;
+  font-size: var(--fs-xl);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.doc-hero__target {
+  margin: 0;
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-sm);
+}
+
+.doc-hero__metrics {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-left: auto;
+}
+
+.doc-hero__metric {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.doc-hero__metric strong {
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.doc-hero__metric small {
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.doc-hero__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.doc-hero__rescan {
+  padding: 6px 14px;
+  border: 1px solid var(--accent-border);
+  border-radius: var(--corner-md);
+  background-color: var(--accent-bg);
+  color: var(--accent);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  user-select: none;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.doc-hero__rescan:hover:not(:disabled) {
+  background: var(--accent-bg-gradient);
+}
+
+.doc-hero__rescan:disabled {
+  opacity: var(--opacity-disabled);
+  cursor: default;
+}
+
+/* --- Triage route ---------------------------------------------------------- */
+
+.doc-route {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.doc-route__step {
+  display: grid;
+  gap: 2px;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  background-color: var(--surface-1);
+}
+
+.doc-route__step strong {
+  color: var(--fg);
+  font-size: var(--fs-base);
+}
+
+.doc-route__step small {
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+
+.doc-route__index {
+  color: var(--muted-3);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+.doc-route__step.is-complete {
+  border-color: color-mix(in srgb, var(--status-ok) 30%, var(--border));
+}
+
+.doc-route__step.is-complete .doc-route__index {
+  color: var(--status-ok);
+}
+
+.doc-route__step.is-current {
+  border-color: color-mix(in srgb, var(--status-warning) 35%, var(--border));
+}
+
+.doc-route__step.is-current .doc-route__index {
+  color: var(--status-warning);
+}
+
+/* --- Lanes ------------------------------------------------------------------ */
+
+.doc-lanes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.doc-lane {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  background-color: var(--surface-1);
+  overflow: hidden;
+}
+
+.doc-lane__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--divider);
+}
+
+.doc-lane__header h2 {
+  margin: 0;
+  margin-right: auto;
+  color: var(--fg);
+  font-size: var(--fs-base);
+  font-weight: 600;
+}
+
+.doc-lane .empty-state {
+  padding: var(--space-4);
+}
+
+/* --- Finding cards ------------------------------------------------------------ */
+
+.doc-finding-stack {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+}
+
+.doc-finding {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-md);
+  background-color: var(--surface-3);
+}
+
+.doc-finding[data-severity="error"] {
+  border-color: color-mix(in srgb, var(--status-danger) 35%, var(--border));
+}
+
+.doc-finding[data-severity="warning"] {
+  border-color: color-mix(in srgb, var(--status-warning) 35%, var(--border));
+}
+
+.doc-finding__number {
+  color: var(--muted-3);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+.doc-finding__body {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.doc-finding__category {
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.doc-finding__path {
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  overflow-wrap: break-word;
+}
+
+.doc-finding[data-severity="error"] .doc-finding__path {
+  color: var(--status-danger);
+}
+
+.doc-finding[data-severity="warning"] .doc-finding__path {
+  color: var(--status-warning);
+}
+
+.doc-finding__message {
+  margin: 0;
+  color: var(--fg-soft);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+}
+
+.doc-finding__remedy {
+  display: grid;
+  gap: 2px;
+  margin-top: 2px;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--divider-faint);
+  font-size: var(--fs-sm);
+}
+
+.doc-finding__remedy small {
+  color: var(--muted-2);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.doc-finding__remedy span {
+  color: var(--fg-soft);
+}
+
+/* --- Narrow layout ------------------------------------------------------------ */
+
+@media (max-width: 768px) {
+  .doc-hero__metrics {
+    margin-left: 0;
+  }
+
+  .doc-route {
+    grid-template-columns: 1fr;
+  }
+
+  .doc-lanes {
+    grid-template-columns: 1fr;
+  }
+}
