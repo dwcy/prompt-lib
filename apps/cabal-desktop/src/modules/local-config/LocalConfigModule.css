@@ -1,0 +1,311 @@
+/* Local Project Config console module: command header with template/gitignore selects, blueprint
+   summary strip, and per-group action cards with accessible preview-item toggles — restyled to the
+   console token system established by ConfigDeployModule.css / ServicesModule.css / McpModule.css.
+   Token-only colors; DOM structure and behavior are unchanged from the pre-redesign markup, except
+   the per-item checkbox is now a role="switch" pill toggle matching EnvironmentModule's convention. */
+
+.lcfg {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+/* ── Command header ─────────────────────────────────────────────────────── */
+
+.lcfg__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  background-color: var(--surface-1);
+}
+
+.lcfg__header h1 {
+  margin: 0;
+  font-size: var(--fs-xl);
+  font-weight: 600;
+}
+
+.lcfg__header p {
+  margin: 4px 0 0;
+  max-width: 46rem;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+}
+
+.lcfg__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.lcfg__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--muted-2);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.lcfg__field select {
+  padding: 8px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-md);
+  background-color: var(--surface-2);
+  color: var(--fg-soft);
+  font-size: var(--fs-base);
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+/* ── Blueprint summary strip ────────────────────────────────────────────── */
+
+.lcfg__summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 10%, transparent), transparent 55%),
+    var(--surface-1);
+}
+
+.lcfg__eyebrow {
+  display: block;
+  color: var(--muted-2);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.lcfg__summary strong {
+  display: block;
+  margin-top: var(--space-1);
+  font-size: var(--fs-lg);
+  line-height: var(--lh-lg);
+}
+
+.lcfg__summary p {
+  margin-top: var(--space-1);
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.lcfg__summary-metrics {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.lcfg__metric {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-md);
+  background-color: var(--surface-2);
+}
+
+.lcfg__metric strong {
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-lg);
+  line-height: var(--lh-lg);
+}
+
+.lcfg__metric small {
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.lcfg__metric--new strong {
+  color: var(--status-info);
+}
+
+.lcfg__metric--changed strong {
+  color: var(--status-warning);
+}
+
+.lcfg__metric--stable strong {
+  color: var(--status-ok);
+}
+
+/* ── Blueprint action-card list ─────────────────────────────────────────── */
+
+.lcfg__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.lcfg__card {
+  display: flex;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  background-color: var(--surface-1);
+}
+
+.lcfg__card-number {
+  flex: 0 0 auto;
+  color: var(--muted-3);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-sm);
+}
+
+.lcfg__card-body {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.lcfg__card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.lcfg__card-header h2 {
+  margin: 0;
+  font-size: var(--fs-md);
+  font-weight: 600;
+}
+
+.lcfg__card-header p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.lcfg__items {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--divider);
+  border-radius: var(--corner-md);
+  list-style: none;
+  overflow: hidden;
+}
+
+.lcfg__item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background-color: var(--surface-2);
+  border-top: 1px solid var(--divider-faint);
+}
+
+.lcfg__item:first-child {
+  border-top: none;
+}
+
+.lcfg__item-path {
+  overflow: hidden;
+  color: var(--fg-soft);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lcfg__apply-btn {
+  align-self: flex-start;
+  padding: 6px 16px;
+  border: 1px solid var(--accent-border);
+  border-radius: var(--corner-md);
+  background: var(--accent-bg-gradient);
+  color: #ffffff;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.lcfg__apply-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.lcfg__apply-btn:disabled {
+  border-color: var(--border-strong);
+  background: var(--surface-2);
+  color: var(--muted);
+  cursor: default;
+  opacity: var(--opacity-disabled);
+}
+
+/* ── Per-item pill toggle (role="switch") ───────────────────────────────── */
+
+.lcfg-toggle {
+  position: relative;
+  width: 30px;
+  height: 17px;
+  padding: 0;
+  background: var(--surface-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-full);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.lcfg-toggle.is-on {
+  background: var(--accent-bg-gradient);
+  border-color: var(--accent-border);
+}
+
+.lcfg-toggle:disabled {
+  cursor: default;
+  opacity: var(--opacity-disabled);
+}
+
+.lcfg-toggle__knob {
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  width: 13px;
+  height: 13px;
+  background: var(--muted);
+  border-radius: var(--corner-full);
+  transition:
+    transform var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard);
+}
+
+.lcfg-toggle.is-on .lcfg-toggle__knob {
+  background: var(--accent);
+  transform: translateX(13px);
+}
+
+/* ── Narrow layouts ──────────────────────────────────────────────────────── */
+
+@media (max-width: 48rem) {
+  .lcfg__header,
+  .lcfg__summary {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .lcfg__item {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+}
