@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { PathInput } from "@/modules/project-gate/components/PathInput";
 import { RecentProjectsList } from "@/modules/project-gate/components/RecentProjectsList";
 import { useProjectGate } from "@/modules/project-gate/hooks/useProjectGate";
+import "./ProjectGateModule.css";
 
 export function ProjectGateModule() {
   const projectQuery = useProjectContext();
@@ -25,10 +26,10 @@ export function ProjectGateModule() {
   }, [projectQuery.data?.recents, search]);
 
   return (
-    <div className="project-gate">
-      <section className="project-gate__command-center">
-        <div>
-          <span className="project-gate__eyebrow select-none">Workspace launchpad</span>
+    <div className="gate">
+      <section className="gate-header">
+        <div className="gate-header__intro">
+          <span className="gate-eyebrow select-none">Workspace launchpad</span>
           <h1>{projectQuery.data === undefined ? "Choose project context" : "Switch workspace"}</h1>
           <p>
             Project context scopes dashboards, local configuration, sessions, and repository actions
@@ -36,19 +37,19 @@ export function ProjectGateModule() {
           </p>
         </div>
         {projectQuery.data !== undefined ? (
-          <div className="project-gate__current select-none">
+          <div className="gate-current select-none">
             <span>Current workspace</span>
             <strong>{projectQuery.data.name}</strong>
             <code>{projectQuery.data.path}</code>
           </div>
         ) : (
-          <div className="project-gate__current project-gate__current--empty">
+          <div className="gate-current gate-current--empty">
             <span>Current workspace</span>
             <strong>Not selected</strong>
             <small>Choose a recent project or resolve a folder path.</small>
           </div>
         )}
-        <dl className="project-gate__metrics">
+        <dl className="gate-metrics">
           <div>
             <dt>Recent</dt>
             <dd>{projectQuery.data?.recents.length ?? 0}</dd>
@@ -60,19 +61,19 @@ export function ProjectGateModule() {
         </dl>
       </section>
 
-      <div className="project-gate__launchpad">
-        <section className="project-gate__recents">
-          <header className="project-gate__section-header">
+      <div className="gate-layout">
+        <section className="gate-recents">
+          <header className="gate-panel__header">
             <div>
-              <span className="module-eyebrow">History lanes</span>
-              <h2 className="project-gate__section-title select-none">Recent projects</h2>
+              <span className="gate-eyebrow">History lanes</span>
+              <h2 className="gate-panel__title select-none">Recent projects</h2>
             </div>
             {projectQuery.data !== undefined ? (
-              <span className="project-gate__section-count">{visibleRecents.length}</span>
+              <span className="gate-panel__count">{visibleRecents.length}</span>
             ) : null}
           </header>
           <input
-            className="project-gate__search"
+            className="gate-search"
             type="search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
@@ -88,14 +89,14 @@ export function ProjectGateModule() {
           )}
         </section>
 
-        <aside className="project-gate__resolver">
-          <header>
-            <span className="module-eyebrow">Direct location</span>
+        <aside className="gate-resolver">
+          <header className="gate-resolver__header">
+            <span className="gate-eyebrow">Direct location</span>
             <h2>Resolve a workspace</h2>
             <p>Use a folder outside recent history without leaving the control surface.</p>
           </header>
           <PathInput onSubmit={selectPath} disabled={isBusy} />
-          <ol className="project-gate__runway" aria-label="Workspace switch sequence">
+          <ol className="gate-runway" aria-label="Workspace switch sequence">
             <li className="is-current">
               <span>01</span>
               <strong>Resolve folder</strong>

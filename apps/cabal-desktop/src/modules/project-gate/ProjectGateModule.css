@@ -1,0 +1,435 @@
+/* Project Gate & Switcher console layout: header card (title, current workspace, quick metrics),
+   recents list card, and resolver card, sharing the console's surface/border/corner-lg card
+   language. Co-located with ProjectGateModule.tsx, PathInput.tsx, RecentProjectsList.tsx. */
+
+.gate {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-6);
+}
+
+.gate-eyebrow {
+  color: var(--muted-2);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+/* ─── Header card: title, current workspace, quick metrics ───────────────────── */
+
+.gate-header {
+  display: grid;
+  grid-template-columns: minmax(18rem, 1fr) minmax(15rem, 0.7fr) auto;
+  gap: var(--space-5);
+  align-items: center;
+  padding: var(--space-5);
+  background-color: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+}
+
+.gate-header__intro h1 {
+  margin-top: var(--space-1);
+  font-size: var(--fs-2xl);
+}
+
+.gate-header__intro p {
+  max-width: 38rem;
+  margin-top: var(--space-1);
+  color: var(--muted);
+}
+
+.gate-current {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  background-color: color-mix(in srgb, var(--status-ok) 6%, var(--surface-2));
+  border: 1px solid color-mix(in srgb, var(--status-ok) 35%, var(--border));
+  border-radius: var(--corner-md);
+}
+
+.gate-current--empty {
+  background-color: var(--surface-2);
+  border-color: var(--border-strong);
+}
+
+.gate-current > span {
+  color: var(--status-ok);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.gate-current--empty > span {
+  color: var(--muted);
+}
+
+.gate-current strong {
+  font-size: var(--fs-sm);
+}
+
+.gate-current code,
+.gate-current small {
+  width: 100%;
+  overflow: hidden;
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gate-metrics {
+  display: grid;
+  min-width: 9rem;
+  grid-template-columns: 1fr;
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--corner-sm);
+  background-color: var(--border);
+}
+
+.gate-metrics > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background-color: var(--surface-2);
+}
+
+.gate-metrics dt {
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+}
+
+.gate-metrics dd {
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+}
+
+/* ─── Layout: recents list card + resolver card ───────────────────────────────── */
+
+.gate-layout {
+  display: grid;
+  grid-template-columns: minmax(22rem, 1.15fr) minmax(20rem, 0.85fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.gate-recents,
+.gate-resolver {
+  min-width: 0;
+  padding: var(--space-5);
+  background-color: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+}
+
+.gate-recents {
+  padding: 0;
+  overflow: hidden;
+}
+
+.gate-recents .gate-panel__header {
+  padding: var(--space-4) var(--space-4) var(--space-3);
+}
+
+.gate-panel__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-height: 3rem;
+  border-bottom: 1px solid var(--divider);
+}
+
+.gate-panel__title {
+  margin: var(--space-1) 0 0;
+  font-size: var(--fs-lg);
+}
+
+.gate-panel__count {
+  display: grid;
+  place-items: center;
+  min-width: 1.4rem;
+  height: 1.4rem;
+  padding: 0 var(--space-1);
+  margin-bottom: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-full);
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+.gate-search {
+  display: block;
+  width: calc(100% - (var(--space-4) * 2));
+  margin: var(--space-3) var(--space-4);
+  padding: var(--space-2) var(--space-3);
+  background-color: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-md);
+  color: var(--fg);
+  font-size: var(--fs-sm);
+}
+
+.gate-search::placeholder {
+  color: var(--muted);
+}
+
+/* ─── Recency lanes + rows ─────────────────────────────────────────────────────── */
+
+.gate-lanes {
+  display: flex;
+  flex-direction: column;
+}
+
+.gate-lane + .gate-lane {
+  margin-top: var(--space-2);
+}
+
+.gate-lane__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  background-color: var(--surface-2);
+  color: var(--muted-2);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.gate-lane__header small {
+  color: var(--muted-3);
+  font-family: var(--font-family-mono);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.gate-recents-list {
+  display: grid;
+}
+
+.gate-recents-item {
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr) auto 1rem;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: 0;
+  border-bottom: 1px solid var(--divider-faint);
+  border-radius: 0;
+  background-color: transparent;
+  text-align: left;
+}
+
+.gate-recents-item:hover:not(:disabled) {
+  background-color: var(--surface-2);
+}
+
+.gate-recents-mark {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--accent-border);
+  border-radius: var(--corner-sm);
+  background-color: var(--accent-bg);
+  color: var(--accent);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+}
+
+.gate-recents-main {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.gate-recents-name {
+  overflow: hidden;
+  color: var(--fg);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gate-recents-path {
+  overflow: hidden;
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gate-recents-meta {
+  flex-shrink: 0;
+  color: var(--muted-3);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+.gate-recents-enter {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.gate-recents-item:hover:not(:disabled) .gate-recents-enter {
+  color: var(--accent);
+}
+
+/* ─── Resolver card ────────────────────────────────────────────────────────────── */
+
+.gate-resolver__header h2 {
+  margin-top: var(--space-1);
+  font-size: var(--fs-lg);
+}
+
+.gate-resolver__header p {
+  margin-top: var(--space-1);
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.gate-path-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  padding-bottom: var(--space-5);
+  border-bottom: 1px solid var(--divider);
+}
+
+.gate-path-label {
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+
+.gate-path-row {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.gate-path-input {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  background-color: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-md);
+  color: var(--fg);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-sm);
+}
+
+.gate-path-error {
+  color: var(--status-danger);
+  font-size: var(--fs-sm);
+}
+
+/* ─── Runway: numbered switch sequence (mirrors ConfirmDialog's runway strip) ──── */
+
+.gate-runway {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  margin-top: var(--space-5);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--corner-sm);
+  background-color: var(--border);
+  list-style: none;
+}
+
+.gate-runway li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-1) var(--space-2);
+  padding: var(--space-2);
+  background-color: var(--surface-2);
+}
+
+.gate-runway li > span {
+  grid-row: 1 / 3;
+  align-self: center;
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+.gate-runway li strong,
+.gate-runway li small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gate-runway li strong {
+  font-size: var(--fs-xs);
+}
+
+.gate-runway li small {
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+
+.gate-runway li.is-current {
+  box-shadow: inset 0 -2px var(--status-info);
+}
+
+.gate-runway li.is-current > span {
+  color: var(--status-info);
+}
+
+/* ─── Narrow layout (FR-014) ───────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .gate-header {
+    grid-template-columns: 1fr;
+  }
+
+  .gate-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .gate-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .gate-recents-item {
+    grid-template-columns: 2.25rem minmax(0, 1fr) 1rem;
+  }
+
+  .gate-recents-meta {
+    display: none;
+  }
+
+  .gate-runway {
+    grid-template-columns: 1fr;
+  }
+
+  .gate-path-row {
+    flex-wrap: wrap;
+  }
+
+  .gate-path-input {
+    flex-basis: 100%;
+  }
+}
