@@ -1,3 +1,5 @@
+// Git identity console: repo authorship hero, scope chain + identity editor, and the
+// commit-policy blueprint (signature, vocabulary, protected branches, release authority).
 import { useQueryClient } from "@tanstack/react-query";
 import { type KeyboardEvent, useEffect, useMemo, useState } from "react";
 import { queryKeys } from "@/api/queryKeys";
@@ -12,6 +14,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
 import { StatePill } from "@/components/StatePill";
 import { useAction } from "@/hooks/useAction";
+import "./GitIdentityModule.css";
 
 export function GitIdentityModule() {
   const queryClient = useQueryClient();
@@ -78,15 +81,15 @@ export function GitIdentityModule() {
   const policyDirty = !samePolicy(policyPayload, policyQuery.data.policy);
 
   return (
-    <div className="git-identity-workspace">
-      <section className="git-identity-command-center">
-        <div>
-          <span className="module-eyebrow select-none">Source control trust</span>
+    <div className="gid-workspace">
+      <section className="gid-hero">
+        <div className="gid-hero__intro">
+          <span className="gid-eyebrow select-none">Source control trust</span>
           <h1>Authorship control</h1>
           <p>{identityQuery.data.repo_root ?? "No repository selected"}</p>
         </div>
-        <div className="git-identity-command-center__effective">
-          <span className="module-eyebrow">Effective author</span>
+        <div className="gid-hero__effective">
+          <span className="gid-eyebrow">Effective author</span>
           <strong>{effectiveIdentity?.name || "Not configured"}</strong>
           <code>{effectiveIdentity?.email || "No email"}</code>
           <StatePill
@@ -94,26 +97,26 @@ export function GitIdentityModule() {
             label={effectiveIdentity?.scope ?? "none"}
           />
         </div>
-        <div className="git-policy-source">
-          <span>Policy source</span>
+        <div className="gid-hero__policy-source">
+          <span className="gid-eyebrow">Policy source</span>
           <code>{policyQuery.data.source}</code>
         </div>
       </section>
 
-      <section className="git-authorship">
-        <header className="git-authorship__header">
+      <section className="gid-authorship">
+        <header className="gid-authorship__header">
           <div>
-            <span className="module-eyebrow">Resolution order</span>
+            <span className="gid-eyebrow">Resolution order</span>
             <h2>Authorship chain</h2>
           </div>
           <p>Project identity overrides the global baseline when configured.</p>
         </header>
 
-        <div className="git-authorship__chain">
+        <div className="gid-authorship__chain">
           {identityQuery.data.identities.map((identity, index) => (
-            <div className="git-authorship__chain-segment" key={identity.scope}>
+            <div className="gid-authorship__chain-segment" key={identity.scope}>
               {index > 0 ? (
-                <span className="git-authorship__connector" aria-hidden="true">
+                <span className="gid-authorship__connector" aria-hidden="true">
                   &gt;
                 </span>
               ) : null}
@@ -127,15 +130,15 @@ export function GitIdentityModule() {
           ))}
         </div>
 
-        <div className="git-identity-editor">
-          <div className="git-identity-editor__avatar" aria-hidden="true">
+        <div className="gid-identity-editor">
+          <div className="gid-identity-editor__avatar" aria-hidden="true">
             {identityInitial(identityDraft.name)}
           </div>
-          <div className="git-identity-editor__heading">
-            <span className="module-eyebrow select-none">{scope} scope</span>
+          <div className="gid-identity-editor__heading">
+            <span className="gid-eyebrow select-none">{scope} scope</span>
             <h3>{scope === "global" ? "Global baseline" : "Project override"}</h3>
           </div>
-          <label className="provider-field">
+          <label className="gid-field">
             <span>Name</span>
             <input
               value={identityDraft.name}
@@ -144,7 +147,7 @@ export function GitIdentityModule() {
               }
             />
           </label>
-          <label className="provider-field">
+          <label className="gid-field">
             <span>Email</span>
             <input
               type="email"
@@ -156,7 +159,7 @@ export function GitIdentityModule() {
           </label>
           <button
             type="button"
-            className="git-identity-editor__save"
+            className="gid-identity-editor__save"
             disabled={
               selectedIdentity?.available !== true ||
               !identityDirty ||
@@ -177,13 +180,13 @@ export function GitIdentityModule() {
         </div>
       </section>
 
-      <section className="git-policy-editor">
-        <header className="git-policy-editor__header">
+      <section className="gid-policy-editor">
+        <header className="gid-policy-editor__header">
           <div>
-            <span className="module-eyebrow select-none">Commit policy</span>
+            <span className="gid-eyebrow select-none">Commit policy</span>
             <h2>Agent guardrails</h2>
           </div>
-          <div>
+          <div className="gid-policy-editor__actions">
             <StatePill variant={policyValid ? (policyDirty ? "update" : "ok") : "failed"} />
             <button
               type="button"
@@ -201,8 +204,8 @@ export function GitIdentityModule() {
           </div>
         </header>
 
-        <div className="git-policy-blueprint">
-          <section className="git-policy-lane git-policy-lane--signature">
+        <div className="gid-policy-blueprint">
+          <section className="gid-policy-lane gid-policy-lane--signature">
             <header>
               <span>01</span>
               <div>
@@ -210,8 +213,8 @@ export function GitIdentityModule() {
                 <p>Identity written to agent-authored commits.</p>
               </div>
             </header>
-            <div className="git-policy-form-grid">
-              <label className="provider-field">
+            <div className="gid-policy-form-grid">
+              <label className="gid-field">
                 <span>Agent name</span>
                 <input
                   value={policyDraft.agentName}
@@ -222,7 +225,7 @@ export function GitIdentityModule() {
                   }
                 />
               </label>
-              <label className="provider-field">
+              <label className="gid-field">
                 <span>Agent email</span>
                 <input
                   type="email"
@@ -237,7 +240,7 @@ export function GitIdentityModule() {
             </div>
           </section>
 
-          <section className="git-policy-lane git-policy-lane--types">
+          <section className="gid-policy-lane gid-policy-lane--types">
             <header>
               <span>02</span>
               <div>
@@ -257,7 +260,7 @@ export function GitIdentityModule() {
             />
           </section>
 
-          <section className="git-policy-lane git-policy-lane--branches">
+          <section className="gid-policy-lane gid-policy-lane--branches">
             <header>
               <span>03</span>
               <div>
@@ -277,7 +280,7 @@ export function GitIdentityModule() {
             />
           </section>
 
-          <section className="git-policy-lane git-policy-lane--delivery">
+          <section className="gid-policy-lane gid-policy-lane--delivery">
             <header>
               <span>04</span>
               <div>
@@ -285,7 +288,7 @@ export function GitIdentityModule() {
                 <p>Explicit controls for tags and remote delivery.</p>
               </div>
             </header>
-            <div className="git-policy-switches">
+            <div className="gid-policy-switches">
               <PolicySwitch
                 label="Agent may tag"
                 detail="Allow release tag creation"
@@ -310,7 +313,7 @@ export function GitIdentityModule() {
           </section>
         </div>
 
-        <footer className="git-policy-editor__footer">
+        <footer className="gid-policy-editor__footer">
           <PolicyPreview policy={policyPayload} valid={policyValid} dirty={policyDirty} />
           <button
             type="button"
@@ -369,12 +372,12 @@ function IdentityScopeButton({
   return (
     <button
       type="button"
-      className={`git-identity-scope-card${active ? " is-active" : ""}`}
+      className={`gid-scope-card${active ? " is-active" : ""}`}
       onClick={onSelect}
       disabled={!identity.available}
     >
-      <span className="git-identity-scope-card__scope">{identity.scope}</span>
-      <span className="git-identity-scope-card__author">
+      <span className="gid-scope-card__scope">{identity.scope}</span>
+      <span className="gid-scope-card__author">
         <strong>{identity.name || "Not configured"}</strong>
         <code>{identity.email || identity.source}</code>
       </span>
@@ -416,9 +419,9 @@ function TokenListEditor({
   }
 
   return (
-    <div className="git-token-editor">
+    <div className="gid-token-editor">
       <span className="visually-hidden">{label}</span>
-      <div className="git-token-editor__tokens">
+      <div className="gid-token-editor__tokens">
         {values.map((value) => (
           <span key={value}>
             {value}
@@ -432,7 +435,7 @@ function TokenListEditor({
           </span>
         ))}
       </div>
-      <div className="git-token-editor__add">
+      <div className="gid-token-editor__add">
         <input
           value={nextValue}
           onChange={(event) => setNextValue(event.target.value)}
@@ -461,7 +464,7 @@ function PolicySwitch({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <label className="git-policy-switch">
+    <label className="gid-policy-switch">
       <span>
         <strong>{label}</strong>
         <small>{detail}</small>
@@ -485,7 +488,7 @@ function PolicyPreview({
   dirty: boolean;
 }) {
   return (
-    <div className="git-policy-preview">
+    <div className="gid-policy-preview">
       <StatePill
         variant={valid ? (dirty ? "update" : "ok") : "failed"}
         label={!valid ? "invalid" : dirty ? "staged" : "active"}

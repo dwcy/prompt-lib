@@ -1,0 +1,505 @@
+/* Git Identity module: authorship hero (repo + effective author + policy source), scope chain as
+   segmented pills over an identity editor, and the commit-policy blueprint (signature, vocabulary,
+   protected branches, release authority lanes) with its token-list and switch controls. Token-only
+   colors, following the same card/eyebrow/field language as EnvironmentModule and AccountModule. */
+
+.gid-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.gid-eyebrow {
+  display: block;
+  color: var(--muted-2);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+/* --- Hero: repo identity, effective author, policy source ---------------------- */
+
+.gid-hero {
+  display: grid;
+  grid-template-columns: minmax(18rem, 1fr) minmax(16rem, 0.8fr) minmax(14rem, 0.7fr);
+  gap: var(--space-4);
+  align-items: center;
+  padding: var(--space-4) var(--space-5);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+}
+
+.gid-hero__intro h1 {
+  margin: var(--space-1) 0;
+  font-size: var(--fs-xl);
+}
+
+.gid-hero__intro p {
+  overflow-wrap: anywhere;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.gid-hero__effective {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-left: 2px solid var(--status-ok);
+  border-radius: var(--corner-md);
+  background-color: color-mix(in srgb, var(--status-ok) 6%, var(--surface-2));
+}
+
+.gid-hero__effective .gid-eyebrow,
+.gid-hero__effective strong,
+.gid-hero__effective code {
+  grid-column: 1;
+}
+
+.gid-hero__effective strong {
+  font-size: var(--fs-md);
+}
+
+.gid-hero__effective code {
+  overflow: hidden;
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gid-hero__effective .state-pill {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+}
+
+.gid-hero__policy-source {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.gid-hero__policy-source code {
+  overflow: auto;
+  max-height: 4rem;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-md);
+  background-color: var(--surface-2);
+  color: var(--fg-soft);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+/* --- Authorship: scope chain (segmented pills) + identity editor --------------- */
+
+.gid-authorship {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  background-color: var(--surface-1);
+}
+
+.gid-authorship__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--divider);
+}
+
+.gid-authorship__header h2 {
+  margin-top: var(--space-1);
+  font-size: var(--fs-lg);
+}
+
+.gid-authorship__header p {
+  max-width: 30rem;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  text-align: right;
+}
+
+.gid-authorship__chain {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border-radius: var(--corner-lg);
+  background-color: var(--surface-2);
+}
+
+.gid-authorship__chain-segment {
+  position: relative;
+  min-width: 0;
+}
+
+.gid-authorship__connector {
+  position: absolute;
+  top: 50%;
+  left: calc(var(--space-2) * -1);
+  display: grid;
+  place-items: center;
+  width: var(--space-2);
+  color: var(--muted-3);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  transform: translate(-50%, -50%);
+}
+
+.gid-scope-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  min-height: 4.5rem;
+  gap: var(--space-3);
+  align-items: center;
+  width: 100%;
+  padding: var(--space-3);
+  text-align: left;
+  border: 1px solid transparent;
+  border-radius: var(--corner-md);
+  background-color: transparent;
+}
+
+.gid-scope-card.is-active {
+  border-color: var(--accent-border);
+  background-color: var(--surface-3);
+  box-shadow: inset 2px 0 var(--accent);
+}
+
+.gid-scope-card__scope {
+  padding-right: var(--space-3);
+  border-right: 1px solid var(--border);
+  color: var(--status-info);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.gid-scope-card__author {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.gid-scope-card__author code {
+  overflow: hidden;
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gid-identity-editor {
+  display: grid;
+  grid-template-columns: 3rem minmax(10rem, 0.55fr) minmax(12rem, 1fr) minmax(12rem, 1fr) auto;
+  align-items: end;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-top: 1px solid var(--divider);
+}
+
+.gid-identity-editor__avatar {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border: 1px solid color-mix(in srgb, var(--status-info) 50%, var(--border));
+  border-radius: var(--corner-sm);
+  background-color: color-mix(in srgb, var(--status-info) 10%, var(--surface-2));
+  color: var(--status-info);
+  font-family: var(--font-family-mono);
+  font-weight: 700;
+}
+
+.gid-identity-editor__heading h3 {
+  margin-top: var(--space-1);
+}
+
+.gid-identity-editor__save {
+  white-space: nowrap;
+}
+
+/* --- Shared field pattern (used by identity + policy signature editors) -------- */
+
+.gid-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.gid-field span {
+  color: var(--fg);
+  font-weight: 700;
+}
+
+.gid-field input {
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-md);
+  background-color: var(--surface-2);
+  color: var(--fg);
+}
+
+/* --- Policy editor: blueprint lanes, token editor, switches --------------------- */
+
+.gid-policy-editor {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  background-color: var(--surface-1);
+}
+
+.gid-policy-editor__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--divider);
+}
+
+.gid-policy-editor__header h2 {
+  margin-top: var(--space-1);
+  font-size: var(--fs-lg);
+}
+
+.gid-policy-editor__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.gid-policy-blueprint {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  background-color: var(--divider);
+}
+
+.gid-policy-lane {
+  --lane-accent: var(--status-info);
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  box-shadow: inset 0 2px var(--lane-accent);
+  background-color: var(--surface-1);
+}
+
+.gid-policy-lane--types {
+  --lane-accent: var(--status-accent);
+}
+
+.gid-policy-lane--branches {
+  --lane-accent: var(--status-danger);
+}
+
+.gid-policy-lane--delivery {
+  --lane-accent: var(--status-warning);
+}
+
+.gid-policy-lane > header {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  gap: var(--space-3);
+}
+
+.gid-policy-lane > header > span {
+  color: var(--lane-accent);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+}
+
+.gid-policy-lane > header p {
+  margin-top: var(--space-1);
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+
+.gid-policy-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.gid-token-editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.gid-token-editor__tokens {
+  display: flex;
+  min-height: 2rem;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.gid-token-editor__tokens > span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-1) var(--space-1) var(--space-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-sm);
+  background-color: var(--surface-2);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+.gid-token-editor__tokens button {
+  display: grid;
+  place-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+}
+
+.gid-token-editor__add {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-2);
+}
+
+.gid-token-editor__add input {
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-md);
+  background-color: var(--surface-2);
+  color: var(--fg);
+}
+
+.gid-policy-switches {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.gid-policy-switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-sm);
+  background-color: var(--surface-2);
+}
+
+.gid-policy-switch > span {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.gid-policy-switch small {
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+
+.gid-policy-switch input {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.gid-policy-editor__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--divider);
+}
+
+.gid-policy-preview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.gid-policy-preview > span:not(.state-pill) {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-sm);
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+
+/* --- Narrow layouts -------------------------------------------------------------- */
+
+@media (max-width: 72rem) {
+  .gid-hero {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .gid-hero__policy-source {
+    grid-column: 1 / -1;
+  }
+
+  .gid-identity-editor {
+    grid-template-columns: 3rem minmax(10rem, 0.6fr) repeat(2, minmax(11rem, 1fr));
+  }
+
+  .gid-identity-editor__save {
+    grid-column: 2 / -1;
+    justify-self: end;
+  }
+}
+
+@media (max-width: 56rem) {
+  .gid-hero,
+  .gid-policy-blueprint,
+  .gid-authorship__chain,
+  .gid-identity-editor {
+    grid-template-columns: 1fr;
+  }
+
+  .gid-hero__policy-source,
+  .gid-identity-editor__save {
+    grid-column: auto;
+  }
+
+  .gid-authorship__header,
+  .gid-policy-editor__header,
+  .gid-policy-editor__footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .gid-authorship__header p {
+    text-align: left;
+  }
+
+  .gid-authorship__connector {
+    display: none;
+  }
+
+  .gid-identity-editor__avatar {
+    display: none;
+  }
+
+  .gid-policy-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
