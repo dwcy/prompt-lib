@@ -13,6 +13,9 @@ export const PROJECT_SCOPED_MODULES = [
   // changes when the project switches, same as project_dashboard) — scoped so project.select
   // invalidates it too (T036). Diagnostics stays global: DiagnosticEvent is keyed by module, not project.
   "homeOverview",
+  // README + docs/ come from the current project's working tree, so switching projects must
+  // invalidate them the same way project_dashboard does.
+  "docs",
 ] as const;
 
 export type ProjectScopedModule = (typeof PROJECT_SCOPED_MODULES)[number];

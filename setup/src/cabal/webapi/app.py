@@ -26,6 +26,7 @@ from cabal.webapi.routers import account as account_router
 from cabal.webapi.routers import actions as actions_router
 from cabal.webapi.routers import codex as codex_router
 from cabal.webapi.routers import config as config_router
+from cabal.webapi.routers import docs as docs_router
 from cabal.webapi.routers import environment as environment_router
 from cabal.webapi.routers import knowledge as knowledge_router
 from cabal.webapi.routers import local_config as local_config_router
@@ -117,6 +118,7 @@ def create_app(
     app.router.routes.extend(services_router.router.routes)
     app.router.routes.extend(security_scan_router.router.routes)
     app.router.routes.extend(environment_router.router.routes)
+    app.router.routes.extend(docs_router.router.routes)
 
     _register_exception_handlers(app)
     return app

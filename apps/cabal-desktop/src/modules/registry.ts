@@ -1,10 +1,13 @@
-// Static registry of all 22 feature modules: nav grouping, title, delivery phase, and page component
+// Static registry of all 23 feature modules: nav grouping, title, delivery phase, and page component
 // (or null pre-launch, routed to the shared ModuleUnavailable placeholder).
 import { type ComponentType, type LazyExoticComponent, lazy } from "react";
 import { ProjectGateModule } from "@/modules/project-gate/ProjectGateModule";
 
 const AccountModule = lazy(() =>
   import("@/modules/account/AccountModule").then((module) => ({ default: module.AccountModule })),
+);
+const DocsModule = lazy(() =>
+  import("@/modules/docs/DocsModule").then((module) => ({ default: module.DocsModule })),
 );
 const CleanupRestoreModule = lazy(() =>
   import("@/modules/cleanup-restore/CleanupRestoreModule").then((module) => ({
@@ -132,6 +135,7 @@ export const MODULE_NAV_LABELS: Record<ModuleKey, string> = {
   init_wizard: "New project",
   codex: "Codex parity",
   diagnostics: "Diagnostics",
+  docs: "Docs",
 };
 
 export const MODULE_OPERATION_SUMMARIES: Record<ModuleKey, string> = {
@@ -157,6 +161,7 @@ export const MODULE_OPERATION_SUMMARIES: Record<ModuleKey, string> = {
   init_wizard: "Templates, staged files, and project handoff",
   codex: "Deployment and conversion parity",
   diagnostics: "Backend signals, audit, and live events",
+  docs: "README summary and project reference documents",
 };
 
 export const MODULE_GROUP_ORDER: ModuleGroup[] = [
@@ -191,6 +196,7 @@ export const MODULE_KEYS = [
   "init_wizard",
   "codex",
   "diagnostics",
+  "docs",
 ] as const;
 
 export type ModuleKey = (typeof MODULE_KEYS)[number];
@@ -345,6 +351,13 @@ export const MODULE_REGISTRY: ModuleDefinition[] = [
     group: "machine",
     phase: 3,
     component: DiagnosticsModule,
+  },
+  {
+    key: "docs",
+    title: "Docs & README",
+    group: "reference",
+    phase: 11,
+    component: DocsModule,
   },
 ];
 

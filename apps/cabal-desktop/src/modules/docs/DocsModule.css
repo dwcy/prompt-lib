@@ -1,0 +1,108 @@
+.docs-module {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.docs-card {
+  min-width: 0;
+  padding: var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  background-color: var(--surface-1);
+}
+
+.docs-card--list {
+  padding: 0;
+  overflow: hidden;
+}
+
+.docs-card--list .docs-card__header {
+  padding: var(--space-4) var(--space-4) var(--space-3);
+}
+
+.docs-card__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.docs-card__header h2 {
+  font-size: var(--fs-lg);
+  font-weight: 600;
+}
+
+.docs-meta {
+  margin-left: auto;
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+.docs-back {
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--status-info);
+  font-size: var(--fs-sm);
+}
+
+.docs-content {
+  max-height: 60vh;
+  overflow: auto;
+  color: var(--fg-soft);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.docs-list {
+  list-style: none;
+  display: grid;
+}
+
+.docs-list__item {
+  display: grid;
+  grid-template-columns: 9rem minmax(0, 1fr);
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-2) var(--space-4);
+  border: 0;
+  border-bottom: 1px solid var(--divider-faint);
+  border-radius: 0;
+  background: transparent;
+  color: var(--fg);
+  text-align: left;
+}
+
+.docs-list__item:hover,
+.docs-list__item.is-active {
+  background-color: var(--surface-2);
+}
+
+.docs-list__name {
+  overflow: hidden;
+  color: var(--status-info);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.docs-list__desc {
+  overflow: hidden;
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .docs-module {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -17,7 +17,8 @@ from cabal.webapi.overview_service import build_overview, drift_flags
 # Auth is declared at router level so routes keep the guard when flattened onto the app.
 router = APIRouter(dependencies=[Depends(security.require_bearer_token)])
 
-# The 22 module keys of the spec's Feature Module Breakdown, in table order.
+# The 22 module keys of the spec's Feature Module Breakdown, plus "docs" (console redesign
+# reference module), in table order.
 MODULE_KEYS = (
     "project_gate",
     "home_overview",
@@ -41,6 +42,7 @@ MODULE_KEYS = (
     "init_wizard",
     "codex",
     "diagnostics",
+    "docs",
 )
 
 # Modules whose routers are mounted; the rest honestly report "unavailable".
@@ -68,6 +70,7 @@ IMPLEMENTED_MODULES = frozenset(
         "git_identity",
         "provider",
         "init_wizard",
+        "docs",
     }
 )
 
