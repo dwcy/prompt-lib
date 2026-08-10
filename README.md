@@ -181,8 +181,8 @@ Every command available in this project, grouped by purpose. Source links point 
 
 ```
 prompt-lib/
-├── run                  ← POSIX root launcher for the setup wizard
-├── run.cmd              ← Windows root launcher for the setup wizard
+├── run                  ← POSIX root launcher for the setup wizard, web UI, and Tauri app
+├── run.cmd              ← Windows root launcher for the setup wizard, web UI, and Tauri app
 ├── global/              ← deploy target: ~/.claude/
 │   ├── settings.json    ← MCP servers, hooks, theme, model
 │   ├── CLAUDE.md        ← always-loaded global behaviour
@@ -224,12 +224,12 @@ read-only dashboard.
 
 ```bash
 # Fast browser loop (backend + Vite with hot reload)
-./run-web                 # POSIX
-.\run-web.cmd             # Windows
+./run web                 # POSIX
+.\run.cmd web             # Windows
 
 # Desktop shell
-./run-tauri               # POSIX
-.\run-tauri.cmd           # Windows
+./run tauri               # POSIX
+.\run.cmd tauri           # Windows
 
 # Production shape
 uv run --with pyinstaller python setup/build/build_backend.py

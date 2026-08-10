@@ -178,3 +178,10 @@ Concrete failures from past sessions, recorded so they aren't repeated. Each ent
 - **Root cause**: Pytest is not a root project dependency, so invoking its bare executable did not guarantee the project interpreter.
 - **Future rule**: Run root Cabal tests with `uv run --with pytest --with pytest-asyncio python -m pytest ...`, and verify `uv run python --version` when syntax compatibility matters.
 - **Example**: `uv run --with pytest --with pytest-asyncio python -m pytest setup/tests -q` uses the Python 3.14 project environment.
+
+### M-20260810-01 — Collapsed a one-item forwarded argument array
+- **Date**: 2026-08-10
+- **Situation**: Added root `run.cmd web`/`tauri` dispatch; the first web smoke test forwarded `--help` as `- - h e l p`.
+- **Root cause**: Assigning an `if` expression that emitted a one-item array let PowerShell unwrap it to a scalar string; splatting that scalar into a `.cmd` launcher enumerated its characters.
+- **Future rule**: Initialize forwarded arguments with `@()` and assign the sliced array inside the conditional, then smoke-test both one and multiple forwarded arguments through the real launcher chain.
+- **Example**: `$forwarded = @(); if ($args.Count -gt 1) { $forwarded = @($args[1..($args.Count - 1)]) }; & $launcher @forwarded`.

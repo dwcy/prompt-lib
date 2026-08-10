@@ -255,3 +255,13 @@ The evaluation questions:
 - **To remember**:
   - M-20260716-01 (invoke root Cabal tests through the project Python interpreter)
 - **To unlearn**: nothing.
+
+### E-20260810-01 — Route web and Tauri through the root launcher
+- **Task**: Make the root `run`/`run.cmd` launch the browser workspace and Tauri desktop app while preserving the settings TUI default.
+- **Constraints followed?** Yes — kept bare `run` behavior unchanged, delegated to existing app launchers, preserved user changes, and did not commit.
+- **Unverified assumptions?** Minimal — inferred the requested interface as `run web` and `run tauri`, then documented and exercised those exact commands.
+- **Verified current facts?** Yes — `run.cmd web --help`, multi-argument web forwarding, `run.cmd tauri --help`, the existing `run.cmd --version` route, PowerShell parsing, and diff checks passed.
+- **Requested format?** Yes — both graphical apps now start from the same root command file.
+- **To remember**:
+  - M-20260810-01 (preserve one-item PowerShell forwarding arrays)
+- **To unlearn**: nothing.

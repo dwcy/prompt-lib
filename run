@@ -1,7 +1,19 @@
 #!/usr/bin/env sh
-# Root launcher for the settings configurator.
+# Root launcher for the settings configurator and graphical workspaces.
 
 set -u
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+
+case "${1:-}" in
+    web)
+        shift
+        exec "$SCRIPT_DIR/run-web" "$@"
+        ;;
+    tauri)
+        shift
+        exec "$SCRIPT_DIR/run-tauri" "$@"
+        ;;
+esac
+
 exec sh "$SCRIPT_DIR/setup/settings-configurator-ui.sh" "$@"

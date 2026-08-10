@@ -38,6 +38,12 @@ After editing anything in `global/`, deploy and restart:
 ./run        # POSIX
 .\run.cmd    # Windows
 
+# Graphical workspace from the same root launcher
+./run web
+.\run.cmd web
+./run tauri
+.\run.cmd tauri
+
 # Direct source fallback
 python setup/settings-configurator-ui.py
 
