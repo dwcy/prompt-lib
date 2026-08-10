@@ -5,6 +5,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
 import { StatePill } from "@/components/StatePill";
 import { useAction } from "@/hooks/useAction";
+import "./ModelAssignmentsModule.css";
 
 export function ModelAssignmentsModule() {
   const modelsQuery = useModels();
@@ -61,44 +62,44 @@ export function ModelAssignmentsModule() {
     .filter((lane) => kindFilter === "all" || lane.kind === kindFilter);
 
   return (
-    <div className="model-matrix">
-      <section className="observability-hero">
-        <div>
-          <span className="us3-eyebrow">Routing matrix</span>
+    <div className="ma-module">
+      <section className="ma-header">
+        <div className="ma-header__intro">
+          <span className="ma-eyebrow">Routing matrix</span>
           <h1>Agent and skill model pins</h1>
           <p>
             Alias pins are compared against the deployed target so stale assignments are visible
             before they surprise a session.
           </p>
         </div>
-        <div className="observability-hero__metrics">
-          <span>
+        <div className="ma-header__metrics">
+          <span className="ma-header__metric">
             <strong>{payload.counts.total}</strong>
             <small>assets</small>
           </span>
-          <span>
+          <span className="ma-header__metric">
             <strong>{payload.counts.out_of_sync}</strong>
             <small>out of sync</small>
           </span>
-          <span>
+          <span className="ma-header__metric">
             <strong>{payload.counts.invalid}</strong>
             <small>invalid</small>
           </span>
         </div>
       </section>
 
-      <section className="model-routing-overview">
-        <div>
-          <span className="us3-eyebrow">Repository to runtime</span>
+      <section className="ma-overview">
+        <div className="ma-overview__intro">
+          <span className="ma-eyebrow">Repository to runtime</span>
           <strong>{stagedCount} route change(s) staged</strong>
           <p>Every pin is traced through alias resolution to the deployed target.</p>
         </div>
         <ModelDistribution assignments={payload.assignments} />
       </section>
 
-      <div className="model-matrix__controls">
-        <fieldset className="model-matrix__filters segmented-control">
-          <legend className="visually-hidden">Filter model assignments</legend>
+      <div className="ma-controls">
+        <fieldset className="ma-segmented">
+          <legend className="ma-vh">Filter model assignments</legend>
           {(["all", "agent", "skill"] as const).map((kind) => (
             <button
               key={kind}
@@ -111,8 +112,8 @@ export function ModelAssignmentsModule() {
             </button>
           ))}
         </fieldset>
-        <label className="model-matrix__search">
-          <span className="visually-hidden">Search model routes</span>
+        <label className="ma-search">
+          <span className="ma-vh">Search model routes</span>
           <input
             type="search"
             value={search}
@@ -120,7 +121,7 @@ export function ModelAssignmentsModule() {
             onChange={(event) => setSearch(event.currentTarget.value)}
           />
         </label>
-        <label className="model-matrix__attention">
+        <label className="ma-attention">
           <input
             type="checkbox"
             checked={attentionOnly}
@@ -133,17 +134,17 @@ export function ModelAssignmentsModule() {
       {rows.length === 0 ? (
         <EmptyState title="No model routes match this view" />
       ) : (
-        <div className="model-routing-lanes">
+        <div className="ma-lanes">
           {lanes.map((lane) => (
-            <section key={lane.kind} className="model-routing-lane">
-              <header className="model-routing-lane__header">
+            <section key={lane.kind} className="ma-lane">
+              <header className="ma-lane__header">
                 <div>
-                  <span className="us3-eyebrow">{lane.kind} fleet</span>
+                  <span className="ma-eyebrow">{lane.kind} fleet</span>
                   <h2>{lane.kind === "agent" ? "Agent routes" : "Skill routes"}</h2>
                 </div>
-                <span>{lane.rows.length}</span>
+                <span className="ma-lane__count">{lane.rows.length}</span>
               </header>
-              <div className="model-grid">
+              <div className="ma-grid">
                 {lane.rows.map((assignment) => {
                   const key = assignmentKey(assignment);
                   const draft = drafts[key] ?? assignment.pinned_model;
@@ -197,8 +198,8 @@ function ModelRouteCard({
 }) {
   const staged = draft !== assignment.pinned_model;
   return (
-    <article className={`model-card${staged ? " is-staged" : ""}`}>
-      <header>
+    <article className={`ma-card${staged ? " is-staged" : ""}`}>
+      <header className="ma-card__header">
         <span>
           <strong>{assignment.asset_name}</strong>
           <small>{assignment.asset_kind}</small>
@@ -212,24 +213,28 @@ function ModelRouteCard({
           }
         />
       </header>
-      <div className="model-route" data-drift={!assignment.repo_and_target_in_sync}>
-        <span>
+      <div className="ma-route" data-drift={!assignment.repo_and_target_in_sync}>
+        <span className="ma-route__step">
           <small>repository pin</small>
           <strong>{assignment.pinned_model}</strong>
         </span>
-        <i aria-hidden="true">→</i>
-        <span>
+        <i className="ma-route__arrow" aria-hidden="true">
+          →
+        </i>
+        <span className="ma-route__step">
           <small>resolves to</small>
           <strong>{assignment.resolved_to ?? assignment.pinned_model}</strong>
         </span>
-        <i aria-hidden="true">→</i>
-        <span>
+        <i className="ma-route__arrow" aria-hidden="true">
+          →
+        </i>
+        <span className="ma-route__step">
           <small>deployed target</small>
           <strong>{assignment.target_model ?? "not reported"}</strong>
         </span>
       </div>
-      <div className="model-card__command">
-        <label>
+      <div className="ma-card__command">
+        <label className="ma-card__picker">
           <span>Next repository pin</span>
           <select value={draft} onChange={(event) => onDraft(event.currentTarget.value)}>
             {assignment.assignable_models.map((model) => (
@@ -239,7 +244,7 @@ function ModelRouteCard({
             ))}
           </select>
         </label>
-        <button type="button" disabled={!staged} onClick={onStage}>
+        <button type="button" className="ma-card__stage-btn" disabled={!staged} onClick={onStage}>
           Review route change
         </button>
       </div>
@@ -255,15 +260,15 @@ function ModelDistribution({ assignments }: { assignments: ModelAssignment[] }) 
   const rows = Array.from(counts.entries()).sort((left, right) => right[1] - left[1]);
   const total = Math.max(assignments.length, 1);
   return (
-    <section className="model-distribution" aria-label="Model pin distribution">
+    <section className="ma-distribution" aria-label="Model pin distribution">
       {rows.map(([model, count]) => (
-        <div key={model}>
+        <div key={model} className="ma-distribution__row">
           <span>
             <strong>{model}</strong>
             <small>{count}</small>
           </span>
-          <i>
-            <span style={{ width: `${(count / total) * 100}%` }} />
+          <i className="ma-distribution__track">
+            <span className="ma-distribution__fill" style={{ width: `${(count / total) * 100}%` }} />
           </i>
         </div>
       ))}
