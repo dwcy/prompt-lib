@@ -1,0 +1,223 @@
+/* Package security console module: single full-width table card — header/summary/rescan, notices
+   strip, and the severity-colored findings table — per specs/015-web-ui-overhaul/redesign/
+   cabal-console-mock.html (isInfrastructure "Package security check", ~lines 313-333). */
+
+.pkgsec-console {
+  display: grid;
+  gap: 14px;
+}
+
+.pkgsec-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  overflow: hidden;
+}
+
+/* --- Header: title + scope, summary counts, rescan ------------------------ */
+
+.pkgsec-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--divider);
+}
+
+.pkgsec-header__copy {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+.pkgsec-header__copy span {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.pkgsec-header__summary {
+  display: flex;
+  gap: 14px;
+  margin-left: auto;
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-sm);
+}
+
+.pkgsec-header__summary span[data-tone="ok"] {
+  color: var(--status-ok);
+}
+
+.pkgsec-header__summary span[data-tone="warning"] {
+  color: var(--status-warning);
+}
+
+.pkgsec-header__summary span[data-tone="danger"] {
+  color: var(--status-danger);
+}
+
+.pkgsec-header__summary span[data-tone="info"] {
+  color: var(--status-info);
+}
+
+.pkgsec-header__summary span[data-tone="neutral"] {
+  color: var(--muted);
+}
+
+.pkgsec-header__rescan {
+  padding: 5px 14px;
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--corner-sm);
+  color: var(--accent);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.pkgsec-header__rescan:hover:not(:disabled) {
+  background: var(--accent-bg-gradient);
+}
+
+.pkgsec-header__rescan:disabled {
+  opacity: var(--opacity-disabled);
+  cursor: default;
+}
+
+/* --- Notices strip ---------------------------------------------------------- */
+
+.pkgsec-notices {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 16px;
+  background: color-mix(in srgb, var(--status-info) 6%, transparent);
+  border-bottom: 1px solid var(--divider);
+  color: var(--status-info);
+  font-size: var(--fs-sm);
+}
+
+/* --- Findings table --------------------------------------------------------- */
+
+.pkgsec-table {
+  overflow-x: auto;
+}
+
+.pkgsec-columns,
+.pkgsec-row {
+  display: grid;
+  grid-template-columns: 16px 190px 110px minmax(0, 1fr) 110px 110px;
+  gap: 12px;
+  align-items: center;
+  min-width: 40rem;
+  padding: 9px 16px;
+}
+
+.pkgsec-columns {
+  border-bottom: 1px solid var(--divider);
+  color: var(--muted-2);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.pkgsec-rows {
+  display: grid;
+}
+
+.pkgsec-row {
+  width: 100%;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--divider-faint);
+  color: var(--fg);
+  font-size: var(--fs-base);
+  text-align: left;
+}
+
+.pkgsec-row:last-child {
+  border-bottom: none;
+}
+
+.pkgsec-row--fixable {
+  cursor: pointer;
+}
+
+.pkgsec-row--fixable:hover {
+  background: var(--surface-2);
+}
+
+.pkgsec-dot {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  border-radius: var(--corner-full);
+}
+
+.pkgsec-dot--ok {
+  background: var(--status-ok);
+}
+
+.pkgsec-dot--warning {
+  background: var(--status-warning);
+}
+
+.pkgsec-dot--danger {
+  background: var(--status-danger);
+}
+
+.pkgsec-dot--neutral {
+  background: var(--muted-3);
+}
+
+.pkgsec-row__package {
+  overflow: hidden;
+  color: var(--fg);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pkgsec-row__ecosystem {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pkgsec-row__advisory {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--fg-soft);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pkgsec-row__current,
+.pkgsec-row__latest {
+  overflow: hidden;
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pkgsec-row__current.is-warning {
+  color: var(--status-warning);
+}
+
+.pkgsec-row__latest.is-ok {
+  color: var(--status-ok);
+}
+
+/* --- Narrow layouts --------------------------------------------------------- */
+
+@media (max-width: 768px) {
+  .pkgsec-header__summary {
+    margin-left: 0;
+  }
+}
