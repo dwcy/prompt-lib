@@ -122,6 +122,12 @@ describe("MCP and service workflows", () => {
 
   it("keeps service startup unavailable until prerequisites are ready", async () => {
     server.use(
+      http.get("/api/services/running-apps", () =>
+        HttpResponse.json(wrapEnvelope({ apps: [], count: 0 })),
+      ),
+      http.get("/api/services/docker-apps", () =>
+        HttpResponse.json(wrapEnvelope(emptyDockerPayload())),
+      ),
       http.get("/api/services", () =>
         HttpResponse.json(
           wrapEnvelope({
@@ -147,7 +153,161 @@ describe("MCP and service workflows", () => {
     expect(screen.getAllByRole("button", { name: "Start" })).toHaveLength(1);
     expect(screen.getByRole("button", { name: "Start" })).toBeEnabled();
   });
+
+  it("shows listening web apps and prepares a confirmed shutdown", async () => {
+    let preparedParams: unknown = null;
+    server.use(
+      http.get("/api/services", () =>
+        HttpResponse.json(
+          wrapEnvelope({
+            services: [],
+            counts: { total: 0, running: 0, stopped: 0, not_set_up: 0, blocked: 0 },
+          }),
+        ),
+      ),
+      http.get("/api/services/running-apps", () =>
+        HttpResponse.json(
+          wrapEnvelope({
+            apps: [
+              {
+                port: 5173,
+                pid: 4242,
+                app_name: "fixture-web",
+                location: "C:/projects/fixture-web",
+                address: "127.0.0.1",
+                started_at: 1725000000.25,
+              },
+            ],
+            count: 1,
+          }),
+        ),
+      ),
+      http.get("/api/services/docker-apps", () =>
+        HttpResponse.json(wrapEnvelope(emptyDockerPayload())),
+      ),
+      http.post("/api/actions/services.running_app.stop/prepare", async ({ request }) => {
+        preparedParams = await request.json();
+        return HttpResponse.json(
+          wrapEnvelope(
+            buildConfirmationTicket({
+              action_id: "services.running_app.stop",
+              effect_preview: buildEffectPreview({
+                summary: "Shut down fixture-web on port 5173",
+                scopes: ["services", "running-apps", "4242"],
+                removals: ["fixture-web (PID 4242, port 5173)"],
+                backup: "Restart the app from its location or original command",
+              }),
+            }),
+          ),
+        );
+      }),
+    );
+    const { user } = renderModule(<ServicesModule />);
+
+    expect(await screen.findByText("fixture-web")).toBeInTheDocument();
+    expect(screen.getByText("C:/projects/fixture-web")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Shut down fixture-web on port 5173" }));
+
+    expect(
+      await screen.findByRole("alertdialog", { name: "Shut Down Web App" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Shut down fixture-web on port 5173")).toBeInTheDocument();
+    expect(preparedParams).toEqual({ pid: 4242, port: 5173, started_at: 1725000000.25 });
+  });
+
+  it("shows Docker containers in every state and prepares the matching lifecycle action", async () => {
+    let preparedParams: unknown = null;
+    server.use(
+      http.get("/api/services", () =>
+        HttpResponse.json(
+          wrapEnvelope({
+            services: [],
+            counts: { total: 0, running: 0, stopped: 0, not_set_up: 0, blocked: 0 },
+          }),
+        ),
+      ),
+      http.get("/api/services/running-apps", () =>
+        HttpResponse.json(wrapEnvelope({ apps: [], count: 0 })),
+      ),
+      http.get("/api/services/docker-apps", () =>
+        HttpResponse.json(
+          wrapEnvelope({
+            available: true,
+            daemon_running: true,
+            message: null,
+            containers: [
+              buildDockerApp({ name: "fixture-web", state: "running", can_stop: true }),
+              buildDockerApp({
+                container_id: "b".repeat(64),
+                name: "fixture-worker",
+                state: "exited",
+                status: "Exited (0)",
+                ports: "",
+                can_start: true,
+              }),
+            ],
+            counts: { total: 2, running: 1, stopped: 1, other: 0 },
+          }),
+        ),
+      ),
+      http.post("/api/actions/services.docker.stop/prepare", async ({ request }) => {
+        preparedParams = await request.json();
+        return HttpResponse.json(
+          wrapEnvelope(
+            buildConfirmationTicket({
+              action_id: "services.docker.stop",
+              effect_preview: buildEffectPreview({
+                summary: "Stop Docker container fixture-web",
+                scopes: ["services", "docker", "a".repeat(64)],
+                removals: [`Running container fixture-web (${"a".repeat(12)})`],
+                backup: "Start the same Docker container again to recover",
+              }),
+            }),
+          ),
+        );
+      }),
+    );
+    const { user } = renderModule(<ServicesModule />);
+
+    expect(await screen.findByText("fixture-web")).toBeInTheDocument();
+    expect(screen.getByText("fixture-worker")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Start Docker container fixture-worker" }),
+    ).toBeEnabled();
+    await user.click(screen.getByRole("button", { name: "Stop Docker container fixture-web" }));
+
+    expect(await screen.findByRole("alertdialog", { name: "Stop Docker App" })).toBeInTheDocument();
+    expect(preparedParams).toEqual({ container_id: "a".repeat(64), expected_state: "running" });
+  });
 });
+
+function emptyDockerPayload() {
+  return {
+    available: true,
+    daemon_running: true,
+    message: null,
+    containers: [],
+    counts: { total: 0, running: 0, stopped: 0, other: 0 },
+  };
+}
+
+function buildDockerApp(overrides: Record<string, unknown>) {
+  return {
+    container_id: "a".repeat(64),
+    name: "fixture",
+    image: "fixture/app:latest",
+    state: "running",
+    status: "Up 2 minutes",
+    health: "healthy",
+    ports: "0.0.0.0:5173->5173/tcp",
+    project: "fixture",
+    service: "web",
+    location: "C:/projects/fixture",
+    can_start: false,
+    can_stop: false,
+    ...overrides,
+  };
+}
 
 function buildService(overrides: Record<string, unknown>) {
   return {

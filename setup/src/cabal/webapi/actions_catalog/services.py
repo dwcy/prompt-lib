@@ -11,13 +11,45 @@ from cabal.installers.a2a_bridge import a2a_bridge_install
 from cabal.installers.orchestrator import orchestrator_install
 from cabal.service_catalog import get_service
 from cabal.webapi.actions import ActionDescriptor, ActionOutcome
+from cabal.webapi.docker_apps_service import (
+    docker_container_digest,
+    find_docker_container,
+    start_docker_container,
+    stop_docker_container,
+)
 from cabal.webapi.envelope import ApiError
+from cabal.webapi.running_apps_service import (
+    find_running_app,
+    running_app_digest,
+    stop_running_app,
+)
 from cabal.webapi.services_service import service_payload, services_digest
 
 _SERVICE_SCHEMA = {
     "type": "object",
     "properties": {"key": {"type": "string"}},
     "required": ["key"],
+    "additionalProperties": False,
+}
+
+_RUNNING_APP_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "pid": {"type": "integer", "minimum": 1},
+        "port": {"type": "integer", "minimum": 1, "maximum": 65535},
+        "started_at": {"type": "number"},
+    },
+    "required": ["pid", "port", "started_at"],
+    "additionalProperties": False,
+}
+
+_DOCKER_CONTAINER_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "container_id": {"type": "string"},
+        "expected_state": {"type": "string"},
+    },
+    "required": ["container_id", "expected_state"],
     "additionalProperties": False,
 }
 
@@ -112,6 +144,61 @@ def _stop_execute(params: dict, _state) -> ActionOutcome:
     return ActionOutcome(data=service_payload(key) | {"message": state.detail})
 
 
+def _running_app_stop_prepare(params: dict, _state) -> dict:
+    app = find_running_app(params["pid"], params["port"], params["started_at"])
+    label = f"{app['app_name']} (PID {app['pid']}, port {app['port']})"
+    return {
+        "summary": f"Shut down {app['app_name']} on port {app['port']}",
+        "commands": [f"terminate process {app['pid']}"],
+        "files_changed": [],
+        "scopes": ["services", "running-apps", str(app["pid"])],
+        "backup": "Restart the app from its location or original command",
+        "removals": [label],
+    }
+
+
+def _running_app_stop_execute(params: dict, _state) -> ActionOutcome:
+    return ActionOutcome(
+        data=stop_running_app(params["pid"], params["port"], params["started_at"])
+    )
+
+
+def _docker_start_prepare(params: dict, _state) -> dict:
+    container = find_docker_container(params["container_id"], params["expected_state"])
+    return {
+        "summary": f"Start Docker container {container['name']}",
+        "commands": [f"docker container start {container['container_id'][:12]}"],
+        "files_changed": [],
+        "scopes": ["services", "docker", container["container_id"]],
+        "backup": None,
+        "removals": [],
+    }
+
+
+def _docker_start_execute(params: dict, _state) -> ActionOutcome:
+    return ActionOutcome(
+        data=start_docker_container(params["container_id"], params["expected_state"])
+    )
+
+
+def _docker_stop_prepare(params: dict, _state) -> dict:
+    container = find_docker_container(params["container_id"], params["expected_state"])
+    return {
+        "summary": f"Stop Docker container {container['name']}",
+        "commands": [f"docker container stop --time 10 {container['container_id'][:12]}"],
+        "files_changed": [],
+        "scopes": ["services", "docker", container["container_id"]],
+        "backup": "Start the same Docker container again to recover",
+        "removals": [f"Running container {container['name']} ({container['container_id'][:12]})"],
+    }
+
+
+def _docker_stop_execute(params: dict, _state) -> ActionOutcome:
+    return ActionOutcome(
+        data=stop_docker_container(params["container_id"], params["expected_state"])
+    )
+
+
 def _dashboard_prepare(params: dict, _state) -> dict:
     key = _require_key(params)
     definition = get_service(key)
@@ -181,9 +268,51 @@ SERVICES_DASHBOARD_DESCRIPTOR = ActionDescriptor(
     compute_digest=lambda params, _state: services_digest(params["key"]),
 )
 
+RUNNING_APP_STOP_DESCRIPTOR = ActionDescriptor(
+    action_id="services.running_app.stop",
+    module="services",
+    destructive=True,
+    backup_policy=None,
+    params_schema=_RUNNING_APP_SCHEMA,
+    prepare=_running_app_stop_prepare,
+    execute=_running_app_stop_execute,
+    compute_digest=lambda params, _state: running_app_digest(
+        params["pid"], params["port"], params["started_at"]
+    ),
+)
+
+DOCKER_START_DESCRIPTOR = ActionDescriptor(
+    action_id="services.docker.start",
+    module="services",
+    destructive=False,
+    backup_policy=None,
+    params_schema=_DOCKER_CONTAINER_SCHEMA,
+    prepare=_docker_start_prepare,
+    execute=_docker_start_execute,
+    compute_digest=lambda params, _state: docker_container_digest(
+        params["container_id"], params["expected_state"]
+    ),
+)
+
+DOCKER_STOP_DESCRIPTOR = ActionDescriptor(
+    action_id="services.docker.stop",
+    module="services",
+    destructive=True,
+    backup_policy=None,
+    params_schema=_DOCKER_CONTAINER_SCHEMA,
+    prepare=_docker_stop_prepare,
+    execute=_docker_stop_execute,
+    compute_digest=lambda params, _state: docker_container_digest(
+        params["container_id"], params["expected_state"]
+    ),
+)
+
 SERVICES_DESCRIPTORS = (
     SERVICES_SETUP_DESCRIPTOR,
     SERVICES_START_DESCRIPTOR,
     SERVICES_STOP_DESCRIPTOR,
     SERVICES_DASHBOARD_DESCRIPTOR,
+    RUNNING_APP_STOP_DESCRIPTOR,
+    DOCKER_START_DESCRIPTOR,
+    DOCKER_STOP_DESCRIPTOR,
 )

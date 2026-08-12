@@ -14,7 +14,9 @@ from fastapi.responses import StreamingResponse
 
 from cabal import service_supervisor
 from cabal.webapi import security, sse
+from cabal.webapi.docker_apps_service import docker_apps_payload
 from cabal.webapi.envelope import envelope_response
+from cabal.webapi.running_apps_service import running_apps_payload
 from cabal.webapi.services_service import (
     service_log_path,
     service_log_snapshot,
@@ -51,6 +53,16 @@ def list_services():
         source="services",
         precondition_digest=services_digest(),
     )
+
+
+@router.get("/api/services/running-apps")
+def list_running_apps():
+    return envelope_response(data=running_apps_payload(), source="services")
+
+
+@router.get("/api/services/docker-apps")
+def list_docker_apps():
+    return envelope_response(data=docker_apps_payload(), source="services")
 
 
 @router.get("/api/services/{key}")

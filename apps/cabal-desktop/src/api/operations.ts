@@ -92,6 +92,48 @@ export const servicesPayloadSchema = z.object({
   }),
 });
 
+export const runningWebAppSchema = z.object({
+  port: z.number().int().positive(),
+  pid: z.number().int().positive(),
+  app_name: z.string(),
+  location: z.string().nullable(),
+  address: z.string(),
+  started_at: z.number(),
+});
+
+export const runningWebAppsPayloadSchema = z.object({
+  apps: z.array(runningWebAppSchema),
+  count: z.number().int().nonnegative(),
+});
+
+export const dockerAppSchema = z.object({
+  container_id: z.string(),
+  name: z.string(),
+  image: z.string(),
+  state: z.string(),
+  status: z.string(),
+  health: z.string().nullable(),
+  ports: z.string(),
+  project: z.string().nullable(),
+  service: z.string().nullable(),
+  location: z.string().nullable(),
+  can_start: z.boolean(),
+  can_stop: z.boolean(),
+});
+
+export const dockerAppsPayloadSchema = z.object({
+  available: z.boolean(),
+  daemon_running: z.boolean(),
+  message: z.string().nullable(),
+  containers: z.array(dockerAppSchema),
+  counts: z.object({
+    total: z.number().int().nonnegative(),
+    running: z.number().int().nonnegative(),
+    stopped: z.number().int().nonnegative(),
+    other: z.number().int().nonnegative(),
+  }),
+});
+
 export const serviceDashboardSchema = z.object({
   key: z.string(),
   argv: z.array(z.string()).nullable(),
@@ -104,6 +146,10 @@ export type McpPayload = z.infer<typeof mcpPayloadSchema>;
 export type ServiceRow = z.infer<typeof serviceRowSchema>;
 export type ServiceState = z.infer<typeof serviceStateSchema>;
 export type ServicesPayload = z.infer<typeof servicesPayloadSchema>;
+export type RunningWebApp = z.infer<typeof runningWebAppSchema>;
+export type RunningWebAppsPayload = z.infer<typeof runningWebAppsPayloadSchema>;
+export type DockerApp = z.infer<typeof dockerAppSchema>;
+export type DockerAppsPayload = z.infer<typeof dockerAppsPayloadSchema>;
 
 export function useMcpServers() {
   return useQuery({
@@ -140,6 +186,34 @@ export function useServices() {
       return requireData(envelope, "services");
     },
     staleTime: 10_000,
+  });
+}
+
+export function useRunningWebApps() {
+  return useQuery({
+    queryKey: queryKeys.global("runningWebApps"),
+    queryFn: async ({ signal }) => {
+      const envelope = await apiGet(
+        "/api/services/running-apps",
+        runningWebAppsPayloadSchema,
+        signal,
+      );
+      return requireData(envelope, "running web apps");
+    },
+    refetchInterval: 5_000,
+    staleTime: 3_000,
+  });
+}
+
+export function useDockerApps() {
+  return useQuery({
+    queryKey: queryKeys.global("dockerApps"),
+    queryFn: async ({ signal }) => {
+      const envelope = await apiGet("/api/services/docker-apps", dockerAppsPayloadSchema, signal);
+      return requireData(envelope, "Docker apps");
+    },
+    refetchInterval: 5_000,
+    staleTime: 3_000,
   });
 }
 

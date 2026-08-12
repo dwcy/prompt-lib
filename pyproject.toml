@@ -27,6 +27,7 @@ dependencies = [
   "fastapi>=0.115,<1",
   "uvicorn>=0.34,<1",
   "platformdirs>=4.3,<5",
+  "psutil>=7.1,<8",
 ]
 
 [project.optional-dependencies]

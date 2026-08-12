@@ -99,3 +99,133 @@ def test_service_start_stream_stop_and_app_shutdown_cleanup(
     assert shutdown.json()["data"]["stopping"] is True
     assert spawned[-1].terminated is True
     assert service_supervisor._PROCS == {}
+
+
+def test_running_apps_list_and_confirmed_shutdown_action(
+    app_factory, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from cabal.webapi.actions_catalog import services as service_actions
+    from cabal.webapi.routers import services as services_router
+
+    app = {
+        "port": 5_173,
+        "pid": 4_242,
+        "app_name": "fixture-web",
+        "location": "C:/projects/fixture-web",
+        "address": "127.0.0.1",
+        "started_at": 1_725_000_000.25,
+    }
+    stopped: list[int] = []
+    monkeypatch.setattr(
+        services_router,
+        "running_apps_payload",
+        lambda: {"apps": [app], "count": 1},
+    )
+    monkeypatch.setattr(service_actions, "find_running_app", lambda *_args: app)
+    monkeypatch.setattr(service_actions, "running_app_digest", lambda *_args: "sha256:app")
+    monkeypatch.setattr(
+        service_actions,
+        "stop_running_app",
+        lambda pid, _port, _started_at: stopped.append(pid) or {"stopped": True, "app": app},
+    )
+    _app, client = build_client(app_factory)
+
+    listed = client.get("/api/services/running-apps", headers=auth_headers())
+    assert listed.status_code == 200
+    assert listed.json()["data"] == {"apps": [app], "count": 1}
+
+    result = _execute_action(
+        client,
+        "services.running_app.stop",
+        {"pid": 4_242, "port": 5_173, "started_at": 1_725_000_000.25},
+    )
+
+    assert result["stopped"] is True
+    assert stopped == [4_242]
+
+
+def test_docker_apps_list_start_and_stop_actions(
+    app_factory, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from cabal.webapi.actions_catalog import services as service_actions
+    from cabal.webapi.routers import services as services_router
+
+    running = {
+        "container_id": "a" * 64,
+        "name": "fixture-web",
+        "image": "fixture/web:latest",
+        "state": "running",
+        "status": "Up 2 minutes",
+        "health": "healthy",
+        "ports": "0.0.0.0:5173->5173/tcp",
+        "project": "fixture",
+        "service": "web",
+        "location": "C:/projects/fixture",
+        "can_start": False,
+        "can_stop": True,
+    }
+    stopped = running | {
+        "container_id": "b" * 64,
+        "name": "fixture-worker",
+        "state": "exited",
+        "status": "Exited (0)",
+        "health": None,
+        "ports": "",
+        "service": "worker",
+        "can_start": True,
+        "can_stop": False,
+    }
+    payload = {
+        "available": True,
+        "daemon_running": True,
+        "message": None,
+        "containers": [running, stopped],
+        "counts": {"total": 2, "running": 1, "stopped": 1, "other": 0},
+    }
+    lifecycle: list[tuple[str, str]] = []
+    monkeypatch.setattr(services_router, "docker_apps_payload", lambda: payload)
+    monkeypatch.setattr(
+        service_actions,
+        "find_docker_container",
+        lambda container_id, _expected_state=None: (
+            running if container_id.startswith("a") else stopped
+        ),
+    )
+    monkeypatch.setattr(
+        service_actions, "docker_container_digest", lambda *_args: "sha256:docker"
+    )
+    monkeypatch.setattr(
+        service_actions,
+        "stop_docker_container",
+        lambda container_id, _state: lifecycle.append(("stop", container_id))
+        or {"stopped": True, "container": stopped},
+    )
+    monkeypatch.setattr(
+        service_actions,
+        "start_docker_container",
+        lambda container_id, _state: lifecycle.append(("start", container_id))
+        or {"started": True, "container": running},
+    )
+    _app, client = build_client(app_factory)
+
+    listed = client.get("/api/services/docker-apps", headers=auth_headers())
+    assert listed.status_code == 200
+    assert listed.json()["data"]["counts"]["total"] == 2
+
+    stopped_result = _execute_action(
+        client,
+        "services.docker.stop",
+        {"container_id": running["container_id"], "expected_state": "running"},
+    )
+    started_result = _execute_action(
+        client,
+        "services.docker.start",
+        {"container_id": stopped["container_id"], "expected_state": "exited"},
+    )
+
+    assert stopped_result["stopped"] is True
+    assert started_result["started"] is True
+    assert lifecycle == [
+        ("stop", running["container_id"]),
+        ("start", stopped["container_id"]),
+    ]

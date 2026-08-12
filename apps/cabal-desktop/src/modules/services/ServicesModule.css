@@ -7,6 +7,176 @@
   gap: 14px;
 }
 
+/* --- Running web apps ---------------------------------------------------- */
+
+.svc-web-apps {
+  overflow: hidden;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+}
+
+.svc-web-apps__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--divider);
+}
+
+.svc-web-apps__header > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.svc-web-apps__header span {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.svc-web-apps__header button,
+.svc-web-apps__action button {
+  padding: 4px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-sm);
+  color: var(--fg-soft);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.svc-web-apps__header button:disabled,
+.svc-web-apps__action button:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.svc-web-apps__scroll {
+  overflow-x: auto;
+}
+
+.svc-web-apps table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+
+.svc-web-apps th,
+.svc-web-apps td {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--divider-faint);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.svc-web-apps th {
+  color: var(--muted-2);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.svc-web-apps tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.svc-web-apps code,
+.svc-web-apps__location {
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+.svc-web-apps__name {
+  color: var(--fg);
+  font-weight: 500;
+}
+
+.svc-web-apps__location {
+  width: 100%;
+  max-width: 440px;
+  overflow: hidden;
+  color: var(--muted);
+  text-overflow: ellipsis;
+}
+
+.svc-web-apps td.svc-web-apps__action {
+  text-align: right;
+}
+
+.svc-web-apps__action button {
+  color: var(--status-danger);
+}
+
+.svc-web-apps__message {
+  margin: 0;
+  padding: 18px 16px;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.svc-web-apps__message--error {
+  color: var(--status-danger);
+}
+
+.svc-docker-apps__image,
+.svc-docker-apps__ports {
+  max-width: 280px;
+  overflow: hidden;
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+}
+
+.svc-docker-apps__status {
+  display: grid;
+  justify-items: start;
+  gap: 4px;
+}
+
+.svc-docker-apps__status > span:last-child {
+  max-width: 180px;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+}
+
+.svc-docker-apps__project {
+  display: grid;
+  max-width: 360px;
+  gap: 3px;
+}
+
+.svc-docker-apps__project strong,
+.svc-docker-apps__project span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.svc-docker-apps__project strong {
+  color: var(--fg-soft);
+  font-size: var(--fs-xs);
+}
+
+.svc-docker-apps__project span {
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+.svc-web-apps__action button.svc-docker-apps__action--start {
+  color: var(--status-ok);
+}
+
+.svc-docker-apps__no-action {
+  color: var(--muted-3);
+}
+
 /* --- Top row: readiness gauge | health grid ----------------------------- */
 
 .svc-top {
