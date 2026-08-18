@@ -69,3 +69,9 @@ docs/okf/prompt-lib/
 .cabal/
 
 .mcp.json
+
+# .NET build output - the dotnetgen templates ship .cs/.csproj sources; builds are artifacts.
+bin/
+obj/
+*.user
+*.suo
