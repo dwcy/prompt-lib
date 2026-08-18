@@ -22,13 +22,13 @@ description: "Task list for 018-dotnet-codegen"
 
 ## Phase 1: Setup
 
-**Status**: ⬜ Pending (0/5 — T001–T005)
+**Status**: ✅ Complete (5/5 — T001–T005)
 
-- [ ] T001 Create pipeline package skeleton with module stubs per plan structure in `setup/src/cabal/dotnetgen/` (`__init__.py`, `pipeline.py`, `state.py`, `ledger.py`, and the `stages/`, `context/`, `edits/`, `verify/`, `providers/`, `templates/` subpackages) — Owner: @python-architect
-- [ ] T002 [P] Create test roots with shared fixtures in `setup/tests/dotnetgen/` (`contract/`, `integration/`, `unit/`, `conftest.py`) — Owner: @python-tester
-- [ ] T003 [P] Add `python -m cabal.dotnetgen` entry point and argparse skeleton mirroring the established pattern, in `setup/src/cabal/dotnetgen/__main__.py` and `setup/src/cabal/dotnetgen/cli.py` — Owner: @python-architect
-- [ ] T004 [P] Create the per-machine stage-binding file with documented defaults — provider and model **names only, never API keys** — in `global/dotnetgen-bindings.toml` — Owner: main
-- [ ] T005 [P] Add toolchain preflight asserting .NET 10 SDK and Python 3.14+, recording discovered versions, in `setup/src/cabal/dotnetgen/preflight.py` — Owner: @python-architect
+- [X] T001 Create pipeline package skeleton with module stubs per plan structure in `setup/src/cabal/dotnetgen/` (`__init__.py`, `pipeline.py`, `state.py`, `ledger.py`, and the `stages/`, `context/`, `edits/`, `verify/`, `providers/`, `templates/` subpackages) — Owner: @python-architect
+- [X] T002 [P] Create test roots with shared fixtures in `setup/tests/dotnetgen/` (`contract/`, `integration/`, `unit/`, `conftest.py`) — Owner: @python-tester
+- [X] T003 [P] Add `python -m cabal.dotnetgen` entry point and argparse skeleton mirroring the established pattern, in `setup/src/cabal/dotnetgen/__main__.py` and `setup/src/cabal/dotnetgen/cli.py` — Owner: @python-architect
+- [X] T004 [P] Create the per-machine stage-binding file with documented defaults — provider and model **names only, never API keys** — in `global/dotnetgen-bindings.toml` — Owner: main
+- [X] T005 [P] Add toolchain preflight asserting .NET 10 SDK and Python 3.14+, recording discovered versions, in `setup/src/cabal/dotnetgen/preflight.py` — Owner: @python-architect
 
 ---
 
