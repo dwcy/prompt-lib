@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prompt-lib.local/018-dotnet-codegen/run-record.schema.json",
+  "title": "RunRecord",
+  "description": "Per-run cost ledger (FR-028, FR-029). Every success criterion in the spec is computed from this object, so it is a contract surface: the skill and any reporting UI consume it. Reconciles with provider-reported usage to within 5% (SC-010).",
+  "type": "object",
+  "required": ["run_id", "outcome", "stage_costs", "retry_budget", "wall_clock_seconds"],
+  "additionalProperties": false,
+  "properties": {
+    "run_id": { "type": "string", "minLength": 1 },
+    "project_path": { "type": "string" },
+    "template_id": {
+      "enum": ["minimal-service", "vertical-slice", "clean-arch"],
+      "description": "Read from ProjectState, never re-decided (FR-001b)."
+    },
+    "outcome": {
+      "enum": ["completed", "halted_at_ceiling", "aborted_environment", "rejected_at_gate"],
+      "description": "rejected_at_gate must cost under 10% of a completed run (SC-011). aborted_environment must consume zero retry budget (FR-022)."
+    },
+    "stage_costs": {
+      "type": "object",
+      "description": "Keyed by stage. verify has no model cost by design - the .NET toolchain is the free signal.",
+      "additionalProperties": false,
+      "properties": {
+        "route": { "$ref": "#/$defs/stageCost" },
+        "architect": { "$ref": "#/$defs/stageCost" },
+        "write": { "$ref": "#/$defs/stageCost" },
+        "verify": { "$ref": "#/$defs/stageCost" }
+      }
+    },
+    "repair_attempts": {
+      "type": "array",
+      "description": "One entry per repair attempt, so repair cost is separately attributable (FR-029).",
+      "items": {
+        "type": "object",
+        "required": ["attempt", "classification", "cost_usd"],
+        "additionalProperties": false,
+        "properties": {
+          "attempt": { "type": "integer", "minimum": 1 },
+          "classification": { "enum": ["code_defect", "environment_failure"] },
+          "diagnostic_ids": { "type": "array", "items": { "type": "string" } },
+          "cost_usd": { "type": "number", "minimum": 0 },
+          "resolved": { "type": "boolean" }
+        }
+      }
+    },
+    "edit_applications": {
+      "type": "array",
+      "description": "Source for SC-003. applied and applied_after_relaxation both count as first-attempt successes - neither cost a repair turn.",
+      "items": {
+        "type": "object",
+        "required": ["outcome", "relaxation_level"],
+        "additionalProperties": false,
+        "properties": {
+          "file": { "type": "string" },
+          "anchor_kind": { "enum": ["symbol", "text"] },
+          "outcome": { "enum": ["applied", "applied_after_relaxation", "failed"] },
+          "relaxation_level": { "type": "integer", "minimum": 0 },
+          "failure_reason": { "type": "string" }
+        }
+      }
+    },
+    "retry_budget": {
+      "type": "object",
+      "required": ["ceiling", "consumed"],
+      "additionalProperties": false,
+      "properties": {
+        "ceiling": { "type": "integer", "minimum": 0 },
+        "consumed": { "type": "integer", "minimum": 0 },
+        "environment_aborts": { "type": "integer", "minimum": 0 }
+      },
+      "$comment": "Invariant enforced in code and in contract tests: consumed <= ceiling, always (SC-007)."
+    },
+    "derived": {
+      "type": "object",
+      "description": "Computed, stored for reporting convenience. Recomputable from the fields above.",
+      "additionalProperties": false,
+      "properties": {
+        "cache_ratio": { "type": "number", "minimum": 0, "maximum": 1, "description": "SC-005 target >= 0.70 across 5+ runs." },
+        "edit_success_rate": { "type": "number", "minimum": 0, "maximum": 1, "description": "SC-003 target >= 0.90." },
+        "first_attempt_build_green": { "type": "boolean", "description": "SC-004 target >= 70% across runs." },
+        "initial_attempt_cost_usd": { "type": "number", "minimum": 0 },
+        "repair_cost_usd": { "type": "number", "minimum": 0 },
+        "reconciled": { "type": "boolean", "description": "False when stage_costs could not be reconciled with provider-reported usage within 5%. Reported, never silently trusted (SC-010)." }
+      }
+    },
+    "wall_clock_seconds": { "type": "number", "minimum": 0, "description": "SC-001 target under 600 for a greenfield service." }
+  },
+  "$defs": {
+    "stageCost": {
+      "type": "object",
+      "required": ["provider", "model"],
+      "additionalProperties": false,
+      "properties": {
+        "provider": { "type": "string" },
+        "model": { "type": "string" },
+        "input_tokens": { "type": "integer", "minimum": 0 },
+        "cached_input_tokens": { "type": "integer", "minimum": 0 },
+        "output_tokens": { "type": "integer", "minimum": 0 },
+        "cost_usd": { "type": "number", "minimum": 0, "description": "Zero for a locally-hosted model (SC-008)." },
+        "wall_clock_seconds": { "type": "number", "minimum": 0 }
+      }
+    }
+  }
+}
