@@ -132,7 +132,7 @@ _TASK_OWNERS = {
     "plan": "T032",
     "apply": "T035",
     "map": "T041",
-    "report": "T066",
+    "report": "T065",
     "providers": "T056",
 }
 

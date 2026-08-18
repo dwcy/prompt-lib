@@ -34,7 +34,7 @@ description: "Task list for 018-dotnet-codegen"
 
 ## Phase 2: Foundational (blocking — no user story may start until complete)
 
-**Status**: 🟡 In progress (9/17 — T006–T022)
+**Status**: ✅ Complete (17/17 — T006–T022)
 
 Contract tests come first per Principle III. T006–T008 must be written and **observed failing** before T009 onward.
 
@@ -44,17 +44,17 @@ Contract tests come first per Principle III. T006–T008 must be written and **o
 - [X] T009 EditOperation model with schema validation and the two non-schema rules (content must parse; a no-op rewrite is rejected) in `setup/src/cabal/dotnetgen/edits/model.py` — Owner: @python-architect
 - [X] T010 [P] StageBinding model and bindings loader reading `global/dotnetgen-bindings.toml` with per-project override, in `setup/src/cabal/dotnetgen/providers/config.py` — Owner: @python-architect
 - [X] T011 [P] Provider interface exposing a chat call plus usage reporting that **must include cached input tokens** (required by SC-005 and SC-010), in `setup/src/cabal/dotnetgen/providers/base.py` — Owner: @python-architect
-- [ ] T012 OpenAI-compatible adapter driven by `base_url`, covering Codex, Ollama and LM Studio in one implementation, in `setup/src/cabal/dotnetgen/providers/openai_compatible.py` — Owner: @python-architect
-- [ ] T013 CLI-shell adapter using subscription auth via the `claude`/`codex` CLIs, built on the persistent-subprocess pattern (reusing `setup/src/cabal/claude_cli.py` and the `/cli-llm-app` guidance) rather than one process per turn, in `setup/src/cabal/dotnetgen/providers/cli_shell.py` — Owner: @python-architect
-- [ ] T014 Usage extraction from the CLI-shell `stream-json` event stream, including cached input tokens — without this the subscription path cannot satisfy SC-005 or SC-010 — in `setup/src/cabal/dotnetgen/providers/cli_shell.py` — Owner: @python-architect
+- [X] T012 OpenAI-compatible adapter driven by `base_url`, covering Codex, Ollama and LM Studio in one implementation, in `setup/src/cabal/dotnetgen/providers/openai_compatible.py` — Owner: @python-architect
+- [X] T013 CLI-shell adapter using subscription auth via the `claude`/`codex` CLIs, built on the persistent-subprocess pattern (reusing `setup/src/cabal/claude_cli.py` and the `/cli-llm-app` guidance) rather than one process per turn, in `setup/src/cabal/dotnetgen/providers/cli_shell.py` — Owner: @python-architect
+- [X] T014 Usage extraction from the CLI-shell `stream-json` event stream, including cached input tokens — without this the subscription path cannot satisfy SC-005 or SC-010 — in `setup/src/cabal/dotnetgen/providers/cli_shell.py` — Owner: @python-architect
 - [X] T015 Five-band stable-to-volatile context assembly with cache checkpoints after bands 2 and 3, in `setup/src/cabal/dotnetgen/context/bands.py` — Owner: @python-architect
 - [X] T016 [P] ProjectState read/write with immutable `template_id` and explicit refusal on any change attempt (FR-001c), in `setup/src/cabal/dotnetgen/state.py` — Owner: @python-architect
-- [ ] T017 Pipeline skeleton — stage sequencing, the ChangeIntent approval gate, and RetryBudget with default ceiling 3 — in `setup/src/cabal/dotnetgen/pipeline.py` — Owner: @python-architect
-- [ ] T018 [P] Minimal applier supporting only the `create-file` disposition (enough for US1; the ladder arrives in US2) in `setup/src/cabal/dotnetgen/edits/applier.py` — Owner: @python-architect — Parallel: yes
-- [ ] T019 [P] Minimal verification invocation running `dotnet build` then `dotnet test` and capturing exit codes and raw output, in `setup/src/cabal/dotnetgen/verify/dotnet.py` — Owner: @python-architect — Parallel: yes
-- [ ] T020 Route stage classifying question versus change request (FR-010, SC-009) in `setup/src/cabal/dotnetgen/stages/route.py` — Owner: @python-architect
+- [X] T017 Pipeline skeleton — stage sequencing, the ChangeIntent approval gate, and RetryBudget with default ceiling 3 — in `setup/src/cabal/dotnetgen/pipeline.py` — Owner: @python-architect
+- [X] T018 [P] Minimal applier supporting only the `create-file` disposition (enough for US1; the ladder arrives in US2) in `setup/src/cabal/dotnetgen/edits/applier.py` — Owner: @python-architect — Parallel: yes
+- [X] T019 [P] Minimal verification invocation running `dotnet build` then `dotnet test` and capturing exit codes and raw output, in `setup/src/cabal/dotnetgen/verify/dotnet.py` — Owner: @python-architect — Parallel: yes
+- [X] T020 Route stage classifying question versus change request (FR-010, SC-009) in `setup/src/cabal/dotnetgen/stages/route.py` — Owner: @python-architect
 - [X] T021 [P] Unit tests for band ordering, checkpoint placement, and ProjectState immutability in `setup/tests/dotnetgen/unit/test_bands_and_state.py` — Owner: @python-tester
-- [ ] T022 [P] Unit tests for route classification across question/change/ambiguous phrasings in `setup/tests/dotnetgen/unit/test_route.py` — Owner: @python-tester
+- [X] T022 [P] Unit tests for route classification across question/change/ambiguous phrasings in `setup/tests/dotnetgen/unit/test_route.py` — Owner: @python-tester
 
 ---
 
