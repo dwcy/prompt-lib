@@ -38,3 +38,7 @@ def get_adapter(name: str) -> AgentAdapter:
         known = ", ".join(registered_names()) or "(none registered)"
         raise UnknownAdapterError(f"unknown adapter {name!r}; registered adapters: {known}")
     return factory()
+
+
+# Imported for its register() side effect — this is what puts "claude-code" in the registry.
+from cabal.evals.adapters import claude_code as _claude_code  # noqa: E402,F401
