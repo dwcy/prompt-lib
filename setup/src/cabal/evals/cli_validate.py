@@ -13,8 +13,14 @@ import sys
 from pathlib import Path
 from typing import Final
 
-from cabal.evals.definitions import validate_tree
-from cabal.evals.definitions_model import CONFIGS_DIRNAME, RUBRICS_DIRNAME, TASKS_DIRNAME
+from cabal.evals.adapters import registered_names
+from cabal.evals.definitions import DefinitionError, load_eval_config, validate_tree
+from cabal.evals.definitions_model import (
+    CONFIG_FILENAME,
+    CONFIGS_DIRNAME,
+    RUBRICS_DIRNAME,
+    TASKS_DIRNAME,
+)
 
 EXIT_OK: Final[int] = 0
 EXIT_FAILURE: Final[int] = 1
@@ -46,6 +52,21 @@ def _parse_task_filter(tasks_arg: str | None, available: list[str]) -> list[str]
     return selected
 
 
+def _adapter_error(evals_root: Path) -> str | None:
+    """Unknown adapter names fail at validate time, before any run ever touches a worktree."""
+    config_file = evals_root / CONFIG_FILENAME
+    if not config_file.is_file():
+        return None
+    try:
+        eval_config = load_eval_config(config_file)
+    except DefinitionError:
+        return None
+    if eval_config.adapter in registered_names():
+        return None
+    known = ", ".join(registered_names()) or "(none registered)"
+    return f"{config_file}: adapter: unknown adapter {eval_config.adapter!r}; registered: {known}"
+
+
 def validate_command(args: argparse.Namespace) -> int:
     """Exit codes: 0 tree is valid, 1 definition errors found, 2 usage problem."""
     evals_root = Path(args.root)
@@ -63,6 +84,12 @@ def validate_command(args: argparse.Namespace) -> int:
         for error in errors:
             print(f"{error.file}: {error.field}: {error.message}")
         print(f"{len(errors)} error(s) found under {evals_root}", file=sys.stderr)
+        return EXIT_FAILURE
+
+    adapter_error = _adapter_error(evals_root)
+    if adapter_error is not None:
+        print(adapter_error)
+        print(f"1 error(s) found under {evals_root}", file=sys.stderr)
         return EXIT_FAILURE
 
     tasks_validated = len(task_ids) if task_ids is not None else len(task_dirs)
