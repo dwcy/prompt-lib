@@ -95,14 +95,14 @@
 
 ## Phase 6: User Story 4 - LLM pairwise judge with rubrics (Priority: P4)
 
-**Status**: 🟡 In progress (2/3 — T023–T025)
+**Status**: ✅ Complete (3/3 — T023–T025)
 **Goal**: `python -m cabal.evals judge <run-id>` produces schema-valid `comparison.json` per task with both-orders position-bias control
 
 **Independent Test**: Judge two pre-recorded run cells → comparison.json with winner/confidence/criteria; force order-disagreement via stub → recorded as tie
 
 - [X] T023 [US4] Implement pairwise judge in `setup/src/cabal/evals/judge.py` — build judge prompt (task prompt + rubric files verbatim + both cells' patch.diff/output.txt/check summaries, per-file truncation at `judge.diff_char_limit` with `truncated` flag), one-shot `claude -p` JSON-only verdict, judge both A/B orders, disagreement → `tie` + `order_agreement: false`, call failure → `judge_error` with detail, repetition-i pairing — Owner: @python-architect
 - [X] T024 [US4] Wire `judge` subcommand in `setup/src/cabal/evals/cli.py` — standalone over a recorded results dir (FR-014), `--tasks` filter, re-judge overwrites prior comparison.json atomically — Owner: @python-architect
-- [ ] T025 [P] [US4] Unit tests in `setup/tests/test_evals_judge.py` — stubbed judge callable: both-orders agreement/disagreement/tie matrix, malformed judge JSON → judge_error, truncation flag set, schema-valid output — Owner: @python-tester
+- [X] T025 [P] [US4] Unit tests in `setup/tests/test_evals_judge.py` — stubbed judge callable: both-orders agreement/disagreement/tie matrix, malformed judge JSON → judge_error, truncation flag set, schema-valid output — Owner: @python-tester
 
 **Checkpoint**: Quality dimension measured; deterministic metrics remain primary
 
@@ -110,14 +110,14 @@
 
 ## Phase 7: User Story 5 - Aggregate report across tasks and runs (Priority: P5)
 
-**Status**: 🟡 In progress (2/3 — T026–T028)
+**Status**: ✅ Complete (3/3 — T026–T028)
 **Goal**: `python -m cabal.evals report <run-id>` renders the baseline-vs-candidate table (terminal via rich + report.json/report.md)
 
 **Independent Test**: Point `report` at a recorded results dir → table with ≥7 metric rows and both config columns; failed runs counted against task pass rate but excluded from quality means
 
 - [X] T026 [US5] Implement aggregation in `setup/src/cabal/evals/report.py` — reduce all metrics.json + comparison.json into report.json per report.schema.json: task/test/build pass rates, unrequested changes, tool calls, tokens, wall time, pairwise win rate (ties excluded), mean/min/max/stddev when n≥3, failure inventory, failed-run exclusion rules per data-model.md — Owner: @python-architect
 - [X] T027 [US5] Wire `report` subcommand in `setup/src/cabal/evals/cli.py` — rich table to terminal, persist `report.json` + `report.md` into the run-id dir — Owner: @python-architect
-- [ ] T028 [P] [US5] Unit tests in `setup/tests/test_evals_report.py` — aggregation math against hand-computed fixtures, variance only at n≥3, failed-run handling, win-rate tie exclusion, schema-valid report.json — Owner: @python-tester
+- [X] T028 [P] [US5] Unit tests in `setup/tests/test_evals_report.py` — aggregation math against hand-computed fixtures, variance only at n≥3, failed-run handling, win-rate tie exclusion, schema-valid report.json — Owner: @python-tester
 
 **Checkpoint**: The headline question ("which config won?") is answered end-to-end
 
@@ -125,13 +125,13 @@
 
 ## Phase 8: User Story 6 - Multiple agent CLIs (Priority: P6)
 
-**Status**: 🟡 In progress (1/2 — T029–T030)
+**Status**: ✅ Complete (2/2 — T029–T030)
 **Goal**: Adapter selection is config-driven and the null-capability path works end-to-end, proving Codex/Gemini adapters can drop in without core changes (real second adapter deferred per plan)
 
 **Independent Test**: Matrix run with a registered FakeAdapter lacking token capability → identical artifact schema with token fields `null`
 
 - [X] T029 [US6] Config-driven adapter selection end-to-end — `eval.config.toml` `adapter` + `run --adapter` override resolve through the registry in `setup/src/cabal/evals/adapters/__init__.py`; unknown name fails at validate time; document the drop-in contract for future `codex`/`gemini` adapters in the registry module docstring — Owner: @python-architect
-- [ ] T030 [P] [US6] Adapter registry + capability tests in `setup/tests/test_evals_adapters.py` — registry resolution, unknown-adapter error, capability-gated `null` metrics flow through matrix → metrics.json (US6-AS2) — Owner: @python-tester
+- [X] T030 [P] [US6] Adapter registry + capability tests in `setup/tests/test_evals_adapters.py` — registry resolution, unknown-adapter error, capability-gated `null` metrics flow through matrix → metrics.json (US6-AS2) — Owner: @python-tester
 
 **Checkpoint**: All user stories independently functional
 
