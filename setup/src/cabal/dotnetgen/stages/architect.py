@@ -19,7 +19,14 @@ import json
 from typing import Final
 
 from cabal.dotnetgen.pipeline import ChangeIntent, IntentContainsCodeError
-from cabal.dotnetgen.providers.base import CompletionRequest, Message, Provider
+from collections.abc import Callable
+
+from cabal.dotnetgen.providers.base import (
+    CompletionRequest,
+    CompletionResult,
+    Message,
+    Provider,
+)
 
 MAX_INTENT_TOKENS: Final[int] = 700
 
@@ -92,6 +99,7 @@ def propose(
     *,
     template_contract: str | None = None,
     structural_map: str | None = None,
+    on_call: Callable[[CompletionResult], None] | None = None,
 ) -> ChangeIntent:
     """Produce an approvable intent, correcting exactly once if the model emits code.
 
@@ -104,6 +112,8 @@ def propose(
         request_text, model, template_contract=template_contract, structural_map=structural_map
     )
     result = provider.complete(request)
+    if on_call is not None:
+        on_call(result)
     try:
         return parse(result.text)
     except IntentContainsCodeError:
@@ -117,7 +127,12 @@ def propose(
             max_output_tokens=request.max_output_tokens,
             temperature=request.temperature,
         )
-        return parse(provider.complete(corrected).text)
+        retry = provider.complete(corrected)
+        if on_call is not None:
+            # The correction is a real call and costs real tokens; hiding it would understate
+            # what the architect stage spent.
+            on_call(retry)
+        return parse(retry.text)
 
 
 def _extract_object(reply: str) -> dict[str, object]:

@@ -76,8 +76,22 @@ def cmd_plan(args: argparse.Namespace) -> int:
         emit_error(args, str(exc))
         return EXIT_USAGE
 
+    architect_cost: list[ledger.StageCost] = []
+
+    def meter(result) -> None:
+        architect_cost.append(
+            ledger.StageCost(
+                stage="architect",
+                provider=getattr(provider, "name", "unknown"),
+                model=result.model or binding.model,
+                usage=result.usage,
+                wall_clock_seconds=result.wall_clock_seconds,
+                priced=not ledger.prices_nothing(provider),
+            )
+        )
+
     try:
-        proposed = architect.propose(args.request, provider, binding.model)
+        proposed = architect.propose(args.request, provider, binding.model, on_call=meter)
     except (architect.ArchitectError, IntentContainsCodeError, ProviderError) as exc:
         emit_error(args, str(exc))
         return EXIT_FAILURE
@@ -91,8 +105,13 @@ def cmd_plan(args: argparse.Namespace) -> int:
             "target_symbols": list(proposed.target_symbols),
             "rationale": proposed.rationale,
         },
-        # SC-011: a plan never reaches the writing stage, so its cost is zero by construction.
-        "stages": {"architect": zero_stage(), "write": zero_stage()},
+        # SC-011: a plan never reaches the writing stage, so *that* cost is zero by
+        # construction. The architect stage is a real call and is reported as what it spent -
+        # reporting it as zero too would hide the cost of the gate itself.
+        "stages": {
+            "architect": architect_cost[0].to_dict() if architect_cost else zero_stage(),
+            "write": zero_stage(),
+        },
     }
 
     if args.dry_run:

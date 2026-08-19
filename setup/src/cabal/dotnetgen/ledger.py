@@ -56,6 +56,20 @@ class StageCost:
     priced: bool = True
 
     @property
+    def pricing_known(self) -> bool:
+        """False when the model has no entry in the pricing table.
+
+        A locally-hosted stage and a model nobody has priced both report $0.00, and they mean
+        opposite things - one is a measurement, the other is ignorance. Without this the ledger
+        would present an unpriced subscription run as free and SC-010 would pass on a number that
+        was never computed.
+        """
+        if not self.priced:
+            return True
+        entry = session_pricing.lookup(self.model, session_pricing.load_pricing())
+        return entry.model_prefix != "unknown"
+
+    @property
     def cost_usd(self) -> float:
         if not self.priced:
             return 0.0
@@ -176,6 +190,11 @@ class RunRecord:
             total = total + usage
         return total
 
+    @property
+    def pricing_complete(self) -> bool:
+        """True when every stage's model could actually be priced."""
+        return all(cost.pricing_known for cost in self.stage_costs.values())
+
     def tokens_reconcile(self) -> bool:
         """Do the stage aggregates still equal the sum of the calls that produced them?
 
@@ -201,6 +220,9 @@ class RunRecord:
         reconciled even if the cost happens to match.
         """
         if not self.tokens_reconcile():
+            return False
+        if not self.pricing_complete:
+            # The tokens are real but the price is not, so the total is not a cost record.
             return False
         if provider_reported_usd is None:
             return False
@@ -238,6 +260,9 @@ def _derived(record: RunRecord, provider_reported_usd: float | None) -> dict:
         "first_attempt_build_green": record.first_attempt_build_green,
         "initial_attempt_cost_usd": round(record.initial_attempt_cost_usd, 6),
         "repair_cost_usd": round(record.repair_cost_usd, 6),
+        # Not adding `pricing_complete` here: `derived` is a closed contract surface, and an
+        # unpriced model already surfaces as `reconciled: false`. The reason is rendered by
+        # `reporting`, which can see the zero cost against non-zero tokens.
         "reconciled": record.reconciled_within_tolerance(provider_reported_usd),
     }
     ratio = record.cache_ratio

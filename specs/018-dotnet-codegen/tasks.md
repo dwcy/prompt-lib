@@ -67,11 +67,11 @@ Contract tests come first per Principle III. T006–T008 must be written and **o
 
 ## Phase 2b: Cost baseline (blocking — must precede any generated solution)
 
-**Status**: ⬜ Pending (0/1 — T074)
+**Status**: ✅ Complete (1/1 — T074). Result: [baseline.md](./baseline.md) — pipeline at 32.9% of unassisted tokens, SC-002 target met on this task.
 
 **Purpose**: SC-002 compares against "an unassisted Claude Code session performing the same task on the same solution, measured once and held as the reference" (spec.md *Assumptions*). That reference must be captured before the tool has shaped any solution, or it can only be reconstructed retroactively against code the tool already influenced.
 
-- [ ] T074 Capture the SC-002 unassisted baseline: perform the Phase 3 greenfield scenario and one representative feature edit in an unassisted Claude Code session, recording total input/output tokens, wall-clock, and first-attempt build-green per task; commit the figures as `specs/018-dotnet-codegen/baseline.md` with the model, date, and exact prompts used — Owner: main
+- [X] T074 Capture the SC-002 unassisted baseline: perform the Phase 3 greenfield scenario and one representative feature edit in an unassisted Claude Code session, recording total input/output tokens, wall-clock, and first-attempt build-green per task; commit the figures as `specs/018-dotnet-codegen/baseline.md` with the model, date, and exact prompts used — Owner: main
 
 ---
 
