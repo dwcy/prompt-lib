@@ -167,6 +167,7 @@ _TEMPLATES: Final[tuple[ArchitectureTemplate, ...]] = (
         ),
         layer_order=("api", "tests"),
         built_in_task="T023",
+        prune=("src/Api/Api.http", "tests/Api.Tests/UnitTest1.cs"),
     ),
     ArchitectureTemplate(
         id="vertical-slice",
@@ -194,6 +195,13 @@ _TEMPLATES: Final[tuple[ArchitectureTemplate, ...]] = (
         ),
         layer_order=("domain", "application", "infrastructure", "api", "tests"),
         built_in_task="T025",
+        prune=(
+            "src/Domain/Class1.cs",
+            "src/Application/Class1.cs",
+            "src/Infrastructure/Class1.cs",
+            "src/Api/Api.http",
+            "tests/Api.Tests/UnitTest1.cs",
+        ),
     ),
 )
 

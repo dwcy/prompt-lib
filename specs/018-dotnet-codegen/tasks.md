@@ -214,14 +214,14 @@ Contract tests come first per Principle III. T006–T008 must be written and **o
 
 ## Phase 7b: The remaining templates
 
-**Status**: ⬜ Pending (0/2 — T023, T025)
+**Status**: ✅ Complete (2/2 — T023, T025)
 
 **Purpose**: FR-001 requires a *closed set* of templates, "small enough that every member is maintained and tested". Phase 3 deliberately shipped a set of one so the pipeline could be proven first; this phase restores the set before Phase A claims its exit criteria. Both are mechanical work against a registry and a test harness that already exist — no design decisions remain.
 
 **Must complete before T072** — measuring Phase A exit criteria against a one-template set would not be measuring FR-001.
 
-- [ ] T023 [P] [US1] Build the `minimal-service` template — single project, minimal API, feature folders, EF Core, no mediator — plus its xUnit project and health smoke test, in `setup/src/cabal/dotnetgen/templates/minimal-service/` — Owner: @dotnet-architect — Parallel: yes
-- [ ] T025 [P] [US1] Build the `clean-arch` template — Domain/Application/Infrastructure/Api layering with CQRS — plus its xUnit project and health smoke test, in `setup/src/cabal/dotnetgen/templates/clean-arch/` — Owner: @dotnet-architect — Parallel: yes
+- [X] T023 [P] [US1] Build the `minimal-service` template — single project, minimal API, feature folders, EF Core, no mediator — plus its xUnit project and health smoke test, in `setup/src/cabal/dotnetgen/templates/minimal-service/` — Owner: @dotnet-architect — Parallel: yes
+- [X] T025 [P] [US1] Build the `clean-arch` template — Domain/Application/Infrastructure/Api layering with CQRS — plus its xUnit project and health smoke test, in `setup/src/cabal/dotnetgen/templates/clean-arch/` — Owner: @dotnet-architect — Parallel: yes
 
 ---
 
