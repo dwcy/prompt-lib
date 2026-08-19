@@ -19,7 +19,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Final
 
-TEMPLATE_IDS: Final[tuple[str, ...]] = ("minimal-service", "vertical-slice", "clean-arch")
+from cabal.dotnetgen.templates.registry import TEMPLATE_IDS
+
 STATE_RELPATH: Final[str] = ".dotnetgen/state.json"
 RECENT_TYPES_LIMIT: Final[int] = 32
 

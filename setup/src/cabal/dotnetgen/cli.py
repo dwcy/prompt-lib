@@ -16,6 +16,7 @@ import sys
 from collections.abc import Callable, Sequence
 
 from cabal.dotnetgen import __version__
+from cabal.dotnetgen.templates.registry import DEFAULT_TEMPLATE, TEMPLATE_IDS
 
 EXIT_OK = 0
 EXIT_FAILURE = 1
@@ -24,8 +25,6 @@ EXIT_HALTED_AT_CEILING = 3
 EXIT_ENVIRONMENT_FAILURE = 4
 EXIT_REJECTED_AT_GATE = 5
 
-TEMPLATE_IDS = ("minimal-service", "vertical-slice", "clean-arch")
-DEFAULT_TEMPLATE = "vertical-slice"
 DEFAULT_RETRY_CEILING = 3
 DEFAULT_MAP_BUDGET = 1024
 

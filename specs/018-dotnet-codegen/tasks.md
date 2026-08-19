@@ -231,8 +231,9 @@ Contract tests come first per Principle III. T006–T008 must be written and **o
 ```text
 Phase 1 Setup ✅
   └─> Phase 2 Foundational ✅  (contract tests T006–T008 before T009+)
-        └─> Phase 2b  T074 cost baseline        ← must precede any generated solution
-              └─> Phase 3   US1 (P1)  T024, T026–T036   ← scaffolder works
+        ├─> Phase 2b  T074 cost baseline        ← must precede T036, runs alongside Phase 3
+        └─> Phase 3   US1 (P1)  T024, T026–T036   ← scaffolder works
+              │     (T036 needs T074)
                     └─> Phase 3b  US3 partial  T046–T048  ← unattended becomes safe
                           └─> Phase 4   US2 (P2)  T037–T045, T075   needs T009, T015, T018
                                 └─> Phase 4b  US5 partial  T061–T063  needs T011 usage reporting
@@ -250,7 +251,7 @@ Phase 1 Setup ✅
 
 **Two ordering constraints created by the revision**:
 
-- T074 (baseline) must precede T024 — once the tool has generated a solution, the unassisted reference for SC-002 can no longer be captured cleanly.
+- T074 (baseline) must precede **T036** — the first pipeline-generated solution. It does *not* block T024/T026: hand-authoring the template does not taint an unassisted-from-scratch reference, so the baseline session can be captured in parallel with Phase 3 authoring. What it must precede is the first time the tool produces a solution the baseline would then be compared against.
 - T023/T025 (Phase 7b) must precede T072 — measuring FR-001's "closed set" against a set of one measures nothing.
 
 ## Parallel execution examples
