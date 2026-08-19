@@ -74,17 +74,134 @@ def test_path_escaping_the_project_is_refused(solution_dir: Path) -> None:
     assert record.outcome is applier.ApplyOutcome.FAILED
 
 
-def test_dispositions_awaiting_their_task_say_so(solution_dir: Path) -> None:
-    replace_op = EditOperation(
+ORDER_CS = """namespace Orders.Domain;
+
+public sealed class Order
+{
+    public void Cancel()
+    {
+        Status = "cancelled";
+    }
+}
+"""
+
+
+def _write_order(solution_dir: Path) -> Path:
+    target = solution_dir / "src" / "Order.cs"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(ORDER_CS, encoding="utf-8")
+    return target
+
+
+def test_replacing_a_member_by_symbol_rewrites_only_that_member(solution_dir: Path) -> None:
+    target = _write_order(solution_dir)
+    operation = EditOperation(
         file="src/Order.cs",
         anchor_kind="symbol",
         disposition="replace",
-        symbol="Orders.Domain.Order.Cancel()",
+        symbol="Orders.Domain.Order.Cancel",
+        content='public void Cancel()\n{\n    Status = "void";\n}',
+    )
+
+    record = applier.apply_operation(solution_dir, operation)
+
+    assert record.outcome is applier.ApplyOutcome.APPLIED
+    updated = target.read_text(encoding="utf-8")
+    assert '"void"' in updated
+    assert "public sealed class Order" in updated, "the surrounding type must survive untouched"
+
+
+def test_a_symbol_edit_survives_reformatting_between_write_and_apply(solution_dir: Path) -> None:
+    """The anchor is re-resolved against current text, which is why `dotnet format` is harmless."""
+    target = _write_order(solution_dir)
+    target.write_text(ORDER_CS.replace("    ", "\t"), encoding="utf-8")
+    operation = EditOperation(
+        file="src/Order.cs",
+        anchor_kind="symbol",
+        disposition="replace",
+        symbol="Orders.Domain.Order.Cancel",
         content="public void Cancel() { }",
     )
 
-    with pytest.raises(applier.UnsupportedDispositionError, match="T038"):
-        applier.apply_operation(solution_dir, replace_op)
+    assert applier.apply_operation(solution_dir, operation).landed
+
+
+def test_inserting_into_a_type_keeps_the_existing_member(solution_dir: Path) -> None:
+    target = _write_order(solution_dir)
+    operation = EditOperation(
+        file="src/Order.cs",
+        anchor_kind="symbol",
+        disposition="insert-into-type",
+        symbol="Orders.Domain.Order",
+        content='public string Status { get; private set; } = "open";',
+    )
+
+    record = applier.apply_operation(solution_dir, operation)
+
+    assert record.landed
+    updated = target.read_text(encoding="utf-8")
+    assert "public string Status" in updated
+    assert "public void Cancel" in updated
+
+
+def test_deleting_a_member_removes_it(solution_dir: Path) -> None:
+    target = _write_order(solution_dir)
+    operation = EditOperation(
+        file="src/Order.cs",
+        anchor_kind="symbol",
+        disposition="delete",
+        symbol="Orders.Domain.Order.Cancel",
+    )
+
+    assert applier.apply_operation(solution_dir, operation).landed
+    assert "Cancel" not in target.read_text(encoding="utf-8")
+
+
+def test_a_text_edit_records_the_relaxation_rung_it_needed(solution_dir: Path) -> None:
+    """A drifting codebase must be visible, not silently absorbed."""
+    target = solution_dir / "Program.cs"
+    target.write_text("app.MapHealth();\napp.Run();\n", encoding="utf-8")
+    operation = EditOperation(
+        file="Program.cs",
+        anchor_kind="text",
+        disposition="replace",
+        search="app . MapHealth ( ) ;",
+        content="app.MapHealth();\napp.MapVersion();",
+    )
+
+    record = applier.apply_operation(solution_dir, operation)
+
+    assert record.outcome is applier.ApplyOutcome.APPLIED_AFTER_RELAXATION
+    assert record.relaxation_level > 0
+    assert "app.MapVersion();" in target.read_text(encoding="utf-8")
+
+
+def test_an_edit_against_a_missing_file_is_refused(solution_dir: Path) -> None:
+    operation = EditOperation(
+        file="src/Nope.cs",
+        anchor_kind="symbol",
+        disposition="replace",
+        symbol="Orders.Domain.Order.Cancel",
+        content="public void Cancel() { }",
+    )
+
+    record = applier.apply_operation(solution_dir, operation)
+
+    assert record.outcome is applier.ApplyOutcome.FAILED
+    assert "create-file" in record.failure_reason
+
+
+def test_an_unresolvable_symbol_is_recorded_not_raised(solution_dir: Path) -> None:
+    _write_order(solution_dir)
+    operation = EditOperation(
+        file="src/Order.cs",
+        anchor_kind="symbol",
+        disposition="replace",
+        symbol="Orders.Domain.Order.Refund",
+        content="public void Refund() { }",
+    )
+
+    assert applier.apply_operation(solution_dir, operation).outcome is applier.ApplyOutcome.FAILED
 
 
 # --- the report ----------------------------------------------------------------------------

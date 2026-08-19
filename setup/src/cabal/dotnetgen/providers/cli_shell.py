@@ -11,6 +11,12 @@ Follows the `/cli-llm-app` skill's findings. Two shapes, because the tools diffe
 Known limitation, recorded rather than hidden: the CLI takes a single prompt string, so the
 banded messages are flattened and this path cannot place its own cache checkpoints. Cache
 accounting on this provider is whatever the CLI reports (T014), not something we control.
+
+**Every subprocess pipe pins `encoding="utf-8", errors="replace"`.** Without it Python decodes
+with the platform default, which on Windows is cp1252 - and the first curly quote or em dash the
+model emits kills the reader thread with a `UnicodeDecodeError`. The failure is especially nasty
+because the exception surfaces on a background thread while the main thread waits on a queue that
+will now never fill, so the symptom is a hang until the turn timeout rather than an error.
 """
 
 from __future__ import annotations
@@ -123,6 +129,8 @@ class ClaudeSession:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 bufsize=1,
             )
         except OSError as exc:
@@ -224,7 +232,13 @@ class CliShellProvider:
         command = [self._executable(), *CODEX_FLAGS, "-m", self.binding.model, prompt]
         try:
             proc = subprocess.run(
-                command, capture_output=True, text=True, timeout=TURN_TIMEOUT_SECONDS, check=False
+                command,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=TURN_TIMEOUT_SECONDS,
+                check=False,
             )
         except subprocess.TimeoutExpired as exc:
             raise CliShellError(f"`codex` timed out after {TURN_TIMEOUT_SECONDS}s") from exc
@@ -248,6 +262,8 @@ class CliShellProvider:
                 [exe, "--version"],
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 timeout=CHECK_TIMEOUT_SECONDS,
                 check=False,
             )
