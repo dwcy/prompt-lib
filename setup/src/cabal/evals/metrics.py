@@ -10,12 +10,13 @@ from __future__ import annotations
 
 import json
 from collections.abc import Iterator, Sequence
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any, Final
 
 from cabal.evals.adapters.base import AdapterCapabilities
+from cabal.evals.checks import CheckResult
 from cabal.evals.worktree import DiffResult
 
 SCHEMA_VERSION: Final[int] = 1
@@ -171,8 +172,9 @@ def build_metrics(
     transcript: TranscriptMetrics,
     diff: DiffResult | None,
     expected_files: Sequence[str],
+    checks: Sequence[CheckResult] = (),
 ) -> dict[str, Any]:
-    """Assemble one schema-valid metrics.json payload; `checks` stays [] until T015 fills it."""
+    """Assemble one schema-valid metrics.json payload; CheckResult fields mirror the schema 1:1."""
     return {
         "schema_version": SCHEMA_VERSION,
         "run_id": run_id,
@@ -186,5 +188,5 @@ def build_metrics(
         "finished_at": finished_at,
         "agent": _agent_group(transcript, capabilities, wall_seconds),
         "diff": _diff_group(diff, expected_files),
-        "checks": [],
+        "checks": [asdict(check) for check in checks],
     }

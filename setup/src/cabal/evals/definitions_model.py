@@ -39,6 +39,7 @@ class DefinitionError(ValueError):
         super().__init__(f"{file} [{field}]: {message}")
         self.file = file
         self.field = field
+        self.message = message
 
 
 def fail(file: Path, field: str, message: str) -> NoReturn:

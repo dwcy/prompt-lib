@@ -65,12 +65,12 @@
 
 ## Phase 4: User Story 2 - Author tasks, rubrics, and configurations as versioned files (Priority: P2)
 
-**Status**: 🟡 In progress (1/3 — T017–T019)
+**Status**: 🟡 In progress (2/3 — T017–T019)
 **Goal**: `python -m cabal.evals validate` verifies the whole `evals/` tree with file+field precision; real seed benchmark content exists
 
 **Independent Test**: `validate` on the seeded tree passes; corrupting a ref/rubric/profile path produces the exact expected error strings
 
-- [ ] T017 [US2] Wire `validate` subcommand in `setup/src/cabal/evals/cli.py` over `definitions.validate_tree()` — human-readable per-error output (`<file>: <field>: <problem>`), exit 0/1, `--tasks` filter — Owner: @python-architect
+- [X] T017 [US2] Wire `validate` subcommand in `setup/src/cabal/evals/cli.py` over `definitions.validate_tree()` — human-readable per-error output (`<file>: <field>: <problem>`), exit 0/1, `--tasks` filter — Owner: @python-architect
 - [X] T018 [P] [US2] Author seed benchmark content: `evals/rubrics/architecture.md`, `evals/rubrics/coding-quality.md`, `evals/rubrics/instruction-following.md` (each with a `## Criteria` bullet list), example task `evals/tasks/001-sample-task/` (task.toml + prompt.md pinned to a ref in this repo), and profiles `evals/configs/baseline/` + `evals/configs/candidate-example/` per contracts/definitions-format.md — Owner: main
 - [ ] T019 [US2] Validate-command tests in `setup/tests/test_evals_validate.py` — good tree passes; bad ref, missing rubric, out-of-profile absolute/`..` path, empty prompt.md, unknown TOML key each fail with file+field named — Owner: @python-tester
 
@@ -80,13 +80,13 @@
 
 ## Phase 5: User Story 3 - Deterministic code checks per run (Priority: P3)
 
-**Status**: ⬜ Pending (0/3 — T020–T022)
+**Status**: 🟡 In progress (2/3 — T020–T022)
 **Goal**: Every run's `metrics.json` carries check outcomes (test/build/lint with parsed counts) and unrequested-change scope measurement
 
 **Independent Test**: Task whose check is a pytest suite → metrics.json records passed/failed counts, build result, and files changed outside `expected_files`
 
-- [ ] T020 [US3] Implement deterministic checks in `setup/src/cabal/evals/checks.py` — ordered `CheckSpec` execution in the worktree, per-check timeout kill → `timeout` status, `pytest`/`dotnet`/`exit-code` output parsers for passed/failed counts, `expected_files` glob scope → `unrequested_changes_count`/`unrequested_files` — Owner: @python-architect
-- [ ] T021 [US3] Integrate checks into the run pipeline in `setup/src/cabal/evals/matrix.py` + `metrics.py` — checks execute after the agent finishes (also on empty diff), results land in metrics.json `checks[]` and diff group per metrics.schema.json — Owner: @python-architect
+- [X] T020 [US3] Implement deterministic checks in `setup/src/cabal/evals/checks.py` — ordered `CheckSpec` execution in the worktree, per-check timeout kill → `timeout` status, `pytest`/`dotnet`/`exit-code` output parsers for passed/failed counts, `expected_files` glob scope → `unrequested_changes_count`/`unrequested_files` — Owner: @python-architect
+- [X] T021 [US3] Integrate checks into the run pipeline in `setup/src/cabal/evals/matrix.py` + `metrics.py` — checks execute after the agent finishes (also on empty diff), results land in metrics.json `checks[]` and diff group per metrics.schema.json — Owner: @python-architect
 - [ ] T022 [P] [US3] Unit tests in `setup/tests/test_evals_checks.py` — parser fixtures (pytest/dotnet output samples), exit-code default, hanging-command timeout kill, scope-glob matching incl. Windows path separators — Owner: @python-tester
 
 **Checkpoint**: Runs now self-grade deterministically

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Headless CLI for the eval harness: `validate | run | judge | report` subcommands.
 
-Command bodies land in their own tasks (T014/T016/T024/T027). Until each is wired, invoking it
+Remaining command bodies land in their own tasks (T024/T027). Until each is wired, invoking it
 prints "not implemented" to stderr and exits with the usage code — an explicit, discoverable
 deferral rather than a silent stub.
 """
@@ -20,6 +20,7 @@ from cabal.evals.cli_run import (
     EXIT_USAGE,
     run_command,
 )
+from cabal.evals.cli_validate import validate_command
 
 __all__ = ["DEFAULT_EVALS_ROOT", "EXIT_FAILURE", "EXIT_OK", "EXIT_USAGE", "main"]
 
@@ -38,10 +39,15 @@ def build_parser() -> argparse.ArgumentParser:
 
     validate = subparsers.add_parser("validate", help="validate the evals/ definition tree")
     validate.add_argument(
+        "--root",
         "--evals-root",
+        dest="root",
         metavar="DIR",
         default=DEFAULT_EVALS_ROOT,
         help=f"root of the eval definition tree (default: {DEFAULT_EVALS_ROOT})",
+    )
+    validate.add_argument(
+        "--tasks", metavar="ID[,ID...]", help="comma-separated task ids to validate (default: all)"
     )
 
     run = subparsers.add_parser("run", help="execute the task x config x N matrix")
@@ -62,7 +68,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 # Command handlers register here as their tasks land; an absent entry is a deferral, not a bug.
-_HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {"run": run_command}
+_HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {
+    "run": run_command,
+    "validate": validate_command,
+}
 
 
 def main(argv: Sequence[str] | None = None) -> int:

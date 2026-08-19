@@ -18,7 +18,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Final, Literal
 
-from cabal.evals import metrics, profile, worktree
+from cabal.evals import checks, metrics, profile, worktree
 from cabal.evals.adapters.base import (
     AdapterUnavailableError,
     AgentAdapter,
@@ -234,6 +234,13 @@ def _run_cell(
             (cell_dir / OUTPUT_FILENAME).write_text(result.final_text, encoding="utf-8")
         except (worktree.WorktreeError, OSError) as exc:
             raise _CellError(FAILURE_WORKTREE, str(exc)) from exc
+        # Checks run only when the agent itself finished (data-model Run state machine: a check
+        # timing out is a recorded check outcome, not a run failure) — failed runs keep checks: [].
+        check_results: list[checks.CheckResult] = []
+        if result.status == "completed":
+            check_results = checks.run_checks(
+                task, worktree_path, eval_config.check_timeout_seconds
+            )
         transcript = metrics.parse_transcript(spec.transcript_path)
         payload = metrics.build_metrics(
             run_id=run_id,
@@ -250,6 +257,7 @@ def _run_cell(
             transcript=transcript,
             diff=diff,
             expected_files=task.expected_files,
+            checks=check_results,
         )
         write_json_atomic(cell_dir / METRICS_FILENAME, payload)
         return CellResult(task.id, prof.name, repetition, result.status, result.failure_reason)
