@@ -77,7 +77,7 @@ Contract tests come first per Principle III. T006–T008 must be written and **o
 
 ## Phase 3: US1 — Stand up a new backend service without bootstrapping (P1)
 
-**Status**: 🟡 In progress (5/12 — T024, T026–T029 done; T030–T036 open)
+**Status**: 🟡 In progress (8/12 — T024, T026–T032 done; T033–T036 open)
 
 **Goal**: one sentence plus one template choice plus one approval produces a compiling, test-passing, health-serving solution.
 
@@ -90,9 +90,9 @@ Contract tests come first per Principle III. T006–T008 must be written and **o
 - [X] T027 [US1] ArchitectureTemplate registry with closed-set validation — an unknown id is an error, never a fallback — in `setup/src/cabal/dotnetgen/templates/registry.py` — Owner: @python-architect
 - [X] T028 [US1] Contract test: `new --template <unknown>` exits 2, lists the closed set, and creates no files; a template-change attempt is refused naming the recorded template — in `setup/tests/dotnetgen/contract/test_new_command.py` — Owner: @python-tester
 - [X] T029 [US1] `new` command scaffolding from the template so the solution **builds before any model writes to it** (FR-003), in `setup/src/cabal/dotnetgen/cli.py` — Owner: @python-architect
-- [ ] T030 [US1] Architect stage emitting a prose ChangeIntent, with the enforced invariant that it contains no code fence or C# syntax (FR-010b, FR-012), in `setup/src/cabal/dotnetgen/stages/architect.py` — Owner: @python-architect
-- [ ] T031 [US1] Contract test: `plan` mutates nothing and reports zero write-stage cost, and a rejected plan costs under 10% of a completed run (SC-011) — in `setup/tests/dotnetgen/contract/test_plan_gate.py` — Owner: @python-tester
-- [ ] T032 [US1] `plan` command plus `intent_token` derivation bound to the solution fingerprint so approvals cannot be replayed, in `setup/src/cabal/dotnetgen/cli.py` — Owner: @python-architect
+- [X] T030 [US1] Architect stage emitting a prose ChangeIntent, with the enforced invariant that it contains no code fence or C# syntax (FR-010b, FR-012), in `setup/src/cabal/dotnetgen/stages/architect.py` — Owner: @python-architect
+- [X] T031 [US1] Contract test: `plan` mutates nothing and reports zero write-stage cost, and a rejected plan costs under 10% of a completed run (SC-011) — in `setup/tests/dotnetgen/contract/test_plan_gate.py` — Owner: @python-tester
+- [X] T032 [US1] `plan` command plus `intent_token` derivation bound to the solution fingerprint so approvals cannot be replayed, in `setup/src/cabal/dotnetgen/cli.py` — Owner: @python-architect
 - [ ] T033 [US1] Contract test: `apply` with a mismatched or stale `intent_token` is refused with no mutation, in `setup/tests/dotnetgen/contract/test_apply_token.py` — Owner: @python-tester
 - [ ] T034 [US1] Write stage converting an approved intent into EditOperations, one type per file per `global/rules/csharp.md`, in `setup/src/cabal/dotnetgen/stages/write.py` — Owner: @python-architect
 - [ ] T035 [US1] `apply` command wiring write into verify with the gate enforced and the unattended tail (FR-010d), in `setup/src/cabal/dotnetgen/cli.py` — Owner: @python-architect

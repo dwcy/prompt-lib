@@ -4,41 +4,49 @@
 The `--json` output of these commands is a wire contract consumed by the `/dotnet-codegen` skill,
 so the parser, the argument validation and the exit-code map are authoritative here.
 
-Command bodies land in their own tasks. Until each is wired, invoking it raises `NotWiredError`
-naming the task that implements it — an explicit, discoverable deferral rather than a silent stub.
+Command bodies live in `commands.py`; the exit map and channel rules live in `exits.py`. Until a
+command is wired, invoking it raises `NotWiredError` naming the task that implements it — an
+explicit, discoverable deferral rather than a silent stub.
 """
 
 from __future__ import annotations
 
 import argparse
-import json
 import sys
-from collections.abc import Callable, Sequence
+from collections.abc import Sequence
 
-from pathlib import Path
-
-from cabal.dotnetgen import __version__, scaffold, state
-from cabal.dotnetgen.templates import registry
+from cabal.dotnetgen import __version__
+from cabal.dotnetgen.commands import HANDLERS as _HANDLERS
+from cabal.dotnetgen.commands import TASK_OWNERS as _TASK_OWNERS
+from cabal.dotnetgen.exits import (
+    EXIT_ENVIRONMENT_FAILURE,
+    EXIT_FAILURE,
+    EXIT_HALTED_AT_CEILING,
+    EXIT_OK,
+    EXIT_REJECTED_AT_GATE,
+    EXIT_USAGE,
+    NotWiredError,
+    emit_error as _emit_error,
+)
 from cabal.dotnetgen.templates.registry import DEFAULT_TEMPLATE, TEMPLATE_IDS
 
-EXIT_OK = 0
-EXIT_FAILURE = 1
-EXIT_USAGE = 2
-EXIT_HALTED_AT_CEILING = 3
-EXIT_ENVIRONMENT_FAILURE = 4
-EXIT_REJECTED_AT_GATE = 5
+__all__ = [
+    "EXIT_OK",
+    "EXIT_FAILURE",
+    "EXIT_USAGE",
+    "EXIT_HALTED_AT_CEILING",
+    "EXIT_ENVIRONMENT_FAILURE",
+    "EXIT_REJECTED_AT_GATE",
+    "NotWiredError",
+    "TEMPLATE_IDS",
+    "DEFAULT_TEMPLATE",
+    "build_parser",
+    "main",
+    "version_line",
+]
 
 DEFAULT_RETRY_CEILING = 3
 DEFAULT_MAP_BUDGET = 1024
-
-
-class NotWiredError(Exception):
-    """Raised by a command whose implementation is scheduled in a later task."""
-
-    def __init__(self, command: str, task: str) -> None:
-        super().__init__(f"`{command}` is not wired yet - implemented in {task}")
-        self.command = command
-        self.task = task
 
 
 def version_line() -> str:
@@ -128,80 +136,11 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-_TASK_OWNERS = {
-    "new": "T029",
-    "change": "T044",
-    "plan": "T032",
-    "apply": "T035",
-    "map": "T041",
-    "report": "T065",
-    "providers": "T056",
-}
-
-
-def _emit_result(args: argparse.Namespace, payload: dict[str, object], summary: str) -> None:
-    """`--json` puts one object on stdout; human output goes to stderr (cli-surface contract)."""
-    if getattr(args, "json", False):
-        json.dump(payload, sys.stdout, default=str)
-        sys.stdout.write("\n")
-    else:
-        print(summary, file=sys.stderr)
-
-
-def _cmd_new(args: argparse.Namespace) -> int:
-    """T029: scaffold from the locked template so the solution builds before any model writes."""
-    target = Path(args.out or args.project)
-    try:
-        plan = scaffold.plan(target, args.template)
-    except registry.TemplateError as exc:
-        _emit_error(args, str(exc))
-        return EXIT_USAGE
-
-    if args.dry_run:
-        _emit_result(
-            args,
-            plan.describe(),
-            f"would scaffold {plan.template.display_name} into {plan.target} "
-            f"({len(plan.template.project_layout)} projects); nothing written",
-        )
-        return EXIT_OK
-
-    try:
-        result = scaffold.execute(plan)
-    except scaffold.ScaffoldError as exc:
-        _emit_error(args, str(exc))
-        if exc.output is not None and not getattr(args, "json", False):
-            print(exc.output.combined, file=sys.stderr)
-        return EXIT_FAILURE
-    except state.StateError as exc:
-        _emit_error(args, str(exc))
-        return EXIT_FAILURE
-
-    _emit_result(
-        args,
-        result.describe(),
-        f"created {plan.template.display_name} at {plan.target}; solution builds",
-    )
-    return EXIT_OK
-
-
-# Command handlers register here as their tasks land; an absent entry is a deferral, not a bug.
-_HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {"new": _cmd_new}
-
-
 def _dispatch(args: argparse.Namespace) -> int:
     handler = _HANDLERS.get(args.command)
     if handler is None:
         raise NotWiredError(args.command, _TASK_OWNERS[args.command])
     return handler(args)
-
-
-def _emit_error(args: argparse.Namespace, message: str) -> None:
-    if getattr(args, "json", False):
-        json.dump({"status": "error", "error": message}, sys.stdout)
-        sys.stdout.write("\n")
-    else:
-        print(message, file=sys.stderr)
 
 
 def main(argv: Sequence[str] | None = None) -> int:
