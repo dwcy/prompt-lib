@@ -43,7 +43,9 @@ SKIP_PERMISSION_FLAGS: Final[tuple[str, ...]] = ("--dangerously-skip-permissions
 
 
 def _build_command(executable: str, spec: AgentRunSpec) -> list[str]:
-    command = [executable, "-p", spec.prompt, *BASE_FLAGS]
+    # The prompt travels via stdin, never argv: on Windows `claude` resolves to a .cmd shim whose
+    # cmd.exe re-parsing mangles multi-line arguments and silently drops every flag after them.
+    command = [executable, "-p", *BASE_FLAGS]
     command.extend(SKIP_PERMISSION_FLAGS if spec.skip_permissions else PERMISSION_FLAGS)
     if spec.model is not None:
         command.extend(("--model", spec.model))
@@ -150,7 +152,7 @@ class ClaudeCodeAdapter:
                 _build_command(exe, spec),
                 cwd=spec.worktree,
                 env=_build_env(spec),
-                stdin=subprocess.DEVNULL,
+                stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.DEVNULL,
                 text=True,
@@ -167,6 +169,12 @@ class ClaudeCodeAdapter:
         self, process: subprocess.Popen[str], spec: AgentRunSpec, started: float
     ) -> AgentRunResult:
         assert process.stdout is not None
+        assert process.stdin is not None
+        try:
+            process.stdin.write(spec.prompt)
+            process.stdin.close()
+        except (BrokenPipeError, OSError):
+            pass  # process already gone; the missing result event classifies it as a crash
         lines: queue.Queue[str | None] = queue.Queue()
         threading.Thread(target=_pump, args=(process.stdout, lines), daemon=True).start()
         deadline = started + spec.timeout_seconds

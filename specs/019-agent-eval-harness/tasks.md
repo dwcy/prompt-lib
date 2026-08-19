@@ -139,12 +139,12 @@
 
 ## Phase 9: Polish & Cross-Cutting Concerns
 
-**Status**: 🟡 In progress (1/4 — T031–T034)
+**Status**: 🟡 In progress (3/4 — T031–T034)
 **Purpose**: Live verification, docs, full suite, independent audit
 
-- [ ] T031 Execute the quickstart.md smoke test live: `validate` → 1-task × 2-config × 1-run matrix → `judge` → `report` with the real `claude` CLI; fix any fallout; confirm SC-005 (no writes outside worktrees/scratch/results — check `git status` on main tree + `~/.claude` untouched) — Owner: main
+- [X] T031 Execute the quickstart.md smoke test live: `validate` → 1-task × 2-config × 1-run matrix → `judge` → `report` with the real `claude` CLI; fix any fallout; confirm SC-005 (no writes outside worktrees/scratch/results — check `git status` on main tree + `~/.claude` untouched) — Owner: main
 - [X] T032 [P] Documentation: add `evals/README.md` (authoring guide distilled from contracts/definitions-format.md) and register the `cabal.evals` module in `setup/src/cabal/README.md` — Owner: main
-- [ ] T033 Full test pass: `python -m pytest setup/tests -k evals` green, plus python.md size-cap self-audit on every new module (soft 200 / hard 400 LoC) — Owner: main
+- [X] T033 Full test pass: `python -m pytest setup/tests -k evals` green, plus python.md size-cap self-audit on every new module (soft 200 / hard 400 LoC) — Owner: main
 - [ ] T034 Read-only plan-compliance audit of the implementation against plan.md, contracts/, and constitution gates; PASS required before the completion commit — Owner: @code-plan-verifier
 
 ---

@@ -62,13 +62,15 @@ def default_judge_call(prompt: str, model: str) -> str:
     if exe is None:
         raise JudgeError(f"`{JUDGE_EXECUTABLE}` not found on PATH")
     try:
+        # Prompt via stdin, never argv: the Windows .cmd shim re-parses argv and a multi-line
+        # prompt silently drops every flag after it (same fix as adapters/claude_code.py).
         proc = subprocess.run(
-            [exe, "-p", prompt, "--output-format", "json", "--model", model],
+            [exe, "-p", "--output-format", "json", "--model", model],
             capture_output=True,
             text=True,
             encoding="utf-8",
             errors="replace",
-            stdin=subprocess.DEVNULL,
+            input=prompt,
             timeout=JUDGE_TIMEOUT_SECONDS,
             check=False,
         )
@@ -82,8 +84,14 @@ def default_judge_call(prompt: str, model: str) -> str:
         envelope = json.loads(proc.stdout)
     except json.JSONDecodeError as exc:
         raise JudgeError(f"judge CLI envelope is not JSON: {exc}") from exc
+    # `--output-format json` emits a single result object in some CLI versions and an array of
+    # events (init, ..., result) in others — accept both by extracting the result-type event.
+    if isinstance(envelope, list):
+        envelope = next(
+            (e for e in envelope if isinstance(e, dict) and e.get("type") == "result"), None
+        )
     if not isinstance(envelope, dict):
-        raise JudgeError("judge CLI envelope is not a JSON object")
+        raise JudgeError("judge CLI envelope carried no result object")
     result = envelope.get("result")
     if envelope.get("is_error") or not isinstance(result, str):
         raise JudgeError(f"judge CLI reported an error: {str(result)[:_STDERR_TAIL_CHARS]}")
