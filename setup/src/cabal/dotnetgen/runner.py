@@ -56,11 +56,18 @@ def run_approved(
             diagnostics=_diagnostics(last_failure),
         )
 
+    written: set[str] = set()
+
     def apply(operations) -> applier.ApplyReport:
-        return applier.apply_all(project, tuple(operations))
+        report = applier.apply_all(project, tuple(operations))
+        # Track what this run authored: `verify` needs it to tell "the tool broke the .csproj"
+        # (repairable) from "the SDK is broken" (never repairable). Accumulates across attempts,
+        # because a file written on attempt 1 is still this run's work on attempt 3.
+        written.update(a.operation.file for a in report.landed)
+        return report
 
     def verify() -> dotnet.VerificationResult:
-        return dotnet.verify(project)
+        return dotnet.verify(project, written_files=frozenset(written))
 
     return pipeline.Pipeline(
         writer=writer, applier=apply, verifier=verify, budget=budget

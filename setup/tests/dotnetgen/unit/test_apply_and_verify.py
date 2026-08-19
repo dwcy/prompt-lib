@@ -129,17 +129,71 @@ def test_green_build_and_tests_pass(monkeypatch: pytest.MonkeyPatch, solution_di
     assert dotnet.verify(solution_dir).classification is dotnet.Classification.PASS
 
 
-def test_failing_build_is_a_code_defect(monkeypatch: pytest.MonkeyPatch, solution_dir: Path) -> None:
-    monkeypatch.setattr(dotnet, "build", lambda project, **kw: _output(1))
+def _failed(text: str) -> dotnet.CommandOutput:
+    return dotnet.CommandOutput(
+        command=("dotnet", "build"), exit_code=1, stdout=text, stderr="", timed_out=False
+    )
+
+
+def test_compiler_error_is_a_code_defect(monkeypatch: pytest.MonkeyPatch, solution_dir: Path) -> None:
+    monkeypatch.setattr(
+        dotnet, "build", lambda project, **kw: _failed("src/Api/Program.cs(9,5): error CS1002: ; expected")
+    )
 
     assert dotnet.verify(solution_dir).classification is dotnet.Classification.CODE_DEFECT
 
 
 def test_failing_tests_are_a_code_defect(monkeypatch: pytest.MonkeyPatch, solution_dir: Path) -> None:
     monkeypatch.setattr(dotnet, "build", lambda project, **kw: _output(0))
-    monkeypatch.setattr(dotnet, "test", lambda project, **kw: _output(1))
+    monkeypatch.setattr(
+        dotnet, "test", lambda project, **kw: _failed("Failed!  - Failed: 1, Passed: 3")
+    )
 
     assert dotnet.verify(solution_dir).classification is dotnet.Classification.CODE_DEFECT
+
+
+def test_restore_failure_is_an_environment_failure(
+    monkeypatch: pytest.MonkeyPatch, solution_dir: Path
+) -> None:
+    """Regenerating C# will never fix a NuGet feed, so it must not cost a repair attempt."""
+    monkeypatch.setattr(
+        dotnet,
+        "build",
+        lambda project, **kw: _failed("error NU1101: Unable to find package Foo. No sources."),
+    )
+
+    assert dotnet.verify(solution_dir).classification is dotnet.Classification.ENVIRONMENT_FAILURE
+
+
+def test_failure_with_no_parsed_diagnostics_is_an_environment_failure(
+    monkeypatch: pytest.MonkeyPatch, solution_dir: Path
+) -> None:
+    """A crash the toolchain could not even describe (research R4).
+
+    This reverses the provisional rule the pipeline shipped with, which called every non-zero
+    exit a code defect. Spending the repair budget on output that names no diagnostic is the
+    runaway loop the ceiling exists to prevent.
+    """
+    monkeypatch.setattr(dotnet, "build", lambda project, **kw: _output(1))
+
+    assert dotnet.verify(solution_dir).classification is dotnet.Classification.ENVIRONMENT_FAILURE
+
+
+def test_msbuild_error_against_a_file_this_run_wrote_is_a_code_defect(
+    monkeypatch: pytest.MonkeyPatch, solution_dir: Path
+) -> None:
+    """The tool broke the .csproj it authored - repairable, unlike a broken SDK install."""
+    monkeypatch.setattr(
+        dotnet,
+        "build",
+        lambda project, **kw: _failed("src/Api/Api.csproj : error MSB4025: invalid project file"),
+    )
+
+    ours = dotnet.verify(solution_dir, written_files=frozenset({"src/Api/Api.csproj"}))
+    theirs = dotnet.verify(solution_dir, written_files=frozenset({"src/Api/Other.csproj"}))
+
+    assert ours.classification is dotnet.Classification.CODE_DEFECT
+    assert theirs.classification is dotnet.Classification.ENVIRONMENT_FAILURE
 
 
 def test_build_timeout_is_an_environment_failure(

@@ -103,13 +103,13 @@ Contract tests come first per Principle III. T006–T008 must be written and **o
 
 ## Phase 3b: US3 (partial) — The runaway guard, ahead of the unattended path
 
-**Status**: ⬜ Pending (0/3 — T046–T048)
+**Status**: ✅ Complete (3/3 — T046–T048)
 
 **Purpose**: T035 ships the unattended tail. Until failures are classified, `verify/dotnet.py` provisionally treats every non-toolchain, non-timeout failure as `code_defect` — deliberately honest, but it means a restore failure or a rate limit consumes repair budget. These three tasks are the feature's one hard ordering constraint (parse → classify → enforce) and they are cheap; running them before Phase 4 is what makes every later phase safe to run unattended.
 
-- [ ] T046 [P] [US3] Diagnostic parser extracting `CS####`, `NU####`, `MSB####`, `NETSDK####` and xUnit assertion failures from build and test output, in `setup/src/cabal/dotnetgen/verify/dotnet.py` — Owner: @python-architect — Parallel: yes
-- [ ] T047 [US3] Classification rule per research R4, including reclassification of `MSB####` raised against a file this run wrote as a code defect, in `setup/src/cabal/dotnetgen/verify/dotnet.py` — replaces the provisional rule documented in that module's `verify()` docstring — Owner: @python-architect
-- [ ] T048 [US3] RetryBudget enforcement — consume only on `code_defect`; abort immediately at zero consumed on `environment_failure` — in `setup/src/cabal/dotnetgen/pipeline.py` — Owner: @python-architect
+- [X] T046 [P] [US3] Diagnostic parser extracting `CS####`, `NU####`, `MSB####`, `NETSDK####` and xUnit assertion failures from build and test output, in `setup/src/cabal/dotnetgen/verify/dotnet.py` — Owner: @python-architect — Parallel: yes
+- [X] T047 [US3] Classification rule per research R4, including reclassification of `MSB####` raised against a file this run wrote as a code defect, in `setup/src/cabal/dotnetgen/verify/dotnet.py` — replaces the provisional rule documented in that module's `verify()` docstring — Owner: @python-architect
+- [X] T048 [US3] RetryBudget enforcement — consume only on `code_defect`; abort immediately at zero consumed on `environment_failure` — in `setup/src/cabal/dotnetgen/pipeline.py` — Owner: @python-architect
 
 **Checkpoint**: the repair loop can no longer spend budget on failures the code did not cause. Phases 4 onward are safe unattended.
 

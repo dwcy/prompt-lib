@@ -5,8 +5,8 @@ This is the pipeline's feedback signal, and it is the component the frontend cod
 had. A compiler names the exact symbol, file and line that broke, deterministically and for free,
 where a browser console is noisy, late, and rarely names the cause.
 
-Scope here is the invocation and its raw output (T019). Diagnostic-ID parsing and the
-environment-vs-code-defect classification arrive with T044/T045.
+Scope here is the invocation and the decision it produces. The parsing and classification rules
+themselves live in `diagnostics.py`, which this module depends on.
 """
 
 from __future__ import annotations
@@ -14,20 +14,14 @@ from __future__ import annotations
 import shutil
 import subprocess
 from dataclasses import dataclass, field
-from enum import Enum
 from pathlib import Path
 from typing import Final
 
+from cabal.dotnetgen.verify import diagnostics
+from cabal.dotnetgen.verify.diagnostics import Classification, Diagnostic
+
 BUILD_TIMEOUT_SECONDS: Final[int] = 600
 TEST_TIMEOUT_SECONDS: Final[int] = 900
-
-
-class Classification(str, Enum):
-    """Why a verification run ended. Drives whether a repair attempt may be spent."""
-
-    PASS = "pass"
-    CODE_DEFECT = "code_defect"
-    ENVIRONMENT_FAILURE = "environment_failure"
 
 
 @dataclass(frozen=True)
@@ -57,7 +51,7 @@ class VerificationResult:
     build: CommandOutput | None = None
     test: CommandOutput | None = None
     detail: str = ""
-    diagnostics: tuple[object, ...] = field(default=())
+    diagnostics: tuple[Diagnostic, ...] = field(default=())
 
     @property
     def passed(self) -> bool:
@@ -130,13 +124,15 @@ def verify(
     *,
     filter_expression: str | None = None,
     run_tests: bool = True,
+    written_files: frozenset[str] = frozenset(),
 ) -> VerificationResult:
-    """Build, then test if the build succeeded. Classification is provisional until T046-T047.
+    """Build, then test if the build succeeded, and classify any failure per research R4.
 
-    Until the diagnostic parser lands, any failure is reported as a code defect *except* a
-    missing toolchain or a timeout, which are unambiguously environmental. Erring toward
-    code_defect here is deliberate: it keeps the retry budget honest rather than letting a real
-    defect masquerade as an environment problem and skip the ceiling.
+    `written_files` are solution-relative paths this run authored. They exist for one rule: an
+    MSB#### diagnostic fired against a file the tool itself just wrote is a code defect (the tool
+    broke the .csproj, and that is repairable), while the same diagnostic anywhere else is an
+    environment problem. Without that distinction the tool would either never repair its own
+    project files, or would burn the whole retry budget on a broken SDK install.
     """
     try:
         build_output = build(project)
@@ -153,10 +149,13 @@ def verify(
             detail="build timed out",
         )
     if not build_output.ok:
+        found = diagnostics.parse(build_output.combined)
+        classification = diagnostics.classify(found, written_files=written_files)
         return VerificationResult(
-            classification=Classification.CODE_DEFECT,
+            classification=classification,
             build=build_output,
-            detail="build failed",
+            detail=_describe(found, "build failed"),
+            diagnostics=found,
         )
 
     if not run_tests:
@@ -171,11 +170,18 @@ def verify(
             detail="test run timed out",
         )
     if not test_output.ok:
+        found = diagnostics.parse(test_output.combined)
+        classification = diagnostics.classify(
+            found,
+            written_files=written_files,
+            test_failures=diagnostics.has_test_failures(test_output),
+        )
         return VerificationResult(
-            classification=Classification.CODE_DEFECT,
+            classification=classification,
             build=build_output,
             test=test_output,
-            detail="tests failed",
+            detail=_describe(found, "tests failed"),
+            diagnostics=found,
         )
 
     return VerificationResult(
@@ -183,3 +189,11 @@ def verify(
         build=build_output,
         test=test_output,
     )
+
+
+def _describe(found: tuple[Diagnostic, ...], fallback: str) -> str:
+    """Name the diagnostics that drove the classification, so a halt report is actionable."""
+    if not found:
+        return f"{fallback}; no diagnostics parsed"
+    ids = sorted({d.id for d in found})
+    return f"{fallback}: {', '.join(ids[:6])}" + (" and others" if len(ids) > 6 else "")
