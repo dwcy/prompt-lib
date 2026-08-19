@@ -56,6 +56,35 @@ def test_the_default_template_is_built() -> None:
     )
 
 
+def test_built_overlay_matches_the_declared_project_graph() -> None:
+    """The registry declares the reference graph; the overlay's .csproj files ship it.
+
+    Two sources for one fact, so they are asserted equal here. The graph feeds the structural
+    map's layer ranking (research R3), so a template whose csproj disagrees with its declaration
+    would mis-rank every file in every later `map` run.
+    """
+    for template in registry.all_templates():
+        if not template.is_built:
+            continue
+        for project in template.project_layout:
+            csproj = template.overlay_root / project.path / f"{project.name}.csproj"
+            assert csproj.is_file(), f"{template.id}: overlay is missing {csproj.name}"
+            text = csproj.read_text(encoding="utf-8")
+            for reference in project.references:
+                assert f"{reference}.csproj" in text, (
+                    f"{template.id}/{project.name}.csproj must reference {reference}"
+                )
+
+
+def test_pruned_files_are_not_shipped_in_the_overlay() -> None:
+    """Prune removes what `dotnet new` emits; shipping the same path would be contradictory."""
+    for template in registry.all_templates():
+        for relpath in template.prune:
+            assert not (template.overlay_root / relpath).exists(), (
+                f"{template.id}: {relpath} is both pruned and shipped"
+            )
+
+
 def test_unknown_template_exits_two_and_lists_the_closed_set(
     capsys: pytest.CaptureFixture[str],
 ) -> None:

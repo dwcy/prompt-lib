@@ -79,6 +79,13 @@ class ArchitectureTemplate:
     project_layout: tuple[ProjectSpec, ...]
     layer_order: tuple[str, ...]
     built_in_task: str
+    prune: tuple[str, ...] = ()
+    """Files `dotnet new` emits that the overlay does not want - sample classes, sample requests.
+
+    Removed after scaffolding and before the overlay is copied. Files the overlay *replaces*
+    (`Program.cs`, the `.csproj` files, `appsettings.json`) are not listed: the copy overwrites
+    them, and listing them too would make the two mechanisms disagree about who owns the file.
+    """
 
     def __post_init__(self) -> None:
         uncovered = {p.layer for p in self.project_layout} - set(self.layer_order)
@@ -120,11 +127,6 @@ class ArchitectureTemplate:
         steps.extend(
             ("dotnet", "sln", "add", f"{p.path}/{p.name}.csproj") for p in self.project_layout
         )
-        steps.extend(
-            ("dotnet", "add", f"{p.path}/{p.name}.csproj", "reference", f"{target.path}/{target.name}.csproj")
-            for p in self.project_layout
-            for target in (by_name(self, ref) for ref in p.references)
-        )
         return tuple(steps)
 
     @property
@@ -154,14 +156,6 @@ class ArchitectureTemplate:
         return "\n".join(lines)
 
 
-def by_name(template: ArchitectureTemplate, name: str) -> ProjectSpec:
-    """Resolve a project name within one template's layout."""
-    for project in template.project_layout:
-        if project.name == name:
-            return project
-    raise TemplateError(f"template {template.id!r} has no project named {name!r}")
-
-
 _TEMPLATES: Final[tuple[ArchitectureTemplate, ...]] = (
     ArchitectureTemplate(
         id="minimal-service",
@@ -185,6 +179,7 @@ _TEMPLATES: Final[tuple[ArchitectureTemplate, ...]] = (
         ),
         layer_order=("domain", "api", "tests"),
         built_in_task="T024",
+        prune=("src/Domain/Class1.cs", "src/Api/Api.http", "tests/Api.Tests/UnitTest1.cs"),
     ),
     ArchitectureTemplate(
         id="clean-arch",

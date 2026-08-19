@@ -77,7 +77,7 @@ Contract tests come first per Principle III. T006–T008 must be written and **o
 
 ## Phase 3: US1 — Stand up a new backend service without bootstrapping (P1)
 
-**Status**: ⬜ Pending (0/12 — T024, T026–T036)
+**Status**: 🟡 In progress (4/12 — T024, T026, T027, T028 done; T029–T036 open)
 
 **Goal**: one sentence plus one template choice plus one approval produces a compiling, test-passing, health-serving solution.
 
@@ -85,10 +85,10 @@ Contract tests come first per Principle III. T006–T008 must be written and **o
 
 **Template scope**: `vertical-slice` only. T023 (`minimal-service`) and T025 (`clean-arch`) are Phase 9. The registry (T027) still validates against a closed set — a set of one — so T028's "unknown id is an error, never a fallback" contract is unchanged.
 
-- [ ] T024 [US1] Build the `vertical-slice` template (the default) — feature-folder slices, one handler per slice, EF Core — in `setup/src/cabal/dotnetgen/templates/vertical-slice/` — Owner: @dotnet-architect
-- [ ] T026 [US1] Add an xUnit test project and a health-endpoint smoke test to the `vertical-slice` template under `setup/src/cabal/dotnetgen/templates/vertical-slice/tests/` — Owner: @dotnet-tester
-- [ ] T027 [US1] ArchitectureTemplate registry with closed-set validation — an unknown id is an error, never a fallback — in `setup/src/cabal/dotnetgen/templates/registry.py` — Owner: @python-architect
-- [ ] T028 [US1] Contract test: `new --template <unknown>` exits 2, lists the closed set, and creates no files; a template-change attempt is refused naming the recorded template — in `setup/tests/dotnetgen/contract/test_new_command.py` — Owner: @python-tester
+- [X] T024 [US1] Build the `vertical-slice` template (the default) — feature-folder slices, one handler per slice, EF Core — in `setup/src/cabal/dotnetgen/templates/vertical-slice/` — Owner: @dotnet-architect
+- [X] T026 [US1] Add an xUnit test project and a health-endpoint smoke test to the `vertical-slice` template under `setup/src/cabal/dotnetgen/templates/vertical-slice/tests/` — Owner: @dotnet-tester
+- [X] T027 [US1] ArchitectureTemplate registry with closed-set validation — an unknown id is an error, never a fallback — in `setup/src/cabal/dotnetgen/templates/registry.py` — Owner: @python-architect
+- [X] T028 [US1] Contract test: `new --template <unknown>` exits 2, lists the closed set, and creates no files; a template-change attempt is refused naming the recorded template — in `setup/tests/dotnetgen/contract/test_new_command.py` — Owner: @python-tester
 - [ ] T029 [US1] `new` command scaffolding from the template so the solution **builds before any model writes to it** (FR-003), in `setup/src/cabal/dotnetgen/cli.py` — Owner: @python-architect
 - [ ] T030 [US1] Architect stage emitting a prose ChangeIntent, with the enforced invariant that it contains no code fence or C# syntax (FR-010b, FR-012), in `setup/src/cabal/dotnetgen/stages/architect.py` — Owner: @python-architect
 - [ ] T031 [US1] Contract test: `plan` mutates nothing and reports zero write-stage cost, and a rejected plan costs under 10% of a completed run (SC-011) — in `setup/tests/dotnetgen/contract/test_plan_gate.py` — Owner: @python-tester
