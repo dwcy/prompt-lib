@@ -29,7 +29,9 @@ def cache_path(project: Path, fingerprint: str, token_budget: int) -> Path:
     return project / CACHE_RELPATH / f"{digest}-{token_budget}.txt"
 
 
-def rendered_map(project: Path, *, token_budget: int) -> tuple[str, StructuralMap]:
+def rendered_map(
+    project: Path, *, token_budget: int, write_cache: bool = True
+) -> tuple[str, StructuralMap]:
     """Return the map text and the map itself, reading through the cache."""
     fingerprint = intent.solution_fingerprint(project)
     built = build(
@@ -45,6 +47,8 @@ def rendered_map(project: Path, *, token_budget: int) -> tuple[str, StructuralMa
         return path.read_text(encoding="utf-8"), built
 
     rendered = built.render()
+    if not write_cache:
+        return rendered, built
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(rendered, encoding="utf-8", newline="\n")

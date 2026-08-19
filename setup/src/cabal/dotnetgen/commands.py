@@ -249,13 +249,18 @@ def cmd_map(args: argparse.Namespace) -> int:
     """T041: render the structural map, reusing the cache when the solution has not changed."""
     project = Path(args.project)
     try:
-        rendered, built = map_cache.rendered_map(project, token_budget=args.budget)
+        # `map` only reads the solution, but it does persist a cache file. Under --dry-run even
+        # that is skipped, so the flag means the same thing everywhere: nothing on disk changes.
+        rendered, built = map_cache.rendered_map(
+            project, token_budget=args.budget, write_cache=not args.dry_run
+        )
     except state.StateError as exc:
         emit_error(args, str(exc))
         return EXIT_USAGE
 
     payload: dict[str, object] = {
         "status": "ok",
+        "dry_run": bool(args.dry_run),
         "fingerprint": built.fingerprint,
         "token_budget": built.token_budget,
         "estimated_tokens": built.estimated_tokens,
@@ -345,7 +350,12 @@ def cmd_providers(args: argparse.Namespace) -> int:
 
     emit_result(
         args,
-        {"status": "ok", "stages": stages, "unreachable": unreachable},
+        {
+            "status": "ok",
+            "dry_run": bool(args.dry_run),
+            "stages": stages,
+            "unreachable": unreachable,
+        },
         "\n".join(_provider_line(entry, args.check) for entry in stages),
     )
     # Reporting is the job; an unreachable provider is a finding, not a crash of this command.
@@ -377,6 +387,7 @@ def cmd_report(args: argparse.Namespace) -> int:
         args,
         {
             "status": "ok",
+            "dry_run": bool(args.dry_run),
             "runs": [{"run_id": r.run_id, **r.payload} for r in selected],
             "summary": reporting.summarise(selected),
         },

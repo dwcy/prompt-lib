@@ -229,11 +229,11 @@ Contract tests come first per Principle III. T006–T008 must be written and **o
 
 **Status**: ⬜ Pending (0/7 — T067–T073)
 
-- [ ] T067 Author the thin driver skill that parses `--json`, presents the prose gate, and never reimplements pipeline logic, in `global/skills/dotnet-codegen/SKILL.md` — Owner: main
-- [ ] T068 [P] `--dry-run` support across every command — plan only, no writes, no writing-model call — in `setup/src/cabal/dotnetgen/cli.py` — Owner: @python-architect
-- [ ] T069 [P] Contract test asserting `--dry-run` mutates nothing and invokes no writing model, in `setup/tests/dotnetgen/contract/test_dry_run.py` — Owner: @python-tester
-- [ ] T070 Verify Gate 4 reversibility: the apply flow installs `global/skills/dotnet-codegen/` and `global/dotnetgen-bindings.toml`, and deleting both plus re-running `python setup/settings-configurator-ui.py` fully removes them — record the result in `specs/018-dotnet-codegen/plan.md` — Owner: main
-- [ ] T071 Run `/review-conflicts` against the new skill and record the outcome for Gate 5 in `specs/018-dotnet-codegen/plan.md` — Owner: main
+- [X] T067 Author the thin driver skill that parses `--json`, presents the prose gate, and never reimplements pipeline logic, in `global/skills/dotnet-codegen/SKILL.md` — Owner: main
+- [X] T068 [P] `--dry-run` support across every command — plan only, no writes, no writing-model call — in `setup/src/cabal/dotnetgen/cli.py` — Owner: @python-architect
+- [X] T069 [P] Contract test asserting `--dry-run` mutates nothing and invokes no writing model, in `setup/tests/dotnetgen/contract/test_dry_run.py` — Owner: @python-tester
+- [X] T070 Verify Gate 4 reversibility: the apply flow installs `global/skills/dotnet-codegen/` and `global/dotnetgen-bindings.toml`, and deleting both plus re-running `python setup/settings-configurator-ui.py` fully removes them — record the result in `specs/018-dotnet-codegen/plan.md` — Owner: main
+- [X] T071 Run `/review-conflicts` against the new skill and record the outcome for Gate 5 in `specs/018-dotnet-codegen/plan.md` — Owner: main
 - [ ] T072 Measure every Phase A exit criterion using the verification table in `specs/018-dotnet-codegen/quickstart.md` and record actuals alongside targets — Owner: main
 - [ ] T073 Read-only audit of the implementation against `specs/018-dotnet-codegen/plan.md` and all six Constitution gates — Owner: @code-plan-verifier
 

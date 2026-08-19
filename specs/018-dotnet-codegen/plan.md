@@ -180,6 +180,33 @@ The `context/`, `edits/`, `verify/` and `providers/` packages are the **language
 
 **Phase B blocker discovered during Phase A implementation** — `ProjectState` cannot represent a brownfield project. `state.py` requires `template_id` on creation and rejects any state file whose `template_id` is outside `TEMPLATE_IDS` on load; the architect stage and `context/bands.py` both lean on that locked template for their conventions. A solution the tool did not generate has no template, and US6-AS1 requires new code to *match the surrounding solution's conventions rather than impose the template* — the opposite of what the current model encodes. Phase B therefore needs a no-template, inferred-conventions mode across `state.py` and `bands.py`, designed rather than patched in. This is an entry condition, not an implementation detail, because it changes a data model that Phase A treats as immutable by design (FR-001c).
 
+## Gate verification results
+
+**Gate 4 - Reversibility (T070).** Verified 2026-08-19. The apply flow copies every
+`global/skills/<name>/` directory, so `global/skills/dotnet-codegen/` deploys without further
+change. `global/dotnetgen-bindings.toml` did **not** deploy: the script copies named top-level
+files individually and had no clause for it, so on an installed (non-checkout) machine the
+pipeline would have found no bindings at `~/.claude/dotnetgen-bindings.toml` and fallen back to a
+repo path that does not exist there. A copy clause was added. Both assets install on apply and
+leave nothing behind when deleted - they are a directory and a single file, with no registry entry,
+no settings key, and no hook referencing them.
+
+**Gate 5 - Minimal Skill & Agent Surface (T071).** Reviewed 2026-08-19 by reading every `.NET`
+asset's frontmatter rather than by running `/review-conflicts`, and recorded as such. One new
+skill, no new agent. No trigger overlap found:
+
+| Asset | Scope | Overlap with `/dotnet-codegen` |
+|---|---|---|
+| `/dotnet-class` | Generates one type from a prompt | None - no verification loop, no ceiling, no cost record |
+| `/dotnet-test` | Authors one integration test | None - does not scaffold or route |
+| `@dotnet-architect` | Reasoning about design | None - has no execution surface, and defers architecture to each project's CLAUDE.md, which is the opposite of a locked template |
+| `@dotnet-tester` | Test authoring and review | None |
+| `/dependency-audit` | Mentions `dotnet list package --vulnerable` | None - vulnerability scanning, unrelated trigger |
+
+The new skill's description is scoped to the pipeline's own verbs (scaffold a service, add a
+feature to a generated solution, what a run cost, which model is bound) so it does not compete
+with the reasoning agents for a general "help me design this .NET thing" request.
+
 ## Complexity Tracking
 
 *No Constitution Check violations. Table intentionally empty.*
