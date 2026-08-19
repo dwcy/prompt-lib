@@ -18,7 +18,7 @@ All `NEEDS CLARIFICATION` items from the Technical Context are resolved below. E
 
 **Alternatives considered**: Deploying profiles into the real `~/.claude/` between runs via the apply wizard (rejected: mutates user global state — forbidden by FR-015 and constitution Principle IV's spirit); only worktree-local `.claude/` (rejected: cannot remove user-global skills/instructions from the baseline, so profiles wouldn't be hermetic); containerizing runs (rejected: heavyweight, Windows friction, subscription CLI auth complications).
 
-**Validation note**: exact per-version behavior of `CLAUDE_CONFIG_DIR` (auth/credential lookup included) must be smoke-verified in the first implementation task; if credentials do not resolve under a relocated config dir, fallback is copying the minimal auth material into the scratch config dir, with the limitation recorded.
+**Validation note — RESOLVED (T010, 2026-08-19)**: live-verified on this machine. `CLAUDE_CONFIG_DIR` relocation is honored: with an empty scratch config dir, `claude -p … --output-format json` returns `is_error: true` with `result: "Not logged in · Please run /login"` (exit 1, machine-detectable JSON — useful for adapter failure classification). Auth material does NOT resolve from the real `~/.claude/` when the config dir is relocated, so the credential-copy fallback is REQUIRED, not optional: `profile.py` MUST copy `~/.claude/.credentials.json` into every scratch config dir it materializes, and the scratch dir MUST be deleted after the run (credentials never persist in results). CLAUDE.md/skills pickup under relocation is verified end-to-end in the quickstart smoke (T031) via a marker-instruction profile.
 
 ## R3 — Headless agent invocation
 

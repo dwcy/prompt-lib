@@ -46,12 +46,12 @@
 
 ## Phase 3: User Story 1 - A/B compare two configurations on a task set (Priority: P1) 🎯 MVP
 
-**Status**: ⬜ Pending (0/7 — T010–T016)
+**Status**: 🟡 In progress (1/7 — T010–T016)
 **Goal**: `python -m cabal.evals run --baseline X --candidate Y --runs N` executes the full matrix with per-run worktrees, config isolation, artifact capture, incremental resume, and failure isolation
 
 **Independent Test**: One task, two profiles (candidate = baseline + one skill), `--runs 1` → per-run `patch.diff`/`output.txt`/`transcript.jsonl`/`metrics.json` exist and validate against the schemas; interrupt + `--resume` skips the completed cell
 
-- [ ] T010 [US1] Smoke-verify config isolation on this machine: run live `claude -p` with a relocated `CLAUDE_CONFIG_DIR` (auth resolution, skills/CLAUDE.md pickup) and `--permission-mode acceptEdits --output-format stream-json` headless flags; record confirmed behavior (or the credential-copy fallback) in research.md R2/R3 — Owner: main
+- [X] T010 [US1] Smoke-verify config isolation on this machine: run live `claude -p` with a relocated `CLAUDE_CONFIG_DIR` (auth resolution, skills/CLAUDE.md pickup) and `--permission-mode acceptEdits --output-format stream-json` headless flags; record confirmed behavior (or the credential-copy fallback) in research.md R2/R3 — Owner: main (done: relocation honored, credential-copy fallback REQUIRED — see research.md R2; CLAUDE.md pickup deferred to T031 marker check)
 - [ ] T011 [US1] Implement Claude Code adapter in `setup/src/cabal/evals/adapters/claude_code.py` per contracts/agent-adapter.md — one-shot `claude -p` with stream-json capture to `transcript_path`, timeout process-tree kill → `failed/agent_timeout`, `is_error`/missing-result → `agent_crash`, `skip_permissions` flag handling — Owner: @python-architect — Parallel: yes
 - [ ] T012 [P] [US1] Implement metrics extraction in `setup/src/cabal/evals/metrics.py` — transcript.jsonl → tool_calls_total/by_name, num_turns, tokens/cost (absence → `null`, never 0, mirroring `dotnetgen.providers.usage` semantics), merge diff stats + wall time + status into schema-valid `metrics.json` — Owner: @python-architect — Parallel: yes
 - [ ] T013 [US1] Implement matrix engine in `setup/src/cabal/evals/matrix.py` — cell enumeration (tasks × 2 configs × N), run-id creation, per-cell orchestration (worktree → profile → adapter → collect → metrics), atomic `.tmp`→rename writes, resume-skips-completed, per-cell failure capture that never aborts the matrix (FR-011/FR-012) — Owner: @python-architect
