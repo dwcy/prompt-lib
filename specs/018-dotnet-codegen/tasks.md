@@ -77,7 +77,7 @@ Contract tests come first per Principle III. T006–T008 must be written and **o
 
 ## Phase 3: US1 — Stand up a new backend service without bootstrapping (P1)
 
-**Status**: 🟡 In progress (8/12 — T024, T026–T032 done; T033–T036 open)
+**Status**: 🟡 In progress (11/12 — T024, T026–T035 done; T036 blocked on T074)
 
 **Goal**: one sentence plus one template choice plus one approval produces a compiling, test-passing, health-serving solution.
 
@@ -93,9 +93,9 @@ Contract tests come first per Principle III. T006–T008 must be written and **o
 - [X] T030 [US1] Architect stage emitting a prose ChangeIntent, with the enforced invariant that it contains no code fence or C# syntax (FR-010b, FR-012), in `setup/src/cabal/dotnetgen/stages/architect.py` — Owner: @python-architect
 - [X] T031 [US1] Contract test: `plan` mutates nothing and reports zero write-stage cost, and a rejected plan costs under 10% of a completed run (SC-011) — in `setup/tests/dotnetgen/contract/test_plan_gate.py` — Owner: @python-tester
 - [X] T032 [US1] `plan` command plus `intent_token` derivation bound to the solution fingerprint so approvals cannot be replayed, in `setup/src/cabal/dotnetgen/cli.py` — Owner: @python-architect
-- [ ] T033 [US1] Contract test: `apply` with a mismatched or stale `intent_token` is refused with no mutation, in `setup/tests/dotnetgen/contract/test_apply_token.py` — Owner: @python-tester
-- [ ] T034 [US1] Write stage converting an approved intent into EditOperations, one type per file per `global/rules/csharp.md`, in `setup/src/cabal/dotnetgen/stages/write.py` — Owner: @python-architect
-- [ ] T035 [US1] `apply` command wiring write into verify with the gate enforced and the unattended tail (FR-010d), in `setup/src/cabal/dotnetgen/cli.py` — Owner: @python-architect
+- [X] T033 [US1] Contract test: `apply` with a mismatched or stale `intent_token` is refused with no mutation, in `setup/tests/dotnetgen/contract/test_apply_token.py` — Owner: @python-tester
+- [X] T034 [US1] Write stage converting an approved intent into EditOperations, one type per file per `global/rules/csharp.md`, in `setup/src/cabal/dotnetgen/stages/write.py` — Owner: @python-architect
+- [X] T035 [US1] `apply` command wiring write into verify with the gate enforced and the unattended tail (FR-010d), in `setup/src/cabal/dotnetgen/cli.py` — Owner: @python-architect
 - [ ] T036 [US1] Integration test: empty directory plus description plus approval yields a solution that compiles, passes tests, and serves health — asserting no architecture question after the template choice (SC-001) — in `setup/tests/dotnetgen/integration/test_greenfield.py` — Owner: @python-tester
 
 ---
