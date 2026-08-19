@@ -140,13 +140,13 @@ Contract tests come first per Principle III. T006–T008 must be written and **o
 
 ## Phase 4b: US5 (partial) — The instrument, before the bet is judged
 
-**Status**: ⬜ Pending (0/3 — T061–T063)
+**Status**: ✅ Complete (3/3 — T061–T063)
 
 **Purpose**: US2 is the design's central bet — a cached structural map and symbol anchoring cost less than re-reading files. Without a ledger that number is an opinion. plan.md already records that SC-002, SC-005, SC-008 and SC-010 cannot be verified until US5 exists; pulling the capture half of US5 forward means Phase 4 can be judged when it lands rather than retroactively at T072. Reconciliation (T064) and the `report` command (T065) stay in Phase 7.
 
-- [ ] T061 [US5] RunRecord ledger reusing `cabal.session_pricing` for per-model cost lookup, in `setup/src/cabal/dotnetgen/ledger.py` — Owner: @python-architect
-- [ ] T062 [US5] Per-stage token, cached-token, cost and wall-clock capture wired through every provider adapter, in `setup/src/cabal/dotnetgen/ledger.py` and `providers/base.py` — Owner: @python-architect
-- [ ] T063 [US5] Derived metrics — `cache_ratio`, `edit_success_rate`, `first_attempt_build_green`, and the repair-versus-initial cost split (FR-029) — in `setup/src/cabal/dotnetgen/ledger.py` — Owner: @python-architect
+- [X] T061 [US5] RunRecord ledger reusing `cabal.session_pricing` for per-model cost lookup, in `setup/src/cabal/dotnetgen/ledger.py` — Owner: @python-architect
+- [X] T062 [US5] Per-stage token, cached-token, cost and wall-clock capture wired through every provider adapter, in `setup/src/cabal/dotnetgen/ledger.py` and `providers/base.py` — Owner: @python-architect
+- [X] T063 [US5] Derived metrics — `cache_ratio`, `edit_success_rate`, `first_attempt_build_green`, and the repair-versus-initial cost split (FR-029) — in `setup/src/cabal/dotnetgen/ledger.py` — Owner: @python-architect
 
 **Checkpoint**: the US2 bet is now falsifiable. Compare against the T074 baseline before starting Phase 5 — **this is the suggested stop-and-use-it-for-real-work point.**
 

@@ -16,7 +16,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Final
 
-from cabal.dotnetgen import pipeline, state
+from cabal.dotnetgen import ledger, pipeline, state
 from cabal.dotnetgen.edits import applier
 from cabal.dotnetgen.edits.model import EditOperation
 from cabal.dotnetgen.pipeline import ChangeIntent, GateDecision, RetryBudget, RunResult
@@ -40,21 +40,42 @@ def run_approved(
     provider: Provider,
     model: str,
     budget: RetryBudget,
+    record: ledger.RunRecord | None = None,
 ) -> RunResult:
-    """Write, apply and verify an approved intent, repairing up to the ceiling."""
+    """Write, apply and verify an approved intent, repairing up to the ceiling.
+
+    When a `record` is supplied every write-stage call is metered into it, and calls after the
+    first are attributed as repair cost - that split is what stops a run that repairs three times
+    from averaging out to look cheap (FR-029).
+    """
     contract = _template_contract(project)
+    write_calls = 0
 
     def writer(
         approved: ChangeIntent, last_failure: dotnet.VerificationResult | None
     ) -> tuple[EditOperation, ...]:
-        return write.produce(
+        nonlocal write_calls
+        request = write.build_request(
             approved,
-            provider,
             model,
-            existing=_read_targets(project, approved),
             template_contract=contract,
             diagnostics=_diagnostics(last_failure),
         )
+        completion = provider.complete(request)
+        write_calls += 1
+        if record is not None:
+            record.record_stage(
+                ledger.StageCost(
+                    stage="write",
+                    provider=getattr(provider, "name", "unknown"),
+                    model=completion.model or model,
+                    usage=completion.usage,
+                    wall_clock_seconds=completion.wall_clock_seconds,
+                    priced=not ledger.is_local(getattr(provider, "name", "")),
+                ),
+                is_repair=write_calls > 1,
+            )
+        return write.parse(completion.text, _read_targets(project, approved))
 
     written: set[str] = set()
 
