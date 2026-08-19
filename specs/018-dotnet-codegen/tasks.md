@@ -77,7 +77,7 @@ Contract tests come first per Principle III. T006–T008 must be written and **o
 
 ## Phase 3: US1 — Stand up a new backend service without bootstrapping (P1)
 
-**Status**: 🟡 In progress (11/12 — T024, T026–T035 done; T036 blocked on T074)
+**Status**: ✅ Complete for Phase 3 (11/11 — T024, T026–T035). **T036 moved to Phase 4c** (see below).
 
 **Goal**: one sentence plus one template choice plus one approval produces a compiling, test-passing, health-serving solution.
 
@@ -96,7 +96,8 @@ Contract tests come first per Principle III. T006–T008 must be written and **o
 - [X] T033 [US1] Contract test: `apply` with a mismatched or stale `intent_token` is refused with no mutation, in `setup/tests/dotnetgen/contract/test_apply_token.py` — Owner: @python-tester
 - [X] T034 [US1] Write stage converting an approved intent into EditOperations, one type per file per `global/rules/csharp.md`, in `setup/src/cabal/dotnetgen/stages/write.py` — Owner: @python-architect
 - [X] T035 [US1] `apply` command wiring write into verify with the gate enforced and the unattended tail (FR-010d), in `setup/src/cabal/dotnetgen/cli.py` — Owner: @python-architect
-- [ ] T036 [US1] Integration test: empty directory plus description plus approval yields a solution that compiles, passes tests, and serves health — asserting no architecture question after the template choice (SC-001) — in `setup/tests/dotnetgen/integration/test_greenfield.py` — Owner: @python-tester
+**T036 is not in this phase.** Discovered by running the pipeline live: adding any feature needs one line inserted into the existing `Program.cs` to register the new slice, and Phase 3's applier creates files but cannot edit them (T018 scope; in-place editing is T042). So a greenfield run gets as far as writing the new files and then stops. Rather than redesign the template to avoid in-place edits, or build a throwaway subset of T042, the integration test moves to **Phase 4c**, after T042 gives the applier the ability the test needs. Phase 3 therefore closes having delivered the scaffolder and the full plan/apply path, but without an end-to-end US1 demonstration.
+
 
 ---
 
@@ -148,6 +149,18 @@ Contract tests come first per Principle III. T006–T008 must be written and **o
 - [ ] T063 [US5] Derived metrics — `cache_ratio`, `edit_success_rate`, `first_attempt_build_green`, and the repair-versus-initial cost split (FR-029) — in `setup/src/cabal/dotnetgen/ledger.py` — Owner: @python-architect
 
 **Checkpoint**: the US2 bet is now falsifiable. Compare against the T074 baseline before starting Phase 5 — **this is the suggested stop-and-use-it-for-real-work point.**
+
+---
+
+## Phase 4c: US1 — the deferred greenfield demonstration
+
+**Status**: ⬜ Pending (0/1 — T036)
+
+**Purpose**: the US1 end-to-end test that Phase 3 could not run. It needs T042's in-place editing (to register a slice in `Program.cs`) and T074's baseline (to compare cost against). Both exist by this point.
+
+- [ ] T036 [US1] Integration test: empty directory plus description plus approval yields a solution that compiles, passes tests, and serves health — asserting no architecture question after the template choice (SC-001) — in `setup/tests/dotnetgen/integration/test_greenfield.py` — Owner: @python-tester
+
+**Checkpoint**: US1 is demonstrated end to end for the first time.
 
 ---
 
@@ -232,11 +245,11 @@ Contract tests come first per Principle III. T006–T008 must be written and **o
 Phase 1 Setup ✅
   └─> Phase 2 Foundational ✅  (contract tests T006–T008 before T009+)
         ├─> Phase 2b  T074 cost baseline        ← must precede T036, runs alongside Phase 3
-        └─> Phase 3   US1 (P1)  T024, T026–T036   ← scaffolder works
-              │     (T036 needs T074)
+        └─> Phase 3   US1 (P1)  T024, T026–T035   ← scaffolder + plan/apply path
                     └─> Phase 3b  US3 partial  T046–T048  ← unattended becomes safe
                           └─> Phase 4   US2 (P2)  T037–T045, T075   needs T009, T015, T018
                                 └─> Phase 4b  US5 partial  T061–T063  needs T011 usage reporting
+                                      ├─> Phase 4c  T036 greenfield end-to-end (needs T042 + T074)
                                       │         ← STOP: compare to T074, use it for real work
                                       ├─> Phase 5   US3 remainder  T049–T052
                                       ├─> Phase 6   US4 (P4)  T053–T060   needs T010, T011, T012
@@ -251,7 +264,8 @@ Phase 1 Setup ✅
 
 **Two ordering constraints created by the revision**:
 
-- T074 (baseline) must precede **T036** — the first pipeline-generated solution. It does *not* block T024/T026: hand-authoring the template does not taint an unassisted-from-scratch reference, so the baseline session can be captured in parallel with Phase 3 authoring. What it must precede is the first time the tool produces a solution the baseline would then be compared against.
+- T074 (baseline) must precede **T036**, which now sits in Phase 4c. It does *not* block T024/T026: hand-authoring the template does not taint an unassisted-from-scratch reference, so the baseline session can be captured any time before Phase 4c.
+- T042 (in-place editing) must precede **T036**. A greenfield run cannot register a new slice without inserting a line into `Program.cs`, so the US1 end-to-end test is unrunnable until the applier can edit an existing file.
 - T023/T025 (Phase 7b) must precede T072 — measuring FR-001's "closed set" against a set of one measures nothing.
 
 ## Parallel execution examples
@@ -286,7 +300,7 @@ T053, T054         → @python-architect ×2, Parallel: yes, separate worktrees
 
 ## Implementation strategy
 
-**Demonstrable slice = Phase 2b + Phase 3 (T074, T024, T026–T036).** A described service becomes a running, tested solution after one approval, with the cost baseline already recorded. Note this is a *scaffolder* — `dotnet new` also scaffolds. It is the platform the differentiated work is tested on, not the value proposition.
+**Demonstrable slice = Phase 2b + Phase 3 (T074, T024, T026–T035).** A described service becomes a scaffolded, building solution, and `plan`/`apply` run end to end under the gate. Note this is a *scaffolder* — `dotnet new` also scaffolds — and that the apply path can create files but not yet edit them, so a feature is not fully wired until T042. It is the platform the differentiated work is tested on, not the value proposition.
 
 **Real checkpoint = end of Phase 4b.** The original plan called Phase 3 the MVP and separately advised stopping after Phase 4; those disagreed. The differentiated value starts at US2, and US2 is unjudgeable without the ledger, so the honest stopping point is after 4b: run real work through it, compare the ledger against the T074 baseline, and only then decide whether Phases 5–7 are worth building as specified.
 

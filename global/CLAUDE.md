@@ -10,6 +10,17 @@ Personal preferences and conventions that apply to every project and session.
 - If something I ask is ambiguous, state your assumption and proceed — don't ask for clarification on minor things.
 - Bullet points over paragraphs for lists of things.
 
+### Explain in plain language
+
+When explaining a problem, a blocker, or a decision I have to make, lead with what is concretely true — the file, the line, what breaks — before any label for it. Assume I have not memorised the project's internal shorthand.
+
+- **Don't make identifiers carry the explanation.** Task IDs (`T042`), requirement codes (`FR-010b`, `SC-003`), and internal terms (`disposition`, `anchor_kind`, `relaxation ladder`) are *references*, not descriptions. Say what the thing does, then cite the ID in parentheses if it's useful for lookup.
+- **Show the actual thing.** A three-line code snippet or the literal error text beats a paragraph describing it.
+- **When I have to choose, give me the real-world trade-off** — what I gain, what I lose, what it costs to change later — not the names of the options.
+- If I say something is unclear, that's a signal to re-explain from concrete facts, **not** to add more detail at the same level of abstraction.
+
+This applies to prose aimed at me. Code comments, commit messages, and spec files keep their normal precision and may use the project's terms freely.
+
 ## Searching the codebase
 
 - **Use the `Grep` tool for content search and `Glob` for file lookup — never `grep`/`ls`/`find` via Bash.** They're cheaper, permission-integrated, and don't dump noise into context.
