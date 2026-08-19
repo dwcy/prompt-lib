@@ -13,12 +13,15 @@ import sys
 from collections.abc import Callable, Sequence
 
 from cabal.evals import __version__
+from cabal.evals.cli_run import (
+    DEFAULT_EVALS_ROOT,
+    EXIT_FAILURE,
+    EXIT_OK,
+    EXIT_USAGE,
+    run_command,
+)
 
-EXIT_OK = 0
-EXIT_FAILURE = 1
-EXIT_USAGE = 2
-
-DEFAULT_EVALS_ROOT = "evals"
+__all__ = ["DEFAULT_EVALS_ROOT", "EXIT_FAILURE", "EXIT_OK", "EXIT_USAGE", "main"]
 
 
 def version_line() -> str:
@@ -45,7 +48,9 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--baseline", metavar="PROFILE", help="baseline config profile name")
     run.add_argument("--candidate", metavar="PROFILE", help="candidate config profile name")
     run.add_argument("--runs", type=int, metavar="N", help="repetitions per cell")
+    run.add_argument("--tasks", metavar="ID[,ID...]", help="comma-separated task ids (default: all)")
     run.add_argument("--resume", metavar="RUN_ID", help="resume an interrupted run id")
+    run.add_argument("--adapter", metavar="NAME", help="agent adapter override")
 
     judge = subparsers.add_parser("judge", help="pairwise-judge previously recorded results")
     judge.add_argument("--run-id", metavar="RUN_ID", help="results run id to judge")
@@ -57,7 +62,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 # Command handlers register here as their tasks land; an absent entry is a deferral, not a bug.
-_HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {}
+_HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {"run": run_command}
 
 
 def main(argv: Sequence[str] | None = None) -> int:
