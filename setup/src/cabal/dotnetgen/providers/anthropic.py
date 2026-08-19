@@ -1,0 +1,183 @@
+# -*- coding: utf-8 -*-
+"""Anthropic Messages adapter, for the API-key auth mode.
+
+The reason this exists alongside the CLI-shell adapter is cache accounting. SC-005 asks that at
+least 70% of served context come from cache across a run sequence, and SC-010 asks that our cost
+arithmetic reconcile with the provider's own figures. Both need the *cache* token counts, which
+this API reports directly as `cache_read_input_tokens` and `cache_creation_input_tokens`.
+
+The banded prompt is what makes those numbers move: `context.bands` orders content stable-to-
+volatile and marks checkpoints, and this adapter turns those checkpoints into `cache_control`
+markers. Without that, the prefix is re-sent in full every turn and the cache reports zero.
+
+Uses `urllib` from the standard library, matching `openai_compatible` - the pipeline should not
+take a runtime dependency to POST one JSON document.
+"""
+
+from __future__ import annotations
+
+import json
+import time
+import urllib.error
+import urllib.request
+from dataclasses import dataclass
+from typing import Final
+
+from cabal.dotnetgen.providers.base import (
+    CompletionRequest,
+    CompletionResult,
+    ProviderError,
+    ProviderStatus,
+    ProviderUnavailableError,
+    Usage,
+)
+from cabal.dotnetgen.providers.config import StageBinding
+
+PROVIDER_NAME: Final[str] = "anthropic"
+DEFAULT_BASE_URL: Final[str] = "https://api.anthropic.com"
+API_VERSION: Final[str] = "2023-06-01"
+REQUEST_TIMEOUT_SECONDS: Final[int] = 300
+CHECK_TIMEOUT_SECONDS: Final[int] = 10
+DEFAULT_MAX_TOKENS: Final[int] = 4096
+
+
+@dataclass(frozen=True)
+class AnthropicProvider:
+    """Stage-bindable adapter. Holds no key: the binding reads it from the environment per call."""
+
+    binding: StageBinding
+    name: str = PROVIDER_NAME
+
+    @property
+    def base_url(self) -> str:
+        return (self.binding.base_url or DEFAULT_BASE_URL).rstrip("/")
+
+    @property
+    def is_local(self) -> bool:
+        """Never local. Present so the ledger can ask every provider the same question."""
+        return False
+
+    def _headers(self) -> dict[str, str]:
+        key = self.binding.api_key()
+        if not key:
+            raise ProviderError(
+                f"{self.binding.api_key_env or 'ANTHROPIC_API_KEY'} is not set; "
+                f"stage {self.binding.stage!r} cannot authenticate"
+            )
+        return {
+            "Content-Type": "application/json",
+            "x-api-key": key,
+            "anthropic-version": API_VERSION,
+        }
+
+    def _post(self, path: str, body: dict, timeout: int) -> dict:
+        request = urllib.request.Request(
+            url=f"{self.base_url}{path}",
+            data=json.dumps(body).encode("utf-8"),
+            headers=self._headers(),
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=timeout) as response:
+                return json.loads(response.read().decode("utf-8"))
+        except urllib.error.HTTPError as exc:
+            detail = exc.read().decode("utf-8", errors="replace")[:500]
+            # 429 and 5xx are exactly the cases a configured fallback exists for (FR-027).
+            retryable = exc.code in (408, 409, 429) or exc.code >= 500
+            raise ProviderError(
+                f"{self.base_url}{path} returned HTTP {exc.code}: {detail}", retryable=retryable
+            ) from exc
+        except urllib.error.URLError as exc:
+            raise ProviderUnavailableError(f"cannot reach {self.base_url}: {exc.reason}") from exc
+        except TimeoutError as exc:
+            raise ProviderError(
+                f"{self.base_url} timed out after {timeout}s", retryable=True
+            ) from exc
+        except json.JSONDecodeError as exc:
+            raise ProviderError(f"{self.base_url} returned malformed JSON: {exc}") from exc
+
+    def complete(self, request: CompletionRequest) -> CompletionResult:
+        system, messages = _split_system(request)
+        body: dict = {
+            "model": request.model,
+            "max_tokens": request.max_output_tokens or DEFAULT_MAX_TOKENS,
+            "messages": messages,
+        }
+        if system:
+            body["system"] = system
+        if request.temperature is not None:
+            body["temperature"] = request.temperature
+        if request.stop:
+            body["stop_sequences"] = list(request.stop)
+
+        started = time.monotonic()
+        payload = self._post("/v1/messages", body, REQUEST_TIMEOUT_SECONDS)
+        elapsed = time.monotonic() - started
+
+        blocks = payload.get("content")
+        if not isinstance(blocks, list):
+            raise ProviderError(f"response contained no content: {str(payload)[:300]}")
+        text = "".join(b.get("text", "") for b in blocks if b.get("type") == "text")
+
+        return CompletionResult(
+            text=text,
+            usage=_usage_from(payload.get("usage")),
+            model=payload.get("model", request.model),
+            provider=self.name,
+            wall_clock_seconds=elapsed,
+        )
+
+    def check(self) -> ProviderStatus:
+        """Probe with a one-token call. Cheaper than a health endpoint the API does not offer."""
+        try:
+            self._post(
+                "/v1/messages",
+                {
+                    "model": self.binding.model,
+                    "max_tokens": 1,
+                    "messages": [{"role": "user", "content": "ping"}],
+                },
+                CHECK_TIMEOUT_SECONDS,
+            )
+        except ProviderError as exc:
+            return ProviderStatus(self.name, self.binding.model, reachable=False, detail=str(exc))
+        return ProviderStatus(self.name, self.binding.model, reachable=True)
+
+
+def _split_system(request: CompletionRequest) -> tuple[str, list[dict]]:
+    """Anthropic takes system content as its own field, not as a message role.
+
+    The leading system blocks are the stable bands, so hoisting them here is also what keeps the
+    cacheable prefix contiguous.
+    """
+    system_parts: list[str] = []
+    messages: list[dict] = []
+    for message in request.messages:
+        if message.role == "system" and not messages:
+            system_parts.append(message.content)
+            continue
+        messages.append({"role": message.role, "content": message.content})
+    if not messages:
+        # The API requires at least one message; an all-system request is still a real request.
+        messages.append({"role": "user", "content": system_parts.pop() if system_parts else ""})
+    return "\n\n".join(system_parts), messages
+
+
+def _usage_from(raw: object) -> Usage:
+    """Normalise the API's usage block, keeping cache reads distinct from cache writes.
+
+    `input_tokens` from this API excludes cached reads, so they are added back to give a total
+    that means the same thing across providers - otherwise the cache ratio would be computed
+    against a denominator that shrinks as caching improves.
+    """
+    if not isinstance(raw, dict):
+        return Usage(cache_reported=False)
+    fresh = int(raw.get("input_tokens", 0) or 0)
+    cache_read = int(raw.get("cache_read_input_tokens", 0) or 0)
+    cache_write = int(raw.get("cache_creation_input_tokens", 0) or 0)
+    return Usage(
+        input_tokens=fresh + cache_read + cache_write,
+        output_tokens=int(raw.get("output_tokens", 0) or 0),
+        cached_input_tokens=cache_read,
+        cache_reported=True,
+    )

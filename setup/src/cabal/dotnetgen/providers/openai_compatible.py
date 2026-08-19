@@ -142,12 +142,17 @@ class OpenAICompatibleProvider:
                 provider=self.name, model=self.binding.model, reachable=False, detail=str(exc)
             )
 
+        # Presence of the `data` key means the endpoint answered with a model listing, so its
+        # contents are authoritative. Ollama reports an empty catalogue as `{"data": null}`, not
+        # as an empty array, so testing the value would read "no models installed" as "cannot
+        # tell" - which is what let a run pass the gate and then die at the write stage with
+        # `model 'qwen2.5-coder:7b' not found`.
         available = {
             entry.get("id")
-            for entry in payload.get("data", [])
+            for entry in (payload.get("data") or [])
             if isinstance(entry, dict)
         }
-        if available and self.binding.model not in available:
+        if "data" in payload and self.binding.model not in available:
             return ProviderStatus(
                 provider=self.name,
                 model=self.binding.model,

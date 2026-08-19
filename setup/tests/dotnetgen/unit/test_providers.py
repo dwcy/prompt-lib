@@ -110,11 +110,16 @@ def test_openai_compatible_binding_builds_an_http_provider() -> None:
     assert isinstance(factory.provider_for(binding), OpenAICompatibleProvider)
 
 
-def test_pending_provider_names_the_task_that_adds_it() -> None:
+def test_anthropic_binding_builds_its_adapter() -> None:
     binding = StageBinding(stage="architect", provider="anthropic", model="m")
 
-    with pytest.raises(ProviderError, match="T053"):
-        factory.provider_for(binding)
+    assert factory.provider_for(binding).name == "anthropic"
+
+
+def test_google_binding_builds_its_adapter() -> None:
+    binding = StageBinding(stage="architect", provider="google", model="m")
+
+    assert factory.provider_for(binding).name == "google"
 
 
 def test_unknown_provider_is_refused() -> None:

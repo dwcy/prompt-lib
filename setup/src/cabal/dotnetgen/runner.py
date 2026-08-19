@@ -71,7 +71,7 @@ def run_approved(
                     model=completion.model or model,
                     usage=completion.usage,
                     wall_clock_seconds=completion.wall_clock_seconds,
-                    priced=not ledger.is_local(getattr(provider, "name", "")),
+                    priced=not ledger.prices_nothing(provider),
                 ),
                 is_repair=write_calls > 1,
             )

@@ -283,12 +283,69 @@ def cmd_change(args: argparse.Namespace) -> int:
     return cmd_plan(args)
 
 
+def cmd_providers(args: argparse.Namespace) -> int:
+    """T056: show what each stage is bound to, and with --check whether it answers.
+
+    Probing costs one token per provider and answers the question that otherwise only surfaces
+    halfway through a run: is this configuration actually usable on this machine right now?
+    """
+    project = Path(args.project)
+    try:
+        bindings = config.load_bindings(project)
+    except config.BindingsError as exc:
+        emit_error(args, str(exc))
+        return EXIT_USAGE
+
+    stages: list[dict[str, object]] = []
+    unreachable = 0
+    for stage, binding in sorted(bindings.stages.items()):
+        entry: dict[str, object] = {
+            "stage": stage,
+            "provider": binding.provider,
+            "model": binding.model,
+            "fallback": binding.fallback.provider if binding.fallback else None,
+            "missing_api_key": binding.missing_key(),
+        }
+        if args.check:
+            try:
+                status = factory.provider_for(binding).check()
+            except ProviderError as exc:
+                entry["reachable"] = False
+                entry["detail"] = str(exc)
+            else:
+                entry["reachable"] = status.reachable
+                entry["detail"] = status.detail
+            if not entry["reachable"]:
+                unreachable += 1
+        stages.append(entry)
+
+    emit_result(
+        args,
+        {"status": "ok", "stages": stages, "unreachable": unreachable},
+        "\n".join(_provider_line(entry, args.check) for entry in stages),
+    )
+    # Reporting is the job; an unreachable provider is a finding, not a crash of this command.
+    return EXIT_OK if not unreachable else EXIT_FAILURE
+
+
+def _provider_line(entry: dict[str, object], checked: bool) -> str:
+    parts = [f"{entry['stage']:<10} {entry['provider']}/{entry['model']}"]
+    if entry["fallback"]:
+        parts.append(f"(fallback: {entry['fallback']})")
+    if entry["missing_api_key"]:
+        parts.append("[api key not set]")
+    if checked:
+        parts.append("ok" if entry.get("reachable") else f"UNREACHABLE - {entry.get('detail', '')}")
+    return " ".join(parts)
+
+
 HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {
     "new": cmd_new,
     "plan": cmd_plan,
     "apply": cmd_apply,
     "map": cmd_map,
     "change": cmd_change,
+    "providers": cmd_providers,
 }
 
 TASK_OWNERS: dict[str, str] = {

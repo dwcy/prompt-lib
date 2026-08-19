@@ -34,8 +34,14 @@ RUNS_RELDIR: Final[str] = ".dotnetgen/runs"
 RECONCILE_TOLERANCE: Final[float] = 0.05
 """SC-010 allows 5% drift between our arithmetic and the provider's own reported usage."""
 
-LOCAL_PROVIDERS: Final[frozenset[str]] = frozenset({"openai_compatible"})
-"""Providers that may legitimately cost nothing - a locally-hosted endpoint bills no tokens."""
+def prices_nothing(provider: object) -> bool:
+    """True when the provider runs on this machine and therefore bills nothing (SC-008).
+
+    Asked of the provider instance, never inferred from its name. `openai_compatible` serves both
+    Ollama on localhost and hosted OpenAI; deciding by name would report a hosted run as free and
+    quietly corrupt the one number SC-008 turns on.
+    """
+    return bool(getattr(provider, "is_local", False))
 
 
 @dataclass(frozen=True)
@@ -265,6 +271,3 @@ def new_run_id(stamp: datetime | None = None) -> str:
     return moment.strftime("%Y%m%dT%H%M%SZ")
 
 
-def is_local(provider: str) -> bool:
-    """A locally-hosted provider bills nothing; its zero cost is a measurement, not a gap."""
-    return provider in LOCAL_PROVIDERS

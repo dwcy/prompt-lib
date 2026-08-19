@@ -181,20 +181,20 @@ Contract tests come first per Principle III. T006–T008 must be written and **o
 
 ## Phase 6: US4 — Choose which model does which job, including local ones (P4)
 
-**Status**: ⬜ Pending (0/8 — T053–T060)
+**Status**: ✅ Complete (8/8 — T053–T060)
 
 **Goal**: bind each stage to a provider and model independently; the mechanical write stage can run locally at zero marginal cost.
 
 **Independent test**: run one identical feature under three binding configurations and compare cost, wall-clock, and first-attempt build-green (SC-008).
 
-- [ ] T053 [P] [US4] Anthropic adapter with cache-read/cache-write token reporting, in `setup/src/cabal/dotnetgen/providers/anthropic.py` — Owner: @python-architect — Parallel: yes
-- [ ] T054 [P] [US4] Google adapter with usage reporting normalised to the provider interface, in `setup/src/cabal/dotnetgen/providers/google.py` — Owner: @python-architect — Parallel: yes
-- [ ] T055 [US4] Per-stage binding resolution with configured fallback on provider failure or rate limiting (FR-027), in `setup/src/cabal/dotnetgen/providers/config.py` — Owner: @python-architect
-- [ ] T056 [US4] `providers --check` probing each bound provider for reachability without running a pipeline, in `setup/src/cabal/dotnetgen/cli.py` — Owner: @python-architect
-- [ ] T057 [US4] Local-endpoint support for Ollama and LM Studio through `base_url`, with cost accounted as zero (SC-008), in `setup/src/cabal/dotnetgen/providers/openai_compatible.py` — Owner: @python-architect
-- [ ] T058 [US4] Unit tests for binding resolution, fallback selection, and clear surfacing of an unreachable provider, in `setup/tests/dotnetgen/unit/test_provider_routing.py` — Owner: @python-tester
-- [ ] T059 [US4] Integration test binding stages across all three auth modes — subscription CLI-shell, API key, and local endpoint — asserting each resolves, reports usage, and falls back correctly, in `setup/tests/dotnetgen/integration/test_auth_modes.py` — Owner: @python-tester
-- [ ] T060 [US4] Integration test comparing one feature across all-hosted, cheap-hosted-writer, and local-writer configurations for cost and build-green (SC-008), in `setup/tests/dotnetgen/integration/test_stage_routing.py` — Owner: @python-tester
+- [X] T053 [P] [US4] Anthropic adapter with cache-read/cache-write token reporting, in `setup/src/cabal/dotnetgen/providers/anthropic.py` — Owner: @python-architect — Parallel: yes
+- [X] T054 [P] [US4] Google adapter with usage reporting normalised to the provider interface, in `setup/src/cabal/dotnetgen/providers/google.py` — Owner: @python-architect — Parallel: yes
+- [X] T055 [US4] Per-stage binding resolution with configured fallback on provider failure or rate limiting (FR-027), in `setup/src/cabal/dotnetgen/providers/config.py` — Owner: @python-architect
+- [X] T056 [US4] `providers --check` probing each bound provider for reachability without running a pipeline, in `setup/src/cabal/dotnetgen/cli.py` — Owner: @python-architect
+- [X] T057 [US4] Local-endpoint support for Ollama and LM Studio through `base_url`, with cost accounted as zero (SC-008), in `setup/src/cabal/dotnetgen/providers/openai_compatible.py` — Owner: @python-architect
+- [X] T058 [US4] Unit tests for binding resolution, fallback selection, and clear surfacing of an unreachable provider, in `setup/tests/dotnetgen/unit/test_provider_routing.py` — Owner: @python-tester
+- [X] T059 [US4] Integration test binding stages across all three auth modes — subscription CLI-shell, API key, and local endpoint — asserting each resolves, reports usage, and falls back correctly, in `setup/tests/dotnetgen/integration/test_auth_modes.py` — Owner: @python-tester
+- [X] T060 [US4] Integration test comparing one feature across all-hosted, cheap-hosted-writer, and local-writer configurations for cost and build-green (SC-008), in `setup/tests/dotnetgen/integration/test_stage_routing.py` — Owner: @python-tester
 
 ---
 
