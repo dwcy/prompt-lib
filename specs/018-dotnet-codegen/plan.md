@@ -172,9 +172,13 @@ The `context/`, `edits/`, `verify/` and `providers/` packages are the **language
 
 ## Phase Gating
 
-**Phase A (this feature)** — US1 through US5, greenfield. Exit criteria: SC-001, SC-002, SC-003, SC-004, SC-005, SC-007, SC-008, SC-009, SC-010, SC-011, SC-012 measured and met. SC-006 is not measurable in Phase A because a template-generated solution's structure is known rather than discovered (research R2).
+**Phase A (this feature)** — US1 through US5, greenfield. Exit criteria: SC-001, SC-002, SC-003, SC-004, SC-005, SC-007, SC-008, SC-009, SC-010, SC-011, SC-012 measured and met.
 
-**Phase B (separately gated, may become its own feature)** — US6, brownfield. Entry conditions: Phase A exit criteria met; Gate 1 satisfied if the map ships as MCP; Gate 3 contract tests for any MCP tool schema; fork-before-build evaluation of the three named Roslyn MCP candidates completed. Exit criterion: SC-006 on a 20k-line solution.
+**SC-006 is now measured in Phase A, as a number rather than a target** (revised — tasks.md T075). The original reasoning stands for the *edit* path: a template-generated solution's structure is known rather than discovered, so exercising the map's ranking against one proves nothing (research R2). But `map` is read-only. Pointing it at a real large solution for measurement alone — no `change` run, no edit application, no convention inference — costs a corpus solution and yields the ratio before Phase 4's design is committed to, instead of after Phase B begins. If the ratio misses 2%, that is recorded as a Phase B entry finding, not tuned away.
+
+**Phase B (separately gated, may become its own feature)** — US6, brownfield. Entry conditions: Phase A exit criteria met; Gate 1 satisfied if the map ships as MCP; Gate 3 contract tests for any MCP tool schema; fork-before-build evaluation of the three named Roslyn MCP candidates completed; **and a resolution for the template-shaped state model described below.** Exit criterion: SC-006 on a 20k-line solution, met rather than merely measured.
+
+**Phase B blocker discovered during Phase A implementation** — `ProjectState` cannot represent a brownfield project. `state.py` requires `template_id` on creation and rejects any state file whose `template_id` is outside `TEMPLATE_IDS` on load; the architect stage and `context/bands.py` both lean on that locked template for their conventions. A solution the tool did not generate has no template, and US6-AS1 requires new code to *match the surrounding solution's conventions rather than impose the template* — the opposite of what the current model encodes. Phase B therefore needs a no-template, inferred-conventions mode across `state.py` and `bands.py`, designed rather than patched in. This is an entry condition, not an implementation detail, because it changes a data model that Phase A treats as immutable by design (FR-001c).
 
 ## Complexity Tracking
 

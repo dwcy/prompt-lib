@@ -131,7 +131,7 @@ def verify(
     filter_expression: str | None = None,
     run_tests: bool = True,
 ) -> VerificationResult:
-    """Build, then test if the build succeeded. Classification is provisional until T045.
+    """Build, then test if the build succeeded. Classification is provisional until T046-T047.
 
     Until the diagnostic parser lands, any failure is reported as a code defect *except* a
     missing toolchain or a timeout, which are unambiguously environmental. Erring toward
