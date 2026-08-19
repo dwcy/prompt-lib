@@ -120,9 +120,12 @@ class RunRecord:
     wall_clock_seconds: float = 0.0
     first_attempt_build_green: bool = False
     repair_stage_costs: list[StageCost] = field(default_factory=list)
+    reported_calls: list[Usage] = field(default_factory=list)
+    """Each provider call's own usage, kept unaggregated as the second source for SC-010."""
 
     def record_stage(self, cost: StageCost, *, is_repair: bool = False) -> None:
         """Add one stage call. Repeat calls to a stage accumulate rather than overwrite."""
+        self.reported_calls.append(cost.usage)
         existing = self.stage_costs.get(cost.stage)
         if existing is None:
             self.stage_costs[cost.stage] = cost
@@ -165,8 +168,40 @@ class RunRecord:
         landed = sum(1 for a in self.edit_applications if a.landed)
         return landed / len(self.edit_applications)
 
+    @property
+    def reported_totals(self) -> Usage:
+        """Sum of every individual call's reported usage, independent of the stage aggregates."""
+        total = Usage(input_tokens=0, output_tokens=0, cached_input_tokens=0)
+        for usage in self.reported_calls:
+            total = total + usage
+        return total
+
+    def tokens_reconcile(self) -> bool:
+        """Do the stage aggregates still equal the sum of the calls that produced them?
+
+        This is the check that catches a dropped call - a fallback that answered without being
+        metered, or a stage that returned early. Comparing our cost against our own tokens would
+        prove nothing; comparing two independently accumulated sources can actually fail.
+        """
+        aggregate = Usage(input_tokens=0, output_tokens=0, cached_input_tokens=0)
+        for cost in self.stage_costs.values():
+            aggregate = aggregate + cost.usage
+        reported = self.reported_totals
+        return (
+            aggregate.input_tokens == reported.input_tokens
+            and aggregate.output_tokens == reported.output_tokens
+            and aggregate.cached_input_tokens == reported.cached_input_tokens
+        )
+
     def reconciled_within_tolerance(self, provider_reported_usd: float | None) -> bool:
-        """SC-010: our arithmetic must agree with the provider, and disagreement is reported."""
+        """SC-010: our arithmetic must agree with the provider, and disagreement is reported.
+
+        Both halves must hold. The token halves must tie out exactly, and where the provider also
+        reports a cost it must land within 5% of ours. A run whose tokens do not tie out is not
+        reconciled even if the cost happens to match.
+        """
+        if not self.tokens_reconcile():
+            return False
         if provider_reported_usd is None:
             return False
         ours = self.total_cost_usd
@@ -175,10 +210,9 @@ class RunRecord:
         return abs(ours - provider_reported_usd) / provider_reported_usd <= RECONCILE_TOLERANCE
 
     def to_dict(self, provider_reported_usd: float | None = None) -> dict:
-        return {
+        payload: dict = {
             "run_id": self.run_id,
             "project_path": self.project_path,
-            "template_id": self.template_id,
             "outcome": self.outcome,
             "stage_costs": {name: cost.to_dict() for name, cost in self.stage_costs.items()},
             "repair_attempts": [a.to_dict() for a in self.repair_attempts],
@@ -191,6 +225,11 @@ class RunRecord:
             "derived": _derived(self, provider_reported_usd),
             "wall_clock_seconds": round(self.wall_clock_seconds, 3),
         }
+        if self.template_id:
+            # Omitted rather than blank for a project the tool did not scaffold: the schema's
+            # enum is the closed template set, and "" is not a member of it.
+            payload["template_id"] = self.template_id
+        return payload
 
 
 def _derived(record: RunRecord, provider_reported_usd: float | None) -> dict:
@@ -229,7 +268,7 @@ def from_run(run_id: str, result: RunResult, project: Path, template_id: str = "
         project_path=str(project),
         template_id=template_id,
         outcome=result.outcome.value,
-        repair_attempts=_repairs_from(result),
+        repair_attempts=repairs_from(result),
         edit_applications=applications,
         retry_budget=result.budget,
         first_attempt_build_green=bool(result.attempts) and result.attempts[0].passed,
@@ -237,7 +276,7 @@ def from_run(run_id: str, result: RunResult, project: Path, template_id: str = "
     return record
 
 
-def _repairs_from(result: RunResult) -> list[RepairAttempt]:
+def repairs_from(result: RunResult) -> list[RepairAttempt]:
     """Every attempt after the first is a repair; the first is the initial write."""
     repairs: list[RepairAttempt] = []
     for index, attempt in enumerate(result.attempts[1:], start=1):

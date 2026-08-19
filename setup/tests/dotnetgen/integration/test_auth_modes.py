@@ -17,11 +17,13 @@ from __future__ import annotations
 import pytest
 
 from cabal.dotnetgen.providers import config, factory
-from cabal.dotnetgen.providers.anthropic import AnthropicProvider, _usage_from as anthropic_usage
+from cabal.dotnetgen.providers.anthropic import AnthropicProvider
 from cabal.dotnetgen.providers.base import Provider, ProviderError
 from cabal.dotnetgen.providers.cli_shell import CliShellProvider
 from cabal.dotnetgen.providers.config import StageBinding
-from cabal.dotnetgen.providers.google import GoogleProvider, _usage_from as google_usage
+from cabal.dotnetgen.providers.google import GoogleProvider
+from cabal.dotnetgen.providers.google import _usage_from as google_usage
+from cabal.dotnetgen.providers.usage import parse_usage as anthropic_usage
 from cabal.dotnetgen.providers.openai_compatible import OpenAICompatibleProvider
 
 BINDINGS_TOML = """

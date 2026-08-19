@@ -9,10 +9,11 @@ its task, never a silent stub.
 from __future__ import annotations
 
 import argparse
+import time
 from collections.abc import Callable
 from pathlib import Path
 
-from cabal.dotnetgen import intent, map_cache, pipeline, runner, scaffold, state
+from cabal.dotnetgen import intent, ledger, map_cache, pipeline, reporting, runner, scaffold, state
 from cabal.dotnetgen.edits import applier
 from cabal.dotnetgen.exits import (
     EXIT_ENVIRONMENT_FAILURE,
@@ -151,6 +152,12 @@ def cmd_apply(args: argparse.Namespace) -> int:
         return EXIT_USAGE
 
     budget = RetryBudget(ceiling=args.retry_ceiling)
+    record = ledger.RunRecord(
+        run_id=ledger.new_run_id(),
+        project_path=str(project),
+        template_id=state.load(project).template_id if state.exists(project) else "",
+    )
+    started = time.monotonic()
     try:
         run = runner.run_approved(
             project=project,
@@ -158,6 +165,7 @@ def cmd_apply(args: argparse.Namespace) -> int:
             provider=provider,
             model=binding.model,
             budget=budget,
+            record=record,
         )
     except (write.WriteError, ProviderError) as exc:
         emit_error(args, str(exc))
@@ -171,7 +179,23 @@ def cmd_apply(args: argparse.Namespace) -> int:
     if run.outcome is RunOutcome.COMPLETED:
         intent.clear(project)
 
-    emit_result(args, _describe_run(run, pending.token), _summarise_run(run))
+    # Recorded for every outcome, not just success: a halted run is exactly the one whose cost a
+    # developer needs to see, and dropping it would make repairs invisible in the totals.
+    record.outcome = run.outcome.value
+    record.wall_clock_seconds = time.monotonic() - started
+    record.retry_budget = run.budget
+    record.repair_attempts = ledger.repairs_from(run)
+    record.edit_applications = [
+        a for attempt in run.attempts for a in attempt.apply_report.applications
+    ]
+    record.first_attempt_build_green = bool(run.attempts) and run.attempts[0].passed
+    written = ledger.write(project, record, provider_reported_usd=record.total_cost_usd)
+
+    payload = _describe_run(run, pending.token)
+    payload["run_id"] = record.run_id
+    payload["record_path"] = str(written)
+    payload["cost_usd"] = round(record.total_cost_usd, 6)
+    emit_result(args, payload, _summarise_run(run))
     return _EXIT_FOR_OUTCOME[run.outcome]
 
 
@@ -339,6 +363,28 @@ def _provider_line(entry: dict[str, object], checked: bool) -> str:
     return " ".join(parts)
 
 
+def cmd_report(args: argparse.Namespace) -> int:
+    """T065: read back recorded runs and show what they cost."""
+    project = Path(args.project)
+    runs = reporting.load_runs(project)
+    selected = reporting.select(runs, run_id=args.run, last=args.last)
+
+    if args.run is not None and not selected:
+        emit_error(args, f"no run recorded with id {args.run!r} in {project}")
+        return EXIT_USAGE
+
+    emit_result(
+        args,
+        {
+            "status": "ok",
+            "runs": [{"run_id": r.run_id, **r.payload} for r in selected],
+            "summary": reporting.summarise(selected),
+        },
+        reporting.render(selected),
+    )
+    return EXIT_OK
+
+
 HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {
     "new": cmd_new,
     "plan": cmd_plan,
@@ -346,6 +392,7 @@ HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {
     "map": cmd_map,
     "change": cmd_change,
     "providers": cmd_providers,
+    "report": cmd_report,
 }
 
 TASK_OWNERS: dict[str, str] = {

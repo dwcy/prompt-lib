@@ -200,15 +200,15 @@ Contract tests come first per Principle III. T006–T008 must be written and **o
 
 ## Phase 7: US5 (remainder) — Reconciliation and the cost report (P5)
 
-**Status**: ⬜ Pending (0/3 — T064–T066)
+**Status**: ✅ Complete (3/3 — T064–T066)
 
 **Goal**: every run accounts for all four cost centres, with repair cost separately attributable. Capture landed in Phase 4b; this phase reconciles it against the provider and renders it.
 
 **Independent test**: run one scaffold and one edit; confirm the report covers all four cost centres and reconciles with provider-reported usage (SC-010).
 
-- [ ] T064 [US5] Reconciliation against provider-reported usage with an explicit `reconciled` flag rather than silent trust (SC-010), in `setup/src/cabal/dotnetgen/ledger.py` — Owner: @python-architect
-- [ ] T065 [US5] `report` command supporting `--run` and `--last`, in `setup/src/cabal/dotnetgen/cli.py` — Owner: @python-architect
-- [ ] T066 [US5] Contract test asserting every `--json` output across all seven commands validates against its schema, in `setup/tests/dotnetgen/contract/test_json_outputs.py` — Owner: @python-tester
+- [X] T064 [US5] Reconciliation against provider-reported usage with an explicit `reconciled` flag rather than silent trust (SC-010), in `setup/src/cabal/dotnetgen/ledger.py` — Owner: @python-architect
+- [X] T065 [US5] `report` command supporting `--run` and `--last`, in `setup/src/cabal/dotnetgen/cli.py` — Owner: @python-architect
+- [X] T066 [US5] Contract test asserting every `--json` output across all seven commands validates against its schema, in `setup/tests/dotnetgen/contract/test_json_outputs.py` — Owner: @python-tester
 
 ---
 

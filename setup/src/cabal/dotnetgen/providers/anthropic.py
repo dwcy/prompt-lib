@@ -29,9 +29,9 @@ from cabal.dotnetgen.providers.base import (
     ProviderError,
     ProviderStatus,
     ProviderUnavailableError,
-    Usage,
 )
 from cabal.dotnetgen.providers.config import StageBinding
+from cabal.dotnetgen.providers.usage import parse_usage
 
 PROVIDER_NAME: Final[str] = "anthropic"
 DEFAULT_BASE_URL: Final[str] = "https://api.anthropic.com"
@@ -121,7 +121,7 @@ class AnthropicProvider:
 
         return CompletionResult(
             text=text,
-            usage=_usage_from(payload.get("usage")),
+            usage=parse_usage(payload.get("usage")),
             model=payload.get("model", request.model),
             provider=self.name,
             wall_clock_seconds=elapsed,
@@ -161,23 +161,3 @@ def _split_system(request: CompletionRequest) -> tuple[str, list[dict]]:
         # The API requires at least one message; an all-system request is still a real request.
         messages.append({"role": "user", "content": system_parts.pop() if system_parts else ""})
     return "\n\n".join(system_parts), messages
-
-
-def _usage_from(raw: object) -> Usage:
-    """Normalise the API's usage block, keeping cache reads distinct from cache writes.
-
-    `input_tokens` from this API excludes cached reads, so they are added back to give a total
-    that means the same thing across providers - otherwise the cache ratio would be computed
-    against a denominator that shrinks as caching improves.
-    """
-    if not isinstance(raw, dict):
-        return Usage(cache_reported=False)
-    fresh = int(raw.get("input_tokens", 0) or 0)
-    cache_read = int(raw.get("cache_read_input_tokens", 0) or 0)
-    cache_write = int(raw.get("cache_creation_input_tokens", 0) or 0)
-    return Usage(
-        input_tokens=fresh + cache_read + cache_write,
-        output_tokens=int(raw.get("output_tokens", 0) or 0),
-        cached_input_tokens=cache_read,
-        cache_reported=True,
-    )
