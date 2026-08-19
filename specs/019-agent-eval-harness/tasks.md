@@ -27,13 +27,13 @@
 
 ## Phase 2: Foundational (Blocking Prerequisites)
 
-**Status**: ⬜ Pending (0/7 — T003–T009)
+**Status**: 🟡 In progress (2/7 — T003–T009)
 **Purpose**: Contract tests pinned first (Gate 3), then the shared core every story needs: definitions loading, adapter seam, worktree lifecycle, profile materialization
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete. T003/T004 MUST be written and observed FAILING before T005–T008.
 
-- [ ] T003 [P] Contract test for definition file formats in `setup/tests/contract/test_evals_definitions.py` — pins `task.toml` / `profile.toml` / `eval.config.toml` shapes and every validation rule in contracts/definitions-format.md (unknown keys rejected, ref resolution, in-profile path confinement, ≥1 check, id pattern); run and observe failing — Owner: @python-tester — Parallel: yes
-- [ ] T004 [P] Contract test for artifact schemas + adapter interface in `setup/tests/contract/test_evals_artifacts.py` — validates fixture `metrics.json`/`comparison.json`/`report.json` against `specs/019-agent-eval-harness/contracts/*.schema.json` via `jsonschema` (null-vs-zero rule, order_agreement→tie invariant, schema_version) and pins the `AgentAdapter` protocol per contracts/agent-adapter.md using a `FakeAdapter`; run and observe failing — Owner: @python-tester — Parallel: yes
+- [X] T003 [P] Contract test for definition file formats in `setup/tests/contract/test_evals_definitions.py` — pins `task.toml` / `profile.toml` / `eval.config.toml` shapes and every validation rule in contracts/definitions-format.md (unknown keys rejected, ref resolution, in-profile path confinement, ≥1 check, id pattern); run and observe failing — Owner: @python-tester — Parallel: yes
+- [X] T004 [P] Contract test for artifact schemas + adapter interface in `setup/tests/contract/test_evals_artifacts.py` — validates fixture `metrics.json`/`comparison.json`/`report.json` against `specs/019-agent-eval-harness/contracts/*.schema.json` via `jsonschema` (null-vs-zero rule, order_agreement→tie invariant, schema_version) and pins the `AgentAdapter` protocol per contracts/agent-adapter.md using a `FakeAdapter`; run and observe failing — Owner: @python-tester — Parallel: yes
 - [ ] T005 Implement definition loaders/validators in `setup/src/cabal/evals/definitions.py` — `Task`, `CheckSpec`, `ConfigProfile`, `EvalConfig` dataclasses + `load_*`/`validate_tree()` reporting file+field per error, `tomllib`-based (makes T003 pass) — Owner: @python-architect
 - [ ] T006 Implement adapter seam in `setup/src/cabal/evals/adapters/base.py` (`AgentAdapter` protocol, `AgentRunSpec`, `AgentRunResult`, `AdapterCapabilities`, `AdapterUnavailableError`) and name registry in `setup/src/cabal/evals/adapters/__init__.py` (makes T004's adapter section pass) — Owner: @python-architect
 - [ ] T007 Implement worktree lifecycle in `setup/src/cabal/evals/worktree.py` — `add --detach` at pinned ref, diff collection (`add -N` + `diff` → patch.diff, `status --porcelain` → changed files, insertions/deletions stats), `remove --force` with prune fallback, per research.md R4 — Owner: @python-architect
@@ -65,13 +65,13 @@
 
 ## Phase 4: User Story 2 - Author tasks, rubrics, and configurations as versioned files (Priority: P2)
 
-**Status**: ⬜ Pending (0/3 — T017–T019)
+**Status**: 🟡 In progress (1/3 — T017–T019)
 **Goal**: `python -m cabal.evals validate` verifies the whole `evals/` tree with file+field precision; real seed benchmark content exists
 
 **Independent Test**: `validate` on the seeded tree passes; corrupting a ref/rubric/profile path produces the exact expected error strings
 
 - [ ] T017 [US2] Wire `validate` subcommand in `setup/src/cabal/evals/cli.py` over `definitions.validate_tree()` — human-readable per-error output (`<file>: <field>: <problem>`), exit 0/1, `--tasks` filter — Owner: @python-architect
-- [ ] T018 [P] [US2] Author seed benchmark content: `evals/rubrics/architecture.md`, `evals/rubrics/coding-quality.md`, `evals/rubrics/instruction-following.md` (each with a `## Criteria` bullet list), example task `evals/tasks/001-sample-task/` (task.toml + prompt.md pinned to a ref in this repo), and profiles `evals/configs/baseline/` + `evals/configs/candidate-example/` per contracts/definitions-format.md — Owner: main
+- [X] T018 [P] [US2] Author seed benchmark content: `evals/rubrics/architecture.md`, `evals/rubrics/coding-quality.md`, `evals/rubrics/instruction-following.md` (each with a `## Criteria` bullet list), example task `evals/tasks/001-sample-task/` (task.toml + prompt.md pinned to a ref in this repo), and profiles `evals/configs/baseline/` + `evals/configs/candidate-example/` per contracts/definitions-format.md — Owner: main
 - [ ] T019 [US2] Validate-command tests in `setup/tests/test_evals_validate.py` — good tree passes; bad ref, missing rubric, out-of-profile absolute/`..` path, empty prompt.md, unknown TOML key each fail with file+field named — Owner: @python-tester
 
 **Checkpoint**: Benchmark-as-code authoring loop closed (author → validate → fix)
