@@ -17,11 +17,11 @@
 
 ## Phase 1: Setup (Shared Infrastructure)
 
-**Status**: ⬜ Pending (0/2 — T001–T002)
+**Status**: 🟡 In progress (1/2 — T001–T002)
 **Purpose**: Package skeleton and versioned eval-data tree
 
 - [ ] T001 Create package skeleton `setup/src/cabal/evals/` per plan.md structure — `__init__.py`, `__main__.py` (delegates to `cli.main`, mirroring `cabal/dotnetgen/__main__.py`), `cli.py` with argparse subcommand scaffolding for `validate|run|judge|report` (each exits 2 "not implemented" for now), empty `adapters/__init__.py`; one-line module docstrings everywhere per python.md — Owner: @python-architect
-- [ ] T002 [P] Scaffold eval-data tree at repo root: `evals/eval.config.toml` (defaults per contracts/definitions-format.md), empty `evals/tasks/`, `evals/rubrics/`, `evals/configs/` with `.gitkeep`, and add `evals/results/` to `.gitignore` — Owner: main
+- [X] T002 [P] Scaffold eval-data tree at repo root: `evals/eval.config.toml` (defaults per contracts/definitions-format.md), empty `evals/tasks/`, `evals/rubrics/`, `evals/configs/` with `.gitkeep`, and add `evals/results/` to `.gitignore` — Owner: main
 
 ---
 
