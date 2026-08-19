@@ -8,6 +8,7 @@ Data model in `definitions_model.py`, low-level helpers in `definitions_support.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
@@ -207,8 +208,11 @@ def load_eval_config(path: Path) -> EvalConfig:
     )
 
 
-def validate_tree(evals_root: Path) -> list[DefinitionError]:
-    """Validate every definition under evals_root, collecting all errors instead of stopping at the first."""
+def validate_tree(evals_root: Path, task_ids: Sequence[str] | None = None) -> list[DefinitionError]:
+    """Validate every definition under evals_root, collecting all errors instead of stopping at the first.
+
+    `task_ids` restricts which task directories are validated; config and profiles are always checked.
+    """
     evals_root = Path(evals_root)
     errors: list[DefinitionError] = []
 
@@ -224,6 +228,8 @@ def validate_tree(evals_root: Path) -> list[DefinitionError]:
     tasks_dir = evals_root / TASKS_DIRNAME
     if tasks_dir.is_dir():
         for task_dir in sorted(child for child in tasks_dir.iterdir() if child.is_dir()):
+            if task_ids is not None and task_dir.name not in task_ids:
+                continue
             collect(load_task, task_dir)
     configs_dir = evals_root / CONFIGS_DIRNAME
     if configs_dir.is_dir():

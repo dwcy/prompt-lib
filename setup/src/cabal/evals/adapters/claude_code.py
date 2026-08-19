@@ -12,7 +12,6 @@ import json
 import os
 import queue
 import shutil
-import signal
 import subprocess
 import sys
 import threading
@@ -30,6 +29,7 @@ from cabal.evals.adapters.base import (
     AgentRunResult,
     AgentRunSpec,
 )
+from cabal.evals.proc import kill_process_tree
 
 ADAPTER_NAME: Final[str] = "claude-code"
 EXECUTABLE: Final[str] = "claude"
@@ -58,27 +58,6 @@ def _build_env(spec: AgentRunSpec) -> dict[str, str]:
         env["CLAUDE_CONFIG_DIR"] = str(spec.config_dir)
     env.update(spec.env)
     return env
-
-
-def _kill_tree(process: subprocess.Popen[str]) -> None:
-    """The `claude` shim spawns a node child that a plain kill() orphans, so kill the whole tree."""
-    if process.poll() is None:
-        if sys.platform == "win32":
-            subprocess.run(
-                ["taskkill", "/T", "/F", "/PID", str(process.pid)],
-                capture_output=True,
-                check=False,
-                timeout=EXIT_GRACE_SECONDS,
-            )
-        else:
-            try:
-                os.killpg(os.getpgid(process.pid), signal.SIGKILL)
-            except (OSError, ProcessLookupError):
-                pass
-    try:
-        process.kill()
-    except OSError:
-        pass
 
 
 def _pump(stream: IO[str], lines: "queue.Queue[str | None]") -> None:
@@ -196,7 +175,7 @@ class ClaudeCodeAdapter:
         with spec.transcript_path.open("a", encoding="utf-8", newline="\n") as transcript:
             while True:
                 if time.monotonic() >= deadline:
-                    _kill_tree(process)
+                    kill_process_tree(process, EXIT_GRACE_SECONDS)
                     return AgentRunResult(
                         status="failed",
                         failure_reason=FAILURE_AGENT_TIMEOUT,
@@ -223,7 +202,7 @@ class ClaudeCodeAdapter:
         try:
             return process.wait(timeout=EXIT_GRACE_SECONDS)
         except subprocess.TimeoutExpired:
-            _kill_tree(process)
+            kill_process_tree(process, EXIT_GRACE_SECONDS)
             return process.poll()
 
 
