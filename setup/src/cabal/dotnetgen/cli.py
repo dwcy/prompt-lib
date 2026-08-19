@@ -15,7 +15,10 @@ import json
 import sys
 from collections.abc import Callable, Sequence
 
-from cabal.dotnetgen import __version__
+from pathlib import Path
+
+from cabal.dotnetgen import __version__, scaffold, state
+from cabal.dotnetgen.templates import registry
 from cabal.dotnetgen.templates.registry import DEFAULT_TEMPLATE, TEMPLATE_IDS
 
 EXIT_OK = 0
@@ -136,8 +139,54 @@ _TASK_OWNERS = {
 }
 
 
+def _emit_result(args: argparse.Namespace, payload: dict[str, object], summary: str) -> None:
+    """`--json` puts one object on stdout; human output goes to stderr (cli-surface contract)."""
+    if getattr(args, "json", False):
+        json.dump(payload, sys.stdout, default=str)
+        sys.stdout.write("\n")
+    else:
+        print(summary, file=sys.stderr)
+
+
+def _cmd_new(args: argparse.Namespace) -> int:
+    """T029: scaffold from the locked template so the solution builds before any model writes."""
+    target = Path(args.out or args.project)
+    try:
+        plan = scaffold.plan(target, args.template)
+    except registry.TemplateError as exc:
+        _emit_error(args, str(exc))
+        return EXIT_USAGE
+
+    if args.dry_run:
+        _emit_result(
+            args,
+            plan.describe(),
+            f"would scaffold {plan.template.display_name} into {plan.target} "
+            f"({len(plan.template.project_layout)} projects); nothing written",
+        )
+        return EXIT_OK
+
+    try:
+        result = scaffold.execute(plan)
+    except scaffold.ScaffoldError as exc:
+        _emit_error(args, str(exc))
+        if exc.output is not None and not getattr(args, "json", False):
+            print(exc.output.combined, file=sys.stderr)
+        return EXIT_FAILURE
+    except state.StateError as exc:
+        _emit_error(args, str(exc))
+        return EXIT_FAILURE
+
+    _emit_result(
+        args,
+        result.describe(),
+        f"created {plan.template.display_name} at {plan.target}; solution builds",
+    )
+    return EXIT_OK
+
+
 # Command handlers register here as their tasks land; an absent entry is a deferral, not a bug.
-_HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {}
+_HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {"new": _cmd_new}
 
 
 def _dispatch(args: argparse.Namespace) -> int:

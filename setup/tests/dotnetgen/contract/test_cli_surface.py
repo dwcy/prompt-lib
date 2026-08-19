@@ -111,10 +111,16 @@ def test_human_mode_keeps_stdout_clean(
 def test_unwired_commands_report_their_owning_task(
     command: str, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """Deferral is explicit and discoverable: the error names the task that implements it."""
-    code = cli.main([*MINIMAL_ARGS[command], "--json"])
-    if code == cli.EXIT_OK:
+    """Deferral is explicit and discoverable: the error names the task that implements it.
+
+    Wired commands are excluded by consulting the handler registry rather than by inspecting an
+    exit code - a wired command can legitimately fail for its own reasons, and reading that as
+    "still unwired" would make this assertion outlive the deferral it describes.
+    """
+    if command in cli._HANDLERS:
         pytest.skip(f"`{command}` is now wired; this assertion retires with it")
+    code = cli.main([*MINIMAL_ARGS[command], "--json"])
+    assert code != cli.EXIT_OK
     payload = json.loads(capsys.readouterr().out)
     assert payload["status"] == "error"
     assert "not wired yet" in payload["error"]

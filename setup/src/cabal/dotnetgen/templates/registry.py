@@ -116,23 +116,23 @@ class ArchitectureTemplate:
     def scaffold_steps(self, solution_name: str = SOLUTION_NAME_PLACEHOLDER) -> tuple[tuple[str, ...], ...]:
         """The `dotnet new` invocation and post-steps as argv, never a shell string.
 
+        Steps carry the subcommand only - `verify.dotnet.run_command` supplies the resolved
+        `dotnet` executable, so repeating it here would double it.
+
         The solution takes the caller's name; only the project names come from the layout, so
         two services built from one template are not both called `vertical-slice`.
         """
-        steps: list[tuple[str, ...]] = [("dotnet", "new", "sln", "--name", solution_name)]
+        steps: list[tuple[str, ...]] = [("new", "sln", "--name", solution_name)]
         steps.extend(
-            ("dotnet", "new", p.kind, "--output", p.path, "--name", p.name)
-            for p in self.project_layout
+            ("new", p.kind, "--output", p.path, "--name", p.name) for p in self.project_layout
         )
-        steps.extend(
-            ("dotnet", "sln", "add", f"{p.path}/{p.name}.csproj") for p in self.project_layout
-        )
+        steps.extend(("sln", "add", f"{p.path}/{p.name}.csproj") for p in self.project_layout)
         return tuple(steps)
 
     @property
     def scaffold_command(self) -> str:
         """The step sequence rendered for display and for the run record (data-model)."""
-        return " && ".join(" ".join(step) for step in self.scaffold_steps())
+        return " && ".join(f"dotnet {' '.join(step)}" for step in self.scaffold_steps())
 
     @property
     def conventions_digest(self) -> str:

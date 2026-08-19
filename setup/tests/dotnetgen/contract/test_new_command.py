@@ -13,11 +13,13 @@ Gate 3 observation this file is here to make.
 
 from __future__ import annotations
 
+import json
+import shutil
 from pathlib import Path
 
 import pytest
 
-from cabal.dotnetgen import cli, state
+from cabal.dotnetgen import cli, scaffold, state
 from cabal.dotnetgen.templates import registry
 
 
@@ -85,6 +87,23 @@ def test_pruned_files_are_not_shipped_in_the_overlay() -> None:
             )
 
 
+def test_overlay_never_offers_build_artifacts(tmp_path: Path) -> None:
+    """`dotnet format` restores in place, so obj/ and bin/ appear in a working tree.
+
+    They are gitignored and never reach a clone, but they would otherwise be copied into every
+    generated solution as another machine's stale artifacts.
+    """
+    template = registry.get(registry.DEFAULT_TEMPLATE)
+    stray = template.overlay_root / "src" / "Api" / "obj" / "Debug" / "stale.cs"
+    stray.parent.mkdir(parents=True, exist_ok=True)
+    stray.write_text("// left behind by a local build\n", encoding="utf-8")
+    try:
+        listed = scaffold.plan(tmp_path / "svc", template.id).overlay_files
+    finally:
+        shutil.rmtree(template.overlay_root / "src" / "Api" / "obj")
+    assert not [f for f in listed if "/obj/" in f or "/bin/" in f]
+
+
 def test_unknown_template_exits_two_and_lists_the_closed_set(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
@@ -105,8 +124,14 @@ def test_unknown_template_creates_no_files(tmp_path: Path) -> None:
     assert list(target.iterdir()) == [], "a refused run must leave the target untouched"
 
 
-def test_new_records_the_template_in_project_state(solution_dir: Path) -> None:
-    """The scaffold path: T029 wires this, so it fails until then."""
+def test_new_dry_run_plans_without_writing(
+    solution_dir: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """`--dry-run` reports the whole recipe and writes nothing - not even the state file.
+
+    The real scaffold is asserted by the T036 integration test, which needs the .NET SDK and a
+    package restore. This contract covers the shape the skill parses.
+    """
     exit_code = cli.main(
         [
             "new",
@@ -117,11 +142,32 @@ def test_new_records_the_template_in_project_state(solution_dir: Path) -> None:
             "--project",
             str(solution_dir),
             "--dry-run",
+            "--json",
         ]
     )
     assert exit_code == cli.EXIT_OK
-    recorded = state.load(solution_dir)
-    assert recorded.template_id == registry.DEFAULT_TEMPLATE
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["status"] == "planned"
+    assert payload["template"] == registry.DEFAULT_TEMPLATE
+    assert payload["scaffold_command"].startswith("dotnet new sln")
+    assert payload["conventions_digest"].startswith("sha256:")
+    assert [p["name"] for p in payload["projects"]] == [
+        p.name for p in registry.get(registry.DEFAULT_TEMPLATE).project_layout
+    ]
+    assert list(solution_dir.iterdir()) == [], "a dry run must leave the target untouched"
+
+
+def test_new_refuses_a_declared_but_unbuilt_template(solution_dir: Path) -> None:
+    """An unbuilt member is a usage error naming its task, never a silent substitution."""
+    unbuilt = next((t for t in registry.all_templates() if not t.is_built), None)
+    if unbuilt is None:
+        pytest.skip("every declared template is built - Phase 7b has landed")
+    exit_code = cli.main(
+        ["new", "--template", unbuilt.id, "--description", "x", "--project", str(solution_dir)]
+    )
+    assert exit_code == cli.EXIT_USAGE
+    assert list(solution_dir.iterdir()) == []
 
 
 def test_template_change_is_refused_naming_the_recorded_template(solution_dir: Path) -> None:
