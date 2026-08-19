@@ -27,7 +27,7 @@
 
 ## Phase 2: Foundational (Blocking Prerequisites)
 
-**Status**: 🟡 In progress (6/7 — T003–T009)
+**Status**: ✅ Complete (7/7 — T003–T009)
 **Purpose**: Contract tests pinned first (Gate 3), then the shared core every story needs: definitions loading, adapter seam, worktree lifecycle, profile materialization
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete. T003/T004 MUST be written and observed FAILING before T005–T008.
@@ -38,7 +38,7 @@
 - [X] T006 Implement adapter seam in `setup/src/cabal/evals/adapters/base.py` (`AgentAdapter` protocol, `AgentRunSpec`, `AgentRunResult`, `AdapterCapabilities`, `AdapterUnavailableError`) and name registry in `setup/src/cabal/evals/adapters/__init__.py` (makes T004's adapter section pass) — Owner: @python-architect
 - [X] T007 Implement worktree lifecycle in `setup/src/cabal/evals/worktree.py` — `add --detach` at pinned ref, diff collection (`add -N` + `diff` → patch.diff, `status --porcelain` → changed files, insertions/deletions stats), `remove --force` with prune fallback, per research.md R4 — Owner: @python-architect
 - [X] T008 Implement profile materialization in `setup/src/cabal/evals/profile.py` — synthesize per-run scratch `CLAUDE_CONFIG_DIR` from `user_overlay`, copy `project_overlay` into worktree, resolve `settings_file`/`env`, byte-identical baseline/candidate → `no-op comparison` warning — Owner: @python-architect
-- [ ] T009 Unit tests for worktree + profile in `setup/tests/test_evals_worktree.py` — scratch git repo fixture (tmp_path), full add→mutate→collect→remove cycle, untracked-file diff, unreachable-ref error, profile materialization confinement — Owner: @python-tester
+- [X] T009 Unit tests for worktree + profile in `setup/tests/test_evals_worktree.py` — scratch git repo fixture (tmp_path), full add→mutate→collect→remove cycle, untracked-file diff, unreachable-ref error, profile materialization confinement — Owner: @python-tester
 
 **Checkpoint**: Foundation ready — user story phases can begin
 
