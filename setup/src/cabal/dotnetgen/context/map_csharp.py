@@ -167,8 +167,8 @@ def _record(
     container: str,
     out: list[Declaration],
 ) -> Declaration | None:
-    header = scrubbed[header_start:header_stop].strip()
-    if not header or header.startswith(("using", "namespace", "[", "#")):
+    header = _strip_attributes(scrubbed[header_start:header_stop].strip())
+    if not header or header.startswith(("using", "namespace", "#")):
         return None
 
     type_match = _TYPE_HEADER.search(header)
@@ -202,6 +202,28 @@ def _record(
     )
     out.append(declaration)
     return declaration
+
+
+def _strip_attributes(header: str) -> str:
+    """Drop leading `[Attribute]` blocks so the declaration behind them is still seen.
+
+    Without this, every `[Fact]` test method and every `[HttpGet]` action vanishes from the map -
+    exactly the members a reader most wants, silently absent.
+    """
+    text = header.lstrip()
+    while text.startswith("["):
+        depth = 0
+        for index, char in enumerate(text):
+            if char == "[":
+                depth += 1
+            elif char == "]":
+                depth -= 1
+                if depth == 0:
+                    text = text[index + 1 :].lstrip()
+                    break
+        else:
+            return text
+    return text
 
 
 def _matching_brace(scrubbed: str, open_index: int, stop: int) -> int:

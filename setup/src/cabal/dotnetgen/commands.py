@@ -12,7 +12,7 @@ import argparse
 from collections.abc import Callable
 from pathlib import Path
 
-from cabal.dotnetgen import intent, pipeline, runner, scaffold, state
+from cabal.dotnetgen import intent, map_cache, pipeline, runner, scaffold, state
 from cabal.dotnetgen.edits import applier
 from cabal.dotnetgen.exits import (
     EXIT_ENVIRONMENT_FAILURE,
@@ -28,7 +28,7 @@ from cabal.dotnetgen.exits import (
 from cabal.dotnetgen.pipeline import IntentContainsCodeError, RetryBudget, RunOutcome
 from cabal.dotnetgen.providers import config, factory
 from cabal.dotnetgen.providers.base import ProviderError
-from cabal.dotnetgen.stages import architect, write
+from cabal.dotnetgen.stages import architect, route, write
 from cabal.dotnetgen.templates import registry
 
 
@@ -163,9 +163,9 @@ def cmd_apply(args: argparse.Namespace) -> int:
         emit_error(args, str(exc))
         return EXIT_FAILURE
     except applier.UnsupportedDispositionError as exc:
-        # Phase 3 applies `create-file` only; the relaxation ladder and in-place edits are T042.
-        # Surfaced as a plain failure naming the gap rather than an uncaught traceback.
-        emit_error(args, f"{exc}; this run needed an edit kind Phase 3 cannot apply yet")
+        # Every disposition in the schema is now applied; this catches a disposition the schema
+        # would have to grow to produce. Reported as a failure rather than an uncaught traceback.
+        emit_error(args, str(exc))
         return EXIT_FAILURE
 
     if run.outcome is RunOutcome.COMPLETED:
@@ -215,10 +215,74 @@ def _summarise_run(run: pipeline.RunResult) -> str:
     return f"halted: {run.outcome.value}; {tail}"
 
 
+def cmd_map(args: argparse.Namespace) -> int:
+    """T041: render the structural map, reusing the cache when the solution has not changed."""
+    project = Path(args.project)
+    try:
+        rendered, built = map_cache.rendered_map(project, token_budget=args.budget)
+    except state.StateError as exc:
+        emit_error(args, str(exc))
+        return EXIT_USAGE
+
+    payload: dict[str, object] = {
+        "status": "ok",
+        "fingerprint": built.fingerprint,
+        "token_budget": built.token_budget,
+        "estimated_tokens": built.estimated_tokens,
+        "types": len(built.entries),
+        "omitted_count": built.omitted_count,
+        "omitted_summary": built.omitted_summary,
+        "map": rendered,
+    }
+    emit_result(args, payload, rendered)
+    return EXIT_OK
+
+
+def cmd_change(args: argparse.Namespace) -> int:
+    """T044: route, then architect, then the gate, then write and verify.
+
+    The route stage is why this is not just `plan` plus `apply`. Most turns are questions, and
+    paying full pipeline cost to answer "what does this handler do?" is where naive tools burn
+    money (SC-009). A question is answered and the pipeline never starts.
+
+    A change still stops at the gate. `change` is the convenient front door, not a way around
+    approval - FR-010e applies the gate uniformly, so this prints the intent and its token and
+    leaves the decision to the developer.
+    """
+    project = Path(args.project)
+    try:
+        bindings = config.load_bindings(project)
+        route_binding = bindings.for_stage("route")
+        route_provider = factory.provider_for(route_binding)
+    except (config.BindingsError, ProviderError) as exc:
+        emit_error(args, str(exc))
+        return EXIT_USAGE
+
+    decision = route.classify(args.request, route_provider, route_binding.model)
+    if not decision.enters_pipeline:
+        payload = {
+            "status": "answered",
+            "intent": decision.value,
+            "request": args.request,
+            "stages": {"architect": zero_stage(), "write": zero_stage()},
+        }
+        emit_result(
+            args,
+            payload,
+            "This reads as a question, so nothing was written and the pipeline did not run. "
+            "Re-run with a change request if that is wrong.",
+        )
+        return EXIT_OK
+
+    return cmd_plan(args)
+
+
 HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {
     "new": cmd_new,
     "plan": cmd_plan,
     "apply": cmd_apply,
+    "map": cmd_map,
+    "change": cmd_change,
 }
 
 TASK_OWNERS: dict[str, str] = {
