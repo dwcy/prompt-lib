@@ -46,7 +46,7 @@
 
 ## Phase 3: User Story 1 - A/B compare two configurations on a task set (Priority: P1) 🎯 MVP
 
-**Status**: 🟡 In progress (5/7 — T010–T016)
+**Status**: ✅ Complete (7/7 — T010–T016)
 **Goal**: `python -m cabal.evals run --baseline X --candidate Y --runs N` executes the full matrix with per-run worktrees, config isolation, artifact capture, incremental resume, and failure isolation
 
 **Independent Test**: One task, two profiles (candidate = baseline + one skill), `--runs 1` → per-run `patch.diff`/`output.txt`/`transcript.jsonl`/`metrics.json` exist and validate against the schemas; interrupt + `--resume` skips the completed cell
@@ -56,8 +56,8 @@
 - [X] T012 [P] [US1] Implement metrics extraction in `setup/src/cabal/evals/metrics.py` — transcript.jsonl → tool_calls_total/by_name, num_turns, tokens/cost (absence → `null`, never 0, mirroring `dotnetgen.providers.usage` semantics), merge diff stats + wall time + status into schema-valid `metrics.json` — Owner: @python-architect — Parallel: yes
 - [X] T013 [US1] Implement matrix engine in `setup/src/cabal/evals/matrix.py` — cell enumeration (tasks × 2 configs × N), run-id creation, per-cell orchestration (worktree → profile → adapter → collect → metrics), atomic `.tmp`→rename writes, resume-skips-completed, per-cell failure capture that never aborts the matrix (FR-011/FR-012) — Owner: @python-architect
 - [X] T014 [US1] Wire `run` subcommand in `setup/src/cabal/evals/cli.py` — `--baseline`, `--candidate`, `--runs`, `--tasks <id,…>`, `--resume <run-id>`, `--adapter`, exit codes (0 all cells done, 1 some failed, 2 config error) — Owner: @python-architect
-- [ ] T015 [P] [US1] Unit tests for metrics in `setup/tests/test_evals_metrics.py` — recorded stream-json fixture transcripts under `setup/tests/fixtures/evals/` (success, error-result, missing-usage), null-not-zero assertions, tool-call bucketing — Owner: @python-tester
-- [ ] T016 [US1] Unit tests for matrix in `setup/tests/test_evals_matrix.py` — FakeAdapter-driven: enumeration order, resume skips cells with valid metrics.json, injected adapter failure isolates to its cell, no-op profile warning surfaces, atomic-write crash simulation leaves no half-written metrics.json — Owner: @python-tester
+- [X] T015 [P] [US1] Unit tests for metrics in `setup/tests/test_evals_metrics.py` — recorded stream-json fixture transcripts under `setup/tests/fixtures/evals/` (success, error-result, missing-usage), null-not-zero assertions, tool-call bucketing — Owner: @python-tester
+- [X] T016 [US1] Unit tests for matrix in `setup/tests/test_evals_matrix.py` — FakeAdapter-driven: enumeration order, resume skips cells with valid metrics.json, injected adapter failure isolates to its cell, no-op profile warning surfaces, atomic-write crash simulation leaves no half-written metrics.json — Owner: @python-tester
 
 **Checkpoint**: MVP — a real matrix runs end-to-end and survives failures; only judging/reporting missing
 
