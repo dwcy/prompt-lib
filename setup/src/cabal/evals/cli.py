@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 """Headless CLI for the eval harness: `validate | run | judge | report` subcommands.
 
-Remaining command bodies land in their own tasks (T024/T027). Until each is wired, invoking it
-prints "not implemented" to stderr and exits with the usage code — an explicit, discoverable
-deferral rather than a silent stub.
+Each command body lives in its own cli_<name>.py module per the size discipline; this module is
+only the argparse surface and the command dispatch table.
 """
 
 from __future__ import annotations
@@ -13,6 +12,8 @@ import sys
 from collections.abc import Callable, Sequence
 
 from cabal.evals import __version__
+from cabal.evals.cli_judge import judge_command
+from cabal.evals.cli_report import report_command
 from cabal.evals.cli_run import (
     DEFAULT_EVALS_ROOT,
     EXIT_FAILURE,
@@ -59,18 +60,32 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--adapter", metavar="NAME", help="agent adapter override")
 
     judge = subparsers.add_parser("judge", help="pairwise-judge previously recorded results")
-    judge.add_argument("--run-id", metavar="RUN_ID", help="results run id to judge")
+    judge.add_argument("run_id", metavar="RUN_ID", help="results run id to judge")
+    judge.add_argument(
+        "--tasks", metavar="ID[,ID...]", help="comma-separated task ids (default: all in the run)"
+    )
+    judge.add_argument(
+        "--results-dir",
+        metavar="DIR",
+        help="results directory override (default: eval.config.toml results_dir)",
+    )
 
     report = subparsers.add_parser("report", help="reduce a run's artifacts into the report")
-    report.add_argument("--run-id", metavar="RUN_ID", help="results run id to report on")
+    report.add_argument("run_id", metavar="RUN_ID", help="results run id to report on")
+    report.add_argument(
+        "--results-dir",
+        metavar="DIR",
+        help="results directory override (default: eval.config.toml results_dir)",
+    )
 
     return parser
 
 
-# Command handlers register here as their tasks land; an absent entry is a deferral, not a bug.
 _HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {
     "run": run_command,
     "validate": validate_command,
+    "judge": judge_command,
+    "report": report_command,
 }
 
 
@@ -82,8 +97,4 @@ def main(argv: Sequence[str] | None = None) -> int:
         parser.print_help(sys.stderr)
         return EXIT_USAGE
 
-    handler = _HANDLERS.get(args.command)
-    if handler is None:
-        print(f"cabal.evals {args.command}: not implemented", file=sys.stderr)
-        return EXIT_USAGE
-    return handler(args)
+    return _HANDLERS[args.command](args)
