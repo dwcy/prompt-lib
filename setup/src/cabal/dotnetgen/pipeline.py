@@ -146,6 +146,27 @@ class RunResult:
     def succeeded(self) -> bool:
         return self.outcome is RunOutcome.COMPLETED
 
+    def history(self) -> tuple[str, ...]:
+        """One line per attempt, so a halted run explains itself without the raw logs (FR-023)."""
+        lines: list[str] = []
+        for attempt in self.attempts:
+            landed = len(attempt.apply_report.landed)
+            total = len(attempt.apply_report.applications)
+            verdict = attempt.verification.classification.value
+            detail = attempt.verification.detail or verdict
+            lines.append(f"attempt {attempt.number}: {landed}/{total} edits applied - {detail}")
+        return tuple(lines)
+
+    def report(self) -> str:
+        """The halt report: what was tried, what remains wrong, and where to look."""
+        lines = [f"outcome: {self.outcome.value}", *self.history()]
+        if self.detail:
+            lines.append(self.detail)
+        lines.append(
+            f"repair attempts consumed: {self.budget.consumed}/{self.budget.ceiling}"
+        )
+        return "\n".join(lines)
+
 
 Writer = Callable[[ChangeIntent, VerificationResult | None], Sequence[EditOperation]]
 Applier = Callable[[Sequence[EditOperation]], ApplyReport]
@@ -154,7 +175,14 @@ Verifier = Callable[[], VerificationResult]
 
 @dataclass
 class Pipeline:
-    """Sequences the stages, holds the gate, and enforces the ceiling."""
+    """Sequences the stages, holds the gate, and enforces the ceiling.
+
+    Note what this class does *not* hold: an architect. Repair routing (FR-020) is enforced
+    structurally rather than by discipline - a diagnostic can only reach `writer`, because the
+    loop has no reference to any stage that could re-decide the design. That also protects the
+    cache: re-running the architect would rewrite bands 1-3 and discard the whole cached prefix
+    on every repair (research R5).
+    """
 
     writer: Writer
     applier: Applier
@@ -204,7 +232,10 @@ class Pipeline:
                     intent=intent,
                     attempts=tuple(attempts),
                     detail=(
-                        f"retry ceiling {budget.ceiling} reached; working tree left for inspection"
+                        f"retry ceiling {budget.ceiling} reached after {len(attempts)} attempts; "
+                        f"last failure: {verification.detail or verification.classification.value}. "
+                        "The working tree is left exactly as the final attempt produced it, so the "
+                        "partial work can be inspected or salvaged rather than discarded"
                     ),
                 )
 

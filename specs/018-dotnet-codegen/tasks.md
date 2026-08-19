@@ -166,16 +166,16 @@ Contract tests come first per Principle III. T006–T008 must be written and **o
 
 ## Phase 5: US3 (remainder) — Repair routing and reporting (P3)
 
-**Status**: ⬜ Pending (0/4 — T049–T052)
+**Status**: ✅ Complete (4/4 — T049–T052)
 
 **Goal**: self-repair under a hard visible budget, with environment failures never consuming it. The budget mechanics landed in Phase 3b; this phase routes repairs correctly and reports them.
 
 **Independent test**: inject a compile error and a test failure (both repaired), then an unfixable environment failure (aborts at zero consumed) — SC-007.
 
-- [ ] T049 [US3] Repair routing sending diagnostics to the write stage and never to the architect stage, so bands 1–3 of the cache are never invalidated by a repair (FR-020), in `setup/src/cabal/dotnetgen/pipeline.py` — Owner: @python-architect
-- [ ] T050 [US3] Halt and abort reporting with per-attempt history and the working tree left inspectable (FR-023), in `setup/src/cabal/dotnetgen/pipeline.py` — Owner: @python-architect
-- [ ] T051 [US3] Contract tests: ceiling reached exits 3 with `consumed == ceiling`; injected environment failure exits 4 with `consumed == 0` — in `setup/tests/dotnetgen/contract/test_retry_budget.py` — Owner: @python-tester
-- [ ] T052 [US3] Integration test: injected compile error is repaired within budget; an unfixable failure halts at the ceiling and reports every attempt (SC-007), in `setup/tests/dotnetgen/integration/test_repair_loop.py` — Owner: @python-tester
+- [X] T049 [US3] Repair routing sending diagnostics to the write stage and never to the architect stage, so bands 1–3 of the cache are never invalidated by a repair (FR-020), in `setup/src/cabal/dotnetgen/pipeline.py` — Owner: @python-architect
+- [X] T050 [US3] Halt and abort reporting with per-attempt history and the working tree left inspectable (FR-023), in `setup/src/cabal/dotnetgen/pipeline.py` — Owner: @python-architect
+- [X] T051 [US3] Contract tests: ceiling reached exits 3 with `consumed == ceiling`; injected environment failure exits 4 with `consumed == 0` — in `setup/tests/dotnetgen/contract/test_retry_budget.py` — Owner: @python-tester
+- [X] T052 [US3] Integration test: injected compile error is repaired within budget; an unfixable failure halts at the ceiling and reports every attempt (SC-007), in `setup/tests/dotnetgen/integration/test_repair_loop.py` — Owner: @python-tester
 
 ---
 

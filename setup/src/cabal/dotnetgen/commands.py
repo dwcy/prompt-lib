@@ -203,6 +203,8 @@ def _describe_run(run: pipeline.RunResult, token: str) -> dict[str, object]:
             "consumed": run.budget.consumed,
             "environment_aborts": run.budget.environment_aborts,
         },
+        "history": list(run.history()),
+        "detail": run.detail,
     }
 
 
@@ -211,8 +213,12 @@ def _summarise_run(run: pipeline.RunResult) -> str:
     if run.outcome is RunOutcome.COMPLETED:
         return f"applied and verified; {tail}"
     if run.outcome is RunOutcome.ABORTED_ENVIRONMENT:
-        return f"aborted on an environment failure; {tail} (none spent on it, by design)"
-    return f"halted: {run.outcome.value}; {tail}"
+        return (
+            f"aborted on an environment failure; {tail} (none spent on it, by design)\n"
+            + run.report()
+        )
+    # A halt is the case where the developer has to take over, so it gets the full history.
+    return run.report()
 
 
 def cmd_map(args: argparse.Namespace) -> int:
