@@ -17,27 +17,27 @@
 
 ## Phase 1: Setup (Shared Infrastructure)
 
-**Status**: 🟡 In progress (1/2 — T001–T002)
+**Status**: ✅ Complete (2/2 — T001–T002)
 **Purpose**: Package skeleton and versioned eval-data tree
 
-- [ ] T001 Create package skeleton `setup/src/cabal/evals/` per plan.md structure — `__init__.py`, `__main__.py` (delegates to `cli.main`, mirroring `cabal/dotnetgen/__main__.py`), `cli.py` with argparse subcommand scaffolding for `validate|run|judge|report` (each exits 2 "not implemented" for now), empty `adapters/__init__.py`; one-line module docstrings everywhere per python.md — Owner: @python-architect
+- [X] T001 Create package skeleton `setup/src/cabal/evals/` per plan.md structure — `__init__.py`, `__main__.py` (delegates to `cli.main`, mirroring `cabal/dotnetgen/__main__.py`), `cli.py` with argparse subcommand scaffolding for `validate|run|judge|report` (each exits 2 "not implemented" for now), empty `adapters/__init__.py`; one-line module docstrings everywhere per python.md — Owner: @python-architect
 - [X] T002 [P] Scaffold eval-data tree at repo root: `evals/eval.config.toml` (defaults per contracts/definitions-format.md), empty `evals/tasks/`, `evals/rubrics/`, `evals/configs/` with `.gitkeep`, and add `evals/results/` to `.gitignore` — Owner: main
 
 ---
 
 ## Phase 2: Foundational (Blocking Prerequisites)
 
-**Status**: 🟡 In progress (2/7 — T003–T009)
+**Status**: 🟡 In progress (6/7 — T003–T009)
 **Purpose**: Contract tests pinned first (Gate 3), then the shared core every story needs: definitions loading, adapter seam, worktree lifecycle, profile materialization
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete. T003/T004 MUST be written and observed FAILING before T005–T008.
 
 - [X] T003 [P] Contract test for definition file formats in `setup/tests/contract/test_evals_definitions.py` — pins `task.toml` / `profile.toml` / `eval.config.toml` shapes and every validation rule in contracts/definitions-format.md (unknown keys rejected, ref resolution, in-profile path confinement, ≥1 check, id pattern); run and observe failing — Owner: @python-tester — Parallel: yes
 - [X] T004 [P] Contract test for artifact schemas + adapter interface in `setup/tests/contract/test_evals_artifacts.py` — validates fixture `metrics.json`/`comparison.json`/`report.json` against `specs/019-agent-eval-harness/contracts/*.schema.json` via `jsonschema` (null-vs-zero rule, order_agreement→tie invariant, schema_version) and pins the `AgentAdapter` protocol per contracts/agent-adapter.md using a `FakeAdapter`; run and observe failing — Owner: @python-tester — Parallel: yes
-- [ ] T005 Implement definition loaders/validators in `setup/src/cabal/evals/definitions.py` — `Task`, `CheckSpec`, `ConfigProfile`, `EvalConfig` dataclasses + `load_*`/`validate_tree()` reporting file+field per error, `tomllib`-based (makes T003 pass) — Owner: @python-architect
-- [ ] T006 Implement adapter seam in `setup/src/cabal/evals/adapters/base.py` (`AgentAdapter` protocol, `AgentRunSpec`, `AgentRunResult`, `AdapterCapabilities`, `AdapterUnavailableError`) and name registry in `setup/src/cabal/evals/adapters/__init__.py` (makes T004's adapter section pass) — Owner: @python-architect
-- [ ] T007 Implement worktree lifecycle in `setup/src/cabal/evals/worktree.py` — `add --detach` at pinned ref, diff collection (`add -N` + `diff` → patch.diff, `status --porcelain` → changed files, insertions/deletions stats), `remove --force` with prune fallback, per research.md R4 — Owner: @python-architect
-- [ ] T008 Implement profile materialization in `setup/src/cabal/evals/profile.py` — synthesize per-run scratch `CLAUDE_CONFIG_DIR` from `user_overlay`, copy `project_overlay` into worktree, resolve `settings_file`/`env`, byte-identical baseline/candidate → `no-op comparison` warning — Owner: @python-architect
+- [X] T005 Implement definition loaders/validators in `setup/src/cabal/evals/definitions.py` — `Task`, `CheckSpec`, `ConfigProfile`, `EvalConfig` dataclasses + `load_*`/`validate_tree()` reporting file+field per error, `tomllib`-based (makes T003 pass) — Owner: @python-architect
+- [X] T006 Implement adapter seam in `setup/src/cabal/evals/adapters/base.py` (`AgentAdapter` protocol, `AgentRunSpec`, `AgentRunResult`, `AdapterCapabilities`, `AdapterUnavailableError`) and name registry in `setup/src/cabal/evals/adapters/__init__.py` (makes T004's adapter section pass) — Owner: @python-architect
+- [X] T007 Implement worktree lifecycle in `setup/src/cabal/evals/worktree.py` — `add --detach` at pinned ref, diff collection (`add -N` + `diff` → patch.diff, `status --porcelain` → changed files, insertions/deletions stats), `remove --force` with prune fallback, per research.md R4 — Owner: @python-architect
+- [X] T008 Implement profile materialization in `setup/src/cabal/evals/profile.py` — synthesize per-run scratch `CLAUDE_CONFIG_DIR` from `user_overlay`, copy `project_overlay` into worktree, resolve `settings_file`/`env`, byte-identical baseline/candidate → `no-op comparison` warning — Owner: @python-architect
 - [ ] T009 Unit tests for worktree + profile in `setup/tests/test_evals_worktree.py` — scratch git repo fixture (tmp_path), full add→mutate→collect→remove cycle, untracked-file diff, unreachable-ref error, profile materialization confinement — Owner: @python-tester
 
 **Checkpoint**: Foundation ready — user story phases can begin
