@@ -58,7 +58,7 @@ class AdapterCapabilities:
 
 ## v1 implementation: `claude-code`
 
-- Command: `claude -p <prompt> --output-format stream-json --verbose --permission-mode acceptEdits [--model <m>] [--settings <file>]` (`--dangerously-skip-permissions` replaces the permission-mode flag when `skip_permissions`).
+- Command: `claude -p --output-format stream-json --verbose --permission-mode acceptEdits [--model <m>] [--settings <file>]` with the prompt written to stdin (`--dangerously-skip-permissions` replaces the permission-mode flag when `skip_permissions`). The prompt travels via stdin, never argv: on Windows `claude` resolves to a .cmd shim whose cmd.exe re-parsing mangles multi-line arguments and silently drops every flag after them (found live in T031).
 - cwd = `spec.worktree`; env = `os.environ | {"CLAUDE_CONFIG_DIR": str(config_dir)} | spec.env`.
 - `final_text` = `result` event's `result` field; `status=failed/agent_crash` when the process exits non-zero without a `result` event or the `result` event carries `is_error`.
 - Capabilities: `tokens=True, tool_calls=True, cost=True`.

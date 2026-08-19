@@ -236,3 +236,41 @@ class TestClaudeCodeAdapterRun:
         # Act & Assert
         with pytest.raises(AdapterUnavailableError):
             adapter.run(spec)
+
+    def test_run_with_hung_process_times_out_and_kills_the_process_tree(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        """FR-005 / adapter contract #2: at the deadline the process tree dies and the run
+        records agent_timeout — a leaked child would poison every subsequent cell."""
+        import sys
+
+        # Arrange
+        monkeypatch.setattr(
+            "cabal.evals.adapters.claude_code.shutil.which", lambda name: sys.executable
+        )
+        monkeypatch.setattr(
+            "cabal.evals.adapters.claude_code._build_command",
+            lambda exe, spec: [exe, "-c", "import time; time.sleep(60)"],
+        )
+        adapter = ClaudeCodeAdapter()
+        spec = AgentRunSpec(
+            prompt="irrelevant",
+            worktree=tmp_path,
+            config_dir=None,
+            settings_file=None,
+            env={},
+            model=None,
+            timeout_seconds=2,
+            skip_permissions=False,
+            transcript_path=tmp_path / "transcript.jsonl",
+        )
+
+        # Act
+        result = adapter.run(spec)
+
+        # Assert
+        assert (
+            result.status == "failed"
+            and result.failure_reason == "agent_timeout"
+            and result.wall_seconds < 30
+        )
