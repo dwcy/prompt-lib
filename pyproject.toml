@@ -71,3 +71,8 @@ testpaths = ["tests", "setup/tests", "global/hooks/tests"]
 filterwarnings = [
   "ignore::DeprecationWarning:textual",
 ]
+markers = [
+  # Tests that drive a real external toolchain rather than a stub, so they cost minutes and need
+  # the SDK installed. Deselect with `-m "not toolchain"`; they skip themselves when it is absent.
+  "toolchain: needs a real .NET SDK on PATH",
+]

@@ -207,6 +207,53 @@ The new skill's description is scoped to the pipeline's own verbs (scaffold a se
 feature to a generated solution, what a run cost, which model is bound) so it does not compete
 with the reasoning agents for a general "help me design this .NET thing" request.
 
+**T073 - Implementation audit against this plan and all six gates.** Reviewed 2026-08-24 in the
+main session by reading the committed source, the task ledger and the test suite, rather than by
+dispatching `@code-plan-verifier`; recorded as such so the method is not overstated. Evidence:
+`pytest setup/tests/dotnetgen` - 363 passed, 8 skipped.
+
+| Gate | Verdict | Evidence |
+|---|---|---|
+| 1 - Spec-First | **N/A, correctly** | No external protocol is implemented. `providers/openai_compatible` and `providers/anthropic` are *clients* of third-party APIs, not implementations of a published protocol, and the `contracts/` surfaces are this feature's own. Remains a Phase B entry condition if the map ships as MCP. |
+| 2 - Delegation | **Satisfied** | Every owner named in `tasks.md` (`@python-architect` x43, `@python-tester` x20, `@dotnet-architect` x3, `@dotnet-tester` x1, `@code-plan-verifier` x1, `main` x7) exists in `.specify/memory/agents.md`. |
+| 3 - Contract Tests First | **Satisfied** | T006-T008 cover both declared surfaces and are ordered before T009, the first implementation task. The eight intentional skips are the red-first placeholders retiring by design (`test_cli_surface.py:121`, `test_new_command.py:165`), which is positive evidence the sequence was actually followed rather than back-filled. |
+| 4 - Reversibility | **Satisfied in substance, plan text now inaccurate** | Both assets install and uninstall cleanly (T070, above). But this section's Gate 4 declaration still reads "No existing file under `global/` is modified", and that is no longer true - see the finding below. |
+| 5 - Surface Minimality | **Satisfied** | One skill, no new agent, no trigger overlap (T071, above). |
+| 6 - Parallel Isolation | **Satisfied, but never exercised** | The Parallel Execution Map names two phases and 14 tasks carry `Parallel: yes`. All 23 commits, however, come from a single sequential session, so no two writers ever ran concurrently and the `isolation: "worktree"` requirement was not put to the test. Nothing is violated - the map is aspirational rather than a record of what happened. |
+
+**Findings.**
+
+1. **The Gate 4 declaration above is now factually wrong.** It states that no existing file under
+   `global/` is modified and that rollback is "a pure deletion with no restore step". This feature
+   modified `global/CLAUDE.md` (+11 lines, an "Explain in plain language" preferences section) and
+   added a second file, `global/dotnetgen-bindings.toml`. The bindings file is genuinely part of
+   this feature and its install clause is recorded under T070; rollback for it is still a deletion,
+   so the *substance* of Gate 4 holds. The `global/CLAUDE.md` edit is different in kind - it is a
+   general preferences change that rode along on this branch and is not a dotnetgen asset. It is
+   harmless and already deployed, but it means a rollback of this feature is no longer a pure
+   deletion, and the Gate 4 text should not claim otherwise.
+
+2. **The committed default bindings point at a model that is not installed.** `[stages.route]` and
+   `[stages.write]` both bind `qwen2.5-coder:7b` on Ollama at `localhost:11434`. On the measuring
+   machine Ollama has no models pulled. `write` degrades to its declared `cli_shell` fallback;
+   `route` **has no fallback declared**, so on a machine without that endpoint the cheapest stage
+   in the pipeline is also the most brittle. This is a defensible default for a per-machine file
+   the developer is expected to edit, but the asymmetry is undocumented.
+
+3. **The `.gitignore` block this feature added does not cover the directory the tool writes.**
+   T004's block adds `bin/`, `obj/`, `*.user`, `*.suo`, but not `.dotnetgen/` - which is where
+   `map_cache`, `ledger` and `intent` persist the map cache, run records and the pending approval
+   token, in *every* solution the pipeline touches, including this repo. Run records carry model
+   names, usage and paths. Closed as part of T073.
+
+4. **SC-006 is met for the wrong reason.** See the T075 section of `baseline.md`: the map's C#
+   parser cannot see inside a block-scoped namespace, so it considered 72 of ~1,410 types on the
+   corpus solution. Recorded as a Phase B entry finding rather than fixed, per T075's instruction.
+
+No Constitution violation found. Findings 1-3 are recorded; finding 3 is fixed, findings 1, 2 and 4
+are left as recorded facts because each changes a claim rather than a behaviour, and finding 4 in
+particular is explicitly scoped to Phase B.
+
 ## Complexity Tracking
 
 *No Constitution Check violations. Table intentionally empty.*

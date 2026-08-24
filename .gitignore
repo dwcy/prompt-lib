@@ -75,3 +75,7 @@ bin/
 obj/
 *.user
 *.suo
+
+# Per-solution dotnetgen state: map cache, run records, the pending approval token. Written into
+# every solution the pipeline touches, this repo included. Run records carry model names and usage.
+.dotnetgen/
