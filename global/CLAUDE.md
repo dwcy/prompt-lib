@@ -29,6 +29,14 @@ This applies to prose aimed at me. Code comments, commit messages, and spec file
 - Bash is still correct for *running* things (git, tests, `python -c` smoke checks) — just not for searching source.
 - **Never read generated, dependency, or build-output dirs** — `__pycache__`, `.pytest_cache`, `.mypy_cache`, `.ruff_cache`, `node_modules`, `.venv`/`venv`, `dist`/`build`, `.next`/`.nuxt`, `bin`/`obj`, `publish`/`out`, `target`, `.git`, vendored/`packages`, and the like. They're noise — committed source is the source of truth, not the artifact. Scope `Grep`/`Glob` to source paths and let the tools' default ignores do the rest. Reading into one is a **last resort, only when a bug demands inspecting the actual generated output** (e.g. a build emits wrong code) — and say why when you do.
 
+## Stay inside the working directory
+
+The folder the session starts in is the boundary. Other projects on this machine are not material to look at, sample, or measure against unless I ask for that specific thing — "it would be useful here" is not asking. Exempt: `~/.claude/`, this repo's `global/` tree, and the active toolchain. That much should go without saying; the rest is the part that's easy to miss.
+
+- **Reading is the first half of publishing.** Whatever you read, you may summarise into a file later. Assume every repo I work in may become public.
+- **Never record another project's identity** — name, path, solution or package names, namespaces, type or table names. Describe it by shape: "a private 25-project .NET solution, ~86k lines, block-scoped namespaces".
+- **Screen- and machine-capture tools** (browser page snapshots, container and process listings, screenshots) write absolute paths and unrelated state into the working directory. Keep their output gitignored and check anything they produced before committing.
+
 ## Code style (universal)
 
 - No comments that explain WHAT the code does — only WHY if non-obvious. Exception: XML doc `<summary>` on public .NET types/members is an API-doc convention, not a WHAT comment — keep those (see `/dotnet-class`).
@@ -159,3 +167,4 @@ See [`docs/orchestration.md`](docs/orchestration.md) for the full routing table 
 - Never commit without being asked explicitly — **except** at plan-completion checkpoints (see *Auto-commit at plan completion*).
 - Never push to remote without being asked explicitly.
 - Never delete files without confirmation.
+- Never read, sample, or measure against code outside the working directory unless I asked for that specific thing (see *Stay inside the working directory*), and never write another project's names or paths into this one.
