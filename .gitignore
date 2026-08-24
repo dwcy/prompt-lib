@@ -79,3 +79,12 @@ obj/
 # Per-solution dotnetgen state: map cache, run records, the pending approval token. Written into
 # every solution the pipeline touches, this repo included. Run records carry model names and usage.
 .dotnetgen/
+
+# Playwright MCP output. A page snapshot dumps everything VISIBLE ON SCREEN into the working
+# directory, so these files routinely capture absolute paths, container names and other machine
+# state that has nothing to do with this repo. Never commit them - this repo is public.
+.playwright-mcp/
+
+# Loose local scratch: screenshots and archives dropped in the repo root while working.
+/*.zip
+/port*.png
