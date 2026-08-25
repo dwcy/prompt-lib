@@ -1,0 +1,10 @@
+# Harness defaults for `python -m cabal.evals` — see specs/019-agent-eval-harness/contracts/definitions-format.md
+runs_per_cell = 3
+adapter = "claude-code"
+run_timeout_seconds = 900
+check_timeout_seconds = 300
+results_dir = "evals/results"
+
+[judge]
+model = "claude-haiku-4-5-20251001"
+diff_char_limit = 20000

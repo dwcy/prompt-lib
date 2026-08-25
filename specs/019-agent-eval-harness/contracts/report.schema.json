@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "cabal-evals/report.schema.json",
+  "title": "Aggregate matrix report artifact (report.json)",
+  "type": "object",
+  "required": ["schema_version", "run_id", "created_at", "tasks", "configs", "runs_per_cell", "metrics_rows", "failures"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "run_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "tasks": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+    "configs": { "type": "array", "items": { "type": "string" }, "minItems": 2, "maxItems": 2 },
+    "runs_per_cell": { "type": "integer", "minimum": 1 },
+    "metrics_rows": {
+      "type": "array",
+      "minItems": 7,
+      "items": {
+        "type": "object",
+        "required": ["metric", "per_config"],
+        "properties": {
+          "metric": {
+            "enum": [
+              "task_pass_rate", "test_pass_rate", "build_success_rate",
+              "unrequested_changes", "tool_calls", "tokens_total",
+              "wall_seconds", "pairwise_win_rate"
+            ]
+          },
+          "per_config": {
+            "type": "object",
+            "minProperties": 1,
+            "additionalProperties": {
+              "type": "object",
+              "required": ["mean", "n"],
+              "properties": {
+                "mean": { "type": ["number", "null"] },
+                "min": { "type": ["number", "null"] },
+                "max": { "type": ["number", "null"] },
+                "stddev": { "type": ["number", "null"] },
+                "n": { "type": "integer", "minimum": 0 }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "failures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["task_id", "config_name", "repetition", "reason"],
+        "properties": {
+          "task_id": { "type": "string" },
+          "config_name": { "type": "string" },
+          "repetition": { "type": "integer", "minimum": 1 },
+          "reason": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

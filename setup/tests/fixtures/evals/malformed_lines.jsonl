@@ -1,0 +1,6 @@
+{"type":"assistant","message":{"content":[{"type":"tool_use","id":"call-1","name":"Read","input":{"file_path":"a.py"}}]}}
+not valid json at all {{{
+
+{"type": "assistant", "message": broken
+["just", "an", "array", "not", "an", "event"]
+{"type":"result","subtype":"success","is_error":false,"result":"ok","num_turns":1}

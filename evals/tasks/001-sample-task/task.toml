@@ -1,0 +1,15 @@
+title = "Sample: add a pure text helper with tests"
+repo = "."
+ref = "a426612dc53dfb874a9814dc9a4a320f72d13ca9"
+expected_files = ["setup/src/cabal/text_utils.py", "setup/tests/test_text_utils.py"]
+rubrics = ["coding-quality", "instruction-following"]
+
+[[checks]]
+kind = "test"
+cmd = ["python", "-m", "pytest", "setup/tests/test_text_utils.py", "-q"]
+parser = "pytest"
+timeout_seconds = 120
+
+[[checks]]
+kind = "build"
+cmd = ["python", "-m", "compileall", "setup/src/cabal", "-q"]

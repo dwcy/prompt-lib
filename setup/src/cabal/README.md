@@ -50,6 +50,12 @@ sh setup/settings-configurator-ui.sh
 | Codex | Deploy `global/codex/` to `~/.codex`, scaffold `.agents/`, and inspect Claude -> Codex conversion diffs. |
 | Tools | Install / update companion CLIs (Claude CLI, GitHub CLI, Specify CLI, claude-devtools). |
 
+## Headless submodules
+
+| Command | Purpose |
+|---|---|
+| `python -m cabal.evals` | Agent eval/regression harness: A/B-compare two agent configurations over a fixed task set (`validate` / `run` / `judge` / `report`). Benchmark data lives in the repo's `evals/` tree — see `evals/README.md`. |
+
 ## Identity
 
 Cabal is meant to feel like a local control room: one focused place for agents,
