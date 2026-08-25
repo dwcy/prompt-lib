@@ -37,6 +37,17 @@
   font-size: var(--fs-sm);
 }
 
+.svc-web-apps__filter {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
 .svc-web-apps__header button,
 .svc-web-apps__action button {
   padding: 4px 12px;

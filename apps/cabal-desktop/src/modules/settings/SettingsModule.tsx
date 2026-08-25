@@ -5,6 +5,7 @@ import { queryKeys } from "@/api/queryKeys";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
 import { StatePill } from "@/components/StatePill";
+import { ToggleSwitch } from "@/components/ToggleSwitch";
 import { useAction } from "@/hooks/useAction";
 import { useProjectContextStore } from "@/stores/projectContext";
 import "./SettingsModule.css";
@@ -258,17 +259,12 @@ function SettingResolutionRow({
       </div>
       <div className="settings-resolution-row__command">
         <small>{entry.target_file}</small>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={entry.value_state}
-          aria-label={`${entry.value_state ? "Disable" : "Enable"} ${entry.label}`}
-          className={`settings-toggle${entry.value_state ? " is-on" : ""}`}
-          onClick={onToggle}
+        <ToggleSwitch
+          checked={entry.value_state}
+          label={`${entry.value_state ? "Disable" : "Enable"} ${entry.label}`}
+          onToggle={onToggle}
           disabled={!projectSelected}
-        >
-          <span className="settings-toggle__knob" />
-        </button>
+        />
       </div>
     </article>
   );

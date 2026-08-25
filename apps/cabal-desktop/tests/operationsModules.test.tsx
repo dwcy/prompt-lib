@@ -215,6 +215,57 @@ describe("MCP and service workflows", () => {
     expect(preparedParams).toEqual({ pid: 4242, port: 5173, started_at: 1725000000.25 });
   });
 
+  it("hides OS processes by default and reveals them when the filter is turned off", async () => {
+    server.use(
+      http.get("/api/services", () =>
+        HttpResponse.json(
+          wrapEnvelope({
+            services: [],
+            counts: { total: 0, running: 0, stopped: 0, not_set_up: 0, blocked: 0 },
+          }),
+        ),
+      ),
+      http.get("/api/services/running-apps", () =>
+        HttpResponse.json(
+          wrapEnvelope({
+            apps: [
+              {
+                port: 5173,
+                pid: 4242,
+                app_name: "fixture-web",
+                location: "C:/projects/fixture-web",
+                address: "127.0.0.1",
+                started_at: 1725000000.25,
+              },
+              {
+                port: 135,
+                pid: 900,
+                app_name: "svchost",
+                location: "C:\\Windows\\System32",
+                address: "127.0.0.1",
+                started_at: 1725000000.25,
+              },
+            ],
+            count: 2,
+          }),
+        ),
+      ),
+      http.get("/api/services/docker-apps", () =>
+        HttpResponse.json(wrapEnvelope(emptyDockerPayload())),
+      ),
+    );
+    const { user } = renderModule(<ServicesModule />);
+
+    expect(await screen.findByText("fixture-web")).toBeInTheDocument();
+    expect(screen.queryByText("svchost")).not.toBeInTheDocument();
+    expect(screen.getByText("Hide OS processes (1 hidden)")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("switch", { name: "Hide OS processes" }));
+
+    expect(await screen.findByText("svchost")).toBeInTheDocument();
+    expect(screen.getByText("fixture-web")).toBeInTheDocument();
+  });
+
   it("shows Docker containers in every state and prepares the matching lifecycle action", async () => {
     let preparedParams: unknown = null;
     server.use(

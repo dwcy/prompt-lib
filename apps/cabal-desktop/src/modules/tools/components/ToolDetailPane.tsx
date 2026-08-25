@@ -21,7 +21,7 @@ export function ToolDetailPane({ toolKey }: ToolDetailPaneProps) {
       {toolKey === null ? (
         <EmptyState title="No tool selected" body="Pick a row to inspect a tool." />
       ) : detailQuery.isPending ? (
-        <EmptyState title="Loading tool detail…" />
+        <EmptyState title="Loading tool detail" animated />
       ) : detailQuery.isError ? (
         <EmptyState title="Could not load tool detail" body={detailQuery.error.message} />
       ) : detailQuery.data !== undefined ? (

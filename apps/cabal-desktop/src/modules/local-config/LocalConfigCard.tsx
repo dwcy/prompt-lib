@@ -2,7 +2,7 @@
 // and the confirmed-apply trigger button. Rendered once per LocalConfigAction in the module list.
 import type { LocalConfigAction } from "@/api/config";
 import { StatePill } from "@/components/StatePill";
-import { LocalConfigToggle } from "@/modules/local-config/LocalConfigToggle";
+import { ToggleSwitch } from "@/components/ToggleSwitch";
 
 export function LocalConfigCard({
   step,
@@ -37,7 +37,7 @@ export function LocalConfigCard({
             const checked = selectedKeys.has(item.key);
             return (
               <li key={item.key} className="lcfg__item">
-                <LocalConfigToggle
+                <ToggleSwitch
                   checked={checked}
                   disabled={item.state === "skip"}
                   label={`Include ${item.rel_path}`}

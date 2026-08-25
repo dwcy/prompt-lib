@@ -2,6 +2,52 @@
    DiffView, LogStream, JobPane, VirtualDataTable. Overlay components (DetailDrawer, ConfirmDialog)
    live in overlays.css. */
 
+/* ─── ToggleSwitch ───────────────────────────────────────────────────────── */
+
+.toggle-switch {
+  position: relative;
+  flex: 0 0 34px;
+  width: 34px;
+  min-width: 34px;
+  height: 19px;
+  min-height: 19px;
+  padding: 0;
+  background: var(--toggle-track-off);
+  border: 1px solid var(--toggle-border-off);
+  border-radius: 10px;
+  transition: background var(--toggle-duration);
+}
+
+.toggle-switch:hover:not(:disabled) {
+  background: var(--toggle-track-off);
+}
+
+.toggle-switch.is-on,
+.toggle-switch.is-on:hover:not(:disabled) {
+  background: var(--toggle-track-on);
+  border-color: var(--toggle-border-on);
+}
+
+.toggle-switch:disabled {
+  opacity: 1;
+}
+
+.toggle-switch__knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 13px;
+  height: 13px;
+  background: var(--toggle-knob-off);
+  border-radius: var(--corner-full);
+  transition: left var(--toggle-duration);
+}
+
+.toggle-switch.is-on .toggle-switch__knob {
+  left: 16px;
+  background: var(--accent);
+}
+
 /* ─── StatePill ───────────────────────────────────────────────────────────── */
 
 .state-pill {
@@ -156,6 +202,36 @@
 
 .empty-state__action {
   margin-top: var(--space-2);
+}
+
+.empty-state__dots::after {
+  content: "";
+  display: inline-block;
+  width: 1.5em;
+  text-align: left;
+  animation: empty-state-dots 1.4s steps(1, end) infinite;
+}
+
+@keyframes empty-state-dots {
+  0% {
+    content: "";
+  }
+  25% {
+    content: ".";
+  }
+  50% {
+    content: "..";
+  }
+  75% {
+    content: "...";
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .empty-state__dots::after {
+    content: "...";
+    animation: none;
+  }
 }
 
 /* ─── DiffView ────────────────────────────────────────────────────────────── */

@@ -15,6 +15,7 @@ const MODULE_TITLES = [
   "Agent Services",
   "Package Security",
   "Sessions Dashboard",
+  "Scheduled Tasks",
   "Account & Assistant Info",
   "Config Doctor",
   "Model Assignments",

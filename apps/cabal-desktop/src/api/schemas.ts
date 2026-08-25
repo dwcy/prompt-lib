@@ -33,6 +33,7 @@ export const healthPayloadSchema = z.object({
   started_at: z.string(),
   modules: z.array(moduleHealthSchema),
   drift_flags: driftFlagsSchema.optional(),
+  project_branch: z.string().nullable().optional(),
 });
 
 export const diagnosticEventSchema = z.object({

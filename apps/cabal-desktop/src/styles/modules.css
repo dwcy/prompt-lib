@@ -1673,21 +1673,6 @@
   color: var(--muted);
 }
 
-.settings-toggle {
-  min-width: 4rem;
-  border-color: var(--border-strong);
-}
-
-.settings-toggle[data-state="on"] {
-  border-color: color-mix(in srgb, var(--status-ok) 50%, var(--border));
-  background-color: color-mix(in srgb, var(--status-ok) 12%, transparent);
-  color: var(--status-ok);
-}
-
-.settings-toggle[data-state="off"] {
-  color: var(--muted);
-}
-
 .local-config-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));

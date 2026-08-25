@@ -25,6 +25,31 @@ body,
   height: 100%;
 }
 
+/* Thin, subtle scrollbars everywhere instead of the OS's default chunky bar — a slim colored
+   thumb on a transparent track, brightening on hover, rather than a wide gray gutter. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--border-strong);
+  border-radius: var(--corner-full);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--muted);
+}
+
 body {
   background-color: var(--bg);
   color: var(--fg);

@@ -1,4 +1,4 @@
-// Static registry of all 23 feature modules: nav grouping, title, delivery phase, and page component
+// Static registry of all 24 feature modules: nav grouping, title, delivery phase, and page component
 // (or null pre-launch, routed to the shared ModuleUnavailable placeholder).
 import { type ComponentType, type LazyExoticComponent, lazy } from "react";
 import { ProjectGateModule } from "@/modules/project-gate/ProjectGateModule";
@@ -93,6 +93,11 @@ const SessionsModule = lazy(() =>
     default: module.SessionsModule,
   })),
 );
+const ScheduledTasksModule = lazy(() =>
+  import("@/modules/scheduled-tasks/ScheduledTasksModule").then((module) => ({
+    default: module.ScheduledTasksModule,
+  })),
+);
 const SettingsModule = lazy(() =>
   import("@/modules/settings/SettingsModule").then((module) => ({
     default: module.SettingsModule,
@@ -126,6 +131,7 @@ export const MODULE_NAV_LABELS: Record<ModuleKey, string> = {
   services: "Services",
   package_security: "Package security",
   sessions: "Sessions & cost",
+  scheduled_tasks: "Scheduled tasks",
   account: "Claude config",
   doctor: "Config doctor",
   model_assignments: "Model assignments",
@@ -152,6 +158,7 @@ export const MODULE_OPERATION_SUMMARIES: Record<ModuleKey, string> = {
   services: "Bridges, runtimes, lifecycle, and logs",
   package_security: "Dependency findings and safe fixes",
   sessions: "Usage, cost, activity, and transcripts",
+  scheduled_tasks: "Claude and Codex automation inventory",
   account: "Credentials, instructions, and runtime identity",
   doctor: "Configuration findings and repair routes",
   model_assignments: "Model pins and routing distribution",
@@ -187,6 +194,7 @@ export const MODULE_KEYS = [
   "services",
   "package_security",
   "sessions",
+  "scheduled_tasks",
   "account",
   "doctor",
   "model_assignments",
@@ -296,6 +304,13 @@ export const MODULE_REGISTRY: ModuleDefinition[] = [
     component: SessionsModule,
   },
   {
+    key: "scheduled_tasks",
+    title: "Scheduled Tasks",
+    group: "agents",
+    phase: 12,
+    component: ScheduledTasksModule,
+  },
+  {
     key: "account",
     title: "Account & Assistant Info",
     group: "agents",
@@ -319,7 +334,7 @@ export const MODULE_REGISTRY: ModuleDefinition[] = [
   {
     key: "environment",
     title: "Environment Variables",
-    group: "repo",
+    group: "machine",
     phase: 10,
     component: EnvironmentModule,
   },

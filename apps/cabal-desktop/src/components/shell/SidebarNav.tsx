@@ -1,5 +1,5 @@
 // Grouped primary navigation (console redesign): brand lockup, ⌘K search trigger, all 22 modules
-// in five purpose groups, and a mono workspace footer (project path + backend origin).
+// in five purpose groups, and a mono workspace footer (current branch, project path, backend origin).
 import { useHealth } from "@/api/health";
 import cabalLogo from "@/assets/cabal-logo.png";
 import { ModuleSwitcher } from "@/components/shell/ModuleSwitcher";
@@ -92,6 +92,9 @@ export function SidebarNav({ activeModuleKey, onSelectModule }: SidebarNavProps)
         })}
       </div>
       <footer className="sidebar-nav__footer">
+        {health.data?.project_branch ? (
+          <span title={health.data.project_branch}>⎇ {health.data.project_branch}</span>
+        ) : null}
         {selectedProject ? <span title={selectedProject.path}>{selectedProject.path}</span> : null}
         <span>{backendOrigin} · cabal-web.v2</span>
       </footer>

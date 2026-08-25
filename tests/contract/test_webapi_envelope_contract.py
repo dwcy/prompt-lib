@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import subprocess
+from pathlib import Path
 
 import pytest
 
@@ -42,6 +44,43 @@ def test_health_data_contains_module_health_rows(app_factory) -> None:
     for row in modules:
         assert {"module", "state", "detail", "last_success_at"} <= set(row)
         assert row["state"] in {"ok", "loading", "degraded", "failed", "unavailable"}
+
+
+def _init_git_repo(path: Path, *, branch: str) -> None:
+    subprocess.run(["git", "init", "-b", branch, str(path)], check=True, capture_output=True)
+    subprocess.run(
+        ["git", "-C", str(path), "config", "user.email", "test@example.com"],
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "-C", str(path), "config", "user.name", "Test User"], check=True, capture_output=True
+    )
+    subprocess.run(
+        ["git", "-C", str(path), "commit", "--allow-empty", "-m", "init"],
+        check=True,
+        capture_output=True,
+    )
+
+
+def test_health_reports_current_branch_of_selected_project(app_factory, tmp_path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _init_git_repo(repo, branch="feature/widgets")
+
+    _app, client = build_client(app_factory, project=repo)
+
+    response = client.get("/api/health", headers=auth_headers())
+
+    assert response.json()["data"]["project_branch"] == "feature/widgets"
+
+
+def test_health_reports_null_branch_when_no_project_selected(app_factory) -> None:
+    _app, client = build_client(app_factory)
+
+    response = client.get("/api/health", headers=auth_headers())
+
+    assert response.json()["data"]["project_branch"] is None
 
 
 @pytest.mark.parametrize("path", FOUNDATIONAL_READ_ROUTES)

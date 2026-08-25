@@ -1,10 +1,9 @@
 // Console-layout view models for Overview: KPI row, state-to-tone mapping, signal lanes, and the
 // activity feed — pure presentation mapping over overviewSummary's derived cards/actions.
-import type { OverviewPayload } from "@/api/schemas";
 import type { KpiDeltaTone } from "@/components/KpiCard";
 import type { StatePillVariant } from "@/components/StatePill";
 import type { ModuleKey } from "@/modules/registry";
-import type { OverviewActionSummary, OverviewCardSummary } from "./overviewSummary";
+import type { OverviewActionSummary } from "./overviewSummary";
 
 export type StatusTone = "ok" | "info" | "warning" | "danger" | "neutral";
 
@@ -86,57 +85,95 @@ export function variantTone(variant: StatePillVariant | null): StatusTone {
   }
 }
 
+export interface ToolCatalogSummary {
+  total: number;
+  installedCount: number;
+  missingCount: number;
+  manualCount: number;
+  unsupportedCount: number;
+}
+
+export interface AgentKnowledgeSummary {
+  nodes: number;
+  edges: number;
+  available: boolean;
+  agentCount: number;
+  skillCount: number;
+  hookCount: number;
+  ruleCount: number;
+}
+
+export interface ServicesReadySummary {
+  ready: number;
+  total: number;
+  notReadyLabels: string[];
+}
+
 export function deriveOverviewKpis(
-  payload: OverviewPayload,
-  cards: OverviewCardSummary[],
-  actions: OverviewActionSummary[],
+  tools: ToolCatalogSummary | null,
+  knowledge: AgentKnowledgeSummary | null,
+  services: ServicesReadySummary | null,
 ): OverviewKpi[] {
-  const attention = actions.filter((action) => action.variant !== "ok");
-  const driftCount = Number(payload.drift_flags.claude) + Number(payload.drift_flags.codex);
-  const steadyCount = cards.filter((card) => !isAttentionVariant(card.stateVariant)).length;
-  const attentionCards = cards.length - steadyCount;
-  const sessionsCard = cards.find((card) => card.key === "recent_sessions");
+  const installedPercent =
+    tools !== null && tools.total > 0
+      ? Math.round((tools.installedCount / tools.total) * 100)
+      : null;
+  const assetTotal =
+    knowledge !== null
+      ? knowledge.agentCount + knowledge.skillCount + knowledge.hookCount + knowledge.ruleCount
+      : null;
+
   return [
     {
-      key: "priorities",
-      label: "Priorities",
-      value: String(attention.length),
-      delta: attention.length === 0 ? "steady" : "review queue",
-      deltaTone: attention.length === 0 ? "ok" : "warning",
+      key: "tool_catalog",
+      label: "Tool catalog",
+      value: tools !== null ? String(tools.total) : "…",
+      delta: installedPercent !== null ? `${installedPercent}% installed` : "loading",
+      deltaTone: installedPercent === null ? "neutral" : installedPercent >= 90 ? "ok" : "info",
       hint:
-        attention.length === 0
-          ? "Core config and live sections are in sync."
-          : (attention[0]?.summary ?? "Workspace signals need attention."),
+        tools !== null
+          ? `${tools.installedCount} installed · ${tools.missingCount} missing · ${tools.manualCount} manual · ${tools.unsupportedCount} n/a`
+          : "Loading tool catalog…",
     },
     {
-      key: "drift",
-      label: "Drift lanes",
-      value: String(driftCount),
-      unit: "/ 2",
-      delta: driftCount === 0 ? "aligned" : "changed",
-      deltaTone: driftCount === 0 ? "ok" : "warning",
-      hint: `Claude ${payload.drift_flags.claude ? "drift" : "in sync"} · Codex ${
-        payload.drift_flags.codex ? "drift" : "in sync"
-      }`,
-    },
-    {
-      key: "signals",
-      label: "Live signals",
-      value: String(cards.length),
-      delta: `${steadyCount} steady`,
-      deltaTone: steadyCount === cards.length ? "ok" : "info",
-      hint:
-        attentionCards === 0
-          ? "All sections reporting healthy states."
-          : `${attentionCards} ${attentionCards === 1 ? "section needs" : "sections need"} attention.`,
-    },
-    {
-      key: "sessions",
-      label: "Recent sessions",
-      value: String(payload.recent_sessions.length),
-      delta: "captured",
+      key: "agent_assets",
+      label: "Agent assets",
+      value: assetTotal !== null ? String(assetTotal) : "…",
+      delta: "~/.claude",
       deltaTone: "neutral",
-      hint: sessionsCard?.headline ?? "No sessions recorded yet.",
+      hint:
+        knowledge !== null
+          ? `${knowledge.agentCount} agents · ${knowledge.skillCount} skills · ${knowledge.hookCount} hooks · ${knowledge.ruleCount} rules`
+          : "Loading knowledge graph…",
+    },
+    {
+      key: "knowledge_graph",
+      label: "Knowledge graph",
+      value: knowledge !== null ? String(knowledge.nodes) : "…",
+      unit: "nodes",
+      delta: knowledge === null ? "loading" : knowledge.available ? "exported" : "not exported",
+      deltaTone: knowledge === null ? "neutral" : knowledge.available ? "ok" : "warning",
+      hint: knowledge !== null ? `${knowledge.edges} edges` : "Loading knowledge graph…",
+    },
+    {
+      key: "services_ready",
+      label: "Services ready",
+      value: services !== null ? String(services.ready) : "…",
+      unit: services !== null ? `/ ${services.total}` : undefined,
+      delta:
+        services === null
+          ? "loading"
+          : services.ready === services.total
+            ? "all ready"
+            : `${services.total - services.ready} need attention`,
+      deltaTone:
+        services === null ? "neutral" : services.ready === services.total ? "ok" : "warning",
+      hint:
+        services !== null
+          ? services.notReadyLabels.length > 0
+            ? services.notReadyLabels.join(" · ")
+            : "All project services ready."
+          : "Loading services…",
     },
   ];
 }

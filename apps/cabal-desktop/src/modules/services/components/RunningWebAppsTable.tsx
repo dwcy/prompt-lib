@@ -1,7 +1,11 @@
 import type { RunningWebApp } from "@/api/operations";
+import { ToggleSwitch } from "@/components/ToggleSwitch";
 
 export interface RunningWebAppsTableProps {
   apps: RunningWebApp[];
+  hiddenSystemCount: number;
+  hideSystemProcesses: boolean;
+  onToggleHideSystemProcesses: () => void;
   isLoading: boolean;
   isRefreshing: boolean;
   error: string | null;
@@ -12,6 +16,9 @@ export interface RunningWebAppsTableProps {
 
 export function RunningWebAppsTable({
   apps,
+  hiddenSystemCount,
+  hideSystemProcesses,
+  onToggleHideSystemProcesses,
   isLoading,
   isRefreshing,
   error,
@@ -26,6 +33,17 @@ export function RunningWebAppsTable({
           <b>Running web apps</b>
           <span>Local processes with active TCP listening ports</span>
         </div>
+        <div className="svc-web-apps__filter">
+          <ToggleSwitch
+            checked={hideSystemProcesses}
+            label="Hide OS processes"
+            onToggle={onToggleHideSystemProcesses}
+          />
+          <span>
+            Hide OS processes
+            {hiddenSystemCount > 0 ? ` (${hiddenSystemCount} hidden)` : ""}
+          </span>
+        </div>
         <button type="button" onClick={onRefresh} disabled={isRefreshing}>
           {isRefreshing ? "Refreshing…" : "Refresh"}
         </button>
@@ -38,7 +56,11 @@ export function RunningWebAppsTable({
       ) : isLoading ? (
         <p className="svc-web-apps__message">Scanning listening ports…</p>
       ) : apps.length === 0 ? (
-        <p className="svc-web-apps__message">No running web apps found.</p>
+        <p className="svc-web-apps__message">
+          {hiddenSystemCount > 0
+            ? `All ${hiddenSystemCount} listening processes are OS processes — turn off "Hide OS processes" to see them.`
+            : "No running web apps found."}
+        </p>
       ) : (
         <div className="svc-web-apps__scroll">
           <table>

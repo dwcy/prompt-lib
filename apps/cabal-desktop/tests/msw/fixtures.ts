@@ -1,4 +1,6 @@
 // Envelope-v2 fixture builders matching the Zod schemas in src/api/schemas.ts exactly.
+
+import type { ProviderState } from "@/api/projectLifecycle";
 import {
   type ConfirmationTicket,
   type DiagnosticEvent,
@@ -15,6 +17,7 @@ import {
   SCHEMA_VERSION,
   type SnapshotEnvelope,
 } from "@/api/schemas";
+import type { SystemOverview } from "@/api/systemOverview";
 import type {
   ToolCatalogItem,
   ToolCatalogPayload,
@@ -164,6 +167,109 @@ export function buildOverviewPayload(overrides: Partial<OverviewPayload> = {}): 
     knowledge_availability: {},
     security_summary: {},
     drift_flags: buildDriftFlags(),
+    ...overrides,
+  };
+}
+
+export function buildProviderState(overrides: Partial<ProviderState> = {}): ProviderState {
+  return {
+    authenticated: true,
+    accounts: [
+      {
+        user: "octocat",
+        host: "github.com",
+        active: true,
+        valid: true,
+        storage: "keyring",
+      },
+    ],
+    active_account: "octocat",
+    gh_status: "authenticated",
+    login: { state: "idle" },
+    ...overrides,
+  };
+}
+
+export function buildSystemOverview(overrides: Partial<SystemOverview> = {}): SystemOverview {
+  return {
+    cabal: {
+      version: "0.1.0",
+      status: "up_to_date",
+      local_hash: "abc12345",
+      latest_hash: "abc12345",
+      latest_date: "2026-08-11",
+      behind_count: null,
+      branch: "main",
+      subject: "",
+    },
+    machine: {
+      os: "Windows",
+      release: "11",
+      package_manager: "winget",
+      tools: [
+        { key: "git", label: "Git", installed: true, version: "git version 2.51.0" },
+        { key: "python", label: "Python", installed: true, version: "3.14.0" },
+        { key: "node", label: "Node.js", installed: true, version: "v24.0.0" },
+        { key: "npm", label: "npm", installed: true, version: "11.0.0" },
+        { key: "pnpm", label: "pnpm", installed: true, version: "10.0.0" },
+        { key: "dotnet", label: ".NET SDK", installed: true, version: "10.0.100" },
+        { key: "gh", label: "GitHub CLI", installed: true, version: null },
+      ],
+    },
+    terminal: {
+      default_terminal: "Windows Terminal",
+      default_profile: "PowerShell",
+      shells: [
+        {
+          key: "pwsh",
+          label: "PowerShell",
+          installed: true,
+          version: "PowerShell 7.6.3",
+          path: "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+          active: true,
+          configured: true,
+          profile_path: "C:\\Users\\test\\Documents\\PowerShell\\profile.ps1",
+        },
+        {
+          key: "cmd",
+          label: "Command Prompt",
+          installed: true,
+          version: "Microsoft Windows [Version 11.0.1]",
+          path: "C:\\Windows\\system32\\cmd.exe",
+          active: false,
+          configured: false,
+          profile_path: null,
+        },
+      ],
+      applications: [
+        {
+          key: "windows-terminal",
+          label: "Windows Terminal",
+          installed: true,
+          version: null,
+          path: "C:\\Windows\\wt.exe",
+          configured: true,
+          settings_path: "C:\\Users\\test\\AppData\\Local\\Terminal\\settings.json",
+          active: true,
+        },
+      ],
+      modifications: [
+        {
+          key: "tool:oh-my-posh",
+          label: "Oh My Posh",
+          detail: "Loaded by a shell profile",
+          kind: "prompt",
+          source: "C:\\Users\\test\\Documents\\PowerShell\\profile.ps1",
+        },
+        {
+          key: "fonts",
+          label: "Fonts",
+          detail: "CaskaydiaCove Nerd Font",
+          kind: "appearance",
+          source: "C:\\Users\\test\\AppData\\Local\\Terminal\\settings.json",
+        },
+      ],
+    },
     ...overrides,
   };
 }

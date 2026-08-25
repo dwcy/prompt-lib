@@ -166,3 +166,85 @@ def test_Overview_get_returns_ok_status_with_null_error_when_no_collector_fails(
 
     assert body["status"] == "ok"
     assert body["error"] is None
+
+
+def test_SystemOverview_get_returns_cabal_revision_and_complete_machine_summary(
+    app_factory, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from cabal.webapi.routers import system as system_router
+
+    monkeypatch.setattr(
+        system_router,
+        "check_for_updates",
+        lambda: {
+            "status": "behind",
+            "local_hash": "11111111",
+            "latest_hash": "22222222",
+            "latest_date": "2026-08-11",
+            "behind_count": 2,
+            "branch": "main",
+            "subject": "Latest change",
+        },
+    )
+    monkeypatch.setattr(
+        system_router,
+        "detect_env",
+        lambda: {
+            "os": "Windows",
+            "release": "11",
+            "shell": "pwsh.exe",
+            "pkg_manager": "winget",
+            "git_version": "git version 2.51.0",
+            "python": "3.14.0",
+            "node": "v24.0.0",
+            "dotnet": "10.0.100",
+            "gh": True,
+        },
+    )
+    monkeypatch.setattr(
+        system_router,
+        "build_terminal_summary",
+        lambda environment: {
+            "default_terminal": "Windows Terminal",
+            "default_profile": "PowerShell",
+            "shells": [
+                {
+                    "key": "pwsh",
+                    "label": "PowerShell",
+                    "installed": True,
+                    "version": "7.6.3",
+                    "path": "C:/Program Files/PowerShell/7/pwsh.exe",
+                    "active": True,
+                    "configured": True,
+                    "profile_path": "C:/Users/test/Documents/PowerShell/profile.ps1",
+                }
+            ],
+            "applications": [],
+            "modifications": [],
+        },
+    )
+    _app, client = build_client(app_factory)
+
+    response = client.get("/api/system/overview", headers=auth_headers())
+    data = response.json()["data"]
+
+    assert response.status_code == 200
+    assert data["cabal"]["latest_hash"] == "22222222"
+    assert data["cabal"]["latest_date"] == "2026-08-11"
+    assert data["machine"]["os"] == "Windows"
+    assert data["machine"]["package_manager"] == "winget"
+    assert "shell" not in data["machine"]
+    assert data["terminal"]["default_terminal"] == "Windows Terminal"
+    assert data["terminal"]["default_profile"] == "PowerShell"
+    assert data["terminal"]["shells"][0]["label"] == "PowerShell"
+    statuses = {item["key"]: item for item in data["machine"]["tools"]}
+    assert statuses["git"] == {
+        "key": "git",
+        "label": "Git",
+        "installed": True,
+        "version": "git version 2.51.0",
+    }
+    assert statuses["python"]["version"] == "3.14.0"
+    assert statuses["node"]["version"] == "v24.0.0"
+    assert statuses["dotnet"]["version"] == "10.0.100"
+    assert statuses["gh"]["installed"] is True

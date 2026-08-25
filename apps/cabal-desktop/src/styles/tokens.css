@@ -49,6 +49,14 @@
   --accent-border: #3c2038;
   --accent-muted: #b44b8c;
 
+  /* Toggle switch — exact Cabal Console control treatment. */
+  --toggle-track-off: #17151f;
+  --toggle-track-on: linear-gradient(180deg, #3c2038, #221626);
+  --toggle-border-off: #262433;
+  --toggle-border-on: #5a2c4e;
+  --toggle-knob-off: #55506a;
+  --toggle-duration: 150ms;
+
   /* Purpose-group accents: navigation and workspace-map colors stay consistent everywhere. */
   --group-machine: #f4569d;
   --group-repo: #75c7ff;

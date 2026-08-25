@@ -13,6 +13,649 @@
   gap: var(--space-3);
 }
 
+/* ─── Git/GitHub/Supabase/Vercel service-status row ──────────────────────── */
+
+.overview-console__services {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-3);
+}
+
+.overview-service-card {
+  min-width: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  background-color: var(--surface-1);
+}
+
+.overview-service-card[data-tone="warning"] {
+  border-color: color-mix(in srgb, var(--status-warning) 35%, var(--border));
+}
+
+.overview-service-card[data-tone="danger"] {
+  border-color: color-mix(in srgb, var(--status-danger) 35%, var(--border));
+}
+
+.overview-service-card header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.overview-service-card__dot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--corner-full);
+  background-color: var(--status-ok);
+}
+
+.overview-service-card[data-tone="warning"] .overview-service-card__dot {
+  background-color: var(--status-warning);
+}
+
+.overview-service-card[data-tone="danger"] .overview-service-card__dot {
+  background-color: var(--status-danger);
+}
+
+.overview-service-card[data-tone="neutral"] .overview-service-card__dot {
+  background-color: var(--muted);
+}
+
+.overview-service-card__state {
+  margin-left: auto;
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+.overview-service-card p {
+  margin-top: var(--space-2);
+  color: var(--fg-soft);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+}
+
+.overview-service-card__detail {
+  display: block;
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+
+.overview-console__identity-row {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(15rem, 1fr);
+  gap: var(--space-3);
+  align-items: stretch;
+}
+
+/* ─── Computer and Cabal version panel ───────────────────────────────────── */
+
+.overview-system-panel {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  background-color: var(--surface-1);
+}
+
+.overview-system-panel__title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-bottom: 1px solid var(--divider);
+  background-color: var(--surface-deep);
+}
+
+.overview-system-panel__title b {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.overview-system-panel__title span {
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+
+.overview-system-panel__header {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: center;
+  padding: 0;
+  border-bottom: 1px solid var(--divider);
+}
+
+.overview-system-panel__machine {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-3) var(--space-4);
+}
+
+.overview-system-panel__machine > span:last-child {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.overview-system-panel__machine strong {
+  overflow: hidden;
+  color: var(--fg);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.overview-system-panel__machine small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.overview-system-panel__machine-icon {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 auto;
+  border: 1px solid var(--accent-border);
+  border-radius: var(--corner-md);
+  background: var(--accent-bg-gradient);
+  color: var(--accent);
+}
+
+.overview-system-panel__machine-icon svg {
+  width: 1.35rem;
+  height: 1.35rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.6;
+}
+
+.overview-system-panel__cabal {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  height: 100%;
+  padding: var(--space-3) var(--space-4);
+  overflow-x: auto;
+  border-left: 1px solid var(--divider);
+  white-space: nowrap;
+}
+
+.overview-system-panel__cabal-name {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  flex: 0 0 auto;
+}
+
+.overview-system-panel__cabal-name small,
+.overview-system-panel__cabal time {
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+}
+
+.overview-system-panel__cabal-name,
+.overview-system-panel__version-state {
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.overview-system-panel__version-state,
+.overview-system-panel__update-link {
+  margin-left: auto;
+}
+
+.overview-system-panel__cabal code {
+  color: var(--accent);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+.overview-system-panel__update-link {
+  padding: var(--space-1);
+  border: none;
+  background: none;
+  color: var(--status-warning);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.15rem;
+}
+
+.overview-system-panel__update-link:hover:not(:disabled) {
+  background: none;
+  color: color-mix(in srgb, var(--status-warning) 75%, white);
+}
+
+.overview-system-panel__toolchain {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  background: var(--divider);
+  list-style: none;
+}
+
+.overview-system-tool {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-1);
+}
+
+.overview-system-tool span {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+
+.overview-system-tool i,
+.overview-system-panel__detected i {
+  width: 0.4rem;
+  height: 0.4rem;
+  flex: 0 0 auto;
+  border-radius: var(--corner-full);
+  background: var(--status-danger);
+}
+
+.overview-system-tool[data-installed="true"] i,
+.overview-system-panel__detected i {
+  background: var(--status-ok);
+}
+
+.overview-system-tool strong {
+  overflow: hidden;
+  color: var(--fg);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.overview-system-tool[data-installed="false"] strong {
+  color: var(--status-danger);
+}
+
+.overview-system-panel__detected {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--divider);
+  background-color: var(--surface-deep);
+  font-family: var(--font-family-mono);
+}
+
+.overview-system-panel__detected > small {
+  flex: 0 0 auto;
+  padding-top: 0.2rem;
+  color: var(--muted);
+  font-family: var(--font-family-sans);
+  font-size: var(--fs-xs);
+}
+
+.overview-system-panel__detected > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  line-height: var(--lh-md);
+}
+
+.overview-system-panel__detected > div > span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--fs-sm);
+}
+
+.overview-system-panel__detected b {
+  color: var(--status-info);
+  font-weight: 500;
+}
+
+.overview-system-panel__detected code {
+  color: var(--fg-soft);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-sm);
+}
+
+.overview-system-panel__message {
+  margin: 0;
+  padding: var(--space-4);
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.overview-system-panel__message--error {
+  color: var(--status-danger);
+}
+
+/* ─── GitHub identity panel ──────────────────────────────────────────────── */
+
+.overview-github-panel {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  background-color: var(--surface-1);
+}
+
+.overview-github-panel__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--divider);
+}
+
+.overview-github-panel__header > strong {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.overview-github-panel__body {
+  min-height: 8rem;
+  padding: var(--space-4);
+}
+
+.overview-github-panel__accounts {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.overview-github-panel__switch-target {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.overview-github-account {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+  min-width: 7rem;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--corner-md);
+}
+
+.overview-github-account[data-active="true"] {
+  background: color-mix(in srgb, var(--status-ok) 7%, var(--surface-2));
+}
+
+.overview-github-account__icon {
+  display: grid;
+  place-items: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border: 2px solid var(--status-danger);
+  border-radius: var(--corner-full);
+  background: color-mix(in srgb, var(--status-danger) 12%, var(--surface-2));
+  color: var(--status-danger);
+  box-shadow: 0 0 0 0.25rem color-mix(in srgb, var(--status-danger) 8%, transparent);
+}
+
+.overview-github-account__icon[data-health="healthy"] {
+  border-color: var(--status-ok);
+  background: color-mix(in srgb, var(--status-ok) 12%, var(--surface-2));
+  color: var(--status-ok);
+  box-shadow: 0 0 0 0.25rem color-mix(in srgb, var(--status-ok) 8%, transparent);
+}
+
+.overview-github-account__icon svg {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.overview-github-account b {
+  max-width: 10rem;
+  overflow: hidden;
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.overview-github-account small {
+  max-width: 11rem;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.overview-github-panel__swap {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+  min-width: 3.5rem;
+  padding: var(--space-2);
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+
+.overview-github-panel__swap:hover:not(:disabled) {
+  background: var(--surface-2);
+  color: var(--fg);
+}
+
+.overview-github-panel__swap svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.75;
+}
+
+.overview-github-panel__message {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.overview-github-panel__message--error {
+  color: var(--status-danger);
+}
+
+.overview-github-panel__empty {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.overview-github-panel__empty > span:last-child {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.overview-github-panel__empty b {
+  color: var(--fg);
+}
+
+.overview-github-panel__empty small {
+  color: var(--muted);
+}
+
+/* ─── Terminal settings panel ───────────────────────────────────────────── */
+
+.overview-terminal-panel {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  background-color: var(--surface-1);
+}
+
+.overview-terminal-panel__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--divider);
+}
+
+.overview-terminal-panel__header > span:last-child {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.overview-terminal-panel__header strong {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.overview-terminal-panel__header small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.overview-terminal-panel__icon {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: 0 0 auto;
+  border: 1px solid var(--accent-border);
+  border-radius: var(--corner-md);
+  background: var(--accent-bg-gradient);
+  color: var(--accent);
+}
+
+.overview-terminal-panel__icon svg {
+  width: 1.2rem;
+  height: 1.2rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+}
+
+.overview-terminal-panel__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--divider);
+}
+
+.overview-terminal-group {
+  min-width: 0;
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-1);
+}
+
+.overview-terminal-group h3 {
+  margin: 0 0 var(--space-2);
+  color: var(--muted-2);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.overview-terminal-group ul {
+  display: grid;
+  gap: var(--space-1);
+  max-height: 10rem;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.overview-terminal-group li {
+  display: grid;
+  grid-template-columns: 0.45rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-1) 0;
+}
+
+.overview-terminal-group li > i {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: var(--corner-full);
+  background: var(--status-ok);
+}
+
+.overview-terminal-group li > span {
+  display: grid;
+  min-width: 0;
+}
+
+.overview-terminal-group b,
+.overview-terminal-group small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.overview-terminal-group b {
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+}
+
+.overview-terminal-group small {
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+
+.overview-terminal-group code {
+  padding: 0.1rem var(--space-1);
+  border-radius: var(--corner-sm);
+  background: var(--surface-2);
+  color: var(--accent);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+.overview-terminal-group .overview-terminal-group__empty {
+  display: block;
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+
+.overview-terminal-panel__message {
+  margin: 0;
+  padding: var(--space-4);
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.overview-terminal-panel__message--error {
+  color: var(--status-danger);
+}
+
 /* ─── Grouped section status cards ────────────────────────────────────────── */
 
 .overview-console__lane {
@@ -343,6 +986,30 @@
 /* ─── Narrow layout (FR-014) ──────────────────────────────────────────────── */
 
 @media (max-width: 768px) {
+  .overview-console__identity-row {
+    grid-template-columns: 1fr;
+  }
+
+  .overview-system-panel__header {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .overview-system-panel__toolchain {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .overview-system-panel__detected {
+    flex-direction: column;
+  }
+
+  .overview-github-panel__header {
+    align-items: flex-start;
+  }
+
+  .overview-terminal-panel__grid {
+    grid-template-columns: 1fr;
+  }
+
   .overview-console__kpis {
     grid-template-columns: 1fr 1fr;
   }

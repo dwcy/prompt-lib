@@ -20,6 +20,7 @@ import { RunningWebAppsTable } from "@/modules/services/components/RunningWebApp
 import { ServiceDetailPanel } from "@/modules/services/components/ServiceDetailPanel";
 import { ServiceHealthGrid } from "@/modules/services/components/ServiceHealthGrid";
 import { ServicesReadinessCard } from "@/modules/services/components/ServicesReadinessCard";
+import { isSystemProcessLocation } from "@/modules/services/isSystemProcessLocation";
 import "./ServicesModule.css";
 
 export function ServicesModule() {
@@ -29,6 +30,7 @@ export function ServicesModule() {
   const queryClient = useQueryClient();
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [setupJobId, setSetupJobId] = useState<string | null>(null);
+  const [hideSystemProcesses, setHideSystemProcesses] = useState(true);
   const setup = useAction("services.setup");
   const start = useAction("services.start");
   const stop = useAction("services.stop");
@@ -89,6 +91,13 @@ export function ServicesModule() {
     return <EmptyState title="Could not load services" body={query.error.message} />;
 
   const readyCount = query.data.counts.running + query.data.counts.stopped;
+  const runningApps = runningAppsQuery.data?.apps ?? [];
+  const systemProcessCount = runningApps.filter((app) =>
+    isSystemProcessLocation(app.location),
+  ).length;
+  const visibleRunningApps = hideSystemProcesses
+    ? runningApps.filter((app) => !isSystemProcessLocation(app.location))
+    : runningApps;
 
   return (
     <div className="svc-console">
@@ -102,7 +111,10 @@ export function ServicesModule() {
       </section>
 
       <RunningWebAppsTable
-        apps={runningAppsQuery.data?.apps ?? []}
+        apps={visibleRunningApps}
+        hiddenSystemCount={hideSystemProcesses ? systemProcessCount : 0}
+        hideSystemProcesses={hideSystemProcesses}
+        onToggleHideSystemProcesses={() => setHideSystemProcesses((value) => !value)}
         isLoading={runningAppsQuery.isPending}
         isRefreshing={runningAppsQuery.isFetching}
         error={runningAppsQuery.isError ? runningAppsQuery.error.message : null}

@@ -9,16 +9,19 @@ from typing import Literal
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 
+from cabal.dashboard_git_service import collect_current_branch
 from cabal.webapi import security, sse
 from cabal.webapi.dashboard_service import get_dashboard_section
 from cabal.webapi.envelope import ApiError, ModuleHealth, envelope_response, utc_now_iso
 from cabal.webapi.overview_service import build_overview, drift_flags
+from cabal.webapi.terminal_service import build_terminal_summary
+from cabal.env_detect import detect_env
+from cabal.updates import check_for_updates
 
 # Auth is declared at router level so routes keep the guard when flattened onto the app.
 router = APIRouter(dependencies=[Depends(security.require_bearer_token)])
 
-# The 22 module keys of the spec's Feature Module Breakdown, plus "docs" (console redesign
-# reference module), in table order.
+# Feature modules in the console navigation, including post-spec operational additions.
 MODULE_KEYS = (
     "project_gate",
     "home_overview",
@@ -33,6 +36,7 @@ MODULE_KEYS = (
     "services",
     "package_security",
     "sessions",
+    "scheduled_tasks",
     "account",
     "doctor",
     "model_assignments",
@@ -59,6 +63,7 @@ IMPLEMENTED_MODULES = frozenset(
         "local_config",
         "codex",
         "sessions",
+        "scheduled_tasks",
         "account",
         "doctor",
         "model_assignments",
@@ -82,6 +87,86 @@ def _backend_version() -> str:
         return "0.0.0-dev"
 
 
+_MACHINE_TOOLS = (
+    ("git", "Git", "git_version"),
+    ("python", "Python", "python"),
+    ("node", "Node.js", "node"),
+    ("npm", "npm", "npm"),
+    ("pnpm", "pnpm", "pnpm"),
+    ("bun", "Bun", "bun"),
+    ("uv", "uv", "uv"),
+    ("dotnet", ".NET SDK", "dotnet"),
+    ("docker", "Docker", "docker"),
+    ("podman", "Podman", "podman"),
+    ("kubectl", "kubectl", "kubectl"),
+    ("terraform", "Terraform", "terraform"),
+    ("az", "Azure CLI", "az"),
+    ("gcloud", "Google Cloud CLI", "gcloud"),
+    ("aws", "AWS CLI", "aws"),
+    ("bash", "Bash", "bash"),
+    ("claude", "Claude CLI", "claude"),
+    ("gh", "GitHub CLI", "gh"),
+    ("gemini", "Gemini CLI", "gemini"),
+    ("huggingface", "Hugging Face CLI", "huggingface"),
+    ("codex", "Codex CLI", "codex"),
+    ("opencode", "OpenCode", "opencode"),
+    ("grok", "Grok CLI", "grok"),
+    ("skills", "Skills CLI", "skills"),
+    ("cursor", "Cursor", "cursor"),
+    ("windsurf", "Windsurf", "windsurf"),
+    ("copilot", "Copilot CLI", "copilot"),
+    ("antigravity", "Antigravity", "antigravity"),
+    ("vllm", "vLLM", "vllm"),
+    ("vscode", "VS Code", "vscode"),
+    ("rider", "Rider", "rider"),
+    ("visualstudio", "Visual Studio", "visualstudio"),
+    ("ollama", "Ollama", "ollama"),
+    ("lm-studio", "LM Studio", "lm-studio"),
+    ("sqlcmd", "SQLCMD", "sqlcmd"),
+    ("psql", "PostgreSQL CLI", "psql"),
+    ("supabase", "Supabase CLI", "supabase"),
+    ("neonctl", "Neon CLI", "neonctl"),
+    ("sqlite", "SQLite", "sqlite"),
+    ("duckdb", "DuckDB", "duckdb"),
+    ("zed", "Zed", "zed"),
+    ("postman", "Postman", "postman"),
+    ("hugo", "Hugo", "hugo"),
+    ("uvicorn", "Uvicorn", "uvicorn"),
+    ("dbeaver", "DBeaver", "dbeaver"),
+    ("ssms", "SQL Server Management Studio", "ssms"),
+)
+
+
+def _machine_summary(environment: dict | None = None) -> dict:
+    environment = environment or detect_env()
+    tools = []
+    for key, label, field in _MACHINE_TOOLS:
+        value = environment.get(field)
+        installed = bool(value)
+        version = value if isinstance(value, str) else None
+        tools.append({"key": key, "label": label, "installed": installed, "version": version})
+    return {
+        "os": environment.get("os") or "Unknown",
+        "release": environment.get("release") or "",
+        "package_manager": environment.get("pkg_manager"),
+        "tools": tools,
+    }
+
+
+def _cabal_summary() -> dict:
+    update = check_for_updates()
+    return {
+        "version": _backend_version(),
+        "status": update.get("status", "error"),
+        "local_hash": update.get("local_hash") or update.get("local"),
+        "latest_hash": update.get("latest_hash") or update.get("remote") or update.get("hash"),
+        "latest_date": update.get("latest_date") or update.get("date") or "",
+        "behind_count": update.get("behind_count"),
+        "branch": update.get("branch"),
+        "subject": update.get("subject") or "",
+    }
+
+
 @router.get("/api/health")
 def health(request: Request):
     modules = [
@@ -93,11 +178,24 @@ def health(request: Request):
         ).model_dump()
         for key in MODULE_KEYS
     ]
+    project = request.app.state.project
     data = {
         "version": _backend_version(),
         "started_at": request.app.state.started_at,
         "modules": modules,
         "drift_flags": drift_flags(),
+        "project_branch": collect_current_branch(Path(project)) if project is not None else None,
+    }
+    return envelope_response(data=data, source="system")
+
+
+@router.get("/api/system/overview")
+def system_overview():
+    environment = detect_env()
+    data = {
+        "cabal": _cabal_summary(),
+        "machine": _machine_summary(environment),
+        "terminal": build_terminal_summary(environment),
     }
     return envelope_response(data=data, source="system")
 

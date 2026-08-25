@@ -14,11 +14,22 @@ export function sourceVariant(source: string): StatePillVariant {
     case "system":
       return "ok";
     case "default":
-      return "degraded";
+      return "unavailable";
     case "unset":
       return "missing";
     default:
       return "unavailable";
+  }
+}
+
+export function sourceLabel(source: string): string {
+  switch (source) {
+    case "system":
+      return "set";
+    case "unset":
+      return "missing";
+    default:
+      return source;
   }
 }
 

@@ -18,7 +18,9 @@ from cabal.webapi.actions_catalog import local_config as local_config_actions
 from cabal.webapi.actions_catalog import mcp as mcp_actions
 from cabal.webapi.actions_catalog import sessions as sessions_actions
 from cabal.webapi.actions_catalog import services as services_actions
+from cabal.webapi.actions_catalog import scheduled_tasks as scheduled_tasks_actions
 from cabal.webapi.actions_catalog import tools as tools_actions
+from cabal.webapi.actions_catalog import system as system_actions
 from cabal.webapi.audit import AuditRecorder, DiagnosticsRecorder
 from cabal.webapi.envelope import ApiError, error_response, utc_now_iso
 from cabal.webapi.jobs import JobManager
@@ -35,6 +37,7 @@ from cabal.webapi.routers import projects as projects_router
 from cabal.webapi.routers import security_scan as security_scan_router
 from cabal.webapi.routers import sessions as sessions_router
 from cabal.webapi.routers import services as services_router
+from cabal.webapi.routers import scheduled_tasks as scheduled_tasks_router
 from cabal.webapi.routers import system as system_router
 from cabal.webapi.routers import tools as tools_router
 from cabal.webapi.storage import Storage, WriteGuard
@@ -77,6 +80,7 @@ def create_app(
         app.state.actions.register(descriptor)
     app.state.actions.register(tools_actions.TOOLS_INSTALL_DESCRIPTOR)
     app.state.actions.register(tools_actions.TOOLS_UPDATE_DESCRIPTOR)
+    app.state.actions.register(system_actions.SYSTEM_UPDATE_DESCRIPTOR)
     for descriptor in config_actions.CONFIG_DESCRIPTORS:
         app.state.actions.register(descriptor)
     for descriptor in local_config_actions.LOCAL_CONFIG_DESCRIPTORS:
@@ -91,6 +95,7 @@ def create_app(
         app.state.actions.register(descriptor)
     for descriptor in services_actions.SERVICES_DESCRIPTORS:
         app.state.actions.register(descriptor)
+    app.state.actions.register(scheduled_tasks_actions.SCHEDULED_TASKS_DELETE_DESCRIPTOR)
     for descriptor in security_scan_router.SECURITY_DESCRIPTORS:
         app.state.actions.register(descriptor)
     for descriptor in environment_router.ENVIRONMENT_DESCRIPTORS:
@@ -116,6 +121,7 @@ def create_app(
     app.router.routes.extend(knowledge_router.router.routes)
     app.router.routes.extend(mcp_router.router.routes)
     app.router.routes.extend(services_router.router.routes)
+    app.router.routes.extend(scheduled_tasks_router.router.routes)
     app.router.routes.extend(security_scan_router.router.routes)
     app.router.routes.extend(environment_router.router.routes)
     app.router.routes.extend(docs_router.router.routes)

@@ -6,6 +6,7 @@ import type { EnvEntry, EnvScope } from "@/api/securityEnvironment";
 export interface UseEnvironmentProfileResult {
   baseline: Record<string, string>;
   draft: Record<string, string>;
+  enabled: Record<string, boolean>;
   dirtyValues: Record<string, string>;
   dirtyCount: number;
   browseError: string | null;
@@ -22,6 +23,7 @@ export function useEnvironmentProfile(
 ): UseEnvironmentProfileResult {
   const [baseline, setBaseline] = useState<Record<string, string>>({});
   const [draft, setDraft] = useState<Record<string, string>>({});
+  const [enabled, setEnabled] = useState<Record<string, boolean>>({});
   const [browseError, setBrowseError] = useState<string | null>(null);
   const lastNonEmpty = useRef<Record<string, string>>({});
 
@@ -32,6 +34,9 @@ export function useEnvironmentProfile(
     );
     setBaseline(next);
     setDraft(next);
+    setEnabled(
+      Object.fromEntries(entries.map((entry) => [entry.name, next[entry.name].trim() !== ""])),
+    );
   }, [entries, scope]);
 
   const dirtyValues = useMemo(() => {
@@ -45,25 +50,36 @@ export function useEnvironmentProfile(
 
   function setValue(name: string, value: string): void {
     setDraft((state) => ({ ...state, [name]: value }));
+    setEnabled((state) => ({ ...state, [name]: true }));
   }
 
   function revertOne(name: string): void {
-    setDraft((state) => ({ ...state, [name]: baseline[name] ?? "" }));
+    const restored = baseline[name] ?? "";
+    setDraft((state) => ({ ...state, [name]: restored }));
+    setEnabled((state) => ({ ...state, [name]: restored.trim() !== "" }));
   }
 
   function revertAll(): void {
     setDraft(baseline);
+    setEnabled(
+      Object.fromEntries(
+        Object.entries(baseline).map(([name, value]) => [name, value.trim() !== ""]),
+      ),
+    );
   }
 
   function toggleEntry(entry: EnvEntry): void {
     const current = draft[entry.name] ?? "";
-    if (current.trim() !== "") {
-      lastNonEmpty.current[entry.name] = current;
-      setValue(entry.name, "");
+    const isEnabled = enabled[entry.name] ?? current.trim() !== "";
+    if (isEnabled) {
+      if (current.trim() !== "") lastNonEmpty.current[entry.name] = current;
+      setDraft((state) => ({ ...state, [entry.name]: "" }));
+      setEnabled((state) => ({ ...state, [entry.name]: false }));
       return;
     }
     const restored = lastNonEmpty.current[entry.name] ?? baseline[entry.name] ?? entry.default;
-    setValue(entry.name, restored);
+    setDraft((state) => ({ ...state, [entry.name]: restored }));
+    setEnabled((state) => ({ ...state, [entry.name]: true }));
   }
 
   async function browseFor(entry: EnvEntry): Promise<void> {
@@ -80,6 +96,7 @@ export function useEnvironmentProfile(
   return {
     baseline,
     draft,
+    enabled,
     dirtyValues,
     dirtyCount: Object.keys(dirtyValues).length,
     browseError,

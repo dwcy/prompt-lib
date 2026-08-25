@@ -9,7 +9,9 @@ import {
   buildJobRecord,
   buildOverviewPayload,
   buildProjectContext,
+  buildProviderState,
   buildSseStream,
+  buildSystemOverview,
   type SseFrameInput,
   wrapEnvelope,
 } from "./fixtures";
@@ -37,9 +39,42 @@ export const handlers: HttpHandler[] = [
 
   http.get("/api/overview", () => HttpResponse.json(wrapEnvelope(buildOverviewPayload()))),
 
+  http.get("/api/provider", () => HttpResponse.json(wrapEnvelope(buildProviderState()))),
+
+  http.get("/api/system/overview", () => HttpResponse.json(wrapEnvelope(buildSystemOverview()))),
+
   http.get("/api/dashboard", () => HttpResponse.json(wrapEnvelope({}))),
 
   http.get("/api/diagnostics", () => HttpResponse.json(wrapEnvelope({ events: [] }))),
+
+  http.get("/api/scheduled-tasks", () =>
+    HttpResponse.json(
+      wrapEnvelope({
+        counts: { all: 0, active: 0, paused: 0, completed: 0 },
+        items: [],
+        providers: [
+          {
+            provider: "claude",
+            label: "Claude Desktop",
+            detected: true,
+            task_count: 0,
+            source: "Local Desktop scheduled tasks",
+            detail: "Cloud Routines are managed separately on claude.ai.",
+            management_url: "https://claude.ai/code/routines",
+          },
+          {
+            provider: "codex",
+            label: "Codex",
+            detected: true,
+            task_count: 0,
+            source: "$CODEX_HOME/automations",
+            detail: "Web-only ChatGPT tasks are managed separately in Scheduled.",
+            management_url: "https://learn.chatgpt.com/docs/automations",
+          },
+        ],
+      }),
+    ),
+  ),
 ];
 
 export function toolsCatalogHandler(payload: ToolCatalogPayload): HttpHandler {

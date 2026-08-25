@@ -121,48 +121,48 @@ export default function App() {
       <a className="skip-link" href="#workspace-content">
         Skip to workspace
       </a>
-      <header className="app-shell__header">
-        <button
-          type="button"
-          className="app-shell__sidebar-toggle select-none"
-          onClick={toggleSidebar}
-          aria-label={sidebarCollapsed ? "Expand navigation" : "Collapse navigation"}
-          aria-expanded={!sidebarCollapsed}
-          aria-controls="workspace-navigation"
-          title={sidebarCollapsed ? "Expand navigation" : "Collapse navigation"}
-        >
-          <span aria-hidden="true">{sidebarCollapsed ? "›" : "‹"}</span>
-        </button>
-        <h1
-          className="app-shell__view-title select-none"
-          title={MODULE_OPERATION_SUMMARIES[activeModule.key]}
-        >
-          {activeModule.title}
-        </h1>
-        <SnapshotStamp />
-        <div className="app-shell__header-spacer" />
-        <HealthStrip />
-        <button
-          type="button"
-          className="app-shell__refresh"
-          onClick={() => void queryClient.invalidateQueries()}
-          title="Refetch every visible data source"
-        >
-          Refresh
-        </button>
-        <button
-          type="button"
-          className="app-shell__project-context"
-          onClick={() => selectModule("project_gate")}
-          title="Switch project"
-        >
-          <span>{selectedProject.name}</span>
-          <small>{selectedProject.path}</small>
-        </button>
-        <JobTray />
-      </header>
-      <div className="app-shell__body">
-        <SidebarNav activeModuleKey={activeModuleKey} onSelectModule={selectModule} />
+      <SidebarNav activeModuleKey={activeModuleKey} onSelectModule={selectModule} />
+      <div className="app-shell__main">
+        <header className="app-shell__header">
+          <button
+            type="button"
+            className="app-shell__sidebar-toggle select-none"
+            onClick={toggleSidebar}
+            aria-label={sidebarCollapsed ? "Expand navigation" : "Collapse navigation"}
+            aria-expanded={!sidebarCollapsed}
+            aria-controls="workspace-navigation"
+            title={sidebarCollapsed ? "Expand navigation" : "Collapse navigation"}
+          >
+            <span aria-hidden="true">{sidebarCollapsed ? "›" : "‹"}</span>
+          </button>
+          <h1
+            className="app-shell__view-title select-none"
+            title={MODULE_OPERATION_SUMMARIES[activeModule.key]}
+          >
+            {activeModule.title}
+          </h1>
+          <SnapshotStamp />
+          <div className="app-shell__header-spacer" />
+          <HealthStrip />
+          <button
+            type="button"
+            className="app-shell__refresh"
+            onClick={() => void queryClient.invalidateQueries()}
+            title="Refetch every visible data source"
+          >
+            Refresh
+          </button>
+          <button
+            type="button"
+            className="app-shell__project-context"
+            onClick={() => selectModule("project_gate")}
+            title="Switch project"
+          >
+            <span>{selectedProject.name}</span>
+            <small>{selectedProject.path}</small>
+          </button>
+          <JobTray />
+        </header>
         <main id="workspace-content" className="app-shell__content" tabIndex={-1}>
           <ModuleOutlet activeModuleKey={activeModuleKey} />
         </main>

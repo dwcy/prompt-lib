@@ -112,7 +112,7 @@
 .env-console__table .virtual-data-table__header,
 .env-console__table .virtual-data-table__row {
   display: grid;
-  grid-template-columns: 44px minmax(0, 220px) minmax(0, 1fr) minmax(0, 260px) 96px;
+  grid-template-columns: 44px minmax(0, 220px) minmax(0, 1fr) minmax(0, 240px) 68px 88px;
   gap: var(--space-3);
   align-items: center;
   min-width: 0;
@@ -136,6 +136,10 @@
   border-bottom: 1px solid var(--divider-faint);
 }
 
+.env-console__table .virtual-data-table__row:has(.toggle-switch:not(.is-on)) {
+  opacity: 0.45;
+}
+
 .env-console__table .virtual-data-table__cell {
   min-width: 0;
   padding: 0;
@@ -143,44 +147,6 @@
 }
 
 /* --- Cell content --- */
-
-.env-toggle {
-  position: relative;
-  width: 30px;
-  height: 17px;
-  padding: 0;
-  background: var(--surface-3);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--corner-full);
-  transition: background-color var(--duration-fast) var(--ease-standard);
-}
-
-.env-toggle.is-on {
-  background: var(--accent-bg-gradient);
-  border-color: var(--accent-border);
-}
-
-.env-toggle:disabled {
-  opacity: var(--opacity-disabled);
-}
-
-.env-toggle__knob {
-  position: absolute;
-  top: 1px;
-  left: 1px;
-  width: 13px;
-  height: 13px;
-  background: var(--muted);
-  border-radius: var(--corner-full);
-  transition:
-    transform var(--duration-fast) var(--ease-standard),
-    background-color var(--duration-fast) var(--ease-standard);
-}
-
-.env-toggle.is-on .env-toggle__knob {
-  background: var(--accent);
-  transform: translateX(13px);
-}
 
 .env-cell-name {
   overflow: hidden;
@@ -208,6 +174,57 @@
   white-space: nowrap;
 }
 
+.env-cell-value--masked {
+  color: var(--muted);
+  letter-spacing: 0.08em;
+}
+
+.env-secret,
+.env-state {
+  overflow: hidden;
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.env-secret {
+  color: var(--muted-3);
+}
+
+.env-secret--masked {
+  color: var(--status-warning);
+}
+
+.env-state {
+  color: var(--state-unavailable);
+  text-transform: lowercase;
+}
+
+.env-state[data-state="ok"],
+.env-state[data-state="installed"],
+.env-state[data-state="open"],
+.env-state[data-state="succeeded"] {
+  color: var(--state-ok);
+}
+
+.env-state[data-state="degraded"],
+.env-state[data-state="missing"],
+.env-state[data-state="stale"] {
+  color: var(--state-missing);
+}
+
+.env-state[data-state="failed"],
+.env-state[data-state="error"] {
+  color: var(--state-error);
+}
+
+.env-state[data-state="loading"],
+.env-state[data-state="connecting"],
+.env-state[data-state="update"] {
+  color: var(--state-update-available);
+}
+
 .env-cell-editor {
   display: flex;
   align-items: center;
@@ -215,8 +232,15 @@
   min-width: 0;
 }
 
-.env-cell-editor input {
+.env-cell-input {
+  display: flex;
   min-width: 0;
+  flex: 1 1 auto;
+}
+
+.env-cell-input input {
+  min-width: 0;
+  width: 100%;
   flex: 1 1 auto;
   padding: 4px 8px;
   background: var(--surface-2);
@@ -225,6 +249,45 @@
   color: var(--fg);
   font-family: var(--font-family-mono);
   font-size: var(--fs-xs);
+}
+
+.env-cell-input--secret {
+  position: relative;
+}
+
+.env-cell-input--secret input {
+  padding-right: 30px;
+}
+
+.env-cell-editor .env-secret-visibility {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  display: grid;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: var(--corner-sm);
+  background: transparent;
+  color: var(--muted);
+  transform: translateY(-50%);
+}
+
+.env-cell-editor .env-secret-visibility:hover:not(:disabled) {
+  background: var(--surface-3);
+  color: var(--fg);
+}
+
+.env-secret-visibility svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
 }
 
 .env-cell-editor button {
@@ -258,7 +321,7 @@
 @media (max-width: 768px) {
   .env-console__table .virtual-data-table__header,
   .env-console__table .virtual-data-table__row {
-    grid-template-columns: 36px minmax(0, 1fr) 96px 64px;
+    grid-template-columns: 36px minmax(0, 1fr) 96px 52px 64px;
   }
 
   .env-console__table .virtual-data-table__header-cell:nth-child(3),

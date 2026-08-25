@@ -26,6 +26,20 @@ _ARGS_LOCAL_BRANCHES = ("branch", "--format=%(refname:short)")
 _ARGS_REMOTES = ("remote", "-v")
 
 
+def collect_current_branch(project: Path) -> str | None:
+    """Single-call branch lookup for callers that only need the name (e.g. health polling) —
+    skips the repo/local-branches/remotes checks `collect_git` does for the full dashboard section.
+    """
+    git = shutil.which(_GIT)
+    if git is None:
+        return None
+    try:
+        branch, _detached = _resolve_branch(git, project)
+    except (subprocess.TimeoutExpired, OSError):
+        return None
+    return branch
+
+
 def collect_git(project: Path) -> GitSection:
     """Collect the local git state for `project`; never raises."""
     git = shutil.which(_GIT)

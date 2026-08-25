@@ -11,6 +11,8 @@ import { EnvScopeSwitcher } from "@/modules/environment/components/EnvScopeSwitc
 import { EnvTable, type EnvTableRow } from "@/modules/environment/components/EnvTable";
 import {
   countActive,
+  isSensitiveEnvironmentEntry,
+  sourceLabel,
   sourceVariant,
   systemEntryLabel,
   systemEntryVariant,
@@ -56,7 +58,9 @@ export function EnvironmentModule() {
   });
   const enabledCount =
     scope === "curated"
-      ? countActive(envQuery.data.entries, (entry) => profile.draft[entry.name] ?? "")
+      ? envQuery.data.entries.filter(
+          (entry) => profile.enabled[entry.name] ?? (profile.draft[entry.name] ?? "").trim() !== "",
+        ).length
       : countActive(envQuery.data.entries, (entry) => entry.value_redacted);
   const rows: EnvTableRow[] = visibleEntries.map((entry) =>
     scope === "curated" ? curatedRow(entry, profile) : systemRow(entry),
@@ -147,7 +151,7 @@ function curatedRow(
 ): EnvTableRow {
   const value = profile.draft[entry.name] ?? "";
   const dirty = entry.name in profile.dirtyValues;
-  const isOn = value.trim() !== "";
+  const isOn = profile.enabled[entry.name] ?? value.trim() !== "";
   return {
     entry,
     value,
@@ -155,8 +159,9 @@ function curatedRow(
     canToggle: entry.editable,
     editing: entry.editable && isOn,
     dirty,
+    isSecret: isSensitiveEnvironmentEntry(entry),
     stateVariant: dirty ? "update" : sourceVariant(entry.source),
-    stateLabel: dirty ? "staged" : entry.source,
+    stateLabel: dirty ? "staged" : sourceLabel(entry.source),
     onToggle: entry.editable ? () => profile.toggleEntry(entry) : undefined,
     onChange: entry.editable ? (next) => profile.setValue(entry.name, next) : undefined,
     onBrowse: entry.editable ? () => void profile.browseFor(entry) : undefined,
@@ -172,6 +177,7 @@ function systemRow(entry: EnvEntry): EnvTableRow {
     canToggle: false,
     editing: false,
     dirty: false,
+    isSecret: isSensitiveEnvironmentEntry(entry),
     stateVariant: systemEntryVariant(entry),
     stateLabel: systemEntryLabel(entry),
   };
