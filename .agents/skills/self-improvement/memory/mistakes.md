@@ -185,3 +185,59 @@ Concrete failures from past sessions, recorded so they aren't repeated. Each ent
 - **Root cause**: Assigning an `if` expression that emitted a one-item array let PowerShell unwrap it to a scalar string; splatting that scalar into a `.cmd` launcher enumerated its characters.
 - **Future rule**: Initialize forwarded arguments with `@()` and assign the sliced array inside the conditional, then smoke-test both one and multiple forwarded arguments through the real launcher chain.
 - **Example**: `$forwarded = @(); if ($args.Count -gt 1) { $forwarded = @($args[1..($args.Count - 1)]) }; & $launcher @forwarded`.
+
+### M-20260811-01 — Shipped a frontend panel without an old-backend fallback
+- **Date**: 2026-08-11
+- **Situation**: Added an Overview machine panel backed by a new `/api/system/overview` route while the user had an older Cabal backend process still running.
+- **Root cause**: Verified the new frontend and backend together, but did not test the normal development rollout state where Vite hot-reloads before the long-lived backend restarts.
+- **Future rule**: Every new frontend GET route must either tolerate HTTP 404 using existing endpoints or show a targeted restart-required state; add a regression test for the mixed-version state.
+- **Example**: `useSystemOverview()` falls back to health, environment, catalog, and tool-status endpoints when `/api/system/overview` returns 404.
+
+### M-20260811-02 — Added redundant Cabal version status controls
+- **Date**: 2026-08-11
+- **Situation**: The Overview Cabal block showed a status label plus a disabled `Up to date`/`Restart required` button, while the user wanted one compact state slot.
+- **Root cause**: Treated every state as if it needed an action control instead of distinguishing passive status from an available action.
+- **Future rule**: In the Overview Cabal block, show plain `Latest version` when current and replace that same label with a yellow `Update` link only when behind; never render disabled up-to-date or restart buttons.
+- **Example**: A `behind` payload renders `Update (2)` in the status slot, while an `up_to_date` payload renders only `Latest version`.
+
+### M-20260811-03 — Stacked Cabal metadata and moved the header divider off-center
+- **Date**: 2026-08-11
+- **Situation**: The Overview header gave its Cabal section flexible leftover width and stacked the state beneath the Cabal name, but the user wanted an even Windows/Cabal split and one ordered row.
+- **Root cause**: Optimized the Cabal area for available space without preserving the requested visual axis and sequence.
+- **Future rule**: Keep the Overview computer header on a two-column 50/50 grid, and order the Cabal row as name/version, hash, date, then state/action.
+- **Example**: `Cabal 0.1.0 · abc12345 · 2026-08-11 · Latest version` stays on one row with the divider at 50%.
+
+### M-20260811-04 — Claimed design parity without rendered evidence
+- **Date**: 2026-08-11
+- **Situation**: Replaced an Environment switch with a shared component and called it design-matched, but used approximate accent tokens and did not render-compare it to the reference.
+- **Root cause**: Treated matching dimensions and component structure as proof of visual parity while the track gradient, border, and hover cascade still differed.
+- **Future rule**: Never call a UI control design-matched until its rendered normal, active, hover, and disabled states are compared with the reference.
+- **Example**: The Cabal switch must use the reference `#3c2038 → #221626` track and `#5a2c4e` active border, then be checked in the running UI.
+
+### M-20260811-05 — Derived switch state solely from its value
+- **Date**: 2026-08-11
+- **Situation**: An unset editable secret could not be switched on because both its current value and default were empty.
+- **Root cause**: The UI treated a non-empty value as the switch's enabled state, so restoring an empty default immediately rendered the switch off again.
+- **Future rule**: Model editable enablement separately from field contents whenever an enabled control may legitimately begin empty.
+- **Example**: Switching on an unset secret opens an empty password field; entering a value then stages the change.
+
+### M-20260811-06 — Called a component global without replacing its copies
+- **Date**: 2026-08-11
+- **Situation**: Added an exact shared switch, but Settings and Local Config still rendered separate 30×17 approximations and Environment omitted the reference's dimmed off-row state.
+- **Root cause**: Verified the new component's CSS in isolation instead of auditing every switch call site and the surrounding reference state treatment.
+- **Future rule**: A global design primitive is complete only after all equivalent local implementations are removed and its full reference context is reproduced.
+- **Example**: Environment, Settings, and Local Config import one 34×19 `ToggleSwitch`; off Environment rows use the reference opacity.
+
+### M-20260812-01 — Assumed psutil connection records share one shape
+- **Date**: 2026-08-12
+- **Situation**: The fallback listener scan tried to add a PID with `_replace(pid=...)` to records returned by `Process.net_connections()`.
+- **Root cause**: System-wide `sconn` records include `pid`; per-process `pconn` records do not expose the same named-tuple fields.
+- **Future rule**: Normalize process-library fallback records into an explicit internal shape before feeding them to shared discovery logic.
+- **Example**: Wrap per-process connections as `{pid, status, laddr}` instead of calling `_replace(pid=...)`.
+
+### M-20260812-02 — Conflated a local CI server with a remote self-hosted runner
+- **Date**: 2026-08-12
+- **Situation**: The user asked whether a complete pipeline system with a visual gated UI could run locally, but the answer centered on replaying GitHub Actions and remote orchestration.
+- **Root cause**: Interpreted “run a pipeline locally” as runner locality instead of separating the pipeline controller/UI from its execution workers.
+- **Future rule**: For local-CI questions, first distinguish a fully local CI controller (for example Jenkins or GoCD) from a local runner controlled by GitHub or Azure.
+- **Example**: Jenkins controller + agent + Pipeline Graph View can all run on one machine without GitHub or Azure coordinating the run.

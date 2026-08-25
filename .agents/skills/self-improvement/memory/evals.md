@@ -265,3 +265,87 @@ The evaluation questions:
 - **To remember**:
   - M-20260810-01 (preserve one-item PowerShell forwarding arrays)
 - **To unlearn**: nothing.
+
+### E-20260811-01 — Repair mixed-version Overview system panel
+- **Task**: Fix the machine panel's `Not Found` state against an already-running older Cabal backend.
+- **Constraints followed?** Yes — preserved the requested 3/4 machine and 1/4 GitHub layout and avoided forcing a backend restart.
+- **Unverified assumptions?** Initially assumed frontend and backend would restart together; the live handshake disproved that assumption.
+- **Verified current facts?** Yes — confirmed the live route returned 404, verified all four fallback endpoints returned 200, rebuilt the frontend, and ran 54 tests.
+- **Requested format?** Yes — the panel now shows useful machine data and reserves “Restart required” for unavailable revision metadata.
+- **To remember**: M-20260811-01 (new UI routes need mixed-version fallback coverage).
+- **To unlearn**: nothing.
+
+### E-20260811-02 — Separate terminal configuration from the computer header
+- **Task**: Keep package-manager metadata under the OS, remove the shell path from that line, add a terminal settings panel, and simplify Cabal update status.
+- **Constraints followed?** Yes — retained the 3/4 computer and 1/4 GitHub row, kept package-manager placement, added read-only terminal discovery, and exposed no shell-profile content.
+- **Unverified assumptions?** Minimal — terminal discovery reports supported installed shells and safe configuration categories; platform-specific tools not present on this machine remain hidden in the UI.
+- **Verified current facts?** Yes — the live authenticated endpoint reports `winget`, no machine `shell` field, four installed shells, Windows Terminal, its default profile, and five configuration categories; production build, 54 frontend tests, and focused Python tests passed.
+- **Requested format?** Yes — `Latest version` occupies one status slot and becomes a yellow `Update` link only when an update is available; no `Up to date` control exists.
+- **To remember**:
+  - M-20260811-02 (passive Cabal status is not a disabled action)
+  - P-20260811-01 (keep machine and terminal metadata separated)
+- **To unlearn**: nothing.
+
+### E-20260811-03 — Center the Windows/Cabal header split
+- **Task**: Put the Windows/Cabal divider in the middle and keep all Cabal version metadata on the Cabal name row with status last.
+- **Constraints followed?** Yes — retained package-manager placement, the outer 3/4 computer and 1/4 GitHub split, and the conditional yellow update action.
+- **Unverified assumptions?** No — encoded the requested sequence in component structure and a focused DOM-order assertion.
+- **Verified current facts?** Yes — focused lint passed, production build passed, and all six Overview component tests passed.
+- **Requested format?** Yes — the inner header is exactly 50/50 and the Cabal row is name/version, hash, date, state/action.
+- **To remember**:
+  - M-20260811-03 (preserve the requested header axis and metadata order)
+- **To unlearn**: nothing.
+
+### E-20260811-04 — Correct Environment switch visual parity
+- **Task**: Fix the shared Environment switch after the user reported that it did not look like the reference design.
+- **Constraints followed?** Yes — corrected the shared control itself and kept the Environment behavior unchanged.
+- **Unverified assumptions?** Rendered comparison remains unavailable because no in-app browser is connected; I did not claim screenshot parity.
+- **Verified current facts?** Yes — compared every switch value against the checked-in design markup, fixed the generic hover cascade, and passed focused tests, lint, and production build.
+- **Requested format?** Yes — replaced approximate accent styling with the exact design track, border, knob, and dimensions.
+- **To remember**: M-20260811-04 (visual parity requires rendered evidence).
+- **To unlearn**: nothing.
+
+### E-20260811-05 — Remove remaining switch approximations
+- **Task**: Retry the Environment switch implementation under the explicit never-approximate rule.
+- **Constraints followed?** Yes — copied the reference's off/on colors, 150ms timing, and left-position knob movement exactly.
+- **Unverified assumptions?** Rendered comparison remains unavailable because the in-app browser is still not connected.
+- **Verified current facts?** Yes — source values match the checked-in reference; focused tests, lint, and production build pass.
+- **Requested format?** Yes — removed transform motion, 120ms timing, token substitutions, and disabled fading that differed from the reference.
+- **To remember**: P-20260811-02 and M-20260811-04.
+- **To unlearn**: nothing.
+
+### E-20260811-06 — Enable unset Environment secrets
+- **Task**: Fix editable environment values that could not be switched on, using an unset secret as the regression case.
+- **Constraints followed?** Yes — preserved masking and exact switch styling while changing only the interaction state model.
+- **Unverified assumptions?** Rendered browser verification remains unavailable because no in-app browser is connected.
+- **Verified current facts?** Yes — backend metadata marks curated entries editable; the focused five-test suite, lint, and production build pass.
+- **Requested format?** Yes — switching on an unset secret now opens an empty password field and entering a value stages Apply.
+- **To remember**: M-20260811-05.
+- **To unlearn**: nothing.
+
+### E-20260811-07 — Complete global toggle and secret reveal controls
+- **Task**: Correct the remaining toggle design mismatch and add a proper show/hide eye to secret inputs.
+- **Constraints followed?** Yes — used the checked-in reference values and state opacity without inventing alternate toggle styling.
+- **Unverified assumptions?** Rendered browser comparison remains unavailable because the in-app browser is not connected.
+- **Verified current facts?** Yes — all three switch call sites now use one component; 54 non-Overview tests, lint, and the production build pass.
+- **Requested format?** Yes — off rows dim exactly as specified and secret inputs have accessible eye/eye-off controls.
+- **To remember**: M-20260811-06.
+- **To unlearn**: nothing.
+
+### E-20260812-01 — Add running web apps control
+- **Task**: Add a Services view listing listening apps by port, PID, name, and location with confirmation-guarded shutdown.
+- **Constraints followed?** Yes — preserved unrelated WIP, reused the action-safety protocol, excluded Cabal's own backend, and did not commit.
+- **Unverified assumptions?** Interpreted the user's “sid” as PID; live visual inspection remained unavailable because no in-app browser target was connected.
+- **Verified current facts?** Yes — 56 Python tests, 62 frontend tests, targeted lint, production build, and whitespace checks passed.
+- **Requested format?** Yes — implemented the table, refresh behavior, process discovery, stable identity validation, and shutdown action.
+- **To remember**: M-20260812-01 (normalize differing psutil connection record shapes).
+- **To unlearn**: nothing.
+
+### E-20260812-02 — Add all-state Docker apps panel
+- **Task**: Add a separate Services panel for all Docker containers with status, ports, Compose location, and safe Start/Stop actions.
+- **Constraints followed?** Yes — included running, stopped, and unusual states; preserved unrelated WIP; reused confirmation tickets; made Docker absence non-fatal.
+- **Unverified assumptions?** Live visual inspection remained unavailable because no in-app browser target was connected.
+- **Verified current facts?** Yes — read the local Docker 29.7.2 output shape, detected all three live containers and Compose locations, passed 60 Python tests, 63 frontend tests, targeted lint, build, and whitespace checks.
+- **Requested format?** Yes — Docker containers are in a separate panel with lifecycle actions matched to current state.
+- **To remember**: No new durable lesson; behavior is explicit in tests and implementation.
+- **To unlearn**: nothing.
