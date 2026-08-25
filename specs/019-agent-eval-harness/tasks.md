@@ -139,13 +139,15 @@
 
 ## Phase 9: Polish & Cross-Cutting Concerns
 
-**Status**: ✅ Complete (4/4 — T031–T034)
-**Purpose**: Live verification, docs, full suite, independent audit
+**Status**: 🟡 In progress (4/6 — T031–T034 done; T035–T036 open)
+**Purpose**: Live verification, docs, full suite, independent audit, and the success-criteria measurements those four did not cover
 
 - [X] T031 Execute the quickstart.md smoke test live: `validate` → 1-task × 2-config × 1-run matrix → `judge` → `report` with the real `claude` CLI; fix any fallout; confirm SC-005 (no writes outside worktrees/scratch/results — check `git status` on main tree + `~/.claude` untouched) — Owner: main
 - [X] T032 [P] Documentation: add `evals/README.md` (authoring guide distilled from contracts/definitions-format.md) and register the `cabal.evals` module in `setup/src/cabal/README.md` — Owner: main
 - [X] T033 Full test pass: `python -m pytest setup/tests -k evals` green, plus python.md size-cap self-audit on every new module (soft 200 / hard 400 LoC) — Owner: main
 - [X] T034 Read-only plan-compliance audit of the implementation against plan.md, contracts/, and constitution gates; PASS required before the completion commit — Owner: @code-plan-verifier
+- [ ] T035 Author four more benchmark tasks under `evals/tasks/` so the corpus reaches the five SC-003 names — `evals/tasks/` currently holds only `001-sample-task`, which is one fifth of it. Follow the `prompt.md` + `task.toml` shape `001-sample-task` established: pin `ref` to a real commit, pick `expected_files` that do not exist at that ref, and give each task at least one `test` check with a `pytest` parser. Also fix `quickstart.md` line 84, which names a task id (`003-refactor-repository`) that was never authored — Owner: main
+- [ ] T036 Measure the outstanding success criteria and record actuals in `specs/019-agent-eval-harness/baseline.md`, which holds the procedure and the exact command for each: **SC-003** the 5 × 2 × 3 unattended matrix with one injected agent failure (30 cells; needs T035), **SC-002** two consecutive runs diffed for structural rather than textual identity, and **SC-005** re-confirmed on the 30-cell run where parallelism and per-run config dirs are actually exercised. Live billed runs against the real `claude` CLI, so this is a measurement rather than a test — Owner: main
 
 ---
 
