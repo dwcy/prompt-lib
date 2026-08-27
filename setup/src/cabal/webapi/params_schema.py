@@ -27,6 +27,17 @@ def _validate(value: Any, schema: dict, path: str, errors: list[str]) -> None:
     if declared is not None and not _matches_type(value, declared):
         errors.append(f"{path}: expected type {declared!r}")
         return
+    enum = schema.get("enum")
+    if enum is not None and value not in enum:
+        errors.append(f"{path}: value must be one of {enum!r}")
+        return
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        minimum = schema.get("minimum")
+        if minimum is not None and value < minimum:
+            errors.append(f"{path}: value below minimum {minimum}")
+        maximum = schema.get("maximum")
+        if maximum is not None and value > maximum:
+            errors.append(f"{path}: value above maximum {maximum}")
     if isinstance(value, dict):
         properties = schema.get("properties", {})
         for key in schema.get("required", ()):

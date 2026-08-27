@@ -95,10 +95,16 @@ class ActionRegistry:
                 extra={"precondition_digest": current_digest},
             )
         summary = str(ticket["effect_preview"].get("summary", ""))
+        # Claim the ticket BEFORE running the descriptor: the atomic
+        # pending->executed flip in storage is what makes tickets single-use
+        # under concurrent execute requests (load-then-set would let both run).
+        if not self._storage.consume_ticket(ticket_id):
+            raise ApiError(409, "ticket_consumed", "Ticket already executed; tickets are single-use")
         try:
             outcome = descriptor.execute(ticket["params"], state)
         except JobConflict as exc:
-            # No side effect happened; the ticket stays pending for a retry.
+            # No side effect happened; release the claim so the ticket can retry.
+            self._storage.set_ticket_state(ticket_id, "pending")
             raise ApiError(
                 409,
                 "job_conflict",
@@ -106,12 +112,15 @@ class ActionRegistry:
                 extra={"blocking_job_id": exc.blocking_job_id},
             ) from exc
         except ApiError:
+            # Descriptor-raised ApiErrors reported no side effect worth
+            # consuming the ticket over; release the claim for a retry.
+            self._storage.set_ticket_state(ticket_id, "pending")
             raise
         except Exception as exc:
-            self._storage.set_ticket_state(ticket_id, "executed")
+            self._storage.clear_ticket_params(ticket_id)
             self._record_audit(action_id, ticket_id, None, summary, "failed")
             raise ApiError(500, "execution_failed", str(exc)) from exc
-        self._storage.set_ticket_state(ticket_id, "executed")
+        self._storage.clear_ticket_params(ticket_id)
         if outcome.job_id is not None:
             state.jobs.attach_ticket(outcome.job_id, ticket_id)
             self._audit_on_terminal(action_id, ticket_id, outcome.job_id, summary, state)

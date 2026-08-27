@@ -138,6 +138,13 @@ def redact_value(value):
     return value
 
 
+def redact_env_display(name: str, value: str) -> str:
+    """Display form of an environment value: fully masked for secret-named keys, pattern-scrubbed otherwise."""
+    if _looks_secret_key(name):
+        return REDACTION_MARKER if value else ""
+    return redact_text(value)
+
+
 def contains_secret(value: object) -> bool:
     """Return True when the raw value contains a known credential pattern."""
     text = "" if value is None else str(value)

@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import platform
+import shlex
 import shutil
 import subprocess
 from pathlib import Path
@@ -17,6 +18,7 @@ from cabal.components import ENV_DESCRIPTIONS
 from cabal.env_profile import update_profile
 from cabal.git_config import apply_git_line_endings
 from cabal.git_policy import BUILTIN_DEFAULTS, load_policy, policy_source, save_policy
+from cabal.redaction import redact_env_display
 from cabal.webapi import security
 from cabal.webapi.actions import ActionDescriptor, ActionOutcome
 from cabal.webapi.envelope import ApiError, compute_precondition_digest, envelope_response
@@ -76,16 +78,17 @@ def _curated_entries(q: str | None = None) -> list[dict[str, Any]]:
         current = os.environ.get(key)
         value = current if current is not None else default
         source = "system" if current is not None else ("default" if default else "unset")
+        display = redact_env_display(key, str(value))
         row = {
             "name": key,
-            "value_redacted": value,
-            "default": default,
+            "value_redacted": display,
+            "default": redact_env_display(key, str(default)),
             "is_path": key in _PATH_KEYS,
             "source": source,
             "editable": True,
             "description": ENV_DESCRIPTIONS.get(key, ""),
         }
-        if needle and needle not in key.lower() and needle not in str(value).lower():
+        if needle and needle not in key.lower() and needle not in display.lower():
             continue
         entries.append(row)
     return entries
@@ -95,12 +98,13 @@ def _system_entries(q: str | None = None) -> list[dict[str, Any]]:
     needle = (q or "").strip().lower()
     rows: list[dict[str, Any]] = []
     for key, value in sorted(os.environ.items()):
-        if needle and needle not in key.lower() and needle not in value.lower():
+        display = redact_env_display(key, value)
+        if needle and needle not in key.lower() and needle not in display.lower():
             continue
         rows.append(
             {
                 "name": key,
-                "value_redacted": value,
+                "value_redacted": display,
                 "default": "",
                 "is_path": "PATH" in key.upper() or key.upper().endswith("_HOME"),
                 "source": "system",
@@ -112,7 +116,10 @@ def _system_entries(q: str | None = None) -> list[dict[str, Any]]:
 
 
 def env_digest() -> str:
-    return compute_precondition_digest({"curated": _curated_entries(), "platform": platform.system()})
+    # Digest over the RAW curated state, not the redacted display rows: two
+    # different secret values must not collapse into the same masked digest.
+    raw = {key: os.environ.get(key, default) for key, default in _env_defaults().items()}
+    return compute_precondition_digest({"curated": raw, "platform": platform.system()})
 
 
 @router.get("/api/env")
@@ -173,7 +180,7 @@ def _env_apply_execute(params: dict, _state: Any) -> ActionOutcome:
             else:
                 messages.append(f"setx {key} failed: {(result.stderr or result.stdout).strip()}")
     elif non_empty:
-        export_lines = [f"export {key}={value!r}" for key, value in non_empty.items()]
+        export_lines = [f"export {key}={shlex.quote(value)}" for key, value in non_empty.items()]
         for profile in ["~/.bashrc", "~/.zshrc", "~/.profile"]:
             update_profile(profile, list(non_empty), export_lines)
         messages.append("Updated shell profile files")

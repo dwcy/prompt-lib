@@ -98,6 +98,74 @@ def test_fix_preview_command_matches_execution_and_env_apply_round_trips(
     assert row["source"] == "system"
 
 
+def test_secret_named_env_values_are_masked_in_responses(
+    app_factory, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from cabal.webapi.routers import environment as environment_router
+
+    env_file = tmp_path / "setup.env.example.json"
+    env_file.write_text(
+        json.dumps({"PROJECTS_PATH": "", "FIXTURE_API_TOKEN": ""}), encoding="utf-8"
+    )
+    monkeypatch.setattr(environment_router, "ENV_FILE", env_file)
+    secret_value = "figd_FixtureSecretValue1234567890"
+    path_value = str(tmp_path / "projects")
+    monkeypatch.setenv("FIXTURE_API_TOKEN", secret_value)
+    monkeypatch.setenv("PROJECTS_PATH", path_value)
+    _app, client = build_client(app_factory, project=tmp_path)
+
+    response = client.get("/api/env", headers=auth_headers())
+
+    assert response.status_code == 200
+    assert secret_value not in response.text
+    entries = {row["name"]: row for row in response.json()["data"]["entries"]}
+    assert entries["FIXTURE_API_TOKEN"]["value_redacted"] == "[redacted]"
+    assert entries["PROJECTS_PATH"]["value_redacted"] == path_value
+
+
+def test_env_apply_shell_quotes_values_in_posix_profiles(
+    app_factory, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import shlex
+
+    from cabal.webapi.routers import environment as environment_router
+
+    env_file = tmp_path / "setup.env.example.json"
+    env_file.write_text(json.dumps({"PROJECTS_PATH": ""}), encoding="utf-8")
+    monkeypatch.setattr(environment_router, "ENV_FILE", env_file)
+    monkeypatch.setattr(environment_router.platform, "system", lambda: "Linux")
+    written: list[list[str]] = []
+    monkeypatch.setattr(
+        environment_router,
+        "update_profile",
+        lambda _profile, _keys, export_lines: written.append(list(export_lines)),
+    )
+    hostile_value = "it's $(touch /tmp/pwned) `whoami`"
+    _app, client = build_client(app_factory, project=tmp_path)
+
+    prepared = _prepare(client, "env.apply", {"values": {"PROJECTS_PATH": hostile_value}})
+    assert prepared.status_code == 200
+    applied = _execute(client, "env.apply", prepared.json()["data"]["ticket_id"])
+
+    assert applied.status_code == 200
+    assert written, "no profile writes captured"
+    expected = f"export PROJECTS_PATH={shlex.quote(hostile_value)}"
+    assert all(lines == [expected] for lines in written)
+
+
+def test_identity_scope_outside_enum_is_rejected_at_prepare(app_factory) -> None:
+    _app, client = build_client(app_factory)
+
+    response = _prepare(
+        client,
+        "git.identity.set",
+        {"scope": "system", "name": "Fixture", "email": "fixture@example.test"},
+    )
+
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "params_invalid"
+
+
 @pytest.mark.parametrize(
     "mutation",
     [

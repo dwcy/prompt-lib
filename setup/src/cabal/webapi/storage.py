@@ -5,9 +5,12 @@ from __future__ import annotations
 import json
 import sqlite3
 import threading
+from datetime import datetime, timezone
 from pathlib import Path
 
 import platformdirs
+
+from cabal.webapi.security import restrict_to_owner
 
 SCHEMA_VERSION = 1
 
@@ -101,6 +104,11 @@ class Storage:
         self._conn = sqlite3.connect(self.path, check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
         self._migrate()
+        # Tickets can hold caller-supplied params; the DB gets the same
+        # owner-only protection as the handshake file, and params left behind
+        # by a previous run are purged before anything is served.
+        restrict_to_owner(self.path)
+        self._purge_stale_ticket_params()
 
     def _migrate(self) -> None:
         with self._lock:
@@ -182,7 +190,44 @@ class Storage:
         return record
 
     def set_ticket_state(self, ticket_id: str, state: str) -> None:
-        self._write("UPDATE tickets SET state = ? WHERE ticket_id = ?", (state, ticket_id))
+        if state == "pending":
+            self._write("UPDATE tickets SET state = ? WHERE ticket_id = ?", (state, ticket_id))
+        else:
+            # Terminal states never need the params again; drop them so
+            # consumed tickets don't retain caller-supplied values on disk.
+            self._write(
+                "UPDATE tickets SET state = ?, params = '{}' WHERE ticket_id = ?",
+                (state, ticket_id),
+            )
+
+    def consume_ticket(self, ticket_id: str) -> bool:
+        """Atomically flip a pending ticket to executed; False when it was not pending.
+
+        The conditional UPDATE is the single-use guarantee: of N concurrent
+        executes for one ticket, exactly one observes rowcount == 1.
+        Params are kept so a conflict-released claim can retry.
+        """
+        with self._lock:
+            cursor = self._conn.execute(
+                "UPDATE tickets SET state = 'executed' WHERE ticket_id = ? AND state = 'pending'",
+                (ticket_id,),
+            )
+            self._conn.commit()
+        if self._write_guard is not None:
+            self._write_guard.increment()
+        return cursor.rowcount == 1
+
+    def clear_ticket_params(self, ticket_id: str) -> None:
+        self._write("UPDATE tickets SET params = '{}' WHERE ticket_id = ?", (ticket_id,))
+
+    def _purge_stale_ticket_params(self) -> None:
+        now = datetime.now(timezone.utc).isoformat()
+        with self._lock:
+            self._conn.execute(
+                "UPDATE tickets SET params = '{}' WHERE state != 'pending' OR expires_at < ?",
+                (now,),
+            )
+            self._conn.commit()
 
     # -- audit -----------------------------------------------------------
 

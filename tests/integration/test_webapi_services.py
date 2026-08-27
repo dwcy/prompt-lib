@@ -67,6 +67,9 @@ def test_service_start_stream_stop_and_app_shutdown_cleanup(
     monkeypatch.setattr(service_supervisor.service_prereqs, "check", lambda _key: [])
     monkeypatch.setattr(service_supervisor, "_port_running", lambda _definition: False)
     monkeypatch.setattr(service_supervisor.shutil, "which", lambda command: command)
+    # Build the app BEFORE faking Popen: service_supervisor.subprocess is the
+    # global module, and app construction itself shells out (storage ACL).
+    _app, client = build_client(app_factory)
     spawned: list[_FakeProcess] = []
 
     def fake_popen(command, **kwargs):
@@ -75,7 +78,6 @@ def test_service_start_stream_stop_and_app_shutdown_cleanup(
         return process
 
     monkeypatch.setattr(service_supervisor.subprocess, "Popen", fake_popen)
-    _app, client = build_client(app_factory)
 
     started = _execute_action(client, "services.start", {"key": "a2a-bridge"})
     assert started["service"]["state"] == "running"

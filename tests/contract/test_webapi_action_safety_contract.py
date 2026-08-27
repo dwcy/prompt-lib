@@ -181,6 +181,97 @@ def test_prepare_redacts_effect_preview_before_ticket_persistence(app_factory) -
     assert FAKE_SECRET not in json.dumps(stored["effect_preview"])
 
 
+def test_concurrent_execute_of_one_ticket_runs_the_action_exactly_once(app_factory) -> None:
+    import threading
+
+    from cabal.webapi.actions import ActionDescriptor, ActionOutcome
+
+    app, client = build_client(app_factory)
+    started = threading.Event()
+    release = threading.Event()
+    executions: list[str] = []
+
+    def blocking_execute(_params, _state):
+        executions.append("ran")
+        started.set()
+        release.wait(timeout=5)
+        return ActionOutcome(data={"done": True})
+
+    app.state.actions.register(
+        ActionDescriptor(
+            action_id="test.blocking",
+            module="test",
+            destructive=False,
+            backup_policy=None,
+            params_schema={"type": "object", "additionalProperties": False},
+            prepare=lambda _params, _state: {
+                "summary": "Blocking fixture action",
+                "commands": [],
+                "files_changed": [],
+                "scopes": ["test"],
+                "backup": None,
+                "removals": [],
+            },
+            execute=blocking_execute,
+        )
+    )
+    ticket = _prepare(client, "test.blocking", {}).json()["data"]
+
+    first_response: list = []
+    worker = threading.Thread(
+        target=lambda: first_response.append(_execute(client, "test.blocking", ticket["ticket_id"]))
+    )
+    worker.start()
+    assert started.wait(timeout=5), "first execute never reached the descriptor"
+
+    second = _execute(client, "test.blocking", ticket["ticket_id"])
+
+    release.set()
+    worker.join(timeout=5)
+    assert second.status_code == 409
+    assert second.json()["error"]["code"] == "ticket_consumed"
+    assert first_response and first_response[0].status_code == 200
+    assert executions == ["ran"]
+
+
+def test_ticket_params_are_dropped_once_the_ticket_leaves_pending(app_factory) -> None:
+    app, client = build_client(app_factory)
+    register_fixture_actions(app)
+
+    prepared = _prepare(client, "test.echo", {"note": FAKE_SECRET})
+    ticket_id = prepared.json()["data"]["ticket_id"]
+
+    executed = _execute(client, "test.echo", ticket_id)
+
+    assert executed.status_code == 200
+    stored = app.state.storage.load_ticket(ticket_id)
+    assert stored is not None
+    assert stored["params"] == {}
+    assert FAKE_SECRET not in json.dumps(stored)
+
+
+def test_invalidated_ticket_drops_its_params(app_factory) -> None:
+    app, client = build_client(app_factory)
+    register_fixture_actions(app)
+
+    ticket_id = _prepare(client, "test.echo", {"note": FAKE_SECRET}).json()["data"]["ticket_id"]
+    app.state.test_source_value = "mutated"
+
+    response = _execute(client, "test.echo", ticket_id)
+
+    assert response.status_code == 409
+    stored = app.state.storage.load_ticket(ticket_id)
+    assert stored["params"] == {}
+
+
+def test_storage_database_file_is_owner_restricted(app_factory) -> None:
+    from cabal.webapi.security import handshake_is_owner_restricted
+
+    app, _client = build_client(app_factory)
+
+    assert handshake_is_owner_restricted(app.state.storage.path)
+
+
 def test_get_sweep_across_read_routes_performs_zero_writes(app_factory) -> None:
     app, client = build_client(app_factory)
     register_fixture_actions(app)
