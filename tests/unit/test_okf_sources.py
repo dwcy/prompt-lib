@@ -16,6 +16,12 @@ def test_discover_sources_finds_configured_categories() -> None:
     assert any(source.resource == "global/agents/python-architect.md" for source in sources)
 
 
+def test_discover_sources_skips_placeholder_files() -> None:
+    sources = discover_sources(FIXTURE_REPO)
+
+    assert not any(source.resource.endswith(".gitkeep") for source in sources)
+
+
 def test_discover_sources_is_deterministic() -> None:
     first = [source.resource for source in discover_sources(FIXTURE_REPO)]
     second = [source.resource for source in discover_sources(FIXTURE_REPO)]
