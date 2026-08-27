@@ -149,10 +149,10 @@ claude mcp add -s user headroom -- headroom mcp serve
 ---
 
 ### openshift (opt-in)
-Kubernetes and OpenShift cluster operations — pods, deployments, services, contexts, Helm charts, and OpenShift-specific resources (routes, projects). Uses your local kubeconfig, so whatever `kubectl`/`oc` is logged into is what Claude can reach. Registered **opt-in** (`default_enabled: false`) — enable it from the cabal MCP manager when you need cluster access.
+Kubernetes and OpenShift cluster operations — pods, deployments, services, contexts, Helm charts, and OpenShift-specific resources (routes, projects). Uses your local kubeconfig, so whatever `kubectl`/`oc` is logged into is what Claude can reach. Registered **opt-in** (`default_enabled: false`) — enable it from the cabal MCP manager when you need cluster access. Not shipped in the plugin's `.mcp.json` (plugin servers load unconditionally; this one should stay opt-in, like okf-rag and headroom).
 
 **Setup:** Log in to your cluster first (`oc login` / `kubectl config use-context`) — the server reads the default kubeconfig.
-**Toolsets enabled:** `core,config,helm,openshift`
+**Toolsets:** default set (`core,config,helm`) — OpenShift support is built into `core`; no `--toolsets` flag needed.
 **Package:** `kubernetes-mcp-server`
 
 ---

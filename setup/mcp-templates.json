@@ -69,7 +69,7 @@
     "openshift": {
       "transport": "stdio",
       "command": "pnpm",
-      "args": ["dlx", "kubernetes-mcp-server@latest", "--toolsets", "core,config,helm,openshift"],
+      "args": ["dlx", "kubernetes-mcp-server@latest"],
       "env_required": [],
       "default_enabled": false,
       "description": "Kubernetes/OpenShift cluster operations (pods, resources, contexts, Helm, OpenShift routes/projects) via the local kubeconfig.",

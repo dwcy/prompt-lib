@@ -49,11 +49,6 @@
       "type": "stdio",
       "command": "uvx",
       "args": ["docker-mcp"]
-    },
-    "openshift": {
-      "type": "stdio",
-      "command": "pnpm",
-      "args": ["dlx", "kubernetes-mcp-server@latest", "--toolsets", "core,config,helm,openshift"]
     }
   }
 }
