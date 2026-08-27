@@ -28,6 +28,7 @@ dependencies = [
   "uvicorn>=0.34,<1",
   "platformdirs>=4.3,<5",
   "psutil>=7.1,<8",
+  "mcp>=1.2,<2",
 ]
 
 [project.optional-dependencies]
@@ -44,6 +45,7 @@ Issues = "https://github.com/dwcy/prompt-lib/issues"
 [project.scripts]
 cabal = "cabal.__main__:main"
 cabal-backend = "cabal.webapi.__main__:main"
+cabal-okf-rag = "cabal.okf.mcp_server:main"
 
 [tool.hatch.version]
 path = "setup/src/cabal/__init__.py"

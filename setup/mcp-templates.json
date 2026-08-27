@@ -65,6 +65,15 @@
       "default_enabled": false,
       "description": "Local agent message bus + shared memory + registry (11 tools) for inter-agent comms.",
       "source": "https://github.com/dwcy/prompt-lib/tree/main/services/mcp-bus"
+    },
+    "okf-rag": {
+      "transport": "stdio",
+      "command": "cabal-okf-rag",
+      "args": [],
+      "env_required": [],
+      "default_enabled": false,
+      "description": "Search, concept retrieval, preflight, context packs, analytics, usage, and index refresh over the prompt-lib OKF knowledge catalog (8 tools).",
+      "source": "https://github.com/dwcy/prompt-lib/tree/main/setup/src/cabal/okf"
     }
   }
 }
