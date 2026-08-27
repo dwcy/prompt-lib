@@ -98,8 +98,14 @@ def redact_url(value: object) -> str:
     netloc = parts.netloc
     if parts.username or parts.password:
         host = parts.hostname or ""
-        if parts.port:
-            host = f"{host}:{parts.port}"
+        try:
+            port = parts.port
+        except ValueError:
+            # Out-of-range port makes .port raise; dropping it keeps the
+            # credential-masking path alive instead of crashing the caller.
+            port = None
+        if port:
+            host = f"{host}:{port}"
         netloc = f"{REDACTION_MARKER}@{host}"
     query = []
     for key, item in parse_qsl(parts.query, keep_blank_values=True):

@@ -8,7 +8,7 @@ module only adds pagination, tab payloads, and action-friendly lookup helpers.
 from __future__ import annotations
 
 from dataclasses import asdict
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Literal
 
@@ -55,7 +55,9 @@ def _matches_project(summary: SessionSummary, project: str | None) -> bool:
 
 def _sort_key(row: tuple[Session, SessionSummary], sort: str) -> tuple:
     session, summary = row
-    started = summary.start_time or datetime.min
+    # start_time is tz-aware; a naive datetime.min fallback would make sort()
+    # raise on aware-vs-naive comparison when one transcript has no timestamp.
+    started = summary.start_time or datetime.min.replace(tzinfo=timezone.utc)
     if sort == "cost_desc":
         return (summary.estimated_cost_usd, started, session.session_id)
     if sort == "tokens_desc":

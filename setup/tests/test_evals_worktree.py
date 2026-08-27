@@ -107,6 +107,46 @@ class TestWorktreeLifecycle:
         assert diff.empty_diff is True
         assert diff.changed_files == ()
 
+    def test_collect_diff_counts_changes_the_agent_committed(
+        self, scratch_repo: Path, tmp_path: Path
+    ) -> None:
+        """Agents often commit their work; a committed change must still appear in the collected diff."""
+        # Arrange
+        dest = tmp_path / "wt"
+        worktree = create_worktree(scratch_repo, "HEAD", dest)
+        (worktree / "tracked.txt").write_text("committed change\n", encoding="utf-8")
+        _git(worktree, "config", "user.email", "evals-test@example.com")
+        _git(worktree, "config", "user.name", "Evals Test")
+        _git(worktree, "add", "tracked.txt")
+        _git(worktree, "commit", "-q", "-m", "agent commit")
+
+        # Act
+        diff = collect_diff(worktree)
+
+        # Assert
+        assert diff.empty_diff is False
+        assert "committed change" in diff.patch_text
+        assert diff.changed_files == ("tracked.txt",)
+        assert diff.insertions > 0
+
+    def test_collect_diff_counts_changes_the_agent_staged(
+        self, scratch_repo: Path, tmp_path: Path
+    ) -> None:
+        """Staged-but-uncommitted work must count; index-vs-worktree diffing used to hide it."""
+        # Arrange
+        dest = tmp_path / "wt"
+        worktree = create_worktree(scratch_repo, "HEAD", dest)
+        (worktree / "tracked.txt").write_text("staged change\n", encoding="utf-8")
+        _git(worktree, "add", "tracked.txt")
+
+        # Act
+        diff = collect_diff(worktree)
+
+        # Assert
+        assert diff.empty_diff is False
+        assert "staged change" in diff.patch_text
+        assert diff.changed_files == ("tracked.txt",)
+
     def test_create_worktree_with_unresolvable_ref_raises_worktree_error_with_stderr(
         self, scratch_repo: Path, tmp_path: Path
     ) -> None:
