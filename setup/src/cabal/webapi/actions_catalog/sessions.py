@@ -7,7 +7,7 @@ from typing import Any
 
 from cabal import model_assignments
 from cabal.webapi.account_service import models_digest
-from cabal.webapi.actions import ActionDescriptor, ActionOutcome
+from cabal.webapi.actions import ActionDescriptor, ActionOutcome, effect_preview
 from cabal.webapi.envelope import ApiError
 from cabal.webapi.sessions_service import delete_session_payload, find_session_file, session_digest
 
@@ -35,14 +35,12 @@ _MODEL_ASSIGN_SCHEMA = {
 
 def _delete_prepare(params: dict, _state: Any) -> dict:
     session = find_session_file(params["session_id"])
-    return {
-        "summary": f"Delete session transcript {params['session_id']}",
-        "commands": [],
-        "files_changed": [],
-        "scopes": ["sessions"],
-        "backup": "No backup; transcript deletion is permanent",
-        "removals": [str(session.log_path)],
-    }
+    return effect_preview(
+        f"Delete session transcript {params['session_id']}",
+        scopes=["sessions"],
+        backup="No backup; transcript deletion is permanent",
+        removals=[str(session.log_path)],
+    )
 
 
 def _delete_execute(params: dict, _state: Any) -> ActionOutcome:
@@ -53,14 +51,11 @@ def _assign_prepare(params: dict, _state: Any) -> dict:
     model = params["model"]
     if model not in model_assignments.VALID_MODEL_ALIASES and model not in model_assignments.KNOWN_MODEL_IDS:
         raise ApiError(422, "params_invalid", f"Unknown model value {model!r}")
-    return {
-        "summary": f"Assign {params['asset_kind']} {params['asset_name']} to {model}",
-        "commands": [],
-        "files_changed": [f"{params['asset_kind']}:{params['asset_name']}"],
-        "scopes": ["model_assignments"],
-        "backup": None,
-        "removals": [],
-    }
+    return effect_preview(
+        f"Assign {params['asset_kind']} {params['asset_name']} to {model}",
+        files_changed=[f"{params['asset_kind']}:{params['asset_name']}"],
+        scopes=["model_assignments"],
+    )
 
 
 def _assign_execute(params: dict, _state: Any) -> ActionOutcome:

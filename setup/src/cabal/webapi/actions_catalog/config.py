@@ -13,7 +13,7 @@ from cabal._paths import TARGET
 from cabal.cleanup_service import CLEANUP_BACKUP_DIRNAME, backup_and_remove, restore_cleanup
 from cabal.codex_setup.diff_apply import apply_codex_statuses, ensure_codex_target
 from cabal.diff_apply import apply_statuses, backup_settings, prune_backups
-from cabal.webapi.actions import ActionDescriptor, ActionOutcome
+from cabal.webapi.actions import ActionDescriptor, ActionOutcome, effect_preview
 from cabal.webapi.config_service import config_extras, deploy_digest, extras_digest, resolve_statuses
 from cabal.webapi.envelope import ApiError
 
@@ -55,14 +55,12 @@ def _apply_prepare(params: dict, _state: Any) -> dict:
     paths = list(params["paths"])
     resolve_statuses(target, paths)  # validates every path exists in the live tree
     backs_up_settings = target == "claude" and _SETTINGS_REL in paths
-    return {
-        "summary": f"Deploy {len(paths)} file(s) to the {target} target",
-        "commands": [],
-        "files_changed": paths,
-        "scopes": [target],
-        "backup": "settings.json backup" if backs_up_settings else None,
-        "removals": [],
-    }
+    return effect_preview(
+        f"Deploy {len(paths)} file(s) to the {target} target",
+        files_changed=paths,
+        scopes=[target],
+        backup="settings.json backup" if backs_up_settings else None,
+    )
 
 
 def _apply_execute(params: dict, state: Any) -> ActionOutcome:
@@ -106,14 +104,13 @@ def _validated_cleanup_paths(raw_paths: list[str]) -> list[str]:
 
 def _cleanup_prepare(params: dict, _state: Any) -> dict:
     paths = _validated_cleanup_paths(params["paths"])
-    return {
-        "summary": f"Remove {len(paths)} extra file(s) from the ~/.claude target",
-        "commands": [],
-        "files_changed": paths,
-        "scopes": ["claude"],
-        "backup": "cleanup backup",
-        "removals": paths,
-    }
+    return effect_preview(
+        f"Remove {len(paths)} extra file(s) from the ~/.claude target",
+        files_changed=paths,
+        scopes=["claude"],
+        backup="cleanup backup",
+        removals=paths,
+    )
 
 
 def _cleanup_execute(params: dict, _state: Any) -> ActionOutcome:
@@ -145,14 +142,10 @@ def _cleanup_backup_path(backup_id: str) -> Path:
 
 def _restore_cleanup_prepare(params: dict, _state: Any) -> dict:
     _cleanup_backup_path(params["backup_id"])
-    return {
-        "summary": f"Restore files from cleanup backup {params['backup_id']}",
-        "commands": [],
-        "files_changed": [],
-        "scopes": ["claude"],
-        "backup": None,
-        "removals": [],
-    }
+    return effect_preview(
+        f"Restore files from cleanup backup {params['backup_id']}",
+        scopes=["claude"],
+    )
 
 
 def _restore_cleanup_execute(params: dict, _state: Any) -> ActionOutcome:
@@ -181,14 +174,12 @@ def _settings_backup_path(backup_id: str) -> Path:
 
 def _restore_settings_prepare(params: dict, _state: Any) -> dict:
     _settings_backup_path(params["backup_id"])
-    return {
-        "summary": f"Restore settings.json from {params['backup_id']} (a pre-restore copy is made first)",
-        "commands": [],
-        "files_changed": ["settings.json"],
-        "scopes": ["claude"],
-        "backup": "pre-restore settings.json backup",
-        "removals": [],
-    }
+    return effect_preview(
+        f"Restore settings.json from {params['backup_id']} (a pre-restore copy is made first)",
+        files_changed=["settings.json"],
+        scopes=["claude"],
+        backup="pre-restore settings.json backup",
+    )
 
 
 def _restore_settings_execute(params: dict, _state: Any) -> ActionOutcome:

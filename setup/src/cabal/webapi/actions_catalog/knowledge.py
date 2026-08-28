@@ -9,7 +9,7 @@ from typing import Any
 from cabal.knowledge_rag_logic import bundle_root, index_path, prepare_index, resolve_repo_root
 from cabal.okf.doctor import doctor_bundle, render_human
 from cabal.okf.exporter import export_okf
-from cabal.webapi.actions import ActionDescriptor, ActionOutcome
+from cabal.webapi.actions import ActionDescriptor, ActionOutcome, effect_preview
 from cabal.webapi.knowledge_service import knowledge_digest
 
 KNOWLEDGE_EXPORT_ACTION_ID = "knowledge.export"
@@ -36,14 +36,12 @@ def _repo_root(state: Any) -> Path:
 
 def _export_prepare(_params: dict, state: Any) -> dict:
     repo = _repo_root(state)
-    return {
-        "summary": "Export the OKF knowledge bundle",
-        "commands": ["python -m cabal.okf export --out docs/okf/prompt-lib"],
-        "files_changed": [str(bundle_root(repo))],
-        "scopes": ["knowledge", "okf_bundle"],
-        "backup": None,
-        "removals": [],
-    }
+    return effect_preview(
+        "Export the OKF knowledge bundle",
+        commands=["python -m cabal.okf export --out docs/okf/prompt-lib"],
+        files_changed=[str(bundle_root(repo))],
+        scopes=["knowledge", "okf_bundle"],
+    )
 
 
 def _export_execute(_params: dict, state: Any) -> ActionOutcome:
@@ -65,26 +63,21 @@ def _export_execute(_params: dict, state: Any) -> ActionOutcome:
 def _index_prepare(params: dict, state: Any) -> dict:
     repo = _repo_root(state)
     force = bool(params.get("force", False))
-    return {
-        "summary": "Rebuild the OKF search index" if force else "Refresh the OKF search index",
-        "commands": ["python -m cabal.okf index docs/okf/prompt-lib"],
-        "files_changed": [str(index_path(repo))],
-        "scopes": ["knowledge", "okf_index"],
-        "backup": None,
-        "removals": [],
-    }
+    return effect_preview(
+        "Rebuild the OKF search index" if force else "Refresh the OKF search index",
+        commands=["python -m cabal.okf index docs/okf/prompt-lib"],
+        files_changed=[str(index_path(repo))],
+        scopes=["knowledge", "okf_index"],
+    )
 
 
 def _doctor_prepare(_params: dict, state: Any) -> dict:
     repo = _repo_root(state)
-    return {
-        "summary": "Validate the OKF knowledge bundle",
-        "commands": ["python -m cabal.okf doctor docs/okf/prompt-lib"],
-        "files_changed": [],
-        "scopes": ["knowledge", "okf_bundle"],
-        "backup": None,
-        "removals": [],
-    }
+    return effect_preview(
+        "Validate the OKF knowledge bundle",
+        commands=["python -m cabal.okf doctor docs/okf/prompt-lib"],
+        scopes=["knowledge", "okf_bundle"],
+    )
 
 
 def _doctor_execute(_params: dict, state: Any) -> ActionOutcome:

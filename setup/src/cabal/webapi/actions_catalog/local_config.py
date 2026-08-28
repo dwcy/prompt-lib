@@ -10,7 +10,7 @@ from typing import Any
 
 from cabal.claude_settings import CATALOG, read_local, reset_local, write_local
 from cabal.local_setup import apply_group
-from cabal.webapi.actions import ActionDescriptor, ActionOutcome
+from cabal.webapi.actions import ActionDescriptor, ActionOutcome, effect_preview
 from cabal.webapi.envelope import ApiError, compute_precondition_digest
 from cabal.webapi.local_config_service import local_plan, strip_rich_markup
 
@@ -53,14 +53,11 @@ def _toggle_prepare(params: dict, _state: Any) -> dict:
     setting = _CATALOG_KEYS.get(params["key"])
     if setting is None:
         raise ApiError(422, "params_invalid", f"Unknown setting {params['key']!r}")
-    return {
-        "summary": f"Set '{setting.label}' to {params['value']} as a local override",
-        "commands": [],
-        "files_changed": ["settings.local.json"],
-        "scopes": ["settings"],
-        "backup": None,
-        "removals": [],
-    }
+    return effect_preview(
+        f"Set '{setting.label}' to {params['value']} as a local override",
+        files_changed=["settings.local.json"],
+        scopes=["settings"],
+    )
 
 
 def _toggle_digest(params: dict, state: Any) -> str:
@@ -84,22 +81,13 @@ def _reset_prepare(_params: dict, state: Any) -> dict:
     project = getattr(state, "project", None)
     overridden = [key for key in _CATALOG_KEYS if project is not None and key in read_local(Path(project))]
     if not overridden:
-        return {
-            "summary": "No local setting overrides to reset",
-            "commands": [],
-            "files_changed": [],
-            "scopes": ["settings"],
-            "backup": None,
-            "removals": [],
-        }
-    return {
-        "summary": f"Reset {len(overridden)} local setting override(s) to the global baseline",
-        "commands": [],
-        "files_changed": ["settings.local.json"],
-        "scopes": ["settings"],
-        "backup": None,
-        "removals": overridden,
-    }
+        return effect_preview("No local setting overrides to reset", scopes=["settings"])
+    return effect_preview(
+        f"Reset {len(overridden)} local setting override(s) to the global baseline",
+        files_changed=["settings.local.json"],
+        scopes=["settings"],
+        removals=overridden,
+    )
 
 
 def _reset_digest(_params: dict, state: Any) -> str:
@@ -131,14 +119,12 @@ def _selected_children(state: Any, params: dict) -> tuple[Path, list[dict[str, A
 def _apply_group_prepare(params: dict, state: Any) -> dict:
     _project, chosen = _selected_children(state, params)
     labels = [child["label"] for child in chosen]
-    return {
-        "summary": f"Apply local config '{params['action']}' ({len(chosen)} item(s))",
-        "commands": ["git init"] if params["action"] == "git" else [],
-        "files_changed": labels,
-        "scopes": ["local_config"],
-        "backup": None,
-        "removals": [],
-    }
+    return effect_preview(
+        f"Apply local config '{params['action']}' ({len(chosen)} item(s))",
+        commands=["git init"] if params["action"] == "git" else [],
+        files_changed=labels,
+        scopes=["local_config"],
+    )
 
 
 def _apply_group_digest(params: dict, state: Any) -> str:

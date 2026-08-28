@@ -20,7 +20,7 @@ from cabal.git_config import apply_git_line_endings
 from cabal.git_policy import BUILTIN_DEFAULTS, load_policy, policy_source, save_policy
 from cabal.redaction import redact_env_display
 from cabal.webapi import security
-from cabal.webapi.actions import ActionDescriptor, ActionOutcome
+from cabal.webapi.actions import ActionDescriptor, ActionOutcome, effect_preview
 from cabal.webapi.envelope import ApiError, compute_precondition_digest, envelope_response
 
 router = APIRouter(dependencies=[Depends(security.require_bearer_token)])
@@ -158,14 +158,12 @@ def _env_apply_prepare(params: dict, _state: Any) -> dict:
         commands.append("rewrite shell profile claude-code-env block")
     if non_empty.get("GIT_LINE_ENDINGS"):
         commands.append(f"git config --global core.autocrlf {non_empty['GIT_LINE_ENDINGS']}")
-    return {
-        "summary": f"Apply {len(non_empty)} curated environment value(s)",
-        "commands": commands,
-        "files_changed": ["user environment"] if non_empty else [],
-        "scopes": ["environment"],
-        "backup": None,
-        "removals": [],
-    }
+    return effect_preview(
+        f"Apply {len(non_empty)} curated environment value(s)",
+        commands=commands,
+        files_changed=["user environment"] if non_empty else [],
+        scopes=["environment"],
+    )
 
 
 def _env_apply_execute(params: dict, _state: Any) -> ActionOutcome:
@@ -293,14 +291,12 @@ def _identity_prepare(params: dict, state: Any) -> dict:
         changes.append(f"user.name={params['name'].strip()}")
     if params.get("email", "").strip():
         changes.append("user.email=<value>")
-    return {
-        "summary": f"Set {scope} git identity",
-        "commands": [f"git config --{scope} {change}" for change in changes],
-        "files_changed": [".git/config" if scope == "local" else "~/.gitconfig"],
-        "scopes": ["git_identity", scope],
-        "backup": None,
-        "removals": [],
-    }
+    return effect_preview(
+        f"Set {scope} git identity",
+        commands=[f"git config --{scope} {change}" for change in changes],
+        files_changed=[".git/config" if scope == "local" else "~/.gitconfig"],
+        scopes=["git_identity", scope],
+    )
 
 
 def _identity_execute(params: dict, state: Any) -> ActionOutcome:
@@ -344,14 +340,12 @@ def _validate_policy(params: dict) -> dict[str, Any]:
 
 def _policy_prepare(params: dict, _state: Any) -> dict:
     policy = _validate_policy(params)
-    return {
-        "summary": "Update agent commit policy",
-        "commands": ["write ~/.claude/git-policy.json"],
-        "files_changed": [str(Path.home() / ".claude" / "git-policy.json")],
-        "scopes": ["git_identity", "commit_policy"],
-        "backup": None,
-        "removals": [],
-    }
+    return effect_preview(
+        "Update agent commit policy",
+        commands=["write ~/.claude/git-policy.json"],
+        files_changed=[str(Path.home() / ".claude" / "git-policy.json")],
+        scopes=["git_identity", "commit_policy"],
+    )
 
 
 def _policy_execute(params: dict, _state: Any) -> ActionOutcome:

@@ -9,7 +9,7 @@ from typing import Any
 from cabal.codex_setup.diff_apply import apply_codex_statuses, ensure_codex_target
 from cabal.codex_setup.local_setup import apply_codex_local_group, build_codex_local_plan
 from cabal.codex_setup.paths import CODEX_SOURCE_DIR
-from cabal.webapi.actions import ActionDescriptor, ActionOutcome
+from cabal.webapi.actions import ActionDescriptor, ActionOutcome, effect_preview
 from cabal.webapi.config_service import deploy_digest, resolve_statuses
 from cabal.webapi.envelope import ApiError, compute_precondition_digest
 from cabal.webapi.local_config_service import strip_rich_markup
@@ -70,14 +70,11 @@ def _selected_children(state: Any, params: dict) -> list[dict[str, Any]]:
 def _apply_prepare(params: dict, _state: Any) -> dict:
     paths = list(params["paths"])
     resolve_statuses("codex", paths)
-    return {
-        "summary": f"Deploy {len(paths)} file(s) to the Codex target",
-        "commands": [],
-        "files_changed": paths,
-        "scopes": ["codex"],
-        "backup": None,
-        "removals": [],
-    }
+    return effect_preview(
+        f"Deploy {len(paths)} file(s) to the Codex target",
+        files_changed=paths,
+        scopes=["codex"],
+    )
 
 
 def _apply_execute(params: dict, state: Any) -> ActionOutcome:
@@ -98,14 +95,11 @@ def _apply_execute(params: dict, state: Any) -> ActionOutcome:
 def _local_apply_prepare(params: dict, state: Any) -> dict:
     chosen = _selected_children(state, params)
     labels = [child["label"] for child in chosen]
-    return {
-        "summary": f"Apply Codex local config '{params['action']}' ({len(chosen)} item(s))",
-        "commands": [],
-        "files_changed": labels,
-        "scopes": ["codex"],
-        "backup": None,
-        "removals": [],
-    }
+    return effect_preview(
+        f"Apply Codex local config '{params['action']}' ({len(chosen)} item(s))",
+        files_changed=labels,
+        scopes=["codex"],
+    )
 
 
 def _local_apply_digest(params: dict, state: Any) -> str:

@@ -10,7 +10,7 @@ from cabal import service_supervisor
 from cabal.installers.a2a_bridge import a2a_bridge_install
 from cabal.installers.orchestrator import orchestrator_install
 from cabal.service_catalog import get_service
-from cabal.webapi.actions import ActionDescriptor, ActionOutcome
+from cabal.webapi.actions import ActionDescriptor, ActionOutcome, effect_preview
 from cabal.webapi.docker_apps_service import (
     docker_container_digest,
     find_docker_container,
@@ -71,14 +71,12 @@ def _require_key(params: dict) -> str:
 def _setup_prepare(params: dict, _state) -> dict:
     key = _require_key(params)
     definition = get_service(key)
-    return {
-        "summary": f"Set up {definition.label}",
-        "commands": ["uv tool install --force"],
-        "files_changed": [definition.install_path],
-        "scopes": ["services", key],
-        "backup": None,
-        "removals": [],
-    }
+    return effect_preview(
+        f"Set up {definition.label}",
+        commands=["uv tool install --force"],
+        files_changed=[definition.install_path],
+        scopes=["services", key],
+    )
 
 
 def _setup_execute(params: dict, state) -> ActionOutcome:
@@ -105,14 +103,12 @@ def _setup_execute(params: dict, state) -> ActionOutcome:
 def _start_prepare(params: dict, _state) -> dict:
     key = _require_key(params)
     definition = get_service(key)
-    return {
-        "summary": f"Start {definition.label}",
-        "commands": [definition.run_command],
-        "files_changed": [str(service_supervisor.log_path(key))],
-        "scopes": ["services", key],
-        "backup": None,
-        "removals": [],
-    }
+    return effect_preview(
+        f"Start {definition.label}",
+        commands=[definition.run_command],
+        files_changed=[str(service_supervisor.log_path(key))],
+        scopes=["services", key],
+    )
 
 
 def _start_execute(params: dict, _state) -> ActionOutcome:
@@ -128,14 +124,13 @@ def _stop_prepare(params: dict, _state) -> dict:
     process = f"{definition.label} process"
     if current.get("pid") is not None:
         process += f" (pid {current['pid']})"
-    return {
-        "summary": f"Stop {definition.label}",
-        "commands": ["terminate service process"],
-        "files_changed": [],
-        "scopes": ["services", key],
-        "backup": "No backup; start the service again to recover",
-        "removals": [process],
-    }
+    return effect_preview(
+        f"Stop {definition.label}",
+        commands=["terminate service process"],
+        scopes=["services", key],
+        backup="No backup; start the service again to recover",
+        removals=[process],
+    )
 
 
 def _stop_execute(params: dict, _state) -> ActionOutcome:
@@ -147,14 +142,13 @@ def _stop_execute(params: dict, _state) -> ActionOutcome:
 def _running_app_stop_prepare(params: dict, _state) -> dict:
     app = find_running_app(params["pid"], params["port"], params["started_at"])
     label = f"{app['app_name']} (PID {app['pid']}, port {app['port']})"
-    return {
-        "summary": f"Shut down {app['app_name']} on port {app['port']}",
-        "commands": [f"terminate process {app['pid']}"],
-        "files_changed": [],
-        "scopes": ["services", "running-apps", str(app["pid"])],
-        "backup": "Restart the app from its location or original command",
-        "removals": [label],
-    }
+    return effect_preview(
+        f"Shut down {app['app_name']} on port {app['port']}",
+        commands=[f"terminate process {app['pid']}"],
+        scopes=["services", "running-apps", str(app["pid"])],
+        backup="Restart the app from its location or original command",
+        removals=[label],
+    )
 
 
 def _running_app_stop_execute(params: dict, _state) -> ActionOutcome:
@@ -165,14 +159,11 @@ def _running_app_stop_execute(params: dict, _state) -> ActionOutcome:
 
 def _docker_start_prepare(params: dict, _state) -> dict:
     container = find_docker_container(params["container_id"], params["expected_state"])
-    return {
-        "summary": f"Start Docker container {container['name']}",
-        "commands": [f"docker container start {container['container_id'][:12]}"],
-        "files_changed": [],
-        "scopes": ["services", "docker", container["container_id"]],
-        "backup": None,
-        "removals": [],
-    }
+    return effect_preview(
+        f"Start Docker container {container['name']}",
+        commands=[f"docker container start {container['container_id'][:12]}"],
+        scopes=["services", "docker", container["container_id"]],
+    )
 
 
 def _docker_start_execute(params: dict, _state) -> ActionOutcome:
@@ -183,14 +174,13 @@ def _docker_start_execute(params: dict, _state) -> ActionOutcome:
 
 def _docker_stop_prepare(params: dict, _state) -> dict:
     container = find_docker_container(params["container_id"], params["expected_state"])
-    return {
-        "summary": f"Stop Docker container {container['name']}",
-        "commands": [f"docker container stop --time 10 {container['container_id'][:12]}"],
-        "files_changed": [],
-        "scopes": ["services", "docker", container["container_id"]],
-        "backup": "Start the same Docker container again to recover",
-        "removals": [f"Running container {container['name']} ({container['container_id'][:12]})"],
-    }
+    return effect_preview(
+        f"Stop Docker container {container['name']}",
+        commands=[f"docker container stop --time 10 {container['container_id'][:12]}"],
+        scopes=["services", "docker", container["container_id"]],
+        backup="Start the same Docker container again to recover",
+        removals=[f"Running container {container['name']} ({container['container_id'][:12]})"],
+    )
 
 
 def _docker_stop_execute(params: dict, _state) -> ActionOutcome:
@@ -202,14 +192,11 @@ def _docker_stop_execute(params: dict, _state) -> ActionOutcome:
 def _dashboard_prepare(params: dict, _state) -> dict:
     key = _require_key(params)
     definition = get_service(key)
-    return {
-        "summary": f"Open {definition.label} dashboard",
-        "commands": [definition.dashboard_command or "dashboard unavailable"],
-        "files_changed": [],
-        "scopes": ["services", key, "dashboard"],
-        "backup": None,
-        "removals": [],
-    }
+    return effect_preview(
+        f"Open {definition.label} dashboard",
+        commands=[definition.dashboard_command or "dashboard unavailable"],
+        scopes=["services", key, "dashboard"],
+    )
 
 
 def _dashboard_execute(params: dict, _state) -> ActionOutcome:

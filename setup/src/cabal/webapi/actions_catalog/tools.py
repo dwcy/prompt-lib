@@ -8,7 +8,7 @@ from typing import Any
 from cabal.installers.runtime_backups import backup_before_install
 from cabal.tool_catalog import ToolDefinition, clean_console_output, get_tool_definition
 from cabal.tools import _installer_for, _probe_key, _tool_unavailable_reason
-from cabal.webapi.actions import ActionDescriptor, ActionOutcome
+from cabal.webapi.actions import ActionDescriptor, ActionOutcome, effect_preview
 from cabal.webapi.envelope import ApiError, compute_precondition_digest
 
 TOOLS_INSTALL_ACTION_ID = "tools.install"
@@ -57,14 +57,7 @@ def _prepare_for(mode: str):
         summary = f"{verb} {definition.label}"
         if version:
             summary += f" ({version})"
-        return {
-            "summary": summary,
-            "commands": [],
-            "files_changed": [],
-            "scopes": ["tools"],
-            "backup": definition.backup_policy,
-            "removals": [],
-        }
+        return effect_preview(summary, scopes=["tools"], backup=definition.backup_policy)
 
     return _prepare
 

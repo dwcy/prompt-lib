@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from cabal.webapi.actions import ActionDescriptor, ActionOutcome
+from cabal.webapi.actions import ActionDescriptor, ActionOutcome, effect_preview
 from cabal.webapi.envelope import ApiError, compute_precondition_digest
 
 JOBS_CANCEL_ACTION_ID = "jobs.cancel"
@@ -29,14 +29,12 @@ def _cancel_prepare(params: dict, state: Any) -> dict:
     record = _job_record(job_id, state)
     if record["state"] not in {"queued", "running"}:
         raise ApiError(409, "job_not_cancellable", f"Job {job_id!r} is already {record['state']}")
-    return {
-        "summary": f"Cancel {record['kind']} job {job_id}",
-        "commands": [],
-        "files_changed": [],
-        "scopes": ["jobs"],
-        "backup": "No backup; rerun the original action to recover unfinished work",
-        "removals": [f"remaining work for {record['kind']} job {job_id}"],
-    }
+    return effect_preview(
+        f"Cancel {record['kind']} job {job_id}",
+        scopes=["jobs"],
+        backup="No backup; rerun the original action to recover unfinished work",
+        removals=[f"remaining work for {record['kind']} job {job_id}"],
+    )
 
 
 def _cancel_execute(params: dict, state: Any) -> ActionOutcome:

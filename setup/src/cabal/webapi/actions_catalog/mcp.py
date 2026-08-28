@@ -15,7 +15,7 @@ from cabal.mcp_ops import (
     enumerate_mcp_servers,
     remove_from_project_mcp,
 )
-from cabal.webapi.actions import ActionDescriptor, ActionOutcome
+from cabal.webapi.actions import ActionDescriptor, ActionOutcome, effect_preview
 from cabal.webapi.envelope import ApiError
 from cabal.webapi.mcp_service import mcp_digest, project_dir
 
@@ -56,22 +56,17 @@ def _project(state: Any) -> Path:
 def _activate_global_prepare(params: dict, state: Any) -> dict:
     name, info = _require_info(params, state)
     if info.get("is_plugin"):
-        return {
-            "summary": f"Enable MCP plugin {info.get('plugin_id') or name}",
-            "commands": ["claude plugin enable"],
-            "files_changed": [],
-            "scopes": ["mcp", "plugin"],
-            "backup": None,
-            "removals": [],
-        }
-    return {
-        "summary": f"Activate {name} globally",
-        "commands": ["claude mcp add -s user"],
-        "files_changed": [str(Path.home() / ".claude.json")],
-        "scopes": ["mcp", "user"],
-        "backup": None,
-        "removals": [],
-    }
+        return effect_preview(
+            f"Enable MCP plugin {info.get('plugin_id') or name}",
+            commands=["claude plugin enable"],
+            scopes=["mcp", "plugin"],
+        )
+    return effect_preview(
+        f"Activate {name} globally",
+        commands=["claude mcp add -s user"],
+        files_changed=[str(Path.home() / ".claude.json")],
+        scopes=["mcp", "user"],
+    )
 
 
 def _activate_global_execute(params: dict, state: Any) -> ActionOutcome:
@@ -94,14 +89,12 @@ def _activate_global_execute(params: dict, state: Any) -> ActionOutcome:
 def _activate_local_prepare(params: dict, state: Any) -> dict:
     name, _info = _require_info(params, state)
     project = _project(state)
-    return {
-        "summary": f"Activate {name} for this project",
-        "commands": ["write .mcp.json", "approve project MCP server"],
-        "files_changed": [str(project / ".mcp.json"), str(Path.home() / ".claude.json")],
-        "scopes": ["mcp", "project"],
-        "backup": None,
-        "removals": [],
-    }
+    return effect_preview(
+        f"Activate {name} for this project",
+        commands=["write .mcp.json", "approve project MCP server"],
+        files_changed=[str(project / ".mcp.json"), str(Path.home() / ".claude.json")],
+        scopes=["mcp", "project"],
+    )
 
 
 def _activate_local_execute(params: dict, state: Any) -> ActionOutcome:
@@ -122,14 +115,12 @@ def _activate_local_execute(params: dict, state: Any) -> ActionOutcome:
 def _approve_prepare(params: dict, state: Any) -> dict:
     name, _info = _require_info(params, state)
     project = _project(state)
-    return {
-        "summary": f"Approve pending MCP server {name}",
-        "commands": ["update enabledMcpjsonServers"],
-        "files_changed": [str(Path.home() / ".claude.json"), str(project / ".mcp.json")],
-        "scopes": ["mcp", "project"],
-        "backup": None,
-        "removals": [],
-    }
+    return effect_preview(
+        f"Approve pending MCP server {name}",
+        commands=["update enabledMcpjsonServers"],
+        files_changed=[str(Path.home() / ".claude.json"), str(project / ".mcp.json")],
+        scopes=["mcp", "project"],
+    )
 
 
 def _approve_execute(params: dict, state: Any) -> ActionOutcome:
@@ -159,14 +150,14 @@ def _disable_prepare(params: dict, state: Any) -> dict:
             raise ApiError(422, "params_invalid", f"{name!r} is not registered in scope {scope!r}")
         target_scope = str(scope)
         removal = f"{name} ({target_scope})"
-    return {
-        "summary": f"Disable MCP server {removal}",
-        "commands": ["claude mcp remove" if target_scope != "project" else "remove from .mcp.json"],
-        "files_changed": [str(Path.home() / ".claude.json")],
-        "scopes": ["mcp", target_scope],
-        "backup": "No backup; re-enable or re-register the MCP server to recover",
-        "removals": [removal],
-    }
+    return effect_preview(
+        f"Disable MCP server {removal}",
+        commands=["claude mcp remove" if target_scope != "project" else "remove from .mcp.json"],
+        files_changed=[str(Path.home() / ".claude.json")],
+        scopes=["mcp", target_scope],
+        backup="No backup; re-enable or re-register the MCP server to recover",
+        removals=[removal],
+    )
 
 
 def _disable_execute(params: dict, state: Any) -> ActionOutcome:

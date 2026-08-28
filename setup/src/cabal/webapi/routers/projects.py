@@ -31,7 +31,7 @@ from cabal.init_project_service import (
 from cabal.installers.gh import gh_device_init, gh_device_poll, gh_status
 from cabal.views.init_project_prompt import build_init_prompt, write_init_prompt
 from cabal.webapi import security
-from cabal.webapi.actions import ActionDescriptor, ActionOutcome
+from cabal.webapi.actions import ActionDescriptor, ActionOutcome, effect_preview
 from cabal.webapi.envelope import ApiError, compute_precondition_digest, envelope_response, utc_now_iso
 
 # Auth is declared at router level so routes keep the guard when flattened onto the app.
@@ -486,14 +486,7 @@ def _select_prepare(params: dict, _state: Any) -> dict:
     target = Path(params["path"])
     if not target.is_dir():
         raise ApiError(422, "params_invalid", f"{target} is not an existing directory")
-    return {
-        "summary": f"Switch active project to {target}",
-        "commands": [],
-        "files_changed": [],
-        "scopes": ["project"],
-        "backup": None,
-        "removals": [],
-    }
+    return effect_preview(f"Switch active project to {target}", scopes=["project"])
 
 
 def _select_digest(_params: dict, state: Any) -> str:
@@ -540,14 +533,11 @@ def _provider_login_prepare(params: dict, state: Any) -> dict:
     state.provider_login_session = session
     code = device.get("user_code", "unknown")
     uri = device.get("verification_uri", "https://github.com/login/device")
-    return {
-        "summary": f"Authorize GitHub CLI access with device code {code}",
-        "commands": [f"Open {uri}", f"Enter code {code}", "Store token in gh credentials"],
-        "files_changed": [],
-        "scopes": ["provider", "github", *scopes],
-        "backup": None,
-        "removals": [],
-    }
+    return effect_preview(
+        f"Authorize GitHub CLI access with device code {code}",
+        commands=[f"Open {uri}", f"Enter code {code}", "Store token in gh credentials"],
+        scopes=["provider", "github", *scopes],
+    )
 
 
 def _provider_login_execute(_params: dict, state: Any) -> ActionOutcome:
@@ -603,14 +593,12 @@ def _validate_clone_params(params: dict) -> tuple[str, Path]:
 
 def _provider_clone_prepare(params: dict, _state: Any) -> dict:
     repo, target = _validate_clone_params(params)
-    return {
-        "summary": f"Clone {repo} into {target}",
-        "commands": [f"gh repo clone {repo} {target}"],
-        "files_changed": [str(target)],
-        "scopes": ["provider", "clone", repo],
-        "backup": None,
-        "removals": [],
-    }
+    return effect_preview(
+        f"Clone {repo} into {target}",
+        commands=[f"gh repo clone {repo} {target}"],
+        files_changed=[str(target)],
+        scopes=["provider", "clone", repo],
+    )
 
 
 def _provider_clone_digest(params: dict, _state: Any) -> str:
@@ -673,14 +661,11 @@ def _provider_account(params: dict) -> tuple[str, str]:
 
 def _provider_switch_prepare(params: dict, _state: Any) -> dict:
     user, host = _provider_account(params)
-    return {
-        "summary": f"Make {user} the active GitHub account on {host}",
-        "commands": [f"gh auth switch --hostname {host} --user {user}"],
-        "files_changed": [],
-        "scopes": ["provider", "account", host, user],
-        "backup": None,
-        "removals": [],
-    }
+    return effect_preview(
+        f"Make {user} the active GitHub account on {host}",
+        commands=[f"gh auth switch --hostname {host} --user {user}"],
+        scopes=["provider", "account", host, user],
+    )
 
 
 def _provider_switch_execute(params: dict, _state: Any) -> ActionOutcome:
@@ -693,14 +678,13 @@ def _provider_switch_execute(params: dict, _state: Any) -> ActionOutcome:
 
 def _provider_forget_prepare(params: dict, _state: Any) -> dict:
     user, host = _provider_account(params)
-    return {
-        "summary": f"Forget GitHub account {user} on {host}",
-        "commands": [f"gh auth logout --hostname {host} --user {user}"],
-        "files_changed": [],
-        "scopes": ["provider", "account", host, user],
-        "backup": "No backup; authenticate the account again to recover",
-        "removals": [f"Stored GitHub credentials for {user}@{host}"],
-    }
+    return effect_preview(
+        f"Forget GitHub account {user} on {host}",
+        commands=[f"gh auth logout --hostname {host} --user {user}"],
+        scopes=["provider", "account", host, user],
+        backup="No backup; authenticate the account again to recover",
+        removals=[f"Stored GitHub credentials for {user}@{host}"],
+    )
 
 
 def _provider_forget_execute(params: dict, _state: Any) -> ActionOutcome:
@@ -735,14 +719,12 @@ def _init_prepare(params: dict, _state: Any) -> dict:
     changed = [plan["destination"], *selected[:30]]
     if mcp_json:
         changed.append(str(Path(plan["destination"]) / ".mcp.json"))
-    return {
-        "summary": f"Create {plan['name']} from {plan['template_attribution']}",
-        "commands": ["write staged files", "write .claude/INIT_PROMPT.md", "run claude -p INIT_PROMPT.md"],
-        "files_changed": changed,
-        "scopes": ["init", "project", plan["template_source"]],
-        "backup": None,
-        "removals": [],
-    }
+    return effect_preview(
+        f"Create {plan['name']} from {plan['template_attribution']}",
+        commands=["write staged files", "write .claude/INIT_PROMPT.md", "run claude -p INIT_PROMPT.md"],
+        files_changed=changed,
+        scopes=["init", "project", plan["template_source"]],
+    )
 
 
 def _init_execute(params: dict, state: Any) -> ActionOutcome:

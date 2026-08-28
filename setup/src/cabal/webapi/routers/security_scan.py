@@ -14,7 +14,7 @@ from cabal.package_security import ai_advisor
 from cabal.package_security.models import Finding, ScanOutcome
 from cabal.package_security import service as package_security
 from cabal.webapi import security
-from cabal.webapi.actions import ActionDescriptor, ActionOutcome
+from cabal.webapi.actions import ActionDescriptor, ActionOutcome, effect_preview
 from cabal.webapi.envelope import ApiError, compute_precondition_digest, envelope_response, utc_now_iso
 
 router = APIRouter(dependencies=[Depends(security.require_bearer_token)])
@@ -183,14 +183,12 @@ def _apply_fix_prepare(params: dict, state: Any) -> dict:
     finding = _find_finding(project, params["finding_key"])
     if not finding.fix_command:
         raise ApiError(422, "fix_unavailable", "This finding has no automated fix command")
-    return {
-        "summary": f"Apply package security fix for {finding.package}",
-        "commands": [finding.fix_command],
-        "files_changed": [str(project)],
-        "scopes": ["package_security", finding.ecosystem],
-        "backup": None,
-        "removals": [],
-    }
+    return effect_preview(
+        f"Apply package security fix for {finding.package}",
+        commands=[finding.fix_command],
+        files_changed=[str(project)],
+        scopes=["package_security", finding.ecosystem],
+    )
 
 
 def _apply_fix_execute(params: dict, state: Any) -> ActionOutcome:
@@ -228,14 +226,11 @@ SECURITY_APPLY_FIX_DESCRIPTOR = ActionDescriptor(
 
 
 def _install_pip_audit_prepare(_params: dict, _state: Any) -> dict:
-    return {
-        "summary": "Install pip-audit into this Python environment",
-        "commands": [f"{sys.executable} -m pip install pip-audit"],
-        "files_changed": [],
-        "scopes": ["package_security", "python"],
-        "backup": None,
-        "removals": [],
-    }
+    return effect_preview(
+        "Install pip-audit into this Python environment",
+        commands=[f"{sys.executable} -m pip install pip-audit"],
+        scopes=["package_security", "python"],
+    )
 
 
 def _install_pip_audit_execute(_params: dict, state: Any) -> ActionOutcome:

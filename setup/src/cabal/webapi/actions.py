@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any
@@ -28,6 +28,30 @@ class ActionDescriptor:
     prepare: Callable[[dict, Any], dict]
     execute: Callable[[dict, Any], "ActionOutcome"]
     compute_digest: Callable[[dict, Any], str | None] | None = None
+
+
+def effect_preview(
+    summary: str,
+    *,
+    commands: Sequence[str] = (),
+    files_changed: Sequence[str] = (),
+    scopes: Sequence[str] = (),
+    backup: str | None = None,
+    removals: Sequence[str] = (),
+) -> dict:
+    """Build the EffectPreview every prepare() must return.
+
+    Hand-built dicts made a mistyped or missing key a runtime 500 reachable only by
+    preparing that one action; the keyword defaults make the shape unmissable.
+    """
+    return {
+        "summary": summary,
+        "commands": list(commands),
+        "files_changed": list(files_changed),
+        "scopes": list(scopes),
+        "backup": backup,
+        "removals": list(removals),
+    }
 
 
 @dataclass

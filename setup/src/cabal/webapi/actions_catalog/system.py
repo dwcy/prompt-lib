@@ -6,7 +6,7 @@ import subprocess
 
 from cabal._paths import REPO_DIR
 from cabal.updates import do_git_pull
-from cabal.webapi.actions import ActionDescriptor, ActionOutcome
+from cabal.webapi.actions import ActionDescriptor, ActionOutcome, effect_preview
 from cabal.webapi.envelope import compute_precondition_digest
 
 _EMPTY_SCHEMA = {
@@ -38,14 +38,13 @@ def _digest() -> str:
 
 
 def _prepare(_params: dict, _state) -> dict:
-    return {
-        "summary": "Pull the latest Cabal revision",
-        "commands": ["git pull"],
-        "files_changed": [str(REPO_DIR)] if REPO_DIR is not None else [],
-        "scopes": ["system", "cabal"],
-        "backup": "Git history retains the previous revision",
-        "removals": [],
-    }
+    return effect_preview(
+        "Pull the latest Cabal revision",
+        commands=["git pull"],
+        files_changed=[str(REPO_DIR)] if REPO_DIR is not None else [],
+        scopes=["system", "cabal"],
+        backup="Git history retains the previous revision",
+    )
 
 
 def _execute(_params: dict, state) -> ActionOutcome:
