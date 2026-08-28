@@ -20,7 +20,8 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 cd "$SCRIPT_DIR" || exit 1
-uv run cabal-backend --project "$SCRIPT_DIR" &
+# CABAL_DEV opens CORS to the Vite dev origins; packaged builds never set it.
+CABAL_DEV=1 uv run cabal-backend --project "$SCRIPT_DIR" &
 BACKEND_PID=$!
 
 cd "$APP_DIR" || exit 1

@@ -172,6 +172,11 @@ def okf_get(ids: list[str]) -> dict[str, Any]:
     if not db_path.exists():
         return _missing_index_payload(db_path)
 
+    if not ids:
+        payload: dict[str, Any] = {"concepts": [], "missing": []}
+        payload.update(_staleness_fields(bundle_root, db_path))
+        return payload
+
     started = time.perf_counter()
     placeholders = ",".join("?" for _ in ids)
     with connect(db_path) as conn:

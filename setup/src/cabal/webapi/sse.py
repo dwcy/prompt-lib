@@ -14,9 +14,10 @@ HEARTBEAT_INTERVAL_S = 10.0
 POLL_INTERVAL_S = 0.02
 # Job streams are served in bounded segments: the response closes after this long
 # even while the job is still running, and the client reconnects with Last-Event-ID
-# for a seamless (replay/gap-guarded) continuation. Keeps every stream response
-# finite for buffering consumers such as Starlette's TestClient.
-JOB_STREAM_SEGMENT_MAX_S = 1.0
+# for a seamless (replay/gap-guarded) continuation. Heartbeats keep the connection
+# alive within a segment, so this only bounds how long one response object lives;
+# tests override it to keep buffering consumers such as TestClient finite.
+JOB_STREAM_SEGMENT_MAX_S = 30.0
 
 SSE_MEDIA_TYPE = "text/event-stream"
 
@@ -45,7 +46,9 @@ def parse_last_event_id(value: str | None) -> int | None:
         return None
 
 
-async def job_event_stream(job: Job, last_event_id: int | None) -> AsyncIterator[str]:
+async def job_event_stream(
+    job: Job, last_event_id: int | None, *, segment_max_s: float | None = None
+) -> AsyncIterator[str]:
     """Replay from the ring buffer (gap event on eviction), then follow live.
 
     Closes on terminal state, or at the segment deadline while the job still runs —
@@ -53,7 +56,10 @@ async def job_event_stream(job: Job, last_event_id: int | None) -> AsyncIterator
     """
     last_seq = last_event_id if last_event_id is not None else -1
     last_emit = time.monotonic()
-    deadline = last_emit + JOB_STREAM_SEGMENT_MAX_S
+    # Resolved per call, not as a def-time default, so tests can override the
+    # module constant.
+    segment = JOB_STREAM_SEGMENT_MAX_S if segment_max_s is None else segment_max_s
+    deadline = last_emit + segment
     if not job.is_terminal():
         yield format_event("state", {"state": job.state, "exit_detail": job.exit_detail})
     while True:

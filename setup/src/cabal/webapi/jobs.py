@@ -146,9 +146,7 @@ class JobManager:
             if exclusive_resource is not None:
                 holder = self._resources.get(exclusive_resource)
                 if holder is not None:
-                    blocking = self._jobs.get(holder)
-                    if blocking is not None and not blocking.is_terminal():
-                        raise JobConflict(holder)
+                    raise JobConflict(holder)
                 self._resources[exclusive_resource] = job.job_id
             self._jobs[job.job_id] = job
         thread = threading.Thread(target=self._run, args=(job, runner), daemon=True)
@@ -220,9 +218,6 @@ class JobManager:
             job.state = state
             job.exit_detail = redact_text(exit_detail) if exit_detail else None
             job.finished_at = utc_now_iso()
-            if job.exclusive_resource is not None:
-                if self._resources.get(job.exclusive_resource) == job.job_id:
-                    del self._resources[job.exclusive_resource]
             callbacks = self._terminal_callbacks.pop(job.job_id, [])
         record = job.record()
         # Suppress persistence errors from late daemon-thread finishes (e.g. the
@@ -233,16 +228,31 @@ class JobManager:
             with contextlib.suppress(Exception):
                 callback(record)
 
-    def _run(self, job: Job, runner: Callable[[JobHandle], None]) -> None:
+    def _release_resource(self, job: Job) -> None:
+        """Held until the runner thread actually returns.
+
+        cancel() marks a job terminal while its runner is still executing; releasing
+        the resource there would let a second job start alongside the live one.
+        """
+        if job.exclusive_resource is None:
+            return
         with self._lock:
-            if job.is_terminal():
-                return
-            job.state = "running"
-            job.started_at = utc_now_iso()
-        handle = JobHandle(job, self)
+            if self._resources.get(job.exclusive_resource) == job.job_id:
+                del self._resources[job.exclusive_resource]
+
+    def _run(self, job: Job, runner: Callable[[JobHandle], None]) -> None:
         try:
-            runner(handle)
-        except Exception as exc:
-            self.finish(job, "failed", exit_detail=str(exc))
-        else:
-            self.finish(job, "succeeded")
+            with self._lock:
+                if job.is_terminal():
+                    return
+                job.state = "running"
+                job.started_at = utc_now_iso()
+            handle = JobHandle(job, self)
+            try:
+                runner(handle)
+            except Exception as exc:
+                self.finish(job, "failed", exit_detail=str(exc))
+            else:
+                self.finish(job, "succeeded")
+        finally:
+            self._release_resource(job)

@@ -15,6 +15,8 @@ $startInfo.FileName = (Get-Command uv -ErrorAction Stop).Source
 $startInfo.WorkingDirectory = $root
 $startInfo.UseShellExecute = $false
 $startInfo.Arguments = 'run cabal-backend --project "' + $root + '"'
+# CABAL_DEV opens CORS to the Vite dev origins; packaged builds never set it.
+$startInfo.EnvironmentVariables["CABAL_DEV"] = "1"
 
 try {
     $backend = [System.Diagnostics.Process]::Start($startInfo)

@@ -89,7 +89,17 @@ export function useEventStream(
           }
           if (frame.event === "heartbeat") continue;
           setEvents((current) => {
-            const next = [...current, { event: frame.event, id: frame.id, data: frame.data }];
+            const incoming = { event: frame.event, id: frame.id, data: frame.data };
+            // Every stream segment re-announces the same non-terminal state; left to
+            // accumulate they fill the ring and evict the output lines the log pane renders.
+            const last = current[current.length - 1];
+            const repeatsState =
+              incoming.event === "state" &&
+              last?.event === "state" &&
+              JSON.stringify(last.data) === JSON.stringify(incoming.data);
+            const next = repeatsState
+              ? [...current.slice(0, -1), incoming]
+              : [...current, incoming];
             return next.length > maxEvents ? next.slice(next.length - maxEvents) : next;
           });
           if (isTerminalStateFrame(frame)) sawTerminal = true;

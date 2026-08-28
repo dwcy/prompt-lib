@@ -17,12 +17,18 @@ from cabal.webapi.envelope import ApiError
 
 HANDSHAKE_SCHEMA = "cabal-handshake.v1"
 
-ALLOWED_ORIGINS = (
+TAURI_ORIGINS = (
     "tauri://localhost",
     "http://tauri.localhost",
+)
+# Only reachable while a Vite dev server is actually running; in a packaged build
+# they would hand any local process that can bind 5173 a blessed origin against a
+# mutation-capable backend.
+DEV_ORIGINS = (
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 )
+DEV_MODE_ENV_VAR = "CABAL_DEV"
 
 _STILL_ACTIVE = 259
 _PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
@@ -187,11 +193,21 @@ def require_bearer_token(request: Request) -> None:
         raise ApiError(401, "unauthorized", "Missing or invalid bearer token")
 
 
-def apply_cors(app: FastAPI) -> None:
-    """CORS locked to the Tauri origins and the Vite dev origin only."""
+def dev_mode_enabled() -> bool:
+    return os.environ.get(DEV_MODE_ENV_VAR, "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def allowed_origins(*, dev: bool | None = None) -> list[str]:
+    """Tauri origins always; the Vite dev origins only when dev mode is signalled."""
+    allow_dev = dev_mode_enabled() if dev is None else dev
+    return list(TAURI_ORIGINS) + (list(DEV_ORIGINS) if allow_dev else [])
+
+
+def apply_cors(app: FastAPI, *, dev: bool | None = None) -> None:
+    """CORS locked to the Tauri origins, plus the Vite dev origins in dev mode only."""
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=list(ALLOWED_ORIGINS),
+        allow_origins=allowed_origins(dev=dev),
         allow_methods=["GET", "POST"],
         allow_headers=["Authorization", "Content-Type", "Last-Event-ID"],
     )

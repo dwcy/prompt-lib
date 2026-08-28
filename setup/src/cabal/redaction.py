@@ -134,7 +134,7 @@ def redact_value(value):
         result = {}
         for key, item in value.items():
             safe_key = str(key)
-            if _looks_secret_dict_key(safe_key):
+            if _looks_secret_dict_key(safe_key, item):
                 result[safe_key] = REDACTION_MARKER
             else:
                 result[safe_key] = redact_value(item)
@@ -164,15 +164,19 @@ def _looks_secret_key(key: str) -> bool:
     )
 
 
-def _looks_secret_dict_key(key: str) -> bool:
+def _looks_secret_dict_key(key: str, value: object = None) -> bool:
     """Narrower than the URL-param check: envelope fields like "code" and "key" are data."""
+    # Metric keys such as tokens_in, input_tokens, and token_count carry numbers,
+    # never credentials; the type guard is what lets the name test stay broad.
+    if isinstance(value, (bool, int, float)):
+        return False
     normalized = key.lower().replace("-", "_")
     if normalized in {"authorization", "signature"}:
         return True
-    # Credential variable names end in the credential kind (GITHUB_TOKEN,
-    # clientSecret, DB_PASSWORD). Metric keys such as tokens_in,
-    # input_tokens, and token_count are ordinary numeric API data.
-    return normalized.endswith(("token", "secret", "password", "api_key", "apikey"))
+    return any(
+        marker in normalized
+        for marker in ("token", "secret", "password", "api_key", "apikey")
+    )
 
 
 def _redact_urls_in_text(text: str) -> str:

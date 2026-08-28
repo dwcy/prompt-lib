@@ -42,7 +42,17 @@ async function request<T>(
     body: init.body !== undefined ? JSON.stringify(init.body) : undefined,
   });
 
-  const json: unknown = await response.json();
+  let json: unknown;
+  try {
+    json = await response.json();
+  } catch {
+    // Proxy error pages and the pre-handshake asset protocol answer with text/HTML;
+    // surfacing the parse failure as an envelope error keeps error.code usable.
+    throw new ApiError(response.status, {
+      code: "invalid_envelope",
+      message: `Response for ${path} was not valid JSON`,
+    });
+  }
   const parsed = envelopeSchema(dataSchema).safeParse(json);
   if (!parsed.success) {
     throw new ApiError(response.status, {

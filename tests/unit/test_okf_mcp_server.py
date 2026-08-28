@@ -77,6 +77,12 @@ def test_get_reports_unknown_ids_as_missing(bundle: Path) -> None:
     assert payload["missing"] == ["concept:does-not-exist"]
 
 
+def test_get_with_no_ids_returns_empty_payload(bundle: Path) -> None:
+    payload = mcp_server.okf_get([])
+
+    assert payload["concepts"] == []
+
+
 def test_context_pack_echoes_budget_and_returns_matches(bundle: Path) -> None:
     pack = mcp_server.okf_context_pack("pytest")
 

@@ -92,7 +92,7 @@ function ToolDetailBody({ tool }: ToolDetailBodyProps) {
         </a>
       ) : null}
 
-      <ToolActionPanel tool={tool} />
+      <ToolActionPanel key={tool.key} tool={tool} />
     </>
   );
 }
