@@ -67,20 +67,21 @@ class StageCost:
         """
         if not self.priced:
             return True
-        entry = session_pricing.lookup(self.model, session_pricing.load_pricing())
-        return entry.model_prefix != "unknown"
+        return session_pricing.lookup(self.model, session_pricing.load_pricing()) is not None
 
     @property
     def cost_usd(self) -> float:
         if not self.priced:
             return 0.0
         entry = session_pricing.lookup(self.model, session_pricing.load_pricing())
-        uncached = self.usage.uncached_input_tokens
-        return (
-            uncached * entry.input_usd_per_mtok
-            + self.usage.cached_input_tokens * entry.cache_read_usd_per_mtok
-            + self.usage.output_tokens * entry.output_usd_per_mtok
-        ) / 1_000_000
+        if entry is None:
+            return 0.0
+        return session_pricing.price_usage(
+            entry,
+            input_tokens=self.usage.uncached_input_tokens,
+            output_tokens=self.usage.output_tokens,
+            cache_read_tokens=self.usage.cached_input_tokens,
+        )
 
     def to_dict(self) -> dict:
         return {

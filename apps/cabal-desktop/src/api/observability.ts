@@ -17,6 +17,7 @@ export const sessionSummarySchema = z.object({
   tokens_out: z.number(),
   cache_read_tokens: z.number(),
   cache_write_tokens: z.number(),
+  unpriced_models: z.array(z.string()).default([]),
   agent_count: z.number(),
   skill_count: z.number(),
   tool_count: z.number(),
@@ -40,6 +41,10 @@ export const sessionTotalsSchema = z.object({
   duration_seconds: z.number(),
   files_written: z.number(),
   agent_count: z.number(),
+  // cost_usd covers only models the backend pricing table knows. Any model listed here
+  // contributed tokens but no dollars, so the total is a floor, not a complete figure.
+  unpriced_models: z.array(z.string()).default([]),
+  pricing_as_of: z.string().nullable().default(null),
 });
 
 export const sessionsPayloadSchema = z.object({

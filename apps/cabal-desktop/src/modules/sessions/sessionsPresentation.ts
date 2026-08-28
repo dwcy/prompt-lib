@@ -45,6 +45,17 @@ export function formatMoney(value: number): string {
   return Intl.NumberFormat(FORMAT_LOCALE, { style: "currency", currency: "USD" }).format(value);
 }
 
+/**
+ * Hint line for the cost card. Names the models the backend could not price so an
+ * understated total is legible, and otherwise dates the rate table it was computed from.
+ */
+export function pricingHint(unpricedModels: string[], pricingAsOf: string | null): string {
+  if (unpricedModels.length > 0) {
+    return `Excludes ${unpricedModels.join(", ")} — no rate in the pricing table`;
+  }
+  return pricingAsOf !== null ? `Rates as of ${pricingAsOf}` : "";
+}
+
 export function formatDuration(value: number): string {
   if (value < 60) return `${Math.round(value)}s`;
   if (value < 3600) return `${Math.round(value / 60)}m`;

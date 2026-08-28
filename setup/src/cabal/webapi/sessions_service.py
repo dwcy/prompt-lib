@@ -14,7 +14,7 @@ from typing import Literal
 
 from cabal import session_reader
 from cabal.models.session import Session, SessionSummary, TokenUsage
-from cabal.session_pricing import load_pricing, lookup
+from cabal.session_pricing import PRICING_AS_OF, load_pricing
 from cabal.webapi.envelope import ApiError, compute_precondition_digest
 
 SessionTab = Literal["overview", "activity", "raw", "triggers"]
@@ -69,16 +69,11 @@ def _sort_key(row: tuple[Session, SessionSummary], sort: str) -> tuple:
 
 
 def _model_rows(summary: SessionSummary) -> list[dict]:
-    pricing = load_pricing()
+    """Per-model rows.  Cost is read back from the summary, never recomputed here —
+    a second copy of the pricing formula is a second thing to get wrong."""
+    unpriced = set(summary.unpriced_models)
     rows = []
     for model, usage in sorted(summary.model_breakdown.items()):
-        entry = lookup(model, pricing)
-        cost = (
-            usage.input_tokens * entry.input_usd_per_mtok / 1_000_000
-            + usage.output_tokens * entry.output_usd_per_mtok / 1_000_000
-            + usage.cache_read_input_tokens * entry.cache_read_usd_per_mtok / 1_000_000
-            + usage.cache_creation_input_tokens * entry.cache_write_usd_per_mtok / 1_000_000
-        )
         rows.append(
             {
                 "model": model,
@@ -86,7 +81,10 @@ def _model_rows(summary: SessionSummary) -> list[dict]:
                 "tokens_out": usage.output_tokens,
                 "cache_read_tokens": usage.cache_read_input_tokens,
                 "cache_write_tokens": usage.cache_creation_input_tokens,
-                "cost_usd": round(cost, 6),
+                "cache_write_5m_tokens": usage.cache_creation_5m_tokens,
+                "cache_write_1h_tokens": usage.cache_creation_1h_tokens,
+                "cost_usd": round(summary.model_costs.get(model, 0.0), 6),
+                "priced": model not in unpriced,
             }
         )
     return rows
@@ -105,6 +103,7 @@ def _session_row(session: Session, summary: SessionSummary) -> dict:
         "tokens_out": summary.total_output_tokens,
         "cache_read_tokens": summary.total_cache_read_tokens,
         "cache_write_tokens": summary.total_cache_write_tokens,
+        "unpriced_models": list(summary.unpriced_models),
         "agent_count": summary.agent_count,
         "skill_count": len(summary.skills),
         "tool_count": len(summary.tool_calls),
@@ -130,6 +129,12 @@ def _totals(rows: list[tuple[Session, SessionSummary]]) -> dict:
         "duration_seconds": round(sum(summary.duration_seconds for _session, summary in rows), 3),
         "files_written": sum(summary.files_written for _session, summary in rows),
         "agent_count": sum(summary.agent_count for _session, summary in rows),
+        # cost_usd covers only models the table could price.  These two fields let the UI
+        # say so out loud instead of presenting an understated total as complete.
+        "unpriced_models": sorted(
+            {model for _session, summary in rows for model in summary.unpriced_models}
+        ),
+        "pricing_as_of": PRICING_AS_OF.isoformat(),
     }
 
 

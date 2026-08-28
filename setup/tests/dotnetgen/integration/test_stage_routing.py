@@ -106,17 +106,17 @@ def _run(solution: Path, provider: FixedProvider) -> ledger.RunRecord:
 
 
 def test_a_cheaper_hosted_writer_costs_less_than_the_premium_one(solution: Path) -> None:
-    premium = _run(solution, FixedProvider("anthropic", "claude-opus-4"))
+    premium = _run(solution, FixedProvider("anthropic", "claude-opus-4-1"))
     (solution / "src" / "Order.cs").write_text(ORDER_CS, encoding="utf-8")
-    cheap = _run(solution, FixedProvider("anthropic", "claude-haiku-4"))
+    cheap = _run(solution, FixedProvider("anthropic", "claude-haiku-4-5"))
 
     assert cheap.total_cost_usd < premium.total_cost_usd
 
 
 def test_a_cheap_writer_beats_the_fifty_percent_reduction_sc008_asks_for(solution: Path) -> None:
-    premium = _run(solution, FixedProvider("anthropic", "claude-opus-4"))
+    premium = _run(solution, FixedProvider("anthropic", "claude-opus-4-1"))
     (solution / "src" / "Order.cs").write_text(ORDER_CS, encoding="utf-8")
-    cheap = _run(solution, FixedProvider("anthropic", "claude-haiku-4"))
+    cheap = _run(solution, FixedProvider("anthropic", "claude-haiku-4-5"))
 
     reduction = 1 - (cheap.total_cost_usd / premium.total_cost_usd)
 
@@ -131,7 +131,7 @@ def test_a_local_writer_costs_exactly_nothing(solution: Path) -> None:
 
 def test_build_green_is_unaffected_by_which_model_wrote_the_edits(solution: Path) -> None:
     """SC-008's quality half: cost may fall, first-attempt green must not."""
-    premium = _run(solution, FixedProvider("anthropic", "claude-opus-4"))
+    premium = _run(solution, FixedProvider("anthropic", "claude-opus-4-1"))
     (solution / "src" / "Order.cs").write_text(ORDER_CS, encoding="utf-8")
     local = _run(solution, FixedProvider("openai_compatible", "qwen2.5-coder:7b", is_local=True))
 
@@ -141,7 +141,7 @@ def test_build_green_is_unaffected_by_which_model_wrote_the_edits(solution: Path
 def test_edit_success_rate_is_recorded_for_every_configuration(solution: Path) -> None:
     """SC-003 has to be comparable across configurations or the comparison proves nothing."""
     for provider in (
-        FixedProvider("anthropic", "claude-opus-4"),
+        FixedProvider("anthropic", "claude-opus-4-1"),
         FixedProvider("openai_compatible", "qwen2.5-coder:7b", is_local=True),
     ):
         (solution / "src" / "Order.cs").write_text(ORDER_CS, encoding="utf-8")

@@ -33,7 +33,7 @@ def _application(outcome: ApplyOutcome, level: int = 0) -> EditApplication:
 
 
 def test_a_known_model_is_priced_from_the_shared_table() -> None:
-    cost = _stage("write", "claude-sonnet-4", Usage(input_tokens=1_000_000, output_tokens=0))
+    cost = _stage("write", "claude-sonnet-4-5", Usage(input_tokens=1_000_000, output_tokens=0))
 
     assert cost.cost_usd > 0
 
@@ -50,10 +50,10 @@ def test_a_locally_hosted_stage_costs_nothing() -> None:
 
 def test_cached_input_is_billed_at_the_cache_rate() -> None:
     """The cache is the saving; charging cached tokens at full rate would erase it."""
-    uncached = _stage("write", "claude-sonnet-4", Usage(input_tokens=1_000_000))
+    uncached = _stage("write", "claude-sonnet-4-5", Usage(input_tokens=1_000_000))
     cached = _stage(
         "write",
-        "claude-sonnet-4",
+        "claude-sonnet-4-5",
         Usage(input_tokens=1_000_000, cached_input_tokens=1_000_000),
     )
 
@@ -62,8 +62,8 @@ def test_cached_input_is_billed_at_the_cache_rate() -> None:
 
 def test_repeat_calls_to_one_stage_accumulate() -> None:
     record = ledger.RunRecord(run_id="r1")
-    record.record_stage(_stage("write", "claude-sonnet-4", Usage(input_tokens=100)))
-    record.record_stage(_stage("write", "claude-sonnet-4", Usage(input_tokens=150)))
+    record.record_stage(_stage("write", "claude-sonnet-4-5", Usage(input_tokens=100)))
+    record.record_stage(_stage("write", "claude-sonnet-4-5", Usage(input_tokens=150)))
 
     assert record.stage_costs["write"].usage.input_tokens == 250
 
@@ -71,9 +71,9 @@ def test_repeat_calls_to_one_stage_accumulate() -> None:
 def test_repair_cost_is_attributable_separately() -> None:
     """FR-029: a run that repairs three times must not average out to look cheap."""
     record = ledger.RunRecord(run_id="r1")
-    record.record_stage(_stage("write", "claude-sonnet-4", Usage(output_tokens=1_000_000)))
+    record.record_stage(_stage("write", "claude-sonnet-4-5", Usage(output_tokens=1_000_000)))
     record.record_stage(
-        _stage("write", "claude-sonnet-4", Usage(output_tokens=1_000_000)), is_repair=True
+        _stage("write", "claude-sonnet-4-5", Usage(output_tokens=1_000_000)), is_repair=True
     )
 
     assert record.repair_cost_usd > 0
@@ -119,7 +119,7 @@ def test_edit_success_rate_counts_relaxed_applications_as_successes() -> None:
 def test_reconciliation_fails_when_the_provider_disagrees_beyond_tolerance() -> None:
     """SC-010 reports disagreement rather than silently trusting our own arithmetic."""
     record = ledger.RunRecord(run_id="r1")
-    record.record_stage(_stage("write", "claude-sonnet-4", Usage(output_tokens=1_000_000)))
+    record.record_stage(_stage("write", "claude-sonnet-4-5", Usage(output_tokens=1_000_000)))
 
     assert record.reconciled_within_tolerance(record.total_cost_usd) is True
     assert record.reconciled_within_tolerance(record.total_cost_usd * 2) is False
@@ -146,7 +146,7 @@ def test_the_written_record_validates_against_the_contract(
         first_attempt_build_green=True,
     )
     record.record_stage(_stage("architect", "claude-opus-5", Usage(input_tokens=900)))
-    record.record_stage(_stage("write", "claude-sonnet-4", Usage(output_tokens=400)))
+    record.record_stage(_stage("write", "claude-sonnet-4-5", Usage(output_tokens=400)))
 
     path = ledger.write(tmp_path, record, provider_reported_usd=record.total_cost_usd)
     written = json.loads(path.read_text(encoding="utf-8"))
@@ -165,7 +165,7 @@ def test_consumed_never_exceeds_the_ceiling_in_a_written_record(tmp_path: Path) 
 def test_reconciliation_uses_the_provider_figure_not_our_own_total() -> None:
     """Reconciliation must compare against what the provider billed, never against itself."""
     record = ledger.RunRecord(run_id="r1")
-    record.record_stage(_stage("write", "claude-sonnet-4", Usage(output_tokens=1_000_000)))
+    record.record_stage(_stage("write", "claude-sonnet-4-5", Usage(output_tokens=1_000_000)))
 
     assert record.provider_reported_usd is None
 
@@ -173,10 +173,10 @@ def test_reconciliation_uses_the_provider_figure_not_our_own_total() -> None:
 def test_a_reported_provider_cost_aggregates_across_stages() -> None:
     record = ledger.RunRecord(run_id="r1")
     first = replace(
-        _stage("architect", "claude-sonnet-4", Usage(output_tokens=10)), reported_cost_usd=0.25
+        _stage("architect", "claude-sonnet-4-5", Usage(output_tokens=10)), reported_cost_usd=0.25
     )
     second = replace(
-        _stage("write", "claude-sonnet-4", Usage(output_tokens=10)), reported_cost_usd=0.75
+        _stage("write", "claude-sonnet-4-5", Usage(output_tokens=10)), reported_cost_usd=0.75
     )
     record.record_stage(first)
     record.record_stage(second)

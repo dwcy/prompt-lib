@@ -62,7 +62,7 @@ class EditingProvider:
         return CompletionResult(
             text=EDIT,
             usage=Usage(input_tokens=100, output_tokens=50, cached_input_tokens=40),
-            model="claude-sonnet-4",
+            model="claude-sonnet-4-5",
             provider=self.name,
         )
 
@@ -197,7 +197,7 @@ def test_a_halted_run_is_recorded_too(
             return CompletionResult(
                 text=json.dumps(payload),
                 usage=Usage(input_tokens=10, output_tokens=5),
-                model="claude-sonnet-4",
+                model="claude-sonnet-4-5",
                 provider="editing",
             )
 
