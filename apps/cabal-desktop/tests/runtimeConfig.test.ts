@@ -5,11 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 const invokeMock = vi.hoisted(() => vi.fn());
 vi.mock("@tauri-apps/api/core", () => ({ invoke: invokeMock }));
 
-import {
-  ensureRuntimeConfig,
-  resolveApiUrl,
-  RuntimeConfigError,
-} from "@/lib/runtimeConfig";
+import { ensureRuntimeConfig, RuntimeConfigError, resolveApiUrl } from "@/lib/runtimeConfig";
 
 afterEach(() => {
   invokeMock.mockReset();
