@@ -45,7 +45,6 @@ SCHEDULED_TASKS_DELETE_DESCRIPTOR = ActionDescriptor(
     action_id=SCHEDULED_TASKS_DELETE_ACTION_ID,
     module="scheduled_tasks",
     destructive=True,
-    backup_policy=None,
     params_schema=_DELETE_SCHEMA,
     prepare=_delete_prepare,
     execute=_delete_execute,

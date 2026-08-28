@@ -64,7 +64,6 @@ SYSTEM_UPDATE_DESCRIPTOR = ActionDescriptor(
     action_id="system.update",
     module="home_overview",
     destructive=False,
-    backup_policy=None,
     params_schema=_EMPTY_SCHEMA,
     prepare=_prepare,
     execute=_execute,

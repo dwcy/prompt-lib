@@ -129,7 +129,6 @@ def test_prepare_fails_closed_for_invalid_destructive_preview(app_factory) -> No
             action_id="test.invalid_destructive",
             module="test",
             destructive=True,
-            backup_policy=None,
             params_schema={"type": "object", "additionalProperties": False},
             prepare=lambda _params, _state: {
                 "summary": "Delete a fixture",
@@ -202,7 +201,6 @@ def test_concurrent_execute_of_one_ticket_runs_the_action_exactly_once(app_facto
             action_id="test.blocking",
             module="test",
             destructive=False,
-            backup_policy=None,
             params_schema={"type": "object", "additionalProperties": False},
             prepare=lambda _params, _state: {
                 "summary": "Blocking fixture action",

@@ -24,7 +24,6 @@ class ActionDescriptor:
     action_id: str
     module: str
     destructive: bool
-    backup_policy: str | None
     params_schema: dict
     prepare: Callable[[dict, Any], dict]
     execute: Callable[[dict, Any], "ActionOutcome"]

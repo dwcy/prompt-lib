@@ -45,8 +45,8 @@ Expected seams
     SIGTERM), removing the handshake file before exit.
 
 ``cabal.webapi.actions``
-    - ``ActionDescriptor`` dataclass: ``action_id, module, destructive, backup_policy,
-      params_schema, prepare, execute, compute_digest``.
+    - ``ActionDescriptor`` dataclass: ``action_id, module, destructive, params_schema,
+      prepare, execute, compute_digest``.
       ``prepare(params: dict, state) -> dict`` returns an ``EffectPreview`` dict
       (``summary, commands, files_changed, scopes, backup, removals``).
       ``execute(params: dict, state) -> ActionOutcome``.
@@ -238,7 +238,6 @@ def register_fixture_actions(app, *, secret: str = FAKE_SECRET) -> None:
             action_id="test.echo",
             module="test",
             destructive=False,
-            backup_policy=None,
             params_schema={
                 "type": "object",
                 "properties": {"note": {"type": "string"}},
@@ -254,7 +253,6 @@ def register_fixture_actions(app, *, secret: str = FAKE_SECRET) -> None:
             action_id="test.destructive",
             module="test",
             destructive=True,
-            backup_policy="test-backup",
             params_schema={"type": "object", "additionalProperties": False},
             prepare=destructive_prepare,
             execute=destructive_execute,
@@ -265,7 +263,6 @@ def register_fixture_actions(app, *, secret: str = FAKE_SECRET) -> None:
             action_id="test.job_emitter",
             module="test",
             destructive=False,
-            backup_policy=None,
             params_schema={
                 "type": "object",
                 "properties": {

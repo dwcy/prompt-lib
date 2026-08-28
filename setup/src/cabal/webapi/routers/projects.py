@@ -513,7 +513,6 @@ PROJECT_SELECT_DESCRIPTOR = ActionDescriptor(
     action_id=PROJECT_SELECT_ACTION_ID,
     module="project_gate",
     destructive=False,
-    backup_policy=None,
     params_schema={
         "type": "object",
         "properties": {"path": {"type": "string"}},
@@ -831,7 +830,6 @@ PROVIDER_LOGIN_DESCRIPTOR = ActionDescriptor(
     action_id=PROVIDER_LOGIN_ACTION_ID,
     module="provider",
     destructive=False,
-    backup_policy=None,
     params_schema={
         "type": "object",
         "properties": {"scopes": {"type": "array", "items": {"type": "string"}}},
@@ -846,7 +844,6 @@ PROVIDER_CLONE_DESCRIPTOR = ActionDescriptor(
     action_id=PROVIDER_CLONE_ACTION_ID,
     module="provider",
     destructive=False,
-    backup_policy=None,
     params_schema={
         "type": "object",
         "properties": {
@@ -873,7 +870,6 @@ PROVIDER_SWITCH_DESCRIPTOR = ActionDescriptor(
     action_id=PROVIDER_SWITCH_ACTION_ID,
     module="provider",
     destructive=False,
-    backup_policy=None,
     params_schema=_PROVIDER_ACCOUNT_SCHEMA,
     prepare=_provider_switch_prepare,
     execute=_provider_switch_execute,
@@ -884,7 +880,6 @@ PROVIDER_FORGET_DESCRIPTOR = ActionDescriptor(
     action_id=PROVIDER_FORGET_ACTION_ID,
     module="provider",
     destructive=True,
-    backup_policy=None,
     params_schema=_PROVIDER_ACCOUNT_SCHEMA,
     prepare=_provider_forget_prepare,
     execute=_provider_forget_execute,
@@ -895,7 +890,6 @@ INIT_APPLY_DESCRIPTOR = ActionDescriptor(
     action_id=INIT_APPLY_ACTION_ID,
     module="init_wizard",
     destructive=False,
-    backup_policy=None,
     params_schema={
         "type": "object",
         "properties": {

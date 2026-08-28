@@ -64,7 +64,6 @@ JOBS_CANCEL_DESCRIPTOR = ActionDescriptor(
     action_id=JOBS_CANCEL_ACTION_ID,
     module="jobs",
     destructive=True,
-    backup_policy=None,
     params_schema=_JOBS_CANCEL_SCHEMA,
     prepare=_cancel_prepare,
     execute=_cancel_execute,
