@@ -86,16 +86,7 @@ export function JobPane({ jobId, onDismiss }: JobPaneProps) {
         ) : null}
         <LogStream events={stream.events} connectionState={stream.state} />
       </section>
-      <ConfirmDialog
-        isOpen={cancelJob.phase !== "idle" && cancelJob.phase !== "succeeded"}
-        actionTitle="Cancel job"
-        ticket={cancelJob.ticket}
-        phase={cancelJob.phase}
-        reviewNotice={cancelJob.reviewNotice}
-        error={cancelJob.error}
-        onConfirm={cancelJob.confirm}
-        onCancel={cancelJob.reset}
-      />
+      <ConfirmDialog action={cancelJob} actionTitle="Cancel job" />
     </>
   );
 }

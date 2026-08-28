@@ -325,26 +325,8 @@ export function GitIdentityModule() {
         </footer>
       </section>
 
-      <ConfirmDialog
-        isOpen={identityAction.phase !== "idle" && identityAction.phase !== "succeeded"}
-        actionTitle="Set git identity"
-        ticket={identityAction.ticket}
-        phase={identityAction.phase}
-        reviewNotice={identityAction.reviewNotice}
-        error={identityAction.error}
-        onConfirm={identityAction.confirm}
-        onCancel={identityAction.reset}
-      />
-      <ConfirmDialog
-        isOpen={policyAction.phase !== "idle" && policyAction.phase !== "succeeded"}
-        actionTitle="Set git policy"
-        ticket={policyAction.ticket}
-        phase={policyAction.phase}
-        reviewNotice={policyAction.reviewNotice}
-        error={policyAction.error}
-        onConfirm={policyAction.confirm}
-        onCancel={policyAction.reset}
-      />
+      <ConfirmDialog action={identityAction} actionTitle="Set git identity" />
+      <ConfirmDialog action={policyAction} actionTitle="Set git policy" />
     </div>
   );
 }

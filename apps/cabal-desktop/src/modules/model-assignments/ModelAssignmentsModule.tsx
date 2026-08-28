@@ -171,16 +171,7 @@ export function ModelAssignmentsModule() {
         </div>
       )}
 
-      <ConfirmDialog
-        isOpen={assignAction.phase !== "idle" && assignAction.phase !== "succeeded"}
-        actionTitle="Assign Model Pin"
-        ticket={assignAction.ticket}
-        phase={assignAction.phase}
-        reviewNotice={assignAction.reviewNotice}
-        error={assignAction.error}
-        onConfirm={assignAction.confirm}
-        onCancel={assignAction.reset}
-      />
+      <ConfirmDialog action={assignAction} actionTitle="Assign Model Pin" />
     </div>
   );
 }

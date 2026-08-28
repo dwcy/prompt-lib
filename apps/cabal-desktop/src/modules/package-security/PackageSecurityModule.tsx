@@ -79,26 +79,8 @@ export function PackageSecurityModule() {
       {fixAction.jobId !== null ? <JobPane jobId={fixAction.jobId} /> : null}
       {installAction.jobId !== null ? <JobPane jobId={installAction.jobId} /> : null}
 
-      <ConfirmDialog
-        isOpen={fixAction.phase !== "idle" && fixAction.phase !== "succeeded"}
-        actionTitle="Apply package security fix"
-        ticket={fixAction.ticket}
-        phase={fixAction.phase}
-        reviewNotice={fixAction.reviewNotice}
-        error={fixAction.error}
-        onConfirm={fixAction.confirm}
-        onCancel={fixAction.reset}
-      />
-      <ConfirmDialog
-        isOpen={installAction.phase !== "idle" && installAction.phase !== "succeeded"}
-        actionTitle="Install pip-audit"
-        ticket={installAction.ticket}
-        phase={installAction.phase}
-        reviewNotice={installAction.reviewNotice}
-        error={installAction.error}
-        onConfirm={installAction.confirm}
-        onCancel={installAction.reset}
-      />
+      <ConfirmDialog action={fixAction} actionTitle="Apply package security fix" />
+      <ConfirmDialog action={installAction} actionTitle="Install pip-audit" />
     </div>
   );
 }

@@ -1,34 +1,23 @@
 // Renders the full EffectPreview for a prepared action ticket; destructive styling when removals
 // are non-empty; surfaces the 409 state_changed "re-review" flow per the action-safety contract.
 import { type ReactNode, useEffect, useId, useRef } from "react";
-import type { ApiError } from "@/api/errors";
-import type { ConfirmationTicket } from "@/api/schemas";
-import type { ActionPhase } from "@/hooks/useAction";
+import type { UseActionResult } from "@/hooks/useAction";
 
 export interface ConfirmDialogProps {
-  isOpen: boolean;
+  /** The action being confirmed; the dialog reads its ticket, phase, and callbacks. */
+  action: UseActionResult;
   actionTitle: string;
-  ticket: ConfirmationTicket | null;
-  phase: ActionPhase;
-  reviewNotice: boolean;
-  error: ApiError | null;
-  onConfirm: () => void;
-  onCancel: () => void;
 }
 
 const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-export function ConfirmDialog({
-  isOpen,
-  actionTitle,
-  ticket,
-  phase,
-  reviewNotice,
-  error,
-  onConfirm,
-  onCancel,
-}: ConfirmDialogProps) {
+export function ConfirmDialog({ action, actionTitle }: ConfirmDialogProps) {
+  const { ticket, phase, reviewNotice, error } = action;
+  const onConfirm = action.confirm;
+  const onCancel = action.reset;
+  // An action is being confirmed from the moment it leaves idle until it succeeds.
+  const isVisible = phase !== "idle" && phase !== "succeeded";
   const dialogRef = useRef<HTMLDivElement>(null);
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
@@ -41,7 +30,6 @@ export function ConfirmDialog({
   const preview = ticket?.effect_preview ?? null;
   const isDestructive = (preview?.removals.length ?? 0) > 0;
   const isBusy = phase === "preparing" || phase === "executing";
-  const isVisible = isOpen && phase !== "succeeded";
   isBusyRef.current = isBusy;
 
   useEffect(() => {

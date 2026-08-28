@@ -126,16 +126,7 @@ export function LocalConfigModule() {
         </div>
       )}
 
-      <ConfirmDialog
-        isOpen={action.phase !== "idle" && action.phase !== "succeeded"}
-        actionTitle={pendingTitle}
-        ticket={action.ticket}
-        phase={action.phase}
-        reviewNotice={action.reviewNotice}
-        error={action.error}
-        onConfirm={action.confirm}
-        onCancel={action.reset}
-      />
+      <ConfirmDialog action={action} actionTitle={pendingTitle} />
 
       {action.jobId !== null ? <JobPane jobId={action.jobId} /> : null}
     </div>

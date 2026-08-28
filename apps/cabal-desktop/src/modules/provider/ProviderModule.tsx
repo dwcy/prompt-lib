@@ -151,46 +151,10 @@ export function ProviderModule() {
         />
       </div>
 
-      <ConfirmDialog
-        isOpen={loginAction.phase !== "idle" && loginAction.phase !== "succeeded"}
-        actionTitle="Authorize GitHub provider"
-        ticket={loginAction.ticket}
-        phase={loginAction.phase}
-        reviewNotice={loginAction.reviewNotice}
-        error={loginAction.error}
-        onConfirm={loginAction.confirm}
-        onCancel={loginAction.reset}
-      />
-      <ConfirmDialog
-        isOpen={switchAction.phase !== "idle" && switchAction.phase !== "succeeded"}
-        actionTitle="Switch GitHub account"
-        ticket={switchAction.ticket}
-        phase={switchAction.phase}
-        reviewNotice={switchAction.reviewNotice}
-        error={switchAction.error}
-        onConfirm={switchAction.confirm}
-        onCancel={switchAction.reset}
-      />
-      <ConfirmDialog
-        isOpen={forgetAction.phase !== "idle" && forgetAction.phase !== "succeeded"}
-        actionTitle="Forget GitHub account"
-        ticket={forgetAction.ticket}
-        phase={forgetAction.phase}
-        reviewNotice={forgetAction.reviewNotice}
-        error={forgetAction.error}
-        onConfirm={forgetAction.confirm}
-        onCancel={forgetAction.reset}
-      />
-      <ConfirmDialog
-        isOpen={cloneAction.phase !== "idle" && cloneAction.phase !== "succeeded"}
-        actionTitle="Clone repository"
-        ticket={cloneAction.ticket}
-        phase={cloneAction.phase}
-        reviewNotice={cloneAction.reviewNotice}
-        error={cloneAction.error}
-        onConfirm={cloneAction.confirm}
-        onCancel={cloneAction.reset}
-      />
+      <ConfirmDialog action={loginAction} actionTitle="Authorize GitHub provider" />
+      <ConfirmDialog action={switchAction} actionTitle="Switch GitHub account" />
+      <ConfirmDialog action={forgetAction} actionTitle="Forget GitHub account" />
+      <ConfirmDialog action={cloneAction} actionTitle="Clone repository" />
     </div>
   );
 }

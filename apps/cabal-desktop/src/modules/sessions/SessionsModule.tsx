@@ -105,16 +105,7 @@ export function SessionsModule() {
         )}
       </div>
 
-      <ConfirmDialog
-        isOpen={deleteAction.phase !== "idle" && deleteAction.phase !== "succeeded"}
-        actionTitle="Delete Session Transcript"
-        ticket={deleteAction.ticket}
-        phase={deleteAction.phase}
-        reviewNotice={deleteAction.reviewNotice}
-        error={deleteAction.error}
-        onConfirm={deleteAction.confirm}
-        onCancel={deleteAction.reset}
-      />
+      <ConfirmDialog action={deleteAction} actionTitle="Delete Session Transcript" />
     </div>
   );
 }

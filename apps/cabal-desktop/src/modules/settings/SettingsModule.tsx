@@ -161,26 +161,8 @@ export function SettingsModule() {
         )}
       </section>
 
-      <ConfirmDialog
-        isOpen={toggleAction.phase !== "idle" && toggleAction.phase !== "succeeded"}
-        actionTitle={pendingLabel}
-        ticket={toggleAction.ticket}
-        phase={toggleAction.phase}
-        reviewNotice={toggleAction.reviewNotice}
-        error={toggleAction.error}
-        onConfirm={toggleAction.confirm}
-        onCancel={toggleAction.reset}
-      />
-      <ConfirmDialog
-        isOpen={resetAction.phase !== "idle" && resetAction.phase !== "succeeded"}
-        actionTitle="Reset local overrides"
-        ticket={resetAction.ticket}
-        phase={resetAction.phase}
-        reviewNotice={resetAction.reviewNotice}
-        error={resetAction.error}
-        onConfirm={resetAction.confirm}
-        onCancel={resetAction.reset}
-      />
+      <ConfirmDialog action={toggleAction} actionTitle={pendingLabel} />
+      <ConfirmDialog action={resetAction} actionTitle="Reset local overrides" />
     </div>
   );
 }

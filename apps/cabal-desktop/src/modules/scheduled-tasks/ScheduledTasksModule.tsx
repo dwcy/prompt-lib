@@ -171,16 +171,7 @@ export function ScheduledTasksModule() {
         </aside>
       </section>
 
-      <ConfirmDialog
-        isOpen={deleteAction.phase !== "idle" && deleteAction.phase !== "succeeded"}
-        actionTitle="Delete Scheduled Task"
-        ticket={deleteAction.ticket}
-        phase={deleteAction.phase}
-        reviewNotice={deleteAction.reviewNotice}
-        error={deleteAction.error}
-        onConfirm={deleteAction.confirm}
-        onCancel={deleteAction.reset}
-      />
+      <ConfirmDialog action={deleteAction} actionTitle="Delete Scheduled Task" />
     </div>
   );
 }

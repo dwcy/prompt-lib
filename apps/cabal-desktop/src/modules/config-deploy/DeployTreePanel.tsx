@@ -233,16 +233,7 @@ export function DeployTreePanel({ target, actionId }: DeployTreePanelProps) {
         </aside>
       </div>
 
-      <ConfirmDialog
-        isOpen={action.phase !== "idle" && action.phase !== "succeeded"}
-        actionTitle={`Apply ${target} config`}
-        ticket={action.ticket}
-        phase={action.phase}
-        reviewNotice={action.reviewNotice}
-        error={action.error}
-        onConfirm={action.confirm}
-        onCancel={action.reset}
-      />
+      <ConfirmDialog action={action} actionTitle={`Apply ${target} config`} />
 
       {action.jobId !== null ? <JobPane jobId={action.jobId} /> : null}
     </div>

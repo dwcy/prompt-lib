@@ -154,26 +154,8 @@ export function OverviewModule() {
         />
       </div>
 
-      <ConfirmDialog
-        isOpen={switchAction.phase !== "idle" && switchAction.phase !== "succeeded"}
-        actionTitle="Switch GitHub account"
-        ticket={switchAction.ticket}
-        phase={switchAction.phase}
-        reviewNotice={switchAction.reviewNotice}
-        error={switchAction.error}
-        onConfirm={switchAction.confirm}
-        onCancel={switchAction.reset}
-      />
-      <ConfirmDialog
-        isOpen={updateAction.phase !== "idle" && updateAction.phase !== "succeeded"}
-        actionTitle="Update Cabal"
-        ticket={updateAction.ticket}
-        phase={updateAction.phase}
-        reviewNotice={updateAction.reviewNotice}
-        error={updateAction.error}
-        onConfirm={updateAction.confirm}
-        onCancel={updateAction.reset}
-      />
+      <ConfirmDialog action={switchAction} actionTitle="Switch GitHub account" />
+      <ConfirmDialog action={updateAction} actionTitle="Update Cabal" />
     </div>
   );
 }

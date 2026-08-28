@@ -24,16 +24,7 @@ function ActionHarness({ actionId }: { actionId: string }) {
       <button type="button" onClick={() => action.prepare({ file: "x" })}>
         Prepare
       </button>
-      <ConfirmDialog
-        isOpen={action.phase !== "idle"}
-        actionTitle="Apply config"
-        ticket={action.ticket}
-        phase={action.phase}
-        reviewNotice={action.reviewNotice}
-        error={action.error}
-        onConfirm={action.confirm}
-        onCancel={action.reset}
-      />
+      <ConfirmDialog action={action} actionTitle="Apply config" />
       {action.phase === "succeeded" ? <p>Action succeeded: job {action.jobId ?? "none"}</p> : null}
     </div>
   );

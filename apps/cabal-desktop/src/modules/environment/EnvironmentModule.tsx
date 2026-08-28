@@ -131,16 +131,7 @@ export function EnvironmentModule() {
         </div>
       ) : null}
 
-      <ConfirmDialog
-        isOpen={applyAction.phase !== "idle" && applyAction.phase !== "succeeded"}
-        actionTitle="Apply environment values"
-        ticket={applyAction.ticket}
-        phase={applyAction.phase}
-        reviewNotice={applyAction.reviewNotice}
-        error={applyAction.error}
-        onConfirm={applyAction.confirm}
-        onCancel={applyAction.reset}
-      />
+      <ConfirmDialog action={applyAction} actionTitle="Apply environment values" />
     </div>
   );
 }

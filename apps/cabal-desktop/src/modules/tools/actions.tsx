@@ -67,16 +67,7 @@ export function ToolActionPanel({ tool }: ToolActionPanelProps) {
         {actionLabel}
       </button>
 
-      <ConfirmDialog
-        isOpen={action.phase !== "idle"}
-        actionTitle={`${actionLabel} ${tool.label}`}
-        ticket={action.ticket}
-        phase={action.phase}
-        reviewNotice={action.reviewNotice}
-        error={action.error}
-        onConfirm={action.confirm}
-        onCancel={action.reset}
-      />
+      <ConfirmDialog action={action} actionTitle={`${actionLabel} ${tool.label}`} />
 
       {action.jobId !== null ? <JobPane jobId={action.jobId} /> : null}
     </div>

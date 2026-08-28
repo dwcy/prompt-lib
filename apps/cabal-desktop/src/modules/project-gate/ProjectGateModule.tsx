@@ -116,16 +116,7 @@ export function ProjectGateModule() {
         </aside>
       </div>
 
-      <ConfirmDialog
-        isOpen={action.phase !== "idle"}
-        actionTitle="Switch project"
-        ticket={action.ticket}
-        phase={action.phase}
-        reviewNotice={action.reviewNotice}
-        error={action.error}
-        onConfirm={action.confirm}
-        onCancel={action.reset}
-      />
+      <ConfirmDialog action={action} actionTitle="Switch project" />
     </div>
   );
 }

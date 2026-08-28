@@ -198,38 +198,9 @@ export function CleanupRestoreModule() {
         </aside>
       </section>
 
-      <ConfirmDialog
-        isOpen={cleanupAction.phase !== "idle" && cleanupAction.phase !== "succeeded"}
-        actionTitle="Remove deployed extras"
-        ticket={cleanupAction.ticket}
-        phase={cleanupAction.phase}
-        reviewNotice={cleanupAction.reviewNotice}
-        error={cleanupAction.error}
-        onConfirm={cleanupAction.confirm}
-        onCancel={cleanupAction.reset}
-      />
-      <ConfirmDialog
-        isOpen={restoreCleanupAction.phase !== "idle" && restoreCleanupAction.phase !== "succeeded"}
-        actionTitle="Restore cleanup backup"
-        ticket={restoreCleanupAction.ticket}
-        phase={restoreCleanupAction.phase}
-        reviewNotice={restoreCleanupAction.reviewNotice}
-        error={restoreCleanupAction.error}
-        onConfirm={restoreCleanupAction.confirm}
-        onCancel={restoreCleanupAction.reset}
-      />
-      <ConfirmDialog
-        isOpen={
-          restoreSettingsAction.phase !== "idle" && restoreSettingsAction.phase !== "succeeded"
-        }
-        actionTitle="Restore settings backup"
-        ticket={restoreSettingsAction.ticket}
-        phase={restoreSettingsAction.phase}
-        reviewNotice={restoreSettingsAction.reviewNotice}
-        error={restoreSettingsAction.error}
-        onConfirm={restoreSettingsAction.confirm}
-        onCancel={restoreSettingsAction.reset}
-      />
+      <ConfirmDialog action={cleanupAction} actionTitle="Remove deployed extras" />
+      <ConfirmDialog action={restoreCleanupAction} actionTitle="Restore cleanup backup" />
+      <ConfirmDialog action={restoreSettingsAction} actionTitle="Restore settings backup" />
     </div>
   );
 }

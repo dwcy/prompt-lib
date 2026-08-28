@@ -144,36 +144,9 @@ export function KnowledgeModule() {
         <ReportsPanel task={retrievalBrief} onTaskChange={setRetrievalBrief} />
       ) : null}
 
-      <ConfirmDialog
-        isOpen={exportAction.phase !== "idle" && exportAction.phase !== "succeeded"}
-        actionTitle="Export OKF Bundle"
-        ticket={exportAction.ticket}
-        phase={exportAction.phase}
-        reviewNotice={exportAction.reviewNotice}
-        error={exportAction.error}
-        onConfirm={exportAction.confirm}
-        onCancel={exportAction.reset}
-      />
-      <ConfirmDialog
-        isOpen={doctorAction.phase !== "idle" && doctorAction.phase !== "succeeded"}
-        actionTitle="Validate OKF Bundle"
-        ticket={doctorAction.ticket}
-        phase={doctorAction.phase}
-        reviewNotice={doctorAction.reviewNotice}
-        error={doctorAction.error}
-        onConfirm={doctorAction.confirm}
-        onCancel={doctorAction.reset}
-      />
-      <ConfirmDialog
-        isOpen={indexAction.phase !== "idle" && indexAction.phase !== "succeeded"}
-        actionTitle="Rebuild OKF Index"
-        ticket={indexAction.ticket}
-        phase={indexAction.phase}
-        reviewNotice={indexAction.reviewNotice}
-        error={indexAction.error}
-        onConfirm={indexAction.confirm}
-        onCancel={indexAction.reset}
-      />
+      <ConfirmDialog action={exportAction} actionTitle="Export OKF Bundle" />
+      <ConfirmDialog action={doctorAction} actionTitle="Validate OKF Bundle" />
+      <ConfirmDialog action={indexAction} actionTitle="Rebuild OKF Index" />
     </div>
   );
 }

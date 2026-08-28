@@ -321,16 +321,7 @@ export function InitProjectModule() {
         {initAction.jobId !== null ? <JobPane jobId={initAction.jobId} /> : null}
       </section>
 
-      <ConfirmDialog
-        isOpen={initAction.phase !== "idle" && initAction.phase !== "succeeded"}
-        actionTitle="Create project"
-        ticket={initAction.ticket}
-        phase={initAction.phase}
-        reviewNotice={initAction.reviewNotice}
-        error={initAction.error}
-        onConfirm={initAction.confirm}
-        onCancel={initAction.reset}
-      />
+      <ConfirmDialog action={initAction} actionTitle="Create project" />
     </div>
   );
 }

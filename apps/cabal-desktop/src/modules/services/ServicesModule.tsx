@@ -182,16 +182,5 @@ export function ServicesModule() {
 }
 
 function ServiceDialog({ title, action }: { title: string; action: UseActionResult }) {
-  return (
-    <ConfirmDialog
-      isOpen={action.phase !== "idle" && action.phase !== "succeeded"}
-      actionTitle={title}
-      ticket={action.ticket}
-      phase={action.phase}
-      reviewNotice={action.reviewNotice}
-      error={action.error}
-      onConfirm={action.confirm}
-      onCancel={action.reset}
-    />
-  );
+  return <ConfirmDialog action={action} actionTitle={title} />;
 }

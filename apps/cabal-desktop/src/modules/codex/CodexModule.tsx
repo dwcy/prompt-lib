@@ -207,16 +207,7 @@ export function CodexModule() {
         )}
       </section>
 
-      <ConfirmDialog
-        isOpen={localAction.phase !== "idle" && localAction.phase !== "succeeded"}
-        actionTitle={pendingTitle}
-        ticket={localAction.ticket}
-        phase={localAction.phase}
-        reviewNotice={localAction.reviewNotice}
-        error={localAction.error}
-        onConfirm={localAction.confirm}
-        onCancel={localAction.reset}
-      />
+      <ConfirmDialog action={localAction} actionTitle={pendingTitle} />
 
       {localAction.jobId !== null ? <JobPane jobId={localAction.jobId} /> : null}
     </div>
