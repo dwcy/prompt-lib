@@ -1,8 +1,6 @@
 // KPI stat card: label + delta chip, large value with unit, sparkline, hint (console redesign).
 import type { ReactNode } from "react";
 
-import { Sparkline } from "./Sparkline";
-
 export type KpiDeltaTone = "ok" | "info" | "warning" | "danger" | "neutral";
 
 export interface KpiCardProps {
@@ -12,8 +10,7 @@ export interface KpiCardProps {
   delta?: string;
   deltaTone?: KpiDeltaTone;
   hint?: string;
-  trend?: number[];
-  /** Replaces the sparkline slot when trend data does not apply. */
+  /** Optional slot rendered beside the value. */
   aside?: ReactNode;
 }
 
@@ -24,7 +21,6 @@ export function KpiCard({
   delta,
   deltaTone = "neutral",
   hint,
-  trend,
   aside,
 }: KpiCardProps) {
   return (
@@ -40,9 +36,7 @@ export function KpiCard({
           {value}
           {unit ? <span className="kpi-card__unit"> {unit}</span> : null}
         </span>
-        <span className="kpi-card__aside">
-          {aside ?? (trend ? <Sparkline points={trend} /> : null)}
-        </span>
+        <span className="kpi-card__aside">{aside}</span>
       </div>
       {hint ? <div className="kpi-card__hint">{hint}</div> : null}
     </div>

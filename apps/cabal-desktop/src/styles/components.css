@@ -672,13 +672,7 @@
   }
 }
 
-/* ─── Sparkline / Gauge / KpiCard (console redesign primitives) ───────────── */
-
-.sparkline {
-  display: block;
-  overflow: visible;
-  color: var(--accent);
-}
+/* ─── Gauge / KpiCard (console redesign primitives) ──────────────────────── */
 
 .gauge__track {
   stroke: var(--border);
