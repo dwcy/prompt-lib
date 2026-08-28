@@ -1,4 +1,4 @@
-// Static registry of all 24 feature modules: nav grouping, title, delivery phase, and page component
+// Static registry of every nav module: nav grouping, title, delivery phase, and page component
 // (or null pre-launch, routed to the shared ModuleUnavailable placeholder).
 import { type ComponentType, type LazyExoticComponent, lazy } from "react";
 import { ProjectGateModule } from "@/modules/project-gate/ProjectGateModule";
@@ -93,6 +93,11 @@ const SessionsModule = lazy(() =>
     default: module.SessionsModule,
   })),
 );
+const ReleaseNotesModule = lazy(() =>
+  import("@/modules/release-notes/ReleaseNotesModule").then((module) => ({
+    default: module.ReleaseNotesModule,
+  })),
+);
 const ScheduledTasksModule = lazy(() =>
   import("@/modules/scheduled-tasks/ScheduledTasksModule").then((module) => ({
     default: module.ScheduledTasksModule,
@@ -142,6 +147,7 @@ export const MODULE_NAV_LABELS: Record<ModuleKey, string> = {
   codex: "Codex parity",
   diagnostics: "Diagnostics",
   docs: "Docs",
+  release_notes: "Release news",
 };
 
 export const MODULE_OPERATION_SUMMARIES: Record<ModuleKey, string> = {
@@ -169,6 +175,7 @@ export const MODULE_OPERATION_SUMMARIES: Record<ModuleKey, string> = {
   codex: "Deployment and conversion parity",
   diagnostics: "Backend signals, audit, and live events",
   docs: "README summary and project reference documents",
+  release_notes: "What shipped, where it lives, and how to use it",
 };
 
 export const MODULE_GROUP_ORDER: ModuleGroup[] = [
@@ -180,7 +187,8 @@ export const MODULE_GROUP_ORDER: ModuleGroup[] = [
 ];
 
 // Matches setup/src/cabal/webapi/routers/system.py MODULE_KEYS exactly (same order).
-export const MODULE_KEYS = [
+// Health and drift are reported per key, so this list must not gain frontend-only pages.
+export const BACKEND_MODULE_KEYS = [
   "project_gate",
   "home_overview",
   "project_dashboard",
@@ -206,6 +214,11 @@ export const MODULE_KEYS = [
   "diagnostics",
   "docs",
 ] as const;
+
+/** Pages with no backend module; the sidebar shows them, health never reports on them. */
+export const LOCAL_MODULE_KEYS = ["release_notes"] as const;
+
+export const MODULE_KEYS = [...BACKEND_MODULE_KEYS, ...LOCAL_MODULE_KEYS] as const;
 
 export type ModuleKey = (typeof MODULE_KEYS)[number];
 
@@ -373,6 +386,13 @@ export const MODULE_REGISTRY: ModuleDefinition[] = [
     group: "reference",
     phase: 11,
     component: DocsModule,
+  },
+  {
+    key: "release_notes",
+    title: "Release News",
+    group: "reference",
+    phase: 15,
+    component: ReleaseNotesModule,
   },
 ];
 
