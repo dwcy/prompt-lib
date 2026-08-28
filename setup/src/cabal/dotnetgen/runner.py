@@ -72,6 +72,7 @@ def run_approved(
                     usage=completion.usage,
                     wall_clock_seconds=completion.wall_clock_seconds,
                     priced=not ledger.prices_nothing(provider),
+                    reported_cost_usd=completion.reported_cost_usd,
                 ),
                 is_repair=write_calls > 1,
             )

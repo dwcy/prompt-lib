@@ -25,6 +25,7 @@ from cabal.dotnetgen.providers.base import (
     ProviderError,
     ProviderStatus,
     ProviderUnavailableError,
+    post_json,
 )
 from cabal.dotnetgen.providers.config import StageBinding
 from cabal.dotnetgen.providers.usage import parse_usage
@@ -73,28 +74,8 @@ class OpenAICompatibleProvider:
         return headers
 
     def _post(self, path: str, body: dict, timeout: int) -> dict:
-        request = urllib.request.Request(
-            url=f"{self.base_url}{path}",
-            data=json.dumps(body).encode("utf-8"),
-            headers=self._headers(),
-            method="POST",
-        )
-        try:
-            with urllib.request.urlopen(request, timeout=timeout) as response:
-                return json.loads(response.read().decode("utf-8"))
-        except urllib.error.HTTPError as exc:
-            detail = exc.read().decode("utf-8", errors="replace")[:500]
-            retryable = exc.code in (408, 409, 429) or exc.code >= 500
-            raise ProviderError(
-                f"{self.base_url}{path} returned HTTP {exc.code}: {detail}",
-                retryable=retryable,
-            ) from exc
-        except urllib.error.URLError as exc:
-            raise ProviderUnavailableError(f"cannot reach {self.base_url}: {exc.reason}") from exc
-        except TimeoutError as exc:
-            raise ProviderError(f"{self.base_url} timed out after {timeout}s", retryable=True) from exc
-        except json.JSONDecodeError as exc:
-            raise ProviderError(f"{self.base_url} returned malformed JSON: {exc}") from exc
+        return post_json(f"{self.base_url}{path}", body, self._headers(), timeout)
+
 
     def complete(self, request: CompletionRequest) -> CompletionResult:
         body: dict = {

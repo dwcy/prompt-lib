@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 from pathlib import Path
 
 import jsonschema
@@ -159,3 +160,25 @@ def test_consumed_never_exceeds_the_ceiling_in_a_written_record(tmp_path: Path) 
     payload = record.to_dict()
 
     assert payload["retry_budget"]["consumed"] <= payload["retry_budget"]["ceiling"]
+
+
+def test_reconciliation_uses_the_provider_figure_not_our_own_total() -> None:
+    """Reconciliation must compare against what the provider billed, never against itself."""
+    record = ledger.RunRecord(run_id="r1")
+    record.record_stage(_stage("write", "claude-sonnet-4", Usage(output_tokens=1_000_000)))
+
+    assert record.provider_reported_usd is None
+
+
+def test_a_reported_provider_cost_aggregates_across_stages() -> None:
+    record = ledger.RunRecord(run_id="r1")
+    first = replace(
+        _stage("architect", "claude-sonnet-4", Usage(output_tokens=10)), reported_cost_usd=0.25
+    )
+    second = replace(
+        _stage("write", "claude-sonnet-4", Usage(output_tokens=10)), reported_cost_usd=0.75
+    )
+    record.record_stage(first)
+    record.record_stage(second)
+
+    assert record.provider_reported_usd == pytest.approx(1.0)

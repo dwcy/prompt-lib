@@ -54,6 +54,7 @@ class StageCost:
     usage: Usage = field(default_factory=Usage)
     wall_clock_seconds: float = 0.0
     priced: bool = True
+    reported_cost_usd: float | None = None
 
     @property
     def pricing_known(self) -> bool:
@@ -158,6 +159,16 @@ class RunRecord:
         return sum(cost.cost_usd for cost in self.stage_costs.values())
 
     @property
+    def provider_reported_usd(self) -> float | None:
+        """Sum of what the providers billed, or None when none of them reported a cost."""
+        reported = [
+            cost.reported_cost_usd
+            for cost in self.stage_costs.values()
+            if cost.reported_cost_usd is not None
+        ]
+        return sum(reported) if reported else None
+
+    @property
     def repair_cost_usd(self) -> float:
         """What the repairs cost. Kept apart so a cheap-but-repetitive run cannot look cheap."""
         return sum(cost.cost_usd for cost in self.repair_stage_costs)
@@ -219,13 +230,19 @@ class RunRecord:
         reports a cost it must land within 5% of ours. A run whose tokens do not tie out is not
         reconciled even if the cost happens to match.
         """
+        if not self.stage_costs:
+            # Nothing was metered, so there is no arithmetic to stand behind.
+            return False
         if not self.tokens_reconcile():
             return False
         if not self.pricing_complete:
             # The tokens are real but the price is not, so the total is not a cost record.
             return False
         if provider_reported_usd is None:
-            return False
+            # Nothing to disagree with: a provider that bills no figure (codex exec, a
+            # local model) cannot contradict our arithmetic, and treating "unreported"
+            # as "mismatched" is what made this check compare our total to itself.
+            return True
         ours = self.total_cost_usd
         if provider_reported_usd == 0:
             return ours == 0

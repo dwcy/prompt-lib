@@ -29,6 +29,7 @@ from cabal.dotnetgen.providers.base import (
     ProviderError,
     ProviderStatus,
     ProviderUnavailableError,
+    post_json,
 )
 from cabal.dotnetgen.providers.config import StageBinding
 from cabal.dotnetgen.providers.usage import parse_usage
@@ -71,30 +72,8 @@ class AnthropicProvider:
         }
 
     def _post(self, path: str, body: dict, timeout: int) -> dict:
-        request = urllib.request.Request(
-            url=f"{self.base_url}{path}",
-            data=json.dumps(body).encode("utf-8"),
-            headers=self._headers(),
-            method="POST",
-        )
-        try:
-            with urllib.request.urlopen(request, timeout=timeout) as response:
-                return json.loads(response.read().decode("utf-8"))
-        except urllib.error.HTTPError as exc:
-            detail = exc.read().decode("utf-8", errors="replace")[:500]
-            # 429 and 5xx are exactly the cases a configured fallback exists for (FR-027).
-            retryable = exc.code in (408, 409, 429) or exc.code >= 500
-            raise ProviderError(
-                f"{self.base_url}{path} returned HTTP {exc.code}: {detail}", retryable=retryable
-            ) from exc
-        except urllib.error.URLError as exc:
-            raise ProviderUnavailableError(f"cannot reach {self.base_url}: {exc.reason}") from exc
-        except TimeoutError as exc:
-            raise ProviderError(
-                f"{self.base_url} timed out after {timeout}s", retryable=True
-            ) from exc
-        except json.JSONDecodeError as exc:
-            raise ProviderError(f"{self.base_url} returned malformed JSON: {exc}") from exc
+        return post_json(f"{self.base_url}{path}", body, self._headers(), timeout)
+
 
     def complete(self, request: CompletionRequest) -> CompletionResult:
         system, messages = _split_system(request)
@@ -144,20 +123,43 @@ class AnthropicProvider:
         return ProviderStatus(self.name, self.binding.model, reachable=True)
 
 
-def _split_system(request: CompletionRequest) -> tuple[str, list[dict]]:
+def _split_system(request: CompletionRequest) -> tuple[str | list[dict], list[dict]]:
     """Anthropic takes system content as its own field, not as a message role.
 
     The leading system blocks are the stable bands, so hoisting them here is also what keeps the
     cacheable prefix contiguous.
     """
     system_parts: list[str] = []
+    system_checkpoints: list[bool] = []
     messages: list[dict] = []
     for message in request.messages:
         if message.role == "system" and not messages:
             system_parts.append(message.content)
+            system_checkpoints.append(message.cache_checkpoint)
             continue
-        messages.append({"role": message.role, "content": message.content})
+        content: str | list[dict] = message.content
+        if message.cache_checkpoint:
+            content = [_text_block(message.content, checkpoint=True)]
+        messages.append({"role": message.role, "content": content})
     if not messages:
         # The API requires at least one message; an all-system request is still a real request.
         messages.append({"role": "user", "content": system_parts.pop() if system_parts else ""})
-    return "\n\n".join(system_parts), messages
+        system_checkpoints = system_checkpoints[: len(system_parts)]
+    if any(system_checkpoints):
+        # Block form exists only to carry cache_control; the plain string stays the
+        # payload for the uncached case.
+        system: str | list[dict] = [
+            _text_block(text, checkpoint=checkpoint)
+            for text, checkpoint in zip(system_parts, system_checkpoints)
+        ]
+    else:
+        system = "\n\n".join(system_parts)
+    return system, messages
+
+
+def _text_block(text: str, *, checkpoint: bool) -> dict:
+    """A content block, marked as a cache breakpoint when the band declared one."""
+    block: dict = {"type": "text", "text": text}
+    if checkpoint:
+        block["cache_control"] = {"type": "ephemeral"}
+    return block

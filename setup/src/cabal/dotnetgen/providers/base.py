@@ -9,6 +9,10 @@ rather than letting a zero masquerade as a measurement.
 
 from __future__ import annotations
 
+import json
+import urllib.error
+import urllib.request
+
 from dataclasses import dataclass, field
 from typing import Protocol, runtime_checkable
 
@@ -86,6 +90,9 @@ class CompletionResult:
     model: str
     provider: str
     wall_clock_seconds: float = 0.0
+    reported_cost_usd: float | None = None
+    """What the provider itself billed, when it says so. None means it reported nothing —
+    never substitute our own estimate, or reconciliation compares a number to itself."""
 
 
 @runtime_checkable
@@ -116,3 +123,29 @@ class ProviderStatus:
         mark = "ok" if self.reachable else "FAIL"
         suffix = f" - {self.detail}" if self.detail else ""
         return f"{mark:4} {self.provider}/{self.model}{suffix}"
+
+
+def post_json(url: str, body: dict, headers: dict[str, str], timeout: int) -> dict:
+    """POST JSON and decode the reply, mapping transport failures onto ProviderError.
+
+    Shared by every HTTP adapter so the retryable rule (429/408/409/5xx, the cases a
+    configured fallback exists for per FR-027) cannot drift between providers.
+    """
+    request = urllib.request.Request(
+        url=url, data=json.dumps(body).encode("utf-8"), headers=headers, method="POST"
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            return json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace")[:500]
+        retryable = exc.code in (408, 409, 429) or exc.code >= 500
+        raise ProviderError(
+            f"{url} returned HTTP {exc.code}: {detail}", retryable=retryable
+        ) from exc
+    except urllib.error.URLError as exc:
+        raise ProviderUnavailableError(f"cannot reach {url}: {exc.reason}") from exc
+    except TimeoutError as exc:
+        raise ProviderError(f"{url} timed out after {timeout}s", retryable=True) from exc
+    except json.JSONDecodeError as exc:
+        raise ProviderError(f"{url} returned malformed JSON: {exc}") from exc

@@ -3,7 +3,11 @@
 
 from __future__ import annotations
 
+import json
+
 import pytest
+
+from types import SimpleNamespace
 
 from cabal.dotnetgen.providers import cli_shell, factory, usage
 from cabal.dotnetgen.providers.base import Message, ProviderError, Usage
@@ -243,3 +247,28 @@ def test_flattening_labels_non_user_roles() -> None:
     )
 
     assert flat == "[system]\nrules\n\ndo it"
+
+
+def test_a_timed_out_turn_tears_down_the_session_so_no_stale_result_survives() -> None:
+    """The CLI keeps working after a timeout; reusing the session would answer the next prompt with it."""
+    session = cli_shell.ClaudeSession(model="claude-sonnet-4", executable="claude")
+    closed: list[bool] = []
+    session.start = lambda: None  # type: ignore[method-assign]
+    session.close = lambda: closed.append(True)  # type: ignore[method-assign]
+    session._process = SimpleNamespace(stdin=SimpleNamespace(write=lambda _t: None, flush=lambda: None))
+    session._lines.put(json.dumps({"type": "result", "result": "stale answer"}))
+
+    with pytest.raises(cli_shell.CliShellError):
+        session.send("prompt", timeout=0)
+
+    assert closed == [True]
+    assert session._lines.empty()
+
+
+def test_an_oversized_codex_prompt_is_reported_as_a_prompt_problem() -> None:
+    """An argv-length failure must not masquerade as the provider being unreachable."""
+    binding = StageBinding(stage="architect", provider="cli_shell", model="gpt-5-codex")
+    provider = cli_shell.CliShellProvider(binding=binding)
+
+    with pytest.raises(cli_shell.CliShellError, match="command-line budget"):
+        provider._codex_turn("x" * (cli_shell._MAX_CODEX_PROMPT_CHARS + 1))

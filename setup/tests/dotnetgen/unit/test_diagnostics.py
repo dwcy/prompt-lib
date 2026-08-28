@@ -89,3 +89,15 @@ def test_has_test_failures_reads_the_reported_count() -> None:
 def test_a_zero_failure_count_is_not_a_test_failure() -> None:
     """A non-zero exit with zero failed tests is a harness problem, not a behaviour problem."""
     assert not has_test_failures(_test_output("Passed!  - Failed: 0, Passed: 7"))
+
+
+def test_a_later_project_failing_is_not_hidden_by_an_earlier_passing_one() -> None:
+    """Every test project prints its own count; only reading the first misclassifies the run."""
+    multi_project = "\n".join(
+        [
+            "Passed!  - Failed: 0, Passed: 7, Skipped: 0 - Api.Tests.dll",
+            "Failed!  - Failed: 3, Passed: 4, Skipped: 0 - Domain.Tests.dll",
+        ]
+    )
+
+    assert has_test_failures(_test_output(multi_project))

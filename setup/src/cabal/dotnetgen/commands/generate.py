@@ -87,6 +87,7 @@ def cmd_plan(args: argparse.Namespace) -> int:
                 usage=result.usage,
                 wall_clock_seconds=result.wall_clock_seconds,
                 priced=not ledger.prices_nothing(provider),
+                reported_cost_usd=getattr(result, "reported_cost_usd", None),
             )
         )
 
@@ -206,7 +207,7 @@ def cmd_apply(args: argparse.Namespace) -> int:
         a for attempt in run.attempts for a in attempt.apply_report.applications
     ]
     record.first_attempt_build_green = bool(run.attempts) and run.attempts[0].passed
-    written = ledger.write(project, record, provider_reported_usd=record.total_cost_usd)
+    written = ledger.write(project, record, provider_reported_usd=record.provider_reported_usd)
 
     payload = _describe_run(run, pending.token)
     payload["run_id"] = record.run_id

@@ -46,6 +46,9 @@ PROVIDER_NAME: Final[str] = "cli_shell"
 TURN_TIMEOUT_SECONDS: Final[int] = 600
 CHECK_TIMEOUT_SECONDS: Final[int] = 30
 _READ_POLL_SECONDS: Final[float] = 0.1
+# Windows caps a command line at ~32767 chars; the prompt is one argv element,
+# so an oversized architect prompt fails at spawn rather than reaching the model.
+_MAX_CODEX_PROMPT_CHARS: Final[int] = 30_000
 
 CLAUDE_FLAGS: Final[tuple[str, ...]] = (
     "--print",
@@ -172,7 +175,15 @@ class ClaudeSession:
             if parsed.get("type") == "result":
                 return parsed
 
+        # The process is still working on this turn and will queue its `result`
+        # later; a reused session would hand that stale event to the next prompt.
+        self.close()
+        self._discard_pending()
         raise CliShellError(f"`{self.executable}` did not complete a turn in {timeout}s")
+
+    def _discard_pending(self) -> None:
+        """Drop anything the reader queued for a turn nobody is waiting on any more."""
+        self._lines = queue.Queue()
 
     def close(self) -> None:
         if self._process is None:
@@ -210,9 +221,12 @@ class CliShellProvider:
         started = time.monotonic()
 
         if self.cli == "claude":
-            text, usage, _cost = extract_result(self._claude_turn(prompt))
+            text, usage, cost = extract_result(self._claude_turn(prompt))
+            reported = cost if cost else None
         else:
             text, usage, _cost = self._codex_turn(prompt)
+            # codex exec reports no usage or cost, so there is nothing to reconcile against.
+            reported = None
 
         return CompletionResult(
             text=text,
@@ -220,6 +234,7 @@ class CliShellProvider:
             model=request.model,
             provider=self.name,
             wall_clock_seconds=time.monotonic() - started,
+            reported_cost_usd=reported,
         )
 
     def _claude_turn(self, prompt: str) -> dict:
@@ -229,6 +244,11 @@ class CliShellProvider:
 
     def _codex_turn(self, prompt: str) -> tuple[str, Usage, float]:
         """One-shot: codex `exec` has no persistent-session mode."""
+        if len(prompt) > _MAX_CODEX_PROMPT_CHARS:
+            raise CliShellError(
+                f"prompt of {len(prompt)} chars exceeds the {_MAX_CODEX_PROMPT_CHARS}-char "
+                "codex command-line budget; reduce the context sent to this stage"
+            )
         command = [self._executable(), *CODEX_FLAGS, "-m", self.binding.model, prompt]
         try:
             proc = subprocess.run(

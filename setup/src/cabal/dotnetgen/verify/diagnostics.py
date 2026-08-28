@@ -91,9 +91,11 @@ def has_test_failures(output: "CommandOutput | None") -> bool:
     if output is None:
         return False
     text = output.combined
-    counted = _TEST_FAILED_COUNT.search(text)
-    if counted is not None:
-        return int(counted.group(1)) > 0
+    # Every test project prints its own "Failed: N"; taking only the first reads a
+    # passing project as proof the whole run passed.
+    counted = _TEST_FAILED_COUNT.findall(text)
+    if counted:
+        return any(int(count) > 0 for count in counted)
     return _XUNIT_FAILURE.search(text) is not None
 
 

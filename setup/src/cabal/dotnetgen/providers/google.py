@@ -63,27 +63,9 @@ class GoogleProvider:
 
     def _post(self, model: str, body: dict, timeout: int) -> dict:
         url = f"{self.base_url}/models/{urllib.parse.quote(model)}:generateContent"
-        request = urllib.request.Request(
-            url=url,
-            data=json.dumps(body).encode("utf-8"),
-            headers={"Content-Type": "application/json", "x-goog-api-key": self._key()},
-            method="POST",
-        )
-        try:
-            with urllib.request.urlopen(request, timeout=timeout) as response:
-                return json.loads(response.read().decode("utf-8"))
-        except urllib.error.HTTPError as exc:
-            detail = exc.read().decode("utf-8", errors="replace")[:500]
-            retryable = exc.code in (408, 409, 429) or exc.code >= 500
-            raise ProviderError(
-                f"{url} returned HTTP {exc.code}: {detail}", retryable=retryable
-            ) from exc
-        except urllib.error.URLError as exc:
-            raise ProviderUnavailableError(f"cannot reach {self.base_url}: {exc.reason}") from exc
-        except TimeoutError as exc:
-            raise ProviderError(f"{url} timed out after {timeout}s", retryable=True) from exc
-        except json.JSONDecodeError as exc:
-            raise ProviderError(f"{url} returned malformed JSON: {exc}") from exc
+        headers = {"Content-Type": "application/json", "x-goog-api-key": self._key()}
+        return post_json(url, body, headers, timeout)
+
 
     def complete(self, request: CompletionRequest) -> CompletionResult:
         system, contents = _split_system(request)
