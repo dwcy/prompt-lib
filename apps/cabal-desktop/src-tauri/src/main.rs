@@ -24,6 +24,17 @@ struct BackendHandle {
 const BACKEND_MONITOR_INTERVAL: Duration = Duration::from_secs(2);
 const BACKEND_MONITOR_FAILURE_THRESHOLD: usize = 3;
 
+/// The page asks for this after every load (reloads included), so the connection
+/// survives a refresh that wipes the injected `window.__CABAL__`.
+#[tauri::command]
+fn cabal_runtime_config(state: tauri::State<BackendHandle>) -> Option<backend::BackendConnection> {
+    state
+        .state
+        .lock()
+        .ok()
+        .and_then(|guard| guard.as_ref().map(|backend| backend.connection()))
+}
+
 fn main() {
     tauri::Builder::default()
         // single-instance must be the first registered plugin.
@@ -36,6 +47,21 @@ fn main() {
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .plugin(tauri_plugin_dialog::init())
         .manage(BackendHandle::default())
+        .invoke_handler(tauri::generate_handler![cabal_runtime_config])
+        // Runs on every navigation, so a reloaded page is re-injected instead of
+        // waiting for the health monitor's failure threshold to notice.
+        .on_page_load(|window, _payload| {
+            let handle = window.app_handle();
+            let connection = handle
+                .state::<BackendHandle>()
+                .state
+                .lock()
+                .ok()
+                .and_then(|guard| guard.as_ref().map(|backend| backend.connection()));
+            if let Some(connection) = connection {
+                let _ = window.eval(&backend::injection_script(&connection));
+            }
+        })
         .setup(|app| {
             let handle_for_spawn = app.handle().clone();
             let handle_for_apply = app.handle().clone();
