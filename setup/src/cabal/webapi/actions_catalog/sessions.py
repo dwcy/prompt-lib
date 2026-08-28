@@ -9,7 +9,7 @@ from cabal import model_assignments
 from cabal.webapi.account_service import models_digest
 from cabal.webapi.actions import ActionDescriptor, ActionOutcome
 from cabal.webapi.envelope import ApiError
-from cabal.webapi.sessions_service import delete_session_payload, find_session, session_digest
+from cabal.webapi.sessions_service import delete_session_payload, find_session_file, session_digest
 
 SESSIONS_DELETE_ACTION_ID = "sessions.delete"
 MODELS_ASSIGN_ACTION_ID = "models.assign"
@@ -34,7 +34,7 @@ _MODEL_ASSIGN_SCHEMA = {
 
 
 def _delete_prepare(params: dict, _state: Any) -> dict:
-    session, _summary = find_session(params["session_id"])
+    session = find_session_file(params["session_id"])
     return {
         "summary": f"Delete session transcript {params['session_id']}",
         "commands": [],

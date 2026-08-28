@@ -127,6 +127,7 @@ def create_app(
     app.router.routes.extend(docs_router.router.routes)
 
     _register_exception_handlers(app)
+    security.assert_api_routes_authenticated(app)
     return app
 
 

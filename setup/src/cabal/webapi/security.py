@@ -203,6 +203,43 @@ def allowed_origins(*, dev: bool | None = None) -> list[str]:
     return list(TAURI_ORIGINS) + (list(DEV_ORIGINS) if allow_dev else [])
 
 
+def _dependant_calls(dependant) -> list:
+    calls = []
+    for sub in getattr(dependant, "dependencies", ()):
+        if sub.call is not None:
+            calls.append(sub.call)
+        calls.extend(_dependant_calls(sub))
+    return calls
+
+
+def unauthenticated_api_routes(app: FastAPI) -> list[str]:
+    """Paths under /api that do not resolve require_bearer_token."""
+    unguarded = []
+    for route in app.routes:
+        path = str(getattr(route, "path", ""))
+        if not path.startswith("/api"):
+            continue
+        dependant = getattr(route, "dependant", None)
+        if dependant is None or require_bearer_token not in _dependant_calls(dependant):
+            unguarded.append(path)
+    return sorted(set(unguarded))
+
+
+def assert_api_routes_authenticated(app: FastAPI) -> None:
+    """Fail at construction when an /api route ships without the bearer-token gate.
+
+    Routes are spliced onto the app rather than included, so an app-level dependency
+    cannot cover them and every router must declare its own; without this check a
+    router that omits the declaration would serve unauthenticated and no test would
+    notice, since the suites drive every request with valid headers.
+    """
+    unguarded = unauthenticated_api_routes(app)
+    if unguarded:
+        raise RuntimeError(
+            "API routes missing require_bearer_token: " + ", ".join(unguarded)
+        )
+
+
 def apply_cors(app: FastAPI, *, dev: bool | None = None) -> None:
     """CORS locked to the Tauri origins, plus the Vite dev origins in dev mode only."""
     app.add_middleware(

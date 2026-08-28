@@ -14,6 +14,12 @@ from cabal.webapi import security, sse
 from cabal.webapi.dashboard_service import get_dashboard_section
 from cabal.webapi.envelope import ApiError, ModuleHealth, envelope_response, utc_now_iso
 from cabal.webapi.overview_service import build_overview, drift_flags
+from cabal.webapi.probe_cache import (
+    BRANCH_TTL_S,
+    ENVIRONMENT_TTL_S,
+    UPDATES_TTL_S,
+    ttl_cached,
+)
 from cabal.webapi.terminal_service import build_terminal_summary
 from cabal.env_detect import detect_env
 from cabal.updates import check_for_updates
@@ -138,7 +144,7 @@ _MACHINE_TOOLS = (
 
 
 def _machine_summary(environment: dict | None = None) -> dict:
-    environment = environment or detect_env()
+    environment = environment or _cached_environment()
     tools = []
     for key, label, field in _MACHINE_TOOLS:
         value = environment.get(field)
@@ -154,7 +160,7 @@ def _machine_summary(environment: dict | None = None) -> dict:
 
 
 def _cabal_summary() -> dict:
-    update = check_for_updates()
+    update = _cached_updates()
     return {
         "version": _backend_version(),
         "status": update.get("status", "error"),
@@ -165,6 +171,21 @@ def _cabal_summary() -> dict:
         "branch": update.get("branch"),
         "subject": update.get("subject") or "",
     }
+
+
+@ttl_cached(BRANCH_TTL_S)
+def _cached_branch(project: Path) -> str | None:
+    return collect_current_branch(project)
+
+
+@ttl_cached(ENVIRONMENT_TTL_S)
+def _cached_environment() -> dict:
+    return detect_env()
+
+
+@ttl_cached(UPDATES_TTL_S)
+def _cached_updates() -> dict:
+    return check_for_updates()
 
 
 @router.get("/api/health")
@@ -184,14 +205,14 @@ def health(request: Request):
         "started_at": request.app.state.started_at,
         "modules": modules,
         "drift_flags": drift_flags(),
-        "project_branch": collect_current_branch(Path(project)) if project is not None else None,
+        "project_branch": _cached_branch(Path(project)) if project is not None else None,
     }
     return envelope_response(data=data, source="system")
 
 
 @router.get("/api/system/overview")
 def system_overview():
-    environment = detect_env()
+    environment = _cached_environment()
     data = {
         "cabal": _cabal_summary(),
         "machine": _machine_summary(environment),

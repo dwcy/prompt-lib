@@ -167,14 +167,26 @@ def list_sessions_payload(
 
 
 def find_session(session_id: str, projects_dir: Path | None = None) -> tuple[Session, SessionSummary]:
+    """Full lookup: parses the corpus because the summary carries cross-session tree data."""
     for session, summary in _load_summaries(projects_dir):
         if session.session_id == session_id:
             return session, summary
     raise ApiError(404, "session_not_found", f"Unknown session {session_id!r}")
 
 
+def find_session_file(session_id: str, projects_dir: Path | None = None) -> Session:
+    """Resolve by id without parsing any transcript — the id is the file stem.
+
+    Callers that only need the path (digest, delete) must not pay a full-corpus parse.
+    """
+    for session in session_reader.scan_projects_dir(projects_dir or _projects_dir()):
+        if session.session_id == session_id:
+            return session
+    raise ApiError(404, "session_not_found", f"Unknown session {session_id!r}")
+
+
 def session_digest(session_id: str) -> str:
-    session, _summary = find_session(session_id)
+    session = find_session_file(session_id)
     try:
         stat = session.log_path.stat()
         state = {
@@ -220,7 +232,7 @@ def session_detail_payload(session_id: str, tab: SessionTab) -> dict:
 
 
 def delete_session_payload(session_id: str) -> dict:
-    session, _summary = find_session(session_id)
+    session = find_session_file(session_id)
     path = session.log_path
     session_reader.delete_session(session)
     return {"session_id": session_id, "removed": str(path)}

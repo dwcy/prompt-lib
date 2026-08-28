@@ -17,6 +17,7 @@ from cabal.manifest_doctor import manifest_report
 from cabal.package_security import service as package_security_service
 from cabal.webapi.dashboard_service import SECTIONS, get_dashboard_section
 from cabal.webapi.knowledge_service import knowledge_summary
+from cabal.webapi.probe_cache import DRIFT_TTL_S, ttl_cached
 
 _PROJECTS_DIR = Path.home() / ".claude" / "projects"
 _MAX_RECENT_SESSIONS = 5
@@ -145,5 +146,7 @@ def _security_summary(project: Path) -> dict[str, Any]:
     return {**counts, "notices": notices}
 
 
+@ttl_cached(DRIFT_TTL_S)
 def drift_flags() -> dict[str, bool]:
+    """Cached: each call content-diffs the whole deploy tree, and /api/health polls it."""
     return {"claude": diff_apply.has_deploy_drift(), "codex": codex_diff_apply.has_codex_deploy_drift()}
