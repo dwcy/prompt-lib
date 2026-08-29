@@ -74,7 +74,20 @@ class FallbackProvider:
             if not exc.retryable:
                 # A bad request or a missing key fails the same way twice; only the latency doubles.
                 raise
-            return self.standby.complete(request)
+            try:
+                return self.standby.complete(request)
+            except ProviderError as standby_exc:
+                # Report BOTH causes. The standby's own message alone is actively misleading:
+                # when a stage is bound to `cli_shell` precisely so it needs no API key, an
+                # unreachable CLI surfaces here as "ANTHROPIC_API_KEY is not set", pointing the
+                # developer at a credential their bindings deliberately avoid instead of at the
+                # CLI that actually failed. The fallback's missing key is a consequence, not the
+                # cause, so the primary's reason has to survive.
+                raise ProviderError(
+                    f"{self.primary.name} unavailable ({exc}); "
+                    f"fallback {self.standby.name} also unusable ({standby_exc})",
+                    retryable=standby_exc.retryable,
+                ) from standby_exc
 
     def check(self) -> ProviderStatus:
         primary = self.primary.check()

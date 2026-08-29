@@ -48,6 +48,34 @@ class StubProvider:
         return ProviderStatus(self.name, "m", reachable=self._reachable, detail="" if self._reachable else "down")
 
 
+def test_an_unreachable_cli_primary_does_not_surface_as_a_missing_api_key() -> None:
+    """The real-world shape: a stage bound to `cli_shell` precisely so it needs no API key.
+
+    When the CLI is not accessible the primary raises a retryable ProviderUnavailableError and
+    the anthropic fallback then fails on its absent key. Reporting only the standby's message
+    tells the developer to set ANTHROPIC_API_KEY -- a credential these bindings deliberately
+    avoid needing -- and hides the CLI failure that actually stopped the run. Both causes must
+    survive, primary first.
+    """
+    primary = StubProvider(
+        "cli_shell", error=ProviderUnavailableError("cannot start `claude`: not found")
+    )
+    standby = StubProvider(
+        "anthropic", error=ProviderError("ANTHROPIC_API_KEY is not set", retryable=False)
+    )
+
+    with pytest.raises(ProviderError) as excinfo:
+        factory.FallbackProvider(primary, standby).complete(REQUEST)
+
+    message = str(excinfo.value)
+    assert "cannot start `claude`" in message, "the cause that actually stopped the run must survive"
+    assert "ANTHROPIC_API_KEY" in message, "the fallback's own reason is still worth reporting"
+    assert message.index("claude") < message.index("ANTHROPIC_API_KEY"), (
+        "the primary's failure is the cause and the fallback's is the consequence; "
+        "leading with the key sends the developer to fix the wrong thing"
+    )
+
+
 def test_a_rate_limited_primary_falls_back() -> None:
     primary = StubProvider("primary", error=ProviderError("429 rate limited", retryable=True))
     standby = StubProvider("standby")
