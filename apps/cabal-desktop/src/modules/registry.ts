@@ -123,6 +123,8 @@ export const MODULE_GROUP_LABELS: Record<ModuleGroup, string> = {
 };
 
 export const MODULE_NAV_LABELS: Record<ModuleKey, string> = {
+  codegen: ".NET Codegen",
+  evals: "Agent Evals",
   project_gate: "Switch project",
   home_overview: "Overview",
   project_dashboard: "Project health",
@@ -151,6 +153,8 @@ export const MODULE_NAV_LABELS: Record<ModuleKey, string> = {
 };
 
 export const MODULE_OPERATION_SUMMARIES: Record<ModuleKey, string> = {
+  codegen: "Prose requests, the approval gate, and per-stage cost",
+  evals: "Matrix runs, A/B verdicts, and benchmark definitions",
   project_gate: "Workspace selection and project context",
   home_overview: "Readiness, drift, and current priorities",
   project_dashboard: "Git and connected project systems",
@@ -188,6 +192,10 @@ export const MODULE_GROUP_ORDER: ModuleGroup[] = [
 
 // Matches setup/src/cabal/webapi/routers/system.py MODULE_KEYS exactly (same order).
 // Health and drift are reported per key, so this list must not gain frontend-only pages.
+// "codegen"/"evals" are staged here ahead of the backend addition landing (021-codegen-eval-
+// modules Phase 1, T001-T003) — both have real backend availability endpoints per
+// contracts/codegen-api.md and contracts/evals-api.md, so they belong in this list, not
+// LOCAL_MODULE_KEYS. Reconcile with system.py's MODULE_KEYS when that lands.
 export const BACKEND_MODULE_KEYS = [
   "project_gate",
   "home_overview",
@@ -213,6 +221,8 @@ export const BACKEND_MODULE_KEYS = [
   "codex",
   "diagnostics",
   "docs",
+  "codegen",
+  "evals",
 ] as const;
 
 /** Pages with no backend module; the sidebar shows them, health never reports on them. */
@@ -393,6 +403,23 @@ export const MODULE_REGISTRY: ModuleDefinition[] = [
     group: "reference",
     phase: 15,
     component: ReleaseNotesModule,
+  },
+  // 021-codegen-eval-modules Phase 1: registered ahead of their own build phase (US1 = Phase 3,
+  // US2 = Phase 4 of that feature's tasks.md), routed to the shared ModuleUnavailable placeholder
+  // via the existing `component: null` mechanism (research.md R8) until their module UI lands.
+  {
+    key: "codegen",
+    title: ".NET Code Generation",
+    group: "repo",
+    phase: 16,
+    component: null,
+  },
+  {
+    key: "evals",
+    title: "Agent Eval Harness",
+    group: "agents",
+    phase: 17,
+    component: null,
   },
 ];
 

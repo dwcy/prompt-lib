@@ -16,6 +16,11 @@ export const PROJECT_SCOPED_MODULES = [
   // README + docs/ come from the current project's working tree, so switching projects must
   // invalidate them the same way project_dashboard does.
   "docs",
+  // Both target the currently selected project (spec Assumptions, FR-010): the codegen module
+  // generates against it, and the eval module reads its evals/ tree — switching projects must
+  // invalidate both (021-codegen-eval-modules).
+  "codegen",
+  "evals",
 ] as const;
 
 export type ProjectScopedModule = (typeof PROJECT_SCOPED_MODULES)[number];
