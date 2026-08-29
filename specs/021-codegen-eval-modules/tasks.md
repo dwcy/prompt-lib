@@ -65,7 +65,7 @@ Nothing in Phase 3+ may start until Phase 2 is complete.
 **Goal**: A complete, useful generator: prose request → reviewable plan → explicit decision → written and verified code.
 **Independent test**: Submit a change request, confirm the run pauses with a readable plan and the working tree is byte-identical, reject it and confirm the tree is still clean, then repeat and approve and confirm only the described files were written.
 
-- [ ] T016 [P] [US1] Contract test for the codegen API in `tests/contract/test_codegen_api.py` per `contracts/codegen-api.md` — gate shape, digest bound to the intent token, stale refusal, replay refusal, and the working-tree-unchanged assertion — Owner: @python-tester
+- [ ] T016 [P] [US1] Contract test for the codegen API in `tests/contract/test_codegen_api.py` per `contracts/codegen-api.md` — gate shape, digest bound to the intent token, stale refusal, replay refusal, the working-tree-unchanged assertion, and that every mutating action writes an audit entry (FR-006) — Owner: @python-tester
 - [ ] T017 [US1] Implement the read surface in `setup/src/cabal/webapi/codegen_service.py`: run list, run detail, pending intent with computed `stale` — Owner: @python-architect — Parallel: yes
 - [ ] T018 [US1] Implement the `codegen.plan` action in `actions_catalog/codegen.py` — spawns detached, returns immediately, writes nothing to the target project — Owner: @python-architect — Parallel: yes
 - [ ] T019 [US1] Implement the `codegen.approve` action with `compute_digest` bound to the pending intent's token, so the webapi ticket and the subsystem's own gate cannot disagree (research.md R3) — Owner: @python-architect — Parallel: yes
@@ -73,7 +73,7 @@ Nothing in Phase 3+ may start until Phase 2 is complete.
 - [ ] T021 [US1] Implement the `codegen.new_service` action with destination resolved relative to the selected project, post-normalisation escape refusal (`400 destination_outside_project`) and non-empty refusal (`409 destination_not_empty`) per research.md R10 — Owner: @python-architect — Parallel: yes
 - [ ] T022 [US1] Wire the read endpoints in `setup/src/cabal/webapi/routers/codegen.py` — Owner: @python-architect — Parallel: yes
 - [ ] T023 [P] [US1] Review the approval-gate presentation for states, edge cases, and how a stale or expired plan reads — Owner: @ux-analyst
-- [ ] T024 [US1] Build `apps/cabal-desktop/src/modules/codegen/CodegenModule.tsx` — module shell, project gate, prose request form, template selection — Owner: @react-architect — Parallel: yes
+- [ ] T024 [US1] Build `apps/cabal-desktop/src/modules/codegen/CodegenModule.tsx` — module shell, project gate, prose request form, template selection, and the new-service destination control constrained to paths inside the selected project (FR-011a, SC-014) — Owner: @react-architect — Parallel: yes
 - [ ] T025 [US1] Build `modules/codegen/components/ApprovalGate.tsx` — intended-file-change list, explicit approve and reject controls, stale-plan banner. Must never proceed on timeout or navigation — Owner: @react-architect — Parallel: yes
 - [ ] T026 [US1] Build `modules/codegen/components/RunOutcome.tsx` keeping all six end states distinguishable, with environment failure visibly separate from a code defect — Owner: @react-architect — Parallel: yes
 - [ ] T027 [P] [US1] CSS for the codegen module — Owner: @frontend-css
@@ -88,7 +88,7 @@ Nothing in Phase 3+ may start until Phase 2 is complete.
 **Goal**: The payload of the entire harness — did the candidate beat the baseline, and on what evidence.
 **Independent test**: Point the module at a run directory the CLI produced and confirm the comparison renders correctly, with no ability to launch anything.
 
-- [ ] T030 [P] [US2] Contract test for the evals report payload in `tests/contract/test_evals_api.py` per `contracts/evals-api.md` — every aggregate carries `n`; `stddev` absent below n=3; excluded-pair counts present; `order_agreement: false` reported as a tie — Owner: @python-tester
+- [ ] T030 [P] [US2] Contract test for the evals report payload in `tests/contract/test_evals_api.py` per `contracts/evals-api.md` — every aggregate carries `n`; `stddev` absent below n=3; excluded-pair counts present; `order_agreement: false` reported as a tie; every mutating action writes an audit entry (FR-006) — Owner: @python-tester
 - [ ] T031 [US2] Implement run listing in `setup/src/cabal/webapi/evals_service.py` reading `evals/results/`, with state reconciled at read time and no "launched here" flag — Owner: @python-architect — Parallel: yes
 - [ ] T032 [US2] Implement the report endpoint by delegating to the subsystem's own reducer — never re-derive the aggregation rules (SC-010) — Owner: @python-architect — Parallel: yes
 - [ ] T033 [US2] Implement the cell-detail endpoint, returning a timed-out check as a result with a timeout flag rather than an error — Owner: @python-architect — Parallel: yes
@@ -200,15 +200,17 @@ Nothing in Phase 3+ may start until Phase 2 is complete.
 
 ## Phase 11: Polish & Cross-Cutting Concerns
 
-**Status**: ⬜ Pending (0/7 — T083–T089)
+**Status**: ⬜ Pending (0/9 — T083–T091)
 
-- [ ] T083 [P] Harden both run listings against malformed or partially written artifacts — one unreadable run must not break the list (spec edge case) — Owner: @python-architect
+- [ ] T083 [P] Harden both run listings against malformed or partially written artifacts — one unreadable run must not break the list; and against enormous run output, which must stay navigable without degrading the workspace (spec edge cases) — Owner: @python-architect
 - [ ] T084 [P] Verify no run data was copied into SQLite: everything a user reads about a completed run comes from the artifact tree (data-model cross-cutting rule 1) — Owner: @python-tester
-- [ ] T085 [P] Confirm the frontend computes no aggregate anywhere — no mean, spread, or win rate in TypeScript — Owner: @react-architect
+- [ ] T085 [P] Confirm the frontend computes no aggregate anywhere — no mean, spread, or win rate in TypeScript — Owner: @frontend-tester
 - [ ] T086 Record the two findings from research.md against their features: `cabal.evals` has no `--json` mode → `specs/019-agent-eval-harness/`; `JobManager` never rehydrates from SQLite, stranding `running` jobs → `specs/015-web-ui-overhaul/` — Owner: main
 - [ ] T087 Remove both subsystems from the "Shipped in this release, used outside the app" section of `apps/cabal-desktop/src/modules/release-notes/releaseNotes.ts` and give each its module entry (SC-012) — Owner: main
 - [ ] T088 Update `apps/cabal-desktop/src/modules/registry.ts` to route both modules to their real components, and refresh module docs — Owner: main
 - [ ] T089 Read-only audit of the implementation against this plan — Owner: @code-plan-verifier
+- [ ] T090 [P] Verify FR-006 audit coverage across all nine action descriptors (`codegen.plan`/`approve`/`reject`/`new_service`, `evals.launch`/`cancel`/`resume`/`definition_save`/`definition_delete`) — each records what ran, against what, when, and its outcome — Owner: @python-tester
+- [ ] T091 [P] Verify the plan's performance goals: a completed matrix comparison renders within 1s, per-cell progress appears within 2s of a cell finishing, and the module stays interactive while a run streams — Owner: @frontend-tester
 
 ---
 
@@ -260,6 +262,13 @@ Every `Parallel: yes` task is dispatched with `isolation: "worktree"`; the retur
 | `@frontend-css` | T048, T054, T060, T070 |
 
 Three concurrent writers, within the cap of 4.
+
+**Batch C — Phases 9 + 10** (stage bindings ‖ history and resume):
+
+| Agent | Tasks |
+|---|---|
+| `@python-architect` | T072, T076–T078 |
+| `@react-architect` | T073, T079–T080 |
 
 **Never parallelise**: Phase 2 (shared foundation), and T086–T088 (all touch cross-cutting files).
 

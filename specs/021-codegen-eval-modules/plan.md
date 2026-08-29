@@ -36,7 +36,7 @@ Per `.specify/memory/constitution.md` v1.1.0:
 - **Gate 3 — Contract Tests Before Implementation**: **Required.** Four internal contract surfaces need tests written and observed failing first: (a) the codegen REST + action surface, (b) the eval REST + action surface, (c) the SSE event grammar for run progress, (d) the definition-authoring round-trip (a definition written by the module must be byte-equivalent in meaning to a hand-written one and must validate under the unmodified CLI). Contract tests live in `tests/contract/` and MUST precede their implementation tasks in `tasks.md`.
 - **Gate 4 — Reversible Config Changes**: `N/A` — this feature adds nothing under `global/`. It touches `apps/cabal-desktop/`, `setup/src/cabal/webapi/`, and `specs/`. The `/dotnet-codegen` skill in `global/skills/` is **not** modified; the module is an additional front end to the same CLI. If a later task does need to touch `global/`, rollback is the standard apply-script re-run documented in Principle IV.
 - **Gate 5 — Minimal Skill & Agent Surface**: `N/A` — no new skill and no new agent. The existing `/dotnet-codegen` skill keeps its role as the conversational front end; this feature adds GUI modules, which are not skills. Nothing in `global/agents/` changes.
-- **Gate 6 — Parallel Isolation**: **Applies.** Two phases dispatch concurrent writing agents; see the Parallel Execution Map below.
+- **Gate 6 — Parallel Isolation**: **Applies.** Three batches dispatch concurrent writing agents (US1+US2, US3–US6, US7+US8); all three are listed in the Parallel Execution Map below and their tasks carry `Parallel: yes` in `tasks.md`.
 
 **Post-Phase-1 re-check**: **PASS.** The Phase 1 design introduced no new external protocol (Gate 1 unchanged), no new skill or agent (Gate 5 unchanged), and nothing under `global/` (Gate 4 unchanged). Gate 3's surface list grew by one — the definition round-trip contract — which is recorded above and reflected in `contracts/`. No entries were added to Complexity Tracking.
 
@@ -64,8 +64,9 @@ Per `.specify/memory/constitution.md` v1.1.0:
 
 | Phase | Concurrent agents | Tasks (IDs) | Integration branch |
 |---|---|---|---|
-| US1 + US2 implementation (codegen gate ‖ eval comparison) | `@python-architect`, `@react-architect` | assigned by `/speckit-tasks` | `021-codegen-eval-modules` |
-| US3–US6 implementation (eval launch ‖ codegen cost ‖ definition authoring) | `@python-architect`, `@react-architect`, `@frontend-css` | assigned by `/speckit-tasks` | `021-codegen-eval-modules` |
+| Batch A — US1 + US2 (codegen gate ‖ eval comparison) | `@python-architect`, `@react-architect` | T017–T022, T024–T026, T031–T034, T036–T038 | `021-codegen-eval-modules` |
+| Batch B — US3–US6 (eval launch ‖ codegen cost ‖ definition authoring) | `@python-architect`, `@react-architect`, `@frontend-css` | T042–T048, T051–T054, T057–T060, T063–T070 | `021-codegen-eval-modules` |
+| Batch C — US7 + US8 (stage bindings ‖ history and resume) | `@python-architect`, `@react-architect` | T072–T073, T076–T080 | `021-codegen-eval-modules` |
 
 Every agent in each batch receives `isolation: "worktree"` at dispatch and merges back to the integration branch. The matching tasks in `tasks.md` MUST carry `Parallel: yes`. The hard cap of 4 concurrent subagents applies. See [`docs/parallel-isolation.md`](../../docs/parallel-isolation.md).
 
@@ -117,11 +118,11 @@ apps/cabal-desktop/src/
 └── modules/
     ├── codegen/                 # NEW
     │   ├── CodegenModule.tsx
-    │   ├── components/          # ApprovalGate, StageCostTable, StageBindings, RunHistory
+    │   ├── components/          # ApprovalGate, RunOutcome, StageCostTable, StageBindings, RunHistory
     │   └── hooks/
     ├── evals/                   # NEW
     │   ├── EvalsModule.tsx
-    │   ├── components/          # MatrixLauncher, LiveMatrix, ComparisonView, DefinitionEditor
+    │   ├── components/          # MatrixLauncher, LiveMatrix, ComparisonView, CellDetail, ValidationPanel, DefinitionEditor
     │   └── hooks/
     └── registry.ts              # MODIFIED — two new entries
 
