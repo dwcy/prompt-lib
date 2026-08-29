@@ -43,16 +43,21 @@ One entry per pipeline stage within a run.
 
 ### A3. RunOutcome (enumeration)
 
-Derived from the subsystem's exit codes. The UI must keep these distinguishable (FR-016, FR-017):
+**Authoritative source**: the `outcome` enum in `specs/018-dotnet-codegen/contracts/run-record.schema.json`. It has exactly **four** values. The UI must keep them distinguishable (FR-016, FR-017):
 
-| Outcome | Source | Presentation requirement |
-|---|---|---|
-| Succeeded | `EXIT_OK` | |
-| Rejected at gate | `EXIT_REJECTED_AT_GATE` | A user decision, not a failure |
-| Halted at retry ceiling | `EXIT_HALTED_AT_CEILING` | Distinct from a generic failure |
-| Environment failure | `EXIT_ENVIRONMENT_FAILURE` | A broken toolchain, **not** a code defect — this distinction is what protects the repair budget |
-| Failure | `EXIT_FAILURE` | A genuine code defect |
-| Usage error | `EXIT_USAGE` | Should be unreachable from the GUI; if seen, it is a module bug |
+| Persisted outcome | Presentation requirement |
+|---|---|
+| `completed` | |
+| `rejected_at_gate` | A user decision, not a failure. Costs under 10% of a completed run |
+| `halted_at_ceiling` | Distinct from a generic failure — repair attempts were exhausted |
+| `aborted_environment` | A broken toolchain, **not** a code defect. Consumes zero retry budget — this is what protects the repair budget |
+
+**Do not confuse run outcomes with CLI exit codes.** `exits.py` defines six exit codes, but only four ever become a persisted `outcome`:
+
+- `EXIT_OK` → `completed`; `EXIT_REJECTED_AT_GATE` → `rejected_at_gate`; `EXIT_HALTED_AT_CEILING` → `halted_at_ceiling`; `EXIT_ENVIRONMENT_FAILURE` → `aborted_environment`.
+- `EXIT_FAILURE` and `EXIT_USAGE` are process-level results only. A run that exits with either **has no run record to read**, so the module reports it from the job's own failure state, not from an outcome field.
+
+A code defect that the pipeline could not repair surfaces as `halted_at_ceiling`, not as a distinct "failure" outcome. The environment-vs-defect distinction FR-017 requires is therefore `aborted_environment` versus `halted_at_ceiling` — that is the whole of it.
 
 ### A4. PendingIntent
 

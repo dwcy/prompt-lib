@@ -28,15 +28,15 @@ Nothing in Phase 3+ may start until Phase 2 is complete.
 
 ## Phase 1: Setup (Shared Infrastructure)
 
-**Status**: ⬜ Pending (0/6 — T001–T006)
+**Status**: ✅ Complete (6/6 — T001–T006)
 **Purpose**: Create the skeletons both modules fill in. No behaviour yet.
 
-- [ ] T001 [P] Create backend service stubs `setup/src/cabal/webapi/run_supervisor.py`, `codegen_service.py`, `evals_service.py`, `evals_definitions_service.py` — Owner: @python-architect
-- [ ] T002 [P] Create action catalog stubs `setup/src/cabal/webapi/actions_catalog/codegen.py` and `actions_catalog/evals.py`, registered in the existing catalog index — Owner: @python-architect
-- [ ] T003 [P] Create router stubs `setup/src/cabal/webapi/routers/codegen.py` and `routers/evals.py`, mounted in `setup/src/cabal/webapi/app.py` — Owner: @python-architect
-- [ ] T004 [P] Create frontend module trees `apps/cabal-desktop/src/modules/codegen/` and `modules/evals/`, each with `components/` and `hooks/` — Owner: @react-architect
-- [ ] T005 [P] Create typed API clients `apps/cabal-desktop/src/api/codegen.ts` and `api/evals.ts` — Owner: @react-architect
-- [ ] T006 Register both modules in `apps/cabal-desktop/src/modules/registry.ts`, routed to the existing `ModuleUnavailable` placeholder until their phases land — Owner: @react-architect
+- [X] T001 [P] Create backend service stubs `setup/src/cabal/webapi/run_supervisor.py`, `codegen_service.py`, `evals_service.py`, `evals_definitions_service.py` — Owner: @python-architect
+- [X] T002 [P] Create action catalog stubs `setup/src/cabal/webapi/actions_catalog/codegen.py` and `actions_catalog/evals.py`, registered in the existing catalog index — Owner: @python-architect
+- [X] T003 [P] Create router stubs `setup/src/cabal/webapi/routers/codegen.py` and `routers/evals.py`, mounted in `setup/src/cabal/webapi/app.py` — Owner: @python-architect
+- [X] T004 [P] Create frontend module trees `apps/cabal-desktop/src/modules/codegen/` and `modules/evals/`, each with `components/` and `hooks/` — Owner: @react-architect
+- [X] T005 [P] Create typed API clients `apps/cabal-desktop/src/api/codegen.ts` and `api/evals.ts` — Owner: @react-architect
+- [X] T006 Register both modules in `apps/cabal-desktop/src/modules/registry.ts`, routed to the existing `ModuleUnavailable` placeholder until their phases land — Owner: @react-architect
 
 ---
 
@@ -75,7 +75,7 @@ Nothing in Phase 3+ may start until Phase 2 is complete.
 - [ ] T023 [P] [US1] Review the approval-gate presentation for states, edge cases, and how a stale or expired plan reads — Owner: @ux-analyst
 - [ ] T024 [US1] Build `apps/cabal-desktop/src/modules/codegen/CodegenModule.tsx` — module shell, project gate, prose request form, template selection, and the new-service destination control constrained to paths inside the selected project (FR-011a, SC-014) — Owner: @react-architect — Parallel: yes
 - [ ] T025 [US1] Build `modules/codegen/components/ApprovalGate.tsx` — intended-file-change list, explicit approve and reject controls, stale-plan banner. Must never proceed on timeout or navigation — Owner: @react-architect — Parallel: yes
-- [ ] T026 [US1] Build `modules/codegen/components/RunOutcome.tsx` keeping all six end states distinguishable, with environment failure visibly separate from a code defect — Owner: @react-architect — Parallel: yes
+- [ ] T026 [US1] Build `modules/codegen/components/RunOutcome.tsx` rendering the four persisted outcomes from `run-record.schema.json` (`completed`, `rejected_at_gate`, `halted_at_ceiling`, `aborted_environment`) distinctly, plus the no-run-record case where the process failed outright. `aborted_environment` vs `halted_at_ceiling` IS the environment-vs-defect distinction (FR-017) — see data-model A3; do not invent a sixth outcome from CLI exit codes — Owner: @react-architect — Parallel: yes
 - [ ] T027 [P] [US1] CSS for the codegen module — Owner: @frontend-css
 - [ ] T028 [P] [US1] Vitest + RTL coverage for the gate and outcome components in `apps/cabal-desktop/tests/` — Owner: @frontend-tester
 - [ ] T029 [US1] Playwright end-to-end: working tree unchanged at the gate; reject leaves it clean; approve applies only the listed files; the gate survives a full app restart — Owner: @frontend-tester
