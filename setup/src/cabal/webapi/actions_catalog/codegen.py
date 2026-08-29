@@ -79,7 +79,7 @@ def _load_pending_for_token(project: Path, token: str) -> dotnetgen_intent.Pendi
 def _intent_digest(params: dict, _state: Any) -> str:
     """`codegen.approve`/`codegen.reject` digests bind to the pending intent's own token
     (data-model B4), not to project state -- see module docstring for why."""
-    return f"intent:{params['token']}"
+    return f"intent:{params['intent_ref']}"
 
 
 # --- codegen.plan -------------------------------------------------------------------
