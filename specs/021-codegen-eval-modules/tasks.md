@@ -42,19 +42,21 @@ Nothing in Phase 3+ may start until Phase 2 is complete.
 
 ## Phase 2: Foundational (BLOCKING — sequential, single owner)
 
-**Status**: ⬜ Pending (0/9 — T007–T015)
+**Status**: 🟡 In progress (7/9 — T007–T015; T012b emission deferred to the launch actions, T015 in flight)
 **Purpose**: The run-supervision layer. Everything else depends on it.
 
 ⚠️ **Do not parallelise this phase and do not start Phase 3 before it completes.** One owner, in order — see research.md R1/R2/R7.
 
-- [ ] T007 Contract test for the SSE run-event grammar in `tests/contract/test_run_events.py` — assert a client that disconnects longer than the 200-frame ring buffer and reconnects with `Last-Event-ID` still reaches correct state, and that a gap is signalled explicitly rather than silently — Owner: @python-tester
-- [ ] T008 Implement detached process launch and PID tracking in `setup/src/cabal/webapi/run_supervisor.py` — the process must survive backend exit (research.md R1) — Owner: @python-architect
-- [ ] T009 Implement read-time state reconciliation in `run_supervisor.py`: process alive → `running`; process gone + artifacts complete → the artifacts' outcome; process gone + artifacts incomplete → `interrupted` — Owner: @python-architect
-- [ ] T010 Ensure `interrupted` is a derived presentation state only, never written to the `jobs` table state column, so the existing job state machine and its other consumers are untouched — Owner: @python-architect
-- [ ] T011 Implement the post-restart exclusive-resource liveness check in `run_supervisor.py` — the in-memory `_resources` lock is lost on restart while a detached run may still be live (research.md R7) — Owner: @python-architect
+- [X] T007 Contract test for the SSE run-event grammar in `tests/contract/test_run_events.py` — assert a client that disconnects longer than the 200-frame ring buffer and reconnects with `Last-Event-ID` still reaches correct state, and that a gap is signalled explicitly rather than silently — Owner: @python-tester
+- [X] T008 Implement detached process launch and PID tracking in `setup/src/cabal/webapi/run_supervisor.py` — the process must survive backend exit (research.md R1) — Owner: @python-architect
+- [X] T009 Implement read-time state reconciliation in `run_supervisor.py`: process alive → `running`; process gone + artifacts complete → the artifacts' outcome; process gone + artifacts incomplete → `interrupted` — Owner: @python-architect
+- [X] T010 Ensure `interrupted` is a derived presentation state only, never written to the `jobs` table state column, so the existing job state machine and its other consumers are untouched — Owner: @python-architect
+- [X] T011 Implement the post-restart exclusive-resource liveness check in `run_supervisor.py` — the in-memory `_resources` lock is lost on restart while a detached run may still be live (research.md R7) — Owner: @python-architect
 - [ ] T012 Emit structured `run.progress` and `run.state` events carrying **absolute** position, not deltas, per `contracts/run-events.md` — Owner: @python-architect
-- [ ] T013 Implement process-tree cancellation reusing `cabal.evals.proc.kill_process_tree`, with temporary-worktree cleanup — Owner: @python-architect
-- [ ] T014 Implement `ModuleAvailability` probes for both modules per data-model B3, keeping `no_benchmark_tree` (setup state) and `definitions_invalid` (error) distinct — Owner: @python-architect
+  - [X] T012a Structured-event **channel**: one sequence space in `jobs.py` carrying both output lines and typed events, rendered by `sse.py` through the same Last-Event-ID/gap machinery, so a single reconnect header resumes both — Owner: @python-architect
+  - [ ] T012b Actual **emission** from the supervisor. `run_supervisor.py` emits nothing today; the contract test goes green via the `test.job_emitter` fixture, which proves the grammar but not the producer. A run only produces progress once something tails the detached process, so this lands with the launch actions — verify in T029 (codegen) and T050 (evals) that events come from a real run, not a fixture — Owner: @python-architect
+- [X] T013 Implement process-tree cancellation reusing `cabal.evals.proc.kill_process_tree`, with temporary-worktree cleanup — Owner: @python-architect
+- [X] T014 Implement `ModuleAvailability` probes for both modules per data-model B3, keeping `no_benchmark_tree` (setup state) and `definitions_invalid` (error) distinct — Owner: @python-architect
 - [ ] T015 Integration tests for the reconciliation state machine in `tests/integration/test_run_supervisor.py`, including the stranded-`running` case that motivated it — Owner: @python-tester
 
 ---
