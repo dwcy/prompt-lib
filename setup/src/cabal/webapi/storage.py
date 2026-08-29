@@ -12,7 +12,7 @@ import platformdirs
 
 from cabal.webapi.security import restrict_to_owner
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS jobs (
@@ -61,6 +61,17 @@ CREATE TABLE IF NOT EXISTS supervised_runs (
     pid INTEGER,
     artifact_root TEXT NOT NULL,
     created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS news_source_preferences (
+    source_id TEXT PRIMARY KEY,
+    enabled INTEGER NOT NULL DEFAULT 1,
+    updated_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS news_item_state (
+    item_id TEXT PRIMARY KEY,
+    is_read INTEGER NOT NULL DEFAULT 0,
+    is_saved INTEGER NOT NULL DEFAULT 0,
+    updated_at TEXT NOT NULL
 );
 """
 
@@ -319,6 +330,27 @@ class Storage:
     def delete_supervised_run(self, exclusive_resource: str) -> None:
         self._write(
             "DELETE FROM supervised_runs WHERE exclusive_resource = ?", (exclusive_resource,)
+        )
+
+    # -- news feed preferences -----------------------------------------
+
+    def list_news_source_preferences(self) -> dict[str, bool]:
+        return {row["source_id"]: bool(row["enabled"]) for row in self._rows("SELECT source_id, enabled FROM news_source_preferences")}
+
+    def set_news_source_enabled(self, source_id: str, enabled: bool, updated_at: str) -> None:
+        self._write(
+            "INSERT OR REPLACE INTO news_source_preferences (source_id, enabled, updated_at) VALUES (?, ?, ?)",
+            (source_id, int(enabled), updated_at),
+        )
+
+    def list_news_item_states(self) -> dict[str, dict[str, bool]]:
+        return {row["item_id"]: {"read": bool(row["is_read"]), "saved": bool(row["is_saved"])} for row in self._rows("SELECT item_id, is_read, is_saved FROM news_item_state")}
+
+    def set_news_item_state(self, item_id: str, *, read: bool | None = None, saved: bool | None = None, updated_at: str) -> None:
+        current = self.list_news_item_states().get(item_id, {"read": False, "saved": False})
+        self._write(
+            "INSERT OR REPLACE INTO news_item_state (item_id, is_read, is_saved, updated_at) VALUES (?, ?, ?, ?)",
+            (item_id, int(current["read"] if read is None else read), int(current["saved"] if saved is None else saved), updated_at),
         )
 
 

@@ -106,6 +106,9 @@ const ReleaseNotesModule = lazy(() =>
     default: module.ReleaseNotesModule,
   })),
 );
+const NewsModule = lazy(() =>
+  import("@/modules/news/NewsModule").then((module) => ({ default: module.NewsModule })),
+);
 const ScheduledTasksModule = lazy(() =>
   import("@/modules/scheduled-tasks/ScheduledTasksModule").then((module) => ({
     default: module.ScheduledTasksModule,
@@ -158,6 +161,7 @@ export const MODULE_NAV_LABELS: Record<ModuleKey, string> = {
   diagnostics: "Diagnostics",
   docs: "Docs",
   release_notes: "Release news",
+  news: "AI news feed",
 };
 
 export const MODULE_OPERATION_SUMMARIES: Record<ModuleKey, string> = {
@@ -188,6 +192,7 @@ export const MODULE_OPERATION_SUMMARIES: Record<ModuleKey, string> = {
   diagnostics: "Backend signals, audit, and live events",
   docs: "README summary and project reference documents",
   release_notes: "What shipped, where it lives, and how to use it",
+  news: "AI, security, package, Azure, and Hacker News signals",
 };
 
 export const MODULE_GROUP_ORDER: ModuleGroup[] = [
@@ -231,6 +236,7 @@ export const BACKEND_MODULE_KEYS = [
   "docs",
   "codegen",
   "evals",
+  "news",
 ] as const;
 
 /** Pages with no backend module; the sidebar shows them, health never reports on them. */
@@ -427,6 +433,13 @@ export const MODULE_REGISTRY: ModuleDefinition[] = [
     group: "agents",
     phase: 17,
     component: EvalsModule,
+  },
+  {
+    key: "news",
+    title: "AI Technology News",
+    group: "reference",
+    phase: 18,
+    component: NewsModule,
   },
 ];
 
