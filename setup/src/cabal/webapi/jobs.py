@@ -121,6 +121,15 @@ class JobHandle:
         self._job = job
         self._manager = manager
 
+    @property
+    def job_id(self) -> str:
+        """The real `Job.job_id`, so a runner can persist a supervised-run handle
+        (021-codegen-eval-modules T018/T019) keyed by the same id the client's 202
+        response and `/api/jobs/{job_id}` already use -- without a race against
+        `JobManager.create` starting the runner thread before its return value is
+        assigned on the caller's side."""
+        return self._job.job_id
+
     def emit_line(self, text: str) -> None:
         self._job.append_line(text)
 
