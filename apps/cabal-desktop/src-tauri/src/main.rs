@@ -24,6 +24,22 @@ struct BackendHandle {
 const BACKEND_MONITOR_INTERVAL: Duration = Duration::from_secs(2);
 const BACKEND_MONITOR_FAILURE_THRESHOLD: usize = 3;
 
+/// Reload-safe source of the backend connection. The `window.__CABAL__` eval is
+/// one-shot and wiped by any webview reload (F5/Ctrl+R), so the frontend's
+/// runtimeConfig.ts polls this command on every page load until the sidecar
+/// handshake has completed. Returns `None` while the handshake is still pending.
+#[tauri::command]
+fn backend_config(
+    handle: tauri::State<'_, BackendHandle>,
+) -> Option<backend::BackendConnection> {
+    handle
+        .state
+        .lock()
+        .expect("backend state mutex poisoned")
+        .as_ref()
+        .map(|state| state.connection())
+}
+
 fn main() {
     tauri::Builder::default()
         // single-instance must be the first registered plugin.
@@ -36,6 +52,7 @@ fn main() {
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .plugin(tauri_plugin_dialog::init())
         .manage(BackendHandle::default())
+        .invoke_handler(tauri::generate_handler![backend_config])
         .setup(|app| {
             let handle_for_spawn = app.handle().clone();
             let handle_for_apply = app.handle().clone();
@@ -50,14 +67,18 @@ fn main() {
                 .await;
                 match outcome {
                     Ok(Ok(state)) => {
-                        if let Some(window) = handle_for_apply.get_webview_window("main") {
-                            let _ = window.eval(&backend::injection_script(&state.connection()));
-                        }
+                        // Store the state FIRST so the `backend_config` command (the durable
+                        // config source) is answerable the moment it exists; the eval below is
+                        // only a best-effort fast path that saves the frontend one IPC poll.
+                        let connection = state.connection();
                         *handle_for_apply
                             .state::<BackendHandle>()
                             .state
                             .lock()
                             .expect("backend state mutex poisoned") = Some(state);
+                        if let Some(window) = handle_for_apply.get_webview_window("main") {
+                            let _ = window.eval(&backend::injection_script(&connection));
+                        }
                         start_backend_monitor(handle_for_apply);
                     }
                     Ok(Err(err)) => {
@@ -138,10 +159,13 @@ fn start_backend_monitor(app: tauri::AppHandle) {
                         backend::shutdown(state);
                         return;
                     }
-                    if let Some(window) = app.get_webview_window("main") {
-                        let _ = window.eval(&backend::injection_script(&state.connection()));
-                    }
+                    // Same ordering as startup: make `backend_config` answerable before the
+                    // best-effort eval refreshes any already-loaded page.
+                    let connection = state.connection();
                     *handle.state.lock().expect("backend state mutex poisoned") = Some(state);
+                    if let Some(window) = app.get_webview_window("main") {
+                        let _ = window.eval(&backend::injection_script(&connection));
+                    }
                 }
                 Err(err) => eprintln!("cabal-desktop: backend reconnect failed: {err}"),
             }
