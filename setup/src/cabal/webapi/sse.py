@@ -1,4 +1,12 @@
-"""SSE event grammar and stream generators for job output and the diagnostics feed."""
+"""SSE event grammar and stream generators for job output and the diagnostics feed.
+
+Job streams carry two frame kinds sharing one ring buffer and sequence space: lossy
+`output` text (`Job.append_line`) and typed, replayable events such as `run.progress` /
+`cell.complete` / `run.state` (`Job.append_event`, `JobHandle.emit_event`) -- see
+`specs/021-codegen-eval-modules/contracts/run-events.md`. Job *kind* does not change
+which frame names get emitted; any job can carry either kind, so the same grammar serves
+every job kind, `codegen.run` and `evals.matrix` included.
+"""
 
 from __future__ import annotations
 
@@ -103,11 +111,17 @@ async def diagnostics_event_stream(recorder, last_event_id: int | None) -> Async
 
 
 def _drain(job: Job, last_seq: int) -> tuple[list[str], int]:
-    lines, dropped = job.lines_after(last_seq)
+    """Render buffered frames since last_seq: output lines and structured events
+    (`run.progress`, `cell.complete`, ...) share one sequence space (jobs.py T012), so a
+    reconnecting client's single Last-Event-ID resumes both, and a gap covers whichever
+    kind of frame was evicted.
+    """
+    job_frames, dropped = job.frames_after(last_seq)
     frames: list[str] = []
     if dropped:
         frames.append(format_event("gap", {"dropped": dropped}))
-    for seq, text in lines:
-        frames.append(format_event("output", {"line": text, "seq": seq}, event_id=seq))
+    for seq, event, data in job_frames:
+        payload = {**data, "seq": seq} if event == "output" else data
+        frames.append(format_event(event, payload, event_id=seq))
         last_seq = seq
     return frames, last_seq

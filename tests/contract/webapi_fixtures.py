@@ -158,7 +158,12 @@ def register_fixture_actions(app, *, secret: str = FAKE_SECRET) -> None:
       registry self-check assertion.
     - ``test.job_emitter``: creates a job via ``app.state.jobs`` that emits N lines
       (optionally one containing FAKE_SECRET), honoring ``exclusive_resource`` and
-      ``ring_buffer_size`` params -- the cheap job-kind seam for jobs/SSE tests.
+      ``ring_buffer_size`` params -- the cheap job-kind seam for jobs/SSE tests. Also
+      emits one ``run.progress`` structured event per line (absolute ``stage_index``/
+      ``stage_count``, per ``contracts/run-events.md``), since T012 made job kind a
+      non-factor in which frame types a job may carry (``JobHandle.emit_event``) --
+      this is the same kind-agnostic path a real ``codegen.run``/``evals.matrix`` job
+      exercises once launched (test_run_events.py's module docstring).
     """
     actions_module = import_or_fail("cabal.webapi.actions")
     ActionDescriptor = actions_module.ActionDescriptor
@@ -222,6 +227,15 @@ def register_fixture_actions(app, *, secret: str = FAKE_SECRET) -> None:
                 if secret_line and index == 0:
                     text = f"line {index} token={secret}"
                 handle.emit_line(text)
+                handle.emit_event(
+                    "run.progress",
+                    {
+                        "run_id": "test-fixture",
+                        "stage_index": index + 1,
+                        "stage_count": lines,
+                        "status": "running" if index + 1 < lines else "succeeded",
+                    },
+                )
                 time.sleep(delay_ms / 1000)
             handle.finish("succeeded")
 

@@ -50,7 +50,12 @@ class Job:
         self.started_at: str | None = None
         self.finished_at: str | None = None
         self._lock = threading.Lock()
-        self._buffer: deque[tuple[int, str]] = deque(maxlen=max(1, ring_buffer_size))
+        # One ring buffer, one sequence space, for both output lines and structured
+        # events (021-codegen-eval-modules T012 / contracts/run-events.md): a client's
+        # single Last-Event-ID must resume both channels together, and the contract's
+        # gap/eviction guarantee has to hold regardless of which kind of frame filled
+        # the buffer. Each entry is (seq, sse_event_name, payload).
+        self._frames: deque[tuple[int, str, dict]] = deque(maxlen=max(1, ring_buffer_size))
         self._tail: deque[str] = deque(maxlen=OUTPUT_TAIL_LIMIT)
         self._next_seq = 0
         self._cancel_event = threading.Event()
@@ -58,14 +63,24 @@ class Job:
     def append_line(self, text: str) -> None:
         redacted = redact_text(text)
         with self._lock:
-            self._buffer.append((self._next_seq, redacted))
+            self._frames.append((self._next_seq, "output", {"line": redacted}))
             self._tail.append(redacted)
             self._next_seq += 1
 
-    def lines_after(self, last_seq: int) -> tuple[list[tuple[int, str]], int]:
-        """Return buffered lines newer than last_seq plus the count evicted before them."""
+    def append_event(self, event: str, data: dict) -> None:
+        """Emit a structured, replayable event (`run.progress`, `cell.complete`, ...)
+        sharing the output ring buffer's sequence space and eviction/gap semantics, so a
+        reconnecting client's Last-Event-ID covers both kinds of frame (contracts/run-events.md).
+        Redaction happens at serialization (`sse.format_event`), same as output lines.
+        """
         with self._lock:
-            available = [(seq, text) for seq, text in self._buffer if seq > last_seq]
+            self._frames.append((self._next_seq, event, dict(data)))
+            self._next_seq += 1
+
+    def frames_after(self, last_seq: int) -> tuple[list[tuple[int, str, dict]], int]:
+        """Return buffered frames newer than last_seq plus the count evicted before them."""
+        with self._lock:
+            available = [(seq, event, data) for seq, event, data in self._frames if seq > last_seq]
             dropped = 0
             if available and available[0][0] > last_seq + 1:
                 dropped = available[0][0] - last_seq - 1
@@ -108,6 +123,9 @@ class JobHandle:
 
     def emit_line(self, text: str) -> None:
         self._job.append_line(text)
+
+    def emit_event(self, event: str, data: dict) -> None:
+        self._job.append_event(event, data)
 
     def is_cancelled(self) -> bool:
         return self._job.is_cancelled()

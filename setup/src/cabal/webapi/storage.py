@@ -12,7 +12,7 @@ import platformdirs
 
 from cabal.webapi.security import restrict_to_owner
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS jobs (
@@ -52,6 +52,15 @@ CREATE TABLE IF NOT EXISTS diagnostics (
     message TEXT NOT NULL,
     kind TEXT NOT NULL,
     occurred_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS supervised_runs (
+    exclusive_resource TEXT PRIMARY KEY,
+    job_id TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    run_id TEXT NOT NULL,
+    pid INTEGER,
+    artifact_root TEXT NOT NULL,
+    created_at TEXT NOT NULL
 );
 """
 
@@ -273,6 +282,44 @@ class Storage:
             sql += " LIMIT ?"
             params = (*params, int(limit))
         return [dict(row) for row in self._rows(sql, params)]
+
+    # -- supervised runs (021-codegen-eval-modules, data-model B1) -------
+
+    def save_supervised_run(self, record: dict) -> None:
+        """One row per `exclusive_resource`, replaced on each launch.
+
+        This is the durable side of `run_supervisor.SupervisedRun` -- the handle itself
+        is deliberately ephemeral (research.md R1/R2), but a bare `pid` has to survive a
+        backend restart for the post-restart exclusive-resource liveness check
+        (research.md R7) to find a still-live detached run again; nothing else records
+        a run's pid anywhere (`.dotnetgen/runs/<id>.json` and `evals/results/<id>/run.json`
+        do not carry one).
+        """
+        self._write(
+            "INSERT OR REPLACE INTO supervised_runs "
+            "(exclusive_resource, job_id, kind, run_id, pid, artifact_root, created_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (
+                record["exclusive_resource"],
+                record["job_id"],
+                record["kind"],
+                record["run_id"],
+                record.get("pid"),
+                record["artifact_root"],
+                record["created_at"],
+            ),
+        )
+
+    def load_supervised_run(self, exclusive_resource: str) -> dict | None:
+        rows = self._rows(
+            "SELECT * FROM supervised_runs WHERE exclusive_resource = ?", (exclusive_resource,)
+        )
+        return dict(rows[0]) if rows else None
+
+    def delete_supervised_run(self, exclusive_resource: str) -> None:
+        self._write(
+            "DELETE FROM supervised_runs WHERE exclusive_resource = ?", (exclusive_resource,)
+        )
 
 
 def _job_record(row: sqlite3.Row) -> dict:
