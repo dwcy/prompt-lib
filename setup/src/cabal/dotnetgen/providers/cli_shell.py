@@ -91,12 +91,18 @@ def flatten(messages: tuple[Message, ...]) -> str:
     return "\n\n".join(parts)
 
 
-def extract_result(event: dict) -> tuple[str, Usage, float]:
+def extract_result(event: dict) -> tuple[str, Usage, float | None]:
     """Pull text, usage and cost from a stream-json `result` event (T014).
 
     `result.result` is the assembled reply and `is_error` is the canonical failure flag, per the
     documented schema. Usage field names vary, so normalisation is delegated to `parse_usage`,
     which reports absence rather than substituting a zero.
+
+    Cost is None when the event carries none. Returning 0.0 there and letting the caller coerce
+    it back with `cost if cost else None` loses the distinction twice over: an unreported cost
+    becomes a measured zero, and a genuine measured zero -- what a locally hosted model actually
+    costs -- becomes "unknown". SC-010 reconciles against this figure, and a fabricated zero is
+    not a report.
     """
     if event.get("is_error") or event.get("subtype") not in (None, "success"):
         detail = event.get("result") or event.get("subtype") or "unknown error"
@@ -108,7 +114,7 @@ def extract_result(event: dict) -> tuple[str, Usage, float]:
 
     usage = parse_usage(event.get("usage"))
     cost = event.get("total_cost_usd")
-    return text, usage, float(cost) if isinstance(cost, (int, float)) else 0.0
+    return text, usage, float(cost) if isinstance(cost, (int, float)) else None
 
 
 @dataclass
@@ -144,9 +150,14 @@ class ClaudeSession:
 
     def _pump(self) -> None:
         assert self._process is not None and self._process.stdout is not None
-        for line in self._process.stdout:
-            self._lines.put(line)
-        self._lines.put(None)
+        # Bind both locally. `_discard_pending` swaps in a fresh queue after a timed-out turn,
+        # and a reader still draining the old process would otherwise start writing into that
+        # new queue -- leaking the dead turn's events into the next prompt's answer. Holding a
+        # reference to its own queue means an orphaned reader can only talk to itself.
+        stdout, lines = self._process.stdout, self._lines
+        for line in stdout:
+            lines.put(line)
+        lines.put(None)
 
     def send(self, prompt: str, timeout: int = TURN_TIMEOUT_SECONDS) -> dict:
         """Write one user event and read events until the turn's `result` arrives."""
@@ -222,7 +233,9 @@ class CliShellProvider:
 
         if self.cli == "claude":
             text, usage, cost = extract_result(self._claude_turn(prompt))
-            reported = cost if cost else None
+            # Passed through as-is: `cost if cost else None` would report a genuine measured
+            # zero as unknown, which is the conflation the ledger exists to prevent.
+            reported = cost
         else:
             text, usage, _cost = self._codex_turn(prompt)
             # codex exec reports no usage or cost, so there is nothing to reconcile against.
