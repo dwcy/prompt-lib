@@ -53,6 +53,7 @@ MODULE_KEYS = (
     "codex",
     "diagnostics",
     "docs",
+    "news",
 )
 
 # Modules whose routers are mounted; the rest honestly report "unavailable".
@@ -82,6 +83,7 @@ IMPLEMENTED_MODULES = frozenset(
         "provider",
         "init_wizard",
         "docs",
+        "news",
     }
 )
 

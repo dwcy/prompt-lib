@@ -37,6 +37,7 @@ from cabal.webapi.routers import evals as evals_router
 from cabal.webapi.routers import knowledge as knowledge_router
 from cabal.webapi.routers import local_config as local_config_router
 from cabal.webapi.routers import mcp as mcp_router
+from cabal.webapi.routers import news as news_router
 from cabal.webapi.routers import projects as projects_router
 from cabal.webapi.routers import security_scan as security_scan_router
 from cabal.webapi.routers import sessions as sessions_router
@@ -111,6 +112,8 @@ def create_app(
     app.state.handshake_path = Path(handshake_path) if handshake_path is not None else None
     app.state.started_at = utc_now_iso()
     app.state.request_shutdown = lambda: None
+    app.state.news_items = None
+    app.state.news_health = None
 
     security.apply_cors(app)
     # Flatten routes onto the app instead of include_router: FastAPI >= 0.139 defers
@@ -128,6 +131,7 @@ def create_app(
     app.router.routes.extend(account_router.router.routes)
     app.router.routes.extend(knowledge_router.router.routes)
     app.router.routes.extend(mcp_router.router.routes)
+    app.router.routes.extend(news_router.router.routes)
     app.router.routes.extend(services_router.router.routes)
     app.router.routes.extend(scheduled_tasks_router.router.routes)
     app.router.routes.extend(security_scan_router.router.routes)

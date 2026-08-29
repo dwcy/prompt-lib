@@ -110,6 +110,21 @@ export const overviewPayloadSchema = z.object({
 // overviewSectionSchema above; the `stale` flag itself already lives on the envelope.
 export const dashboardSectionSchema = z.record(z.string(), z.unknown());
 
+export const newsItemSchema = z.object({
+  id: z.string(), source_id: z.string(), source_name: z.string(), category: z.string(),
+  title: z.string(), canonical_url: z.string(), summary: z.string(),
+  published_at: z.string().nullable(), tags: z.array(z.string()),
+  read: z.boolean().optional(), saved: z.boolean().optional(),
+  security: z.record(z.string(), z.unknown()).nullable(), service: z.record(z.string(), z.unknown()).nullable(),
+});
+export const newsSourceSchema = z.object({
+  id: z.string(), name: z.string(), category: z.string(), endpoint: z.string(), format: z.string(),
+  capabilities: z.array(z.string()), health: z.string(), error_hint: z.string().nullable(), enabled: z.boolean().optional(),
+});
+export const newsPayloadSchema = z.object({ items: z.array(newsItemSchema), sources: z.array(newsSourceSchema) });
+export const newsItemStateSchema = z.object({ read: z.boolean(), saved: z.boolean() });
+export const newsSourcesPayloadSchema = z.object({ sources: z.array(newsSourceSchema) });
+
 export const diagnosticsListSchema = z.object({
   events: z.array(diagnosticEventSchema),
 });
@@ -144,6 +159,9 @@ export type DriftFlags = z.infer<typeof driftFlagsSchema>;
 export type OverviewSection = z.infer<typeof overviewSectionSchema>;
 export type OverviewPayload = z.infer<typeof overviewPayloadSchema>;
 export type DashboardSection = z.infer<typeof dashboardSectionSchema>;
+export type NewsItem = z.infer<typeof newsItemSchema>;
+export type NewsSource = z.infer<typeof newsSourceSchema>;
+export type NewsPayload = z.infer<typeof newsPayloadSchema>;
 export type DiagnosticsList = z.infer<typeof diagnosticsListSchema>;
 
 export interface SnapshotEnvelope<T> {
