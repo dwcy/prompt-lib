@@ -451,7 +451,7 @@ def test_pending_intent_has_no_expiry_even_when_very_old(app_factory, tmp_path) 
 
     assert response.status_code == 200, response.text
     assert response.json()["data"] is not None, "a decades-old pending intent must not be treated as expired"
-    assert response.json()["data"]["token"] == pending.token
+    assert response.json()["data"]["intent_ref"] == pending.token
 
 
 # ------------------------------------------------------------------------------------- bindings ---
@@ -545,7 +545,7 @@ def test_codegen_approve_digest_binds_to_pending_intent_token_and_refuses_stale_
 
     prepared = client.post(
         "/api/actions/codegen.approve/prepare",
-        json={"token": pending.token},
+        json={"intent_ref": pending.token},
         headers=auth_headers(),
     )
     assert prepared.status_code == 200, prepared.text
@@ -582,7 +582,7 @@ def test_codegen_approve_execute_on_an_already_redeemed_token_is_refused(app_fac
 
     first_prepare = client.post(
         "/api/actions/codegen.approve/prepare",
-        json={"token": pending.token},
+        json={"intent_ref": pending.token},
         headers=auth_headers(),
     )
     assert first_prepare.status_code == 200, first_prepare.text
@@ -597,7 +597,7 @@ def test_codegen_approve_execute_on_an_already_redeemed_token_is_refused(app_fac
 
     second_prepare = client.post(
         "/api/actions/codegen.approve/prepare",
-        json={"token": pending.token},
+        json={"intent_ref": pending.token},
         headers=auth_headers(),
     )
     assert second_prepare.status_code in {200, 404, 409}, second_prepare.text
@@ -630,7 +630,7 @@ def test_codegen_approve_failed_apply_leaves_pending_intent_intact(app_factory, 
 
     prepared = client.post(
         "/api/actions/codegen.approve/prepare",
-        json={"token": pending.token},
+        json={"intent_ref": pending.token},
         headers=auth_headers(),
     )
     assert prepared.status_code == 200, prepared.text
@@ -659,7 +659,7 @@ def test_codegen_approve_effect_preview_files_changed_mirrors_the_intent_plan(ap
 
     prepared = client.post(
         "/api/actions/codegen.approve/prepare",
-        json={"token": pending.token},
+        json={"intent_ref": pending.token},
         headers=auth_headers(),
     )
     assert prepared.status_code == 200, prepared.text
@@ -688,7 +688,7 @@ def test_codegen_reject_clears_intent_leaves_tree_unmodified_and_audits_the_deci
 
     prepared = client.post(
         "/api/actions/codegen.reject/prepare",
-        json={"token": pending.token},
+        json={"intent_ref": pending.token},
         headers=auth_headers(),
     )
     assert prepared.status_code == 200, prepared.text

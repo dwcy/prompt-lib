@@ -38,7 +38,9 @@ def definitions_validate(request: Request):
 
 @router.get("/api/evals/runs")
 def runs(request: Request):
-    data = {"runs": evals_service.list_runs(request.app.state.project)}
+    data = {
+        "runs": evals_service.list_runs(request.app.state.project, storage=request.app.state.storage)
+    }
     return envelope_response(data=data, source="evals")
 
 

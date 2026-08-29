@@ -1,3 +1,9 @@
+# > 400 LoC justified: T018/T019 added `supervise_command`, the one function that spawns
+# + waits + relays a JobManager job onto exactly the `SupervisedRun` bookkeeping this
+# module already owns; splitting it into a second file would separate the wait/relay
+# loop from the persistence/reconciliation state it reads and writes, without reducing
+# the single concern ("what a run's live handle means and how to drive one to
+# completion") to fewer than one.
 # -*- coding: utf-8 -*-
 """Detached-process run supervision: the live handle over a codegen/eval run and the
 read-time reconciliation of its state against on-disk artifacts.
@@ -26,6 +32,7 @@ zero-write GET sweep every `/api/*` route is already held to.
 from __future__ import annotations
 
 import json
+import subprocess
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -146,6 +153,56 @@ def launch_detached(
     )
     storage.save_supervised_run(_run_to_row(run))
     return run
+
+
+def supervise_command(
+    kind: RunKind,
+    *,
+    command: Sequence[str],
+    cwd: Path | str,
+    handle: object,
+    run_id: str,
+    artifact_root: str,
+    exclusive_resource: ExclusiveResource,
+    storage: Storage,
+    env: Mapping[str, str] | None = None,
+    log_path: Path | None = None,
+    poll_interval: float = 0.1,
+) -> int:
+    """Spawn `command` as the detached process backing one `JobManager` job, persist its
+    supervised-run handle, block until it exits (or the job is cancelled), then release
+    the handle and return the process's exit code (or -1 on cancellation).
+
+    Bridges `launch_detached`'s durable, restart-surviving handle with a live job: the
+    process itself outlives this backend (research.md R1), but *this* call -- run from
+    inside `JobManager`'s own runner thread via `handle` (a `JobHandle`) -- is what turns
+    "the detached process finished" into something the caller can act on, so
+    `codegen.plan`/`codegen.approve` (T018/T019) do not each reimplement the wait/cancel
+    loop. `handle.job_id` is what makes the persisted row findable by
+    `check_resource_liveness` under the *same* id the client's 202 response carries.
+    """
+    process = spawn_detached(command, cwd=cwd, env=env, log_path=log_path)
+    run = SupervisedRun(
+        job_id=handle.job_id,  # type: ignore[attr-defined]
+        kind=kind,
+        run_id=run_id,
+        pid=process.pid,
+        artifact_root=str(artifact_root),
+        exclusive_resource=exclusive_resource,
+    )
+    storage.save_supervised_run(_run_to_row(run))
+    try:
+        while True:
+            if handle.is_cancelled():  # type: ignore[attr-defined]
+                terminate_by_pid(process.pid)
+                process.wait(timeout=5)
+                return -1
+            try:
+                return process.wait(timeout=poll_interval)
+            except subprocess.TimeoutExpired:
+                continue
+    finally:
+        storage.delete_supervised_run(exclusive_resource)
 
 
 def reconcile_state(run: SupervisedRun) -> RunState:
