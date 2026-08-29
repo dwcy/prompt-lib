@@ -331,33 +331,43 @@ export const RELEASE_SECTIONS: ReleaseSection[] = [
   },
   {
     id: "beyond-ui",
-    title: "Shipped in this release, used outside the app",
+    title: "Two subsystems moving into the workspace",
     blurb:
-      "Two subsystems landed alongside the workspace. They run from the command line; these notes tell you where to look.",
+      "Both shipped command-line first and are now growing screens. What is listed under each is what the screen does today; everything else still runs from the CLI.",
     entries: [
       {
-        title: ".NET code generation",
-        location: "— (CLI: python -m cabal.dotnetgen, or the /dotnet-codegen skill)",
+        title: ".NET Code Generation",
+        location: "Repo → .NET Codegen",
         purpose:
           "Generates .NET backend code through a routed pipeline — classify, plan, approve, write, verify — with per-stage model routing so a cheap model does the routing and an expensive one only does architecture.",
         steps: [
-          "Run the generator against a request.",
-          "Review the plan at the approval gate; nothing is written before you approve it.",
-          "Inspect what a run cost afterwards with the report command.",
+          "Describe the change in prose against the selected project.",
+          "Read the plan at the approval gate: it lists every file it intends to touch, and nothing reaches disk until you approve.",
+          "Approve or reject. If the project changed underneath the plan, approval is refused rather than applied to something it never saw.",
         ],
-        note: "Cost per stage is recorded per run, and build failures are separated into environment problems versus real code defects so a broken toolchain does not consume the repair budget.",
+        note: "Per-stage cost and the report view are still CLI-only (python -m cabal.dotnetgen report). Build failures are separated into environment problems versus real code defects, so a broken toolchain does not consume the repair budget.",
       },
       {
-        title: "Agent eval harness",
-        location: "— (CLI: python -m cabal.evals)",
+        title: "Agent Eval Harness",
+        location: "Agents → Agent Evals",
         purpose:
           "Answers 'did that configuration change actually help?' by running fixed coding tasks against two agent configurations and comparing them.",
         steps: [
-          "Validate the benchmark definition.",
-          "Run the matrix; each cell runs in a throwaway worktree at a pinned commit.",
-          "Judge and report to get the comparison.",
+          "Open a finished run to see the comparison: deterministic checks, the pairwise judge verdict, and what each configuration cost in tool calls, tokens and time.",
+          "Drill into any single cell for its own check outcomes.",
+          "Runs the CLI produced appear here too — there is no separate 'started in the app' list.",
         ],
-        note: "Every run uses an isolated config directory, so an eval can never touch your real agent configuration.",
+        note: "Where the evidence is weak the view says so: no spread is claimed below three samples, a judge that disagreed with itself across both A/B orders reads as a tie rather than a win, and excluded pairs are shown with their count. Launching, resuming and editing benchmark definitions are still CLI-only.",
+      },
+      {
+        title: "AI Technology News",
+        location: "Reference → AI news feed",
+        purpose:
+          "Collects AI and developer-tooling news from configured sources into one reviewable feed.",
+        steps: [
+          "Open the feed from the sidebar.",
+          "Scan the collected items; each links back to its source.",
+        ],
       },
     ],
   },
