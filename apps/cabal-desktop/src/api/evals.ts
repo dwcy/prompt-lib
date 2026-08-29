@@ -179,12 +179,20 @@ export const evalsWorktreesPayloadSchema = z.object({
 });
 
 export type EvalsAvailability = z.infer<typeof evalsAvailabilitySchema>;
+export type EvalsAvailabilityReason = z.infer<typeof evalsAvailabilityReasonSchema>;
 export type EvalsDefinitionEntry = z.infer<typeof evalsDefinitionEntrySchema>;
 export type EvalsValidationResult = z.infer<typeof evalsValidationResultSchema>;
+export type EvalsRunState = z.infer<typeof evalsRunStateSchema>;
 export type EvalsRunSummary = z.infer<typeof evalsRunSummarySchema>;
+export type EvalsMetricKey = z.infer<typeof evalsMetricKeySchema>;
 export type EvalsMetricAggregate = z.infer<typeof evalsMetricAggregateSchema>;
+export type EvalsComparison = z.infer<typeof evalsComparisonSchema>;
+export type EvalsTaskComparison = z.infer<typeof evalsTaskComparisonSchema>;
+export type EvalsPairwiseExclusion = z.infer<typeof evalsPairwiseExclusionSchema>;
 export type EvalsReport = z.infer<typeof evalsReportSchema>;
 export type EvalsVerdict = z.infer<typeof evalsVerdictSchema>;
+export type EvalsCheckResult = z.infer<typeof evalsCheckResultSchema>;
+export type EvalsAgentMetrics = z.infer<typeof evalsAgentMetricsSchema>;
 export type EvalsCellDetail = z.infer<typeof evalsCellDetailSchema>;
 export type EvalsWorktree = z.infer<typeof evalsWorktreeSchema>;
 

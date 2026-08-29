@@ -6,6 +6,14 @@ import { ProjectGateModule } from "@/modules/project-gate/ProjectGateModule";
 const AccountModule = lazy(() =>
   import("@/modules/account/AccountModule").then((module) => ({ default: module.AccountModule })),
 );
+const CodegenModule = lazy(() =>
+  import("@/modules/codegen/CodegenModule").then((module) => ({
+    default: module.CodegenModule,
+  })),
+);
+const EvalsModule = lazy(() =>
+  import("@/modules/evals/EvalsModule").then((module) => ({ default: module.EvalsModule })),
+);
 const DocsModule = lazy(() =>
   import("@/modules/docs/DocsModule").then((module) => ({ default: module.DocsModule })),
 );
@@ -404,22 +412,21 @@ export const MODULE_REGISTRY: ModuleDefinition[] = [
     phase: 15,
     component: ReleaseNotesModule,
   },
-  // 021-codegen-eval-modules Phase 1: registered ahead of their own build phase (US1 = Phase 3,
-  // US2 = Phase 4 of that feature's tasks.md), routed to the shared ModuleUnavailable placeholder
-  // via the existing `component: null` mechanism (research.md R8) until their module UI lands.
+  // 021-codegen-eval-modules Phase 3/4 (US1/US2): real module components land here. Later
+  // phases (US3-US8) extend these same components rather than swapping them out again.
   {
     key: "codegen",
     title: ".NET Code Generation",
     group: "repo",
     phase: 16,
-    component: null,
+    component: CodegenModule,
   },
   {
     key: "evals",
     title: "Agent Eval Harness",
     group: "agents",
     phase: 17,
-    component: null,
+    component: EvalsModule,
   },
 ];
 

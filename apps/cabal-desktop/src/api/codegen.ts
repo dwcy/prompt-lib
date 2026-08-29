@@ -143,10 +143,13 @@ export const codegenBindingsPayloadSchema = z.object({
 });
 
 export type CodegenAvailability = z.infer<typeof codegenAvailabilitySchema>;
+export type CodegenAvailabilityReason = z.infer<typeof codegenAvailabilityReasonSchema>;
 export type CodegenRunOutcome = z.infer<typeof codegenRunOutcomeSchema>;
 export type CodegenStageCost = z.infer<typeof codegenStageCostSchema>;
+export type CodegenRetryBudget = z.infer<typeof codegenRetryBudgetSchema>;
 export type CodegenRunSummary = z.infer<typeof codegenRunSummarySchema>;
 export type CodegenRunDetail = z.infer<typeof codegenRunDetailSchema>;
+export type CodegenIntentFileChange = z.infer<typeof codegenIntentFileChangeSchema>;
 export type CodegenPendingIntent = z.infer<typeof codegenPendingIntentSchema>;
 export type CodegenStageBinding = z.infer<typeof codegenStageBindingSchema>;
 

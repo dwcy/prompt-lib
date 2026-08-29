@@ -1,4 +1,7 @@
 // Small status badge mapping a semantic state variant to a styling hook class for T024.
+// Extended for 021-codegen-eval-modules T024/T026/T036: the four persisted codegen run outcomes
+// (rejected/halted/environment), the no-run-record case (unknown), and the eval run state that
+// existing job variants don't cover (interrupted).
 export type StatePillVariant =
   | "ok"
   | "loading"
@@ -16,7 +19,12 @@ export type StatePillVariant =
   | "queued"
   | "running"
   | "succeeded"
-  | "cancelled";
+  | "cancelled"
+  | "rejected"
+  | "halted"
+  | "environment"
+  | "interrupted"
+  | "unknown";
 
 export interface StatePillProps {
   variant: StatePillVariant;

@@ -175,4 +175,12 @@ const ACTION_PRIORITY: Record<StatePillVariant, number> = {
   installed: 5,
   succeeded: 5,
   ok: 5,
+  // 021-codegen-eval-modules variants: Overview never assigns these to a card's stateVariant
+  // today, so they sit in the least-urgent bucket rather than asserting a priority this module
+  // has no evidence for.
+  rejected: 5,
+  halted: 5,
+  environment: 5,
+  interrupted: 5,
+  unknown: 5,
 };
