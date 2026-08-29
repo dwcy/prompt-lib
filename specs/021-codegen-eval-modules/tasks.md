@@ -42,7 +42,7 @@ Nothing in Phase 3+ may start until Phase 2 is complete.
 
 ## Phase 2: Foundational (BLOCKING — sequential, single owner)
 
-**Status**: 🟡 In progress (7/9 — T007–T015; T012b emission deferred to the launch actions, T015 in flight)
+**Status**: 🟡 In progress (8/9 — T007–T015; only T012b remains, deferred to the launch actions in T029/T050)
 **Purpose**: The run-supervision layer. Everything else depends on it.
 
 ⚠️ **Do not parallelise this phase and do not start Phase 3 before it completes.** One owner, in order — see research.md R1/R2/R7.
@@ -57,7 +57,7 @@ Nothing in Phase 3+ may start until Phase 2 is complete.
   - [ ] T012b Actual **emission** from the supervisor. `run_supervisor.py` emits nothing today; the contract test goes green via the `test.job_emitter` fixture, which proves the grammar but not the producer. A run only produces progress once something tails the detached process, so this lands with the launch actions — verify in T029 (codegen) and T050 (evals) that events come from a real run, not a fixture — Owner: @python-architect
 - [X] T013 Implement process-tree cancellation reusing `cabal.evals.proc.kill_process_tree`, with temporary-worktree cleanup — Owner: @python-architect
 - [X] T014 Implement `ModuleAvailability` probes for both modules per data-model B3, keeping `no_benchmark_tree` (setup state) and `definitions_invalid` (error) distinct — Owner: @python-architect
-- [ ] T015 Integration tests for the reconciliation state machine in `tests/integration/test_run_supervisor.py`, including the stranded-`running` case that motivated it — Owner: @python-tester
+- [X] T015 Integration tests for the reconciliation state machine in `tests/integration/test_run_supervisor.py`, including the stranded-`running` case that motivated it — Owner: @python-tester
 
 ---
 

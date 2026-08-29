@@ -298,7 +298,10 @@ def _codegen_recorded_outcome(record_path: Path) -> str | None:
     try:
         payload = json.loads(record_path.read_text(encoding="utf-8"))
     except (OSError, ValueError):
-        return False
+        # A record that is absent (the process died before writing it) or corrupt (it died
+        # mid-write) is precisely an interrupted run, so it takes the same None path as a
+        # record whose `outcome` key is not there yet.
+        return None
     outcome = payload.get("outcome")
     return outcome if outcome in _codegen_decided_outcomes() else None
 
