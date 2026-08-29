@@ -34,7 +34,21 @@ One entry per pipeline stage within a run.
 | `stage` | Pipeline stage name | |
 | `provider`, `model` | What served this stage | The evidence for "cheap model routes, expensive model architects" |
 | `usage` | Input/output tokens, and cache figures **only when the provider reported them** | `Usage.cache_reported` is false for providers that cannot say. Rendering a zero there would fabricate data (FR-008) |
-| `priced` | Whether a price is known at all | `false` means *unknown*; a local model costs a real, known zero. Conflating these is the specific error the subsystem's ledger was written to prevent |
+| `priced` | Whether a price is known at all | **Not persisted today — see the constraint below.** In memory `false` means *unknown*, while a local model costs a real, known zero; conflating them is the specific error the subsystem's ledger was written to prevent |
+
+> **Constraint on `priced` (finding #3, research.md).** `ledger.StageCost` holds `priced` in
+> memory, but `to_dict()` never writes it and `run-record.schema.json` sets
+> `additionalProperties: false`. A real run record therefore **cannot** distinguish a locally
+> hosted model's genuine zero from an unlisted model's unknown price — both land on disk as
+> `cost_usd: 0`. Changing that is 018's call, not this feature's (FR-007).
+>
+> So the module's obligation here is the *negative* one: report the distinction as **unknown**
+> (`null`), never as `true`. Inferring "priced" from a bare zero would manufacture a
+> measured-free claim the run never made. If the schema later gains the field, the read path
+> passes it through unchanged rather than re-deriving it.
+>
+> The cache half of FR-008 is unaffected: `cached_input_tokens` is not in the schema's
+> `required` list, so an unreported figure is genuinely absent rather than a fabricated zero.
 | `reported_cost_usd` | Provider's own figure, when given | Reconciled against computed cost within a 5% tolerance |
 | `wall_clock_seconds` | Stage duration | |
 | *(repair association)* | Whether this spend was initial or repair | Must be presented separately (FR-019) — a pipeline that looks cheap per call but repairs three times is not cheap |

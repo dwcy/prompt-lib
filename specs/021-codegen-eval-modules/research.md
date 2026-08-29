@@ -154,3 +154,9 @@ Per FR-007, gaps are recorded rather than worked around. Neither blocks this fea
 
 1. **`cabal.evals` has no `--json` output mode**, while `cabal.dotnetgen` has one with a strict stdout/stderr channel contract. Machine consumers of the eval CLI must read artifact files. → finding for `019-agent-eval-harness`.
 2. **`JobManager` never rehydrates from SQLite**, so any job alive at a hard shutdown is stranded in `running` forever. This affects all 22 existing modules, not just these two; this feature works around it locally via R2's reconciliation rather than changing shared behaviour. → finding for `015-web-ui-overhaul`.
+
+3. **A run record cannot express `priced`, so FR-008's cost half is only partly achievable.** `ledger.StageCost` carries `priced` in memory and its module docstring is explicit that a local model's zero must never be conflated with an unknown price — but `to_dict()` (`ledger.py:86`) serialises only `provider`, `model`, token counts, `cost_usd` and `wall_clock_seconds`, and `run-record.schema.json` sets `additionalProperties: false` on `stageCost`. Both cases therefore land on disk as `cost_usd: 0`, indistinguishable to any reader.
+
+   Adding the field is 018's decision, not this feature's (FR-007). Until then this module reports the distinction as **unknown**, never as a measured-free run — see the constraint note in data-model A2, and the two contract tests pinning both the negative contract and the forward-compatible read path. → finding for `018-dotnet-codegen`.
+
+   Discovered while writing the T016 contract tests, which had initially assumed the field was readable. Worth stating plainly: this was an error in this feature's own data model, caught by writing the tests before the implementation — which is the entire argument for Gate 3.

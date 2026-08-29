@@ -63,11 +63,11 @@ Nothing in Phase 3+ may start until Phase 2 is complete.
 
 ## Phase 3: US1 — Generate .NET code and decide at the approval gate (P1)
 
-**Status**: ⬜ Pending (0/14 — T016–T029)
+**Status**: 🟡 In progress (1/14 — T016–T029)
 **Goal**: A complete, useful generator: prose request → reviewable plan → explicit decision → written and verified code.
 **Independent test**: Submit a change request, confirm the run pauses with a readable plan and the working tree is byte-identical, reject it and confirm the tree is still clean, then repeat and approve and confirm only the described files were written.
 
-- [ ] T016 [P] [US1] Contract test for the codegen API in `tests/contract/test_codegen_api.py` per `contracts/codegen-api.md` — gate shape, digest bound to the intent token, stale refusal, replay refusal, the working-tree-unchanged assertion, and that every mutating action writes an audit entry (FR-006) — Owner: @python-tester
+- [X] T016 [P] [US1] Contract test for the codegen API in `tests/contract/test_codegen_api.py` per `contracts/codegen-api.md` — gate shape, digest bound to the intent token, stale refusal, replay refusal, the working-tree-unchanged assertion, and that every mutating action writes an audit entry (FR-006) — Owner: @python-tester
 - [ ] T017 [US1] Implement the read surface in `setup/src/cabal/webapi/codegen_service.py`: run list, run detail, pending intent with computed `stale` — Owner: @python-architect — Parallel: yes
 - [ ] T018 [US1] Implement the `codegen.plan` action in `actions_catalog/codegen.py` — spawns detached, returns immediately, writes nothing to the target project — Owner: @python-architect — Parallel: yes
 - [ ] T019 [US1] Implement the `codegen.approve` action with `compute_digest` bound to the pending intent's token, so the webapi ticket and the subsystem's own gate cannot disagree (research.md R3) — Owner: @python-architect — Parallel: yes
@@ -86,11 +86,11 @@ Nothing in Phase 3+ may start until Phase 2 is complete.
 
 ## Phase 4: US2 — Read the A/B verdict for a completed eval run (P1)
 
-**Status**: ⬜ Pending (0/12 — T030–T041)
+**Status**: 🟡 In progress (1/12 — T030–T041)
 **Goal**: The payload of the entire harness — did the candidate beat the baseline, and on what evidence.
 **Independent test**: Point the module at a run directory the CLI produced and confirm the comparison renders correctly, with no ability to launch anything.
 
-- [ ] T030 [P] [US2] Contract test for the evals report payload in `tests/contract/test_evals_api.py` per `contracts/evals-api.md` — every aggregate carries `n`; `stddev` absent below n=3; excluded-pair counts present; `order_agreement: false` reported as a tie; every mutating action writes an audit entry (FR-006) — Owner: @python-tester
+- [X] T030 [P] [US2] Contract test for the evals report payload in `tests/contract/test_evals_api.py` per `contracts/evals-api.md` — every aggregate carries `n`; `stddev` absent below n=3; excluded-pair counts present; `order_agreement: false` reported as a tie; every mutating action writes an audit entry (FR-006) — Owner: @python-tester
 - [ ] T031 [US2] Implement run listing in `setup/src/cabal/webapi/evals_service.py` reading `evals/results/`, with state reconciled at read time and no "launched here" flag — Owner: @python-architect — Parallel: yes
 - [ ] T032 [US2] Implement the report endpoint by delegating to the subsystem's own reducer — never re-derive the aggregation rules (SC-010) — Owner: @python-architect — Parallel: yes
 - [ ] T033 [US2] Implement the cell-detail endpoint, returning a timed-out check as a result with a timeout flag rather than an error — Owner: @python-architect — Parallel: yes
