@@ -16,19 +16,17 @@ take a runtime dependency to POST one JSON document.
 
 from __future__ import annotations
 
-import json
 import time
-import urllib.error
-import urllib.request
 from dataclasses import dataclass
 from typing import Final
 
 from cabal.dotnetgen.providers.base import (
     CompletionRequest,
     CompletionResult,
+    Message,
     ProviderError,
     ProviderStatus,
-    ProviderUnavailableError,
+    post_json,
 )
 from cabal.dotnetgen.providers.config import StageBinding
 from cabal.dotnetgen.providers.usage import parse_usage
@@ -71,30 +69,7 @@ class AnthropicProvider:
         }
 
     def _post(self, path: str, body: dict, timeout: int) -> dict:
-        request = urllib.request.Request(
-            url=f"{self.base_url}{path}",
-            data=json.dumps(body).encode("utf-8"),
-            headers=self._headers(),
-            method="POST",
-        )
-        try:
-            with urllib.request.urlopen(request, timeout=timeout) as response:
-                return json.loads(response.read().decode("utf-8"))
-        except urllib.error.HTTPError as exc:
-            detail = exc.read().decode("utf-8", errors="replace")[:500]
-            # 429 and 5xx are exactly the cases a configured fallback exists for (FR-027).
-            retryable = exc.code in (408, 409, 429) or exc.code >= 500
-            raise ProviderError(
-                f"{self.base_url}{path} returned HTTP {exc.code}: {detail}", retryable=retryable
-            ) from exc
-        except urllib.error.URLError as exc:
-            raise ProviderUnavailableError(f"cannot reach {self.base_url}: {exc.reason}") from exc
-        except TimeoutError as exc:
-            raise ProviderError(
-                f"{self.base_url} timed out after {timeout}s", retryable=True
-            ) from exc
-        except json.JSONDecodeError as exc:
-            raise ProviderError(f"{self.base_url} returned malformed JSON: {exc}") from exc
+        return post_json(f"{self.base_url}{path}", body, self._headers(), timeout)
 
     def complete(self, request: CompletionRequest) -> CompletionResult:
         system, messages = _split_system(request)
@@ -144,20 +119,44 @@ class AnthropicProvider:
         return ProviderStatus(self.name, self.binding.model, reachable=True)
 
 
-def _split_system(request: CompletionRequest) -> tuple[str, list[dict]]:
+def _split_system(request: CompletionRequest) -> tuple[str | list[dict], list[dict]]:
     """Anthropic takes system content as its own field, not as a message role.
 
     The leading system blocks are the stable bands, so hoisting them here is also what keeps the
-    cacheable prefix contiguous.
+    cacheable prefix contiguous. A `cache_checkpoint` marks where that prefix ends, and it is
+    honoured here as a `cache_control` marker - the request-side half of what the module
+    docstring promises. When any system part carries a checkpoint the system field must stay a
+    block list, because joining the parts into one string would erase the checkpoint boundary.
     """
-    system_parts: list[str] = []
+    system_parts: list[Message] = []
     messages: list[dict] = []
     for message in request.messages:
         if message.role == "system" and not messages:
-            system_parts.append(message.content)
+            system_parts.append(message)
             continue
-        messages.append({"role": message.role, "content": message.content})
+        messages.append({"role": message.role, "content": _content(message)})
     if not messages:
         # The API requires at least one message; an all-system request is still a real request.
-        messages.append({"role": "user", "content": system_parts.pop() if system_parts else ""})
-    return "\n\n".join(system_parts), messages
+        last = system_parts.pop() if system_parts else None
+        messages.append({"role": "user", "content": _content(last) if last else ""})
+
+    system: str | list[dict]
+    if any(part.cache_checkpoint for part in system_parts):
+        system = [_block(part) for part in system_parts]
+    else:
+        system = "\n\n".join(part.content for part in system_parts)
+    return system, messages
+
+
+def _content(message: Message) -> str | list[dict]:
+    """Plain string unless a checkpoint forces the block form that can carry `cache_control`."""
+    if not message.cache_checkpoint:
+        return message.content
+    return [_block(message)]
+
+
+def _block(message: Message) -> dict:
+    block: dict = {"type": "text", "text": message.content}
+    if message.cache_checkpoint:
+        block["cache_control"] = {"type": "ephemeral"}
+    return block

@@ -9,6 +9,9 @@ rather than letting a zero masquerade as a measurement.
 
 from __future__ import annotations
 
+import json
+import urllib.error
+import urllib.request
 from dataclasses import dataclass, field
 from typing import Protocol, runtime_checkable
 
@@ -26,6 +29,35 @@ class ProviderUnavailableError(ProviderError):
 
     def __init__(self, message: str) -> None:
         super().__init__(message, retryable=True)
+
+
+def post_json(url: str, body: dict, headers: dict[str, str], timeout: int) -> dict:
+    """POST one JSON document and map every failure mode onto the provider errors.
+
+    Shared by the HTTP adapters so the exception mapping cannot drift between them: 429 and 5xx
+    are retryable because those are exactly the cases a configured fallback exists for (FR-027).
+    """
+    request = urllib.request.Request(
+        url=url,
+        data=json.dumps(body).encode("utf-8"),
+        headers=headers,
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            return json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace")[:500]
+        retryable = exc.code in (408, 409, 429) or exc.code >= 500
+        raise ProviderError(
+            f"{url} returned HTTP {exc.code}: {detail}", retryable=retryable
+        ) from exc
+    except urllib.error.URLError as exc:
+        raise ProviderUnavailableError(f"cannot reach {url}: {exc.reason}") from exc
+    except TimeoutError as exc:
+        raise ProviderError(f"{url} timed out after {timeout}s", retryable=True) from exc
+    except json.JSONDecodeError as exc:
+        raise ProviderError(f"{url} returned malformed JSON: {exc}") from exc
 
 
 @dataclass(frozen=True)
@@ -86,6 +118,12 @@ class CompletionResult:
     model: str
     provider: str
     wall_clock_seconds: float = 0.0
+    provider_cost_usd: float | None = None
+    """The cost the provider itself reported, or None when it reports no figure.
+
+    SC-010 reconciles our arithmetic against this. None is load-bearing: comparing our total to
+    a number we computed ourselves would be a guaranteed-pass check that proves nothing.
+    """
 
 
 @runtime_checkable

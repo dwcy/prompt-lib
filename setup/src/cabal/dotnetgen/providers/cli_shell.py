@@ -88,12 +88,13 @@ def flatten(messages: tuple[Message, ...]) -> str:
     return "\n\n".join(parts)
 
 
-def extract_result(event: dict) -> tuple[str, Usage, float]:
+def extract_result(event: dict) -> tuple[str, Usage, float | None]:
     """Pull text, usage and cost from a stream-json `result` event (T014).
 
     `result.result` is the assembled reply and `is_error` is the canonical failure flag, per the
     documented schema. Usage field names vary, so normalisation is delegated to `parse_usage`,
-    which reports absence rather than substituting a zero.
+    which reports absence rather than substituting a zero. Cost is None when the event carries
+    none: SC-010 reconciles against this figure, and a fabricated zero is not a report.
     """
     if event.get("is_error") or event.get("subtype") not in (None, "success"):
         detail = event.get("result") or event.get("subtype") or "unknown error"
@@ -105,7 +106,7 @@ def extract_result(event: dict) -> tuple[str, Usage, float]:
 
     usage = parse_usage(event.get("usage"))
     cost = event.get("total_cost_usd")
-    return text, usage, float(cost) if isinstance(cost, (int, float)) else 0.0
+    return text, usage, float(cost) if isinstance(cost, (int, float)) else None
 
 
 @dataclass
@@ -141,9 +142,12 @@ class ClaudeSession:
 
     def _pump(self) -> None:
         assert self._process is not None and self._process.stdout is not None
-        for line in self._process.stdout:
-            self._lines.put(line)
-        self._lines.put(None)
+        # Bind the queue locally: after a teardown swaps in a fresh queue, an orphaned reader
+        # must keep writing to its own queue rather than leaking stale events into the new one.
+        stdout, lines = self._process.stdout, self._lines
+        for line in stdout:
+            lines.put(line)
+        lines.put(None)
 
     def send(self, prompt: str, timeout: int = TURN_TIMEOUT_SECONDS) -> dict:
         """Write one user event and read events until the turn's `result` arrives."""
@@ -172,7 +176,25 @@ class ClaudeSession:
             if parsed.get("type") == "result":
                 return parsed
 
-        raise CliShellError(f"`{self.executable}` did not complete a turn in {timeout}s")
+        # The turn is lost but the process is still working on it. Left alive, it would queue
+        # this turn's `result` late and the NEXT send() would return it as its own answer - a
+        # stale-reply bug. Tear the session down so the next turn starts a fresh process.
+        self._teardown()
+        raise CliShellError(
+            f"`{self.executable}` did not complete a turn in {timeout}s; session discarded"
+        )
+
+    def _teardown(self) -> None:
+        """Kill the process and drop every queued event so a late `result` can never be read."""
+        if self._process is not None:
+            self._process.kill()
+            try:
+                self._process.wait(timeout=10)
+            except (OSError, subprocess.TimeoutExpired):
+                pass
+            self._process = None
+        self._lines = queue.Queue()
+        self._reader = None
 
     def close(self) -> None:
         if self._process is None:
@@ -210,9 +232,9 @@ class CliShellProvider:
         started = time.monotonic()
 
         if self.cli == "claude":
-            text, usage, _cost = extract_result(self._claude_turn(prompt))
+            text, usage, cost = extract_result(self._claude_turn(prompt))
         else:
-            text, usage, _cost = self._codex_turn(prompt)
+            text, usage, cost = self._codex_turn(prompt)
 
         return CompletionResult(
             text=text,
@@ -220,6 +242,7 @@ class CliShellProvider:
             model=request.model,
             provider=self.name,
             wall_clock_seconds=time.monotonic() - started,
+            provider_cost_usd=cost,
         )
 
     def _claude_turn(self, prompt: str) -> dict:
@@ -227,12 +250,18 @@ class CliShellProvider:
             self._session = ClaudeSession(model=self.binding.model, executable=self._executable())
         return self._session.send(prompt)
 
-    def _codex_turn(self, prompt: str) -> tuple[str, Usage, float]:
-        """One-shot: codex `exec` has no persistent-session mode."""
-        command = [self._executable(), *CODEX_FLAGS, "-m", self.binding.model, prompt]
+    def _codex_turn(self, prompt: str) -> tuple[str, Usage, float | None]:
+        """One-shot: codex `exec` has no persistent-session mode.
+
+        The prompt travels over stdin (`-` positional, per the flag cookbook), never as an argv
+        element: a banded prompt easily exceeds the ~32K Windows command-line limit, and the
+        resulting OSError would misreport a too-long prompt as the provider being unavailable.
+        """
+        command = [self._executable(), *CODEX_FLAGS, "-m", self.binding.model, "-"]
         try:
             proc = subprocess.run(
                 command,
+                input=prompt,
                 capture_output=True,
                 text=True,
                 encoding="utf-8",
@@ -247,8 +276,9 @@ class CliShellProvider:
 
         if proc.returncode != 0:
             raise CliShellError(f"`codex` exited {proc.returncode}: {proc.stderr[:400]}")
-        # codex exec emits plain text and reports no token usage, so caching is unmeasurable here.
-        return proc.stdout.strip(), Usage(cache_reported=False), 0.0
+        # codex exec emits plain text and reports neither token usage nor cost, so caching is
+        # unmeasurable here and the cost figure is genuinely absent rather than zero.
+        return proc.stdout.strip(), Usage(cache_reported=False), None
 
     def check(self) -> ProviderStatus:
         """Confirm the CLI exists and runs. Never raises."""
