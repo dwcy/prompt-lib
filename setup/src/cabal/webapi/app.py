@@ -11,7 +11,9 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from cabal.webapi import security
 from cabal.webapi.actions import ActionRegistry
 from cabal.webapi.actions_catalog import config as config_actions
+from cabal.webapi.actions_catalog import codegen as codegen_actions
 from cabal.webapi.actions_catalog import codex as codex_actions
+from cabal.webapi.actions_catalog import evals as evals_actions
 from cabal.webapi.actions_catalog import knowledge as knowledge_actions
 from cabal.webapi.actions_catalog import jobs as jobs_actions
 from cabal.webapi.actions_catalog import local_config as local_config_actions
@@ -26,10 +28,12 @@ from cabal.webapi.envelope import ApiError, error_response, utc_now_iso
 from cabal.webapi.jobs import JobManager
 from cabal.webapi.routers import account as account_router
 from cabal.webapi.routers import actions as actions_router
+from cabal.webapi.routers import codegen as codegen_router
 from cabal.webapi.routers import codex as codex_router
 from cabal.webapi.routers import config as config_router
 from cabal.webapi.routers import docs as docs_router
 from cabal.webapi.routers import environment as environment_router
+from cabal.webapi.routers import evals as evals_router
 from cabal.webapi.routers import knowledge as knowledge_router
 from cabal.webapi.routers import local_config as local_config_router
 from cabal.webapi.routers import mcp as mcp_router
@@ -100,6 +104,10 @@ def create_app(
         app.state.actions.register(descriptor)
     for descriptor in environment_router.ENVIRONMENT_DESCRIPTORS:
         app.state.actions.register(descriptor)
+    for descriptor in codegen_actions.CODEGEN_DESCRIPTORS:
+        app.state.actions.register(descriptor)
+    for descriptor in evals_actions.EVALS_DESCRIPTORS:
+        app.state.actions.register(descriptor)
     app.state.handshake_path = Path(handshake_path) if handshake_path is not None else None
     app.state.started_at = utc_now_iso()
     app.state.request_shutdown = lambda: None
@@ -125,6 +133,8 @@ def create_app(
     app.router.routes.extend(security_scan_router.router.routes)
     app.router.routes.extend(environment_router.router.routes)
     app.router.routes.extend(docs_router.router.routes)
+    app.router.routes.extend(codegen_router.router.routes)
+    app.router.routes.extend(evals_router.router.routes)
 
     _register_exception_handlers(app)
     security.assert_api_routes_authenticated(app)
