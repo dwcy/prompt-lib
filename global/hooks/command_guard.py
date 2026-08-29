@@ -263,6 +263,55 @@ def _find_delete_targets_are_versioned_and_clean(command: str, cwd: str) -> bool
         return False
 
 
+
+# A `cd` into a git worktree that is NOT wrapped in a subshell. The Bash tool persists the
+# working directory across calls, so one `cd` silently relocates every later command: reads
+# report the wrong tree as "missing", and pytest picks up the worktree's own conftest and
+# sources, which makes a clean run look like proof about the main checkout. A subshell --
+# `(cd "$wt" && pytest ...)` -- gets the same rootdir without the drift, and git never needs
+# it at all because `git -C <path>` exists.
+_WORKTREE_CD_RE = re.compile('\\bcd\\s+["\']?([^\\s;&|"\']*worktrees[^\\s;&|"\']*)')
+_WORKTREE_ASSIGN_RE = re.compile('([A-Za-z_][A-Za-z0-9_]*)=["\']?[^\\s;&|"\']*worktrees')
+
+
+def _worktree_variables(command: str) -> set[str]:
+    """Names assigned a worktree path earlier in the same command.
+
+    `wt="…/worktrees/agent-x"; cd "$wt" && pytest` is the shape this actually takes in
+    practice, and matching only a literal `cd` argument misses every one of them.
+    """
+    return {m.group(1) for m in _WORKTREE_ASSIGN_RE.finditer(command)}
+
+
+def _unparenthesised_worktree_cd(command: str) -> str | None:
+    """Return the worktree path of a `cd` that runs at paren depth 0, else None."""
+    match = _WORKTREE_CD_RE.search(command)
+    if match is None:
+        for name in _worktree_variables(command):
+            match = re.search(r"\bcd\s+[\"']?\$\{?" + re.escape(name) + r"\}?", command)
+            if match is not None:
+                break
+    if match is None:
+        return None
+    depth = 0
+    quote = ""
+    for index, char in enumerate(command):
+        if index >= match.start():
+            break
+        if quote:
+            if char == quote:
+                quote = ""
+        elif char in "\"'":
+            quote = char
+        elif char == "(":
+            depth += 1
+        elif char == ")":
+            depth = max(0, depth - 1)
+    if depth > 0:
+        return None
+    return match.group(1) if match.groups() else match.group(0).split(None, 1)[-1]
+
+
 def scan(command: str, tool_name: str = "Bash", cwd: str | None = None) -> list[str]:
     issues = []
 
@@ -304,6 +353,16 @@ def scan(command: str, tool_name: str = "Bash", cwd: str | None = None) -> list[
         issues.append(
             "Package manager policy: npm, npx, and yarn are forbidden; use pnpm/pnpm dlx or bun/bunx"
         )
+
+    if tool_name == "Bash":
+        drifting = _unparenthesised_worktree_cd(command)
+        if drifting is not None:
+            issues.append(
+                f"Working-directory drift: `cd` into the worktree {drifting!r} persists across "
+                "every later Bash call in this session. Wrap it in a subshell instead -- "
+                "`(cd <path> && <command>)` -- so the directory is restored afterwards. "
+                "For git, use `git -C <path> ...` and do not cd at all."
+            )
 
     if FIND_DELETE_RE.search(command):
         resolved_cwd = cwd or os.getcwd()
