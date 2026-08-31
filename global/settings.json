@@ -212,6 +212,10 @@
           {
             "type": "command",
             "command": "python \"$USERPROFILE/.claude/hooks/pretool_branch_guard.py\""
+          },
+          {
+            "type": "command",
+            "command": "python \"$USERPROFILE/.claude/hooks/pretool_inflight_guard.py\""
           }
         ]
       },
@@ -225,6 +229,19 @@
           {
             "type": "command",
             "command": "python \"$USERPROFILE/.claude/hooks/pretool_branch_guard.py\""
+          },
+          {
+            "type": "command",
+            "command": "python \"$USERPROFILE/.claude/hooks/pretool_inflight_guard.py\""
+          }
+        ]
+      },
+      {
+        "matcher": "NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$USERPROFILE/.claude/hooks/pretool_inflight_guard.py\""
           }
         ]
       },

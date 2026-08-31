@@ -73,9 +73,9 @@ See [`context-guard.md`](context-guard.md) for the full field derivation and pol
 
 **Critical implementation note**: the script uses `\u`-escaped Unicode for the dangerous-character table. Editing the script and pasting literal Unicode in place of those escapes can silently corrupt them into ASCII spaces — which causes every command containing a normal space to be flagged as a "paragraph separator." Don't replace the escapes.
 
-## PreToolUse (Write / Edit) — `file_write_guard.py` + `pretool_branch_guard.py`
+## PreToolUse (Write / Edit) — `file_write_guard.py` + `pretool_branch_guard.py` + `pretool_inflight_guard.py`
 
-**Fires**: before every `Write` or `Edit` tool call. Both hooks run.
+**Fires**: before every `Write` or `Edit` tool call. All three hooks run. `pretool_inflight_guard.py` also runs on `NotebookEdit`.
 
 ### `file_write_guard.py`
 
@@ -97,6 +97,32 @@ Everything else under `~/.claude/` is freely editable. This is a narrow, deliber
 **Fail-open**: no repo, git missing, unreadable policy, or detached HEAD → allow. **Bypass**: `PROMPTLIB_DISABLED_HOOKS=pretool_branch_guard`.
 
 **Why this exists**: branching used to be a documentation-only convention ("branch before the first edit"). This hook makes it impossible to silently skip — the block fires at the moment of the first edit, not at commit time when it's too late to avoid mixing unrelated work into `main`.
+
+### `pretool_inflight_guard.py`
+
+**What it does**: the first time a session writes or edits anything in a repo, it snapshots that repo's dirty set (`git status --porcelain -uall` — tracked-modified, staged, and untracked-but-not-ignored). If a later edit targets a file that was *already* in that snapshot, the edit is **blocked once** with an explanation. Retrying the same edit goes through.
+
+**Why block-once rather than block-always**: a feature legitimately has to edit files other work has also touched — a shared module, a settings file, a module you are extending. A permanent block would make those files unwritable and the hook would just get disabled. Blocking once converts a silent hazard into a conscious decision, which is the whole goal.
+
+**What it protects against**: two failure modes, both silent.
+
+1. **Sweeping someone else's work into your commit.** `global/CLAUDE.md`'s pre-flight rule already says to check `git diff HEAD --name-only` before editing. This enforces it at the moment it matters instead of relying on memory.
+2. **Destroying work git has no copy of.** This is the serious one. A `git checkout --`/`git restore` on a file with *unstaged* changes is unrecoverable — the content was never in the object store, so there is no blob to recover, no reflog entry, and no stash. The warning names this explicitly.
+
+**Why the per-branch session lock isn't enough**: `session_start.py` detects a *live* competing session and moves you to a sibling worktree. But the likelier hazard is uncommitted work left behind by a session that has already exited — there is no lock holder left to detect, and the file looks completely ordinary. Only the dirty-set snapshot sees it.
+
+**State**: `<git-common-dir>/claude-inflight/<session_id>.json`, holding `recorded_at`, the `baseline` path list, and the `acknowledged` paths already warned about. Inside `.git/`, so never tracked. Pruned after 7 days by `session_end_release_lock.py`.
+
+**Scope notes**:
+
+- Gitignored files are excluded, so build output and caches never trigger it.
+- Files this session dirties *after* its snapshot are absent from the baseline and never warned about — the snapshot is taken before the session's first write.
+- Untracked files are included and matched individually (`-uall`), so a whole new directory left by another session doesn't collapse to its top-level name and slip through.
+- Renames are matched on the new name, since that is what an edit would target.
+
+**Fail-open**: no repo, git missing, unresolvable path, or unreadable state → allow. **Bypass**: `PROMPTLIB_DISABLED_HOOKS=pretool_inflight_guard`.
+
+**Tests**: `global/hooks/tests/test_inflight_guard.py` (stdlib `unittest`, 21 cases).
 
 ## PreToolUse (Task | Agent) — `pretool_task_isolation.py` + `subagent_start.py`
 
@@ -178,6 +204,8 @@ Consider committing or stashing before closing.
 **Why cwd, not PID**: the `SessionEnd` hook runs as a subprocess of the same Claude process that claimed the lock, but PIDs can be reused across sessions. cwd is the unique key per session.
 
 **Stale locks**: if the session was killed (no `SessionEnd` fires), the lock stays on disk. `session_start.py`'s PID-alive check treats it as stale and reclaims it on the next start.
+
+**Also prunes in-flight snapshots**: deletes anything under `<git-common-dir>/claude-inflight/` older than 7 days (written by `pretool_inflight_guard.py`). Pruning is by age rather than by session id on purpose — matching "this session's" snapshot would mean reading stdin, and a `SessionEnd` hook that blocks on stdin is a worse failure than a few leftover JSON files. Snapshots are keyed by session id, so a stale one is never read by a new session; pruning is housekeeping, not correctness.
 
 ### `process_cleanup.py`
 

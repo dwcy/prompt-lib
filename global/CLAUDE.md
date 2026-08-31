@@ -99,7 +99,7 @@ Tags are gated (off by default), the policy file has CLI editors, and a crashed 
 When a planning skill (`/plan`, `/speckit-plan`, `/speckit-tasks`, `/speckit-implement`) reaches its done state — all tasks completed, verification passed, the slice is shipped — commit immediately without asking. (For `/plan` that means the plan's tasks have been *executed*, not merely approved — plan approval itself produces nothing to commit.) Keep follow-up changes in small per-feature commits rather than batching.
 
 - **Trigger:** all plan tasks done + verified; or I say "considered done"; or a single self-contained slice finishes in conversation.
-- **Pre-flight: stage only this session's changes.** Before editing any file as part of a plan, run `git diff HEAD --name-only` to see what already has uncommitted modifications. If a file you plan to edit was already modified before the session, treat it as off-limits for this commit — either skip the edit, or fold it into the unrelated in-flight work later. Never sweep pre-existing in-flight changes into your auto-commit.
+- **Pre-flight: stage only this session's changes.** Before editing any file as part of a plan, run `git diff HEAD --name-only` to see what already has uncommitted modifications. If a file you plan to edit was already modified before the session, treat it as off-limits for this commit — either skip the edit, or fold it into the unrelated in-flight work later. Never sweep pre-existing in-flight changes into your auto-commit. Enforced at edit time by `global/hooks/pretool_inflight_guard.py`, which blocks the first edit of any such file once (bypass: `PROMPTLIB_DISABLED_HOOKS=pretool_inflight_guard`).
 - **Separate commits per distinct feature**, BUT do not split a single file across two commits via an intermediate file-state dance. If two features both touch `settings.json` (or any shared file), prefer one combined commit ("feat: add X + Y") over rewriting → committing → restoring.
 - **Use `git -C <repo>` for every git command.** Never prepend `cd <repo> && git ...` — the harness's safety guardrail treats compound commands as suspicious and denies them, even on a safe branch.
 - **Branch-safety check pattern:** the `git-identity` wrapper already enforces `policy.refuse_on_branches`, so a simple one-liner suffices at plan completion:
@@ -121,6 +121,8 @@ When two or more subagents are dispatched to operate concurrently on the same re
 - **Exempt**: read-only agents (no Write/Edit in `tools:`) and sequential single-agent dispatch.
 
 **Runtime enforcement**: `global/hooks/pretool_task_isolation.py` blocks background `Agent` (formerly `Task`) dispatches that lack `isolation: "worktree"` (unless the subagent is on the read-only allowlist), and `global/hooks/session_start.py` auto-creates a sibling worktree when a second Claude session lands on a feature branch already held by another live session.
+
+Both of those need a *live* competing session. For work left behind by a session that already exited — no lock holder, file looks ordinary — `global/hooks/pretool_inflight_guard.py` snapshots the repo's dirty set on this session's first write and blocks the first edit of any file that was already dirty, once.
 
 See [`docs/parallel-isolation.md`](docs/parallel-isolation.md) for the full rule, edge cases, and anti-patterns.
 
@@ -167,4 +169,5 @@ See [`docs/orchestration.md`](docs/orchestration.md) for the full routing table 
 - Never commit without being asked explicitly — **except** at plan-completion checkpoints (see *Auto-commit at plan completion*).
 - Never push to remote without being asked explicitly.
 - Never delete files without confirmation.
+- **Never `git checkout --` / `git restore` / `git stash` a file carrying changes you did not make.** Unstaged work exists nowhere but the working tree — no blob in the object store, no reflog entry, nothing to recover. Reverting it is permanent data loss, not an undo. To drop only your own edit to a shared file, re-apply the intended content instead.
 - Never read, sample, or measure against code outside the working directory unless I asked for that specific thing (see *Stay inside the working directory*), and never write another project's names or paths into this one.
