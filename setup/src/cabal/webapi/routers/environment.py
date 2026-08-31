@@ -11,21 +11,30 @@ import subprocess
 from pathlib import Path
 from typing import Any, Literal
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Body, Depends, Request
 
+from fastapi.responses import JSONResponse
+
+from cabal import envsource_azure_link
 from cabal._paths import ENV_FILE
 from cabal.components import ENV_DESCRIPTIONS
 from cabal.env_profile import update_profile
 from cabal.git_config import apply_git_line_endings
 from cabal.git_policy import BUILTIN_DEFAULTS, load_policy, policy_source, save_policy
 from cabal.redaction import redact_env_display
-from cabal.webapi import security
+from cabal.webapi import envsources_service, security
 from cabal.webapi.actions import ActionDescriptor, ActionOutcome, effect_preview
-from cabal.webapi.envelope import ApiError, compute_precondition_digest, envelope_response
+from cabal.webapi.envelope import (
+    ApiError,
+    compute_precondition_digest,
+    envelope_body,
+    envelope_response,
+)
 
 router = APIRouter(dependencies=[Depends(security.require_bearer_token)])
 
 ENV_APPLY_ACTION_ID = "env.apply"
+ENV_AZURE_LINK_ACTION_ID = "env.azure_link.set"
 GIT_IDENTITY_SET_ACTION_ID = "git.identity.set"
 GIT_POLICY_SET_ACTION_ID = "git.policy.set"
 
@@ -34,6 +43,18 @@ _ENV_APPLY_SCHEMA = {
     "type": "object",
     "properties": {"values": {"type": "object"}},
     "required": ["values"],
+    "additionalProperties": False,
+}
+# `subscription_id: null` is the clear operation (FR-033) rather than a separate flag: it
+# keeps one action for one concern, and declaring the field required is what marks this as
+# an action a blank-params sweep must not invoke.
+_AZURE_LINK_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "subscription_id": {"type": ["string", "null"]},
+        "resource_group": {"type": ["string", "null"]},
+    },
+    "required": ["subscription_id"],
     "additionalProperties": False,
 }
 _IDENTITY_SCHEMA = {
@@ -133,6 +154,132 @@ def env_vars(scope: Literal["curated", "system"] = "curated", q: str | None = No
         "platform": platform.system(),
     }
     return envelope_response(data=data, source="environment", precondition_digest=env_digest())
+
+
+# -- multi-source browser (020-env-variable-sources) ----------------------
+# Added alongside the curated/system routes above, which are untouched (FR-002).
+
+_REVEAL_SCHEMA_FIELDS = ("source_id", "container_id", "name")
+_NO_STORE_HEADERS = {"Cache-Control": "no-store, no-cache, must-revalidate", "Pragma": "no-cache"}
+
+
+def _selected_project(state: Any) -> Path:
+    project = getattr(state, "project", None)
+    if project is None:
+        # 404 rather than 409: every other project-scoped read in this app (docs, package
+        # security, dashboard sections) answers a missing project that way, and the
+        # action-safety GET sweep is written against that convention.
+        raise ApiError(404, "no_project_selected", "Select a project before browsing its variables")
+    return Path(project)
+
+
+@router.get("/api/env/sources")
+def env_sources(request: Request, source: str | None = None):
+    """Names and metadata for every detected source. Never returns a value (FR-008)."""
+    project = _selected_project(request.app.state)
+    data = envsources_service.build_payload(project, only=source)
+    return envelope_response(data=data, source="environment")
+
+
+@router.post("/api/env/reveal")
+def env_reveal(request: Request, body: dict[str, Any] = Body(...)):
+    """Fetch exactly one value, on explicit user action, and audit the attempt (FR-012/16)."""
+    project = _selected_project(request.app.state)
+    source_id, container_id, name = _validated_reveal(body)
+
+    result = envsources_service.reveal(project, source_id, container_id, name)
+    audit = getattr(request.app.state, "audit", None)
+    if audit is not None:
+        audit.record_reveal(
+            source_id=source_id,
+            container_id=container_id,
+            name=name,
+            status=result.status,
+        )
+
+    # The envelope redacts every string it serialises, which is right for every other route
+    # and wrong for exactly this field: a revealed token would come back as "[redacted]",
+    # defeating the reveal the user explicitly asked for. So the value is re-seated after
+    # the envelope is built, and only ever for a `revealed` result.
+    payload = {
+        "status": result.status,
+        "value": None,
+        "reason": result.reason,
+        "is_reference": result.is_reference,
+    }
+    envelope = envelope_body(data=payload, source="environment")
+    if result.status == "revealed":
+        envelope["data"]["value"] = result.value
+    return JSONResponse(envelope, status_code=200, headers=_NO_STORE_HEADERS)
+
+
+def _validated_reveal(body: Any) -> tuple[str, str, str]:
+    if not isinstance(body, dict):
+        raise ApiError(422, "params_invalid", "Body must be an object naming exactly one entry")
+    values: list[str] = []
+    for field in _REVEAL_SCHEMA_FIELDS:
+        value = body.get(field)
+        # There is no array form by design (FR-012): one reveal, one audit record.
+        if not isinstance(value, str) or not value:
+            raise ApiError(422, "params_invalid", f"{field} must be a non-empty string")
+        values.append(value)
+    return values[0], values[1], values[2]
+
+
+def _azure_link_prepare(params: dict, state: Any) -> dict:
+    _selected_project(state)
+    summary = (
+        "Record an Azure scope for this project"
+        if _is_recording(params)
+        else "Clear the recorded Azure scope for this project"
+    )
+    return effect_preview(
+        summary,
+        files_changed=[str(envsource_azure_link.store_path())],
+        scopes=["environment", "azure_link"],
+    )
+
+
+def _is_recording(params: dict) -> bool:
+    return bool(str(params.get("subscription_id") or "").strip())
+
+
+def _azure_link_execute(params: dict, state: Any) -> ActionOutcome:
+    project = _selected_project(state)
+    if not _is_recording(params):
+        cleared = envsource_azure_link.clear_link(project)
+        return ActionOutcome(data={"cleared": cleared, "link": None})
+    link = envsource_azure_link.save_link(
+        project,
+        str(params["subscription_id"]).strip(),
+        str(params.get("resource_group") or "").strip() or None,
+    )
+    return ActionOutcome(
+        data={
+            "cleared": False,
+            "link": {
+                "subscription_id": link.subscription_id,
+                "resource_group": link.resource_group,
+                "confidence": link.confidence.value,
+                "reason": link.reason,
+                "is_explicit": link.is_explicit,
+            },
+        }
+    )
+
+
+def azure_link_digest(state: Any) -> str:
+    project = getattr(state, "project", None)
+    if project is None:
+        return compute_precondition_digest({"azure_link": None})
+    link = envsource_azure_link.load_link(Path(project))
+    return compute_precondition_digest(
+        {
+            "project": str(project),
+            "subscription_id": link.subscription_id if link else None,
+            "resource_group": link.resource_group if link else None,
+        }
+    )
 
 
 def _validated_env_values(raw: Any) -> dict[str, str]:
@@ -384,8 +531,19 @@ GIT_POLICY_SET_DESCRIPTOR = ActionDescriptor(
     compute_digest=lambda _params, _state: policy_digest(),
 )
 
+ENV_AZURE_LINK_DESCRIPTOR = ActionDescriptor(
+    action_id=ENV_AZURE_LINK_ACTION_ID,
+    module="environment",
+    destructive=False,
+    params_schema=_AZURE_LINK_SCHEMA,
+    prepare=_azure_link_prepare,
+    execute=_azure_link_execute,
+    compute_digest=lambda _params, state: azure_link_digest(state),
+)
+
 ENVIRONMENT_DESCRIPTORS = (
     ENV_APPLY_DESCRIPTOR,
+    ENV_AZURE_LINK_DESCRIPTOR,
     GIT_IDENTITY_SET_DESCRIPTOR,
     GIT_POLICY_SET_DESCRIPTOR,
 )

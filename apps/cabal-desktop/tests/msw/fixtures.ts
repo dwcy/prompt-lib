@@ -1,5 +1,12 @@
 // Envelope-v2 fixture builders matching the Zod schemas in src/api/schemas.ts exactly.
 
+import type {
+  EnvSourcesPayload,
+  RevealResult,
+  VariableContainer,
+  VariableEntry,
+  VariableSource,
+} from "@/api/envSources";
 import type { ProviderState } from "@/api/projectLifecycle";
 import {
   type ConfirmationTicket,
@@ -375,4 +382,105 @@ export function buildSseStream(
       if (!keepOpen) controller.close();
     },
   });
+}
+
+// -- environment variable sources (020-env-variable-sources) --------------
+// One builder per source state, so a test can assemble the exact degradation matrix row it
+// is asserting on without restating the whole payload shape.
+
+export function buildVariableEntry(overrides: Partial<VariableEntry> = {}): VariableEntry {
+  return {
+    name: "DATABASE_URL",
+    source_id: "repo_file:.env.local",
+    container_id: "repo_file:.env.local",
+    description: "",
+    target: null,
+    entry_type: null,
+    updated_at: null,
+    retrievability: "readable",
+    retrievability_reason: null,
+    is_reference: false,
+    ...overrides,
+  };
+}
+
+export function buildVariableContainer(
+  overrides: Partial<VariableContainer> = {},
+): VariableContainer {
+  return {
+    id: "repo_file:.env.local",
+    source_id: "repo_file:.env.local",
+    label: ".env.local",
+    qualifier: null,
+    layer: null,
+    entries: [buildVariableEntry()],
+    ...overrides,
+  };
+}
+
+export function buildVariableSource(overrides: Partial<VariableSource> = {}): VariableSource {
+  return {
+    id: "repo_file:.env.local",
+    kind: "repo_file",
+    label: ".env.local",
+    state: "ok",
+    hint: null,
+    outside_repository: false,
+    link_confidence: null,
+    link_reason: null,
+    containers: [buildVariableContainer()],
+    ...overrides,
+  };
+}
+
+/** A source that is reachable and authenticated but holds nothing (FR-037 `empty`). */
+export function buildEmptySource(overrides: Partial<VariableSource> = {}): VariableSource {
+  return buildVariableSource({
+    id: "github",
+    kind: "github",
+    label: "GitHub",
+    state: "empty",
+    outside_repository: true,
+    containers: [],
+    ...overrides,
+  });
+}
+
+/** A source detected but not fully readable; `hint` always states why (FR-034/35/36). */
+export function buildDegradedSource(overrides: Partial<VariableSource> = {}): VariableSource {
+  return buildVariableSource({
+    id: "azure_keyvault",
+    kind: "azure_keyvault",
+    label: "Key Vault",
+    state: "degraded",
+    hint: "Azure sign-in is required — run `az login`",
+    outside_repository: true,
+    link_confidence: "machine_default",
+    link_reason: "this machine's default Azure sign-in — not a link to this project",
+    containers: [],
+    ...overrides,
+  });
+}
+
+export function buildEnvSourcesPayload(
+  sources: VariableSource[] = [buildVariableSource()],
+  overrides: Partial<EnvSourcesPayload> = {},
+): EnvSourcesPayload {
+  return {
+    sources,
+    project: "C:/projects/example",
+    scanned_at: "2026-08-29T09:20:00Z",
+    notices: [],
+    ...overrides,
+  };
+}
+
+export function buildRevealResult(overrides: Partial<RevealResult> = {}): RevealResult {
+  return {
+    status: "revealed",
+    value: "postgres://localhost/app",
+    reason: null,
+    is_reference: false,
+    ...overrides,
+  };
 }

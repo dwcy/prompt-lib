@@ -123,7 +123,7 @@ export const RELEASE_SECTIONS: ReleaseSection[] = [
       },
       {
         title: "Environment variables",
-        location: "Machine → Environment",
+        location: "Machine → Environment variables",
         purpose:
           "Reads the curated variables this setup uses plus your full system environment, and writes the curated ones back.",
         steps: [
@@ -131,6 +131,19 @@ export const RELEASE_SECTIONS: ReleaseSection[] = [
           "Edit a curated value and apply; the confirm dialog shows exactly what will be written.",
         ],
         note: "Secret-named values (anything with TOKEN, SECRET, PASSWORD, API_KEY in the name) are masked in the UI and never leave the backend in clear text.",
+      },
+      {
+        title: "Every source of configuration for a project",
+        location: "Machine → Environment variables",
+        purpose:
+          "Beyond Curated and System, the screen now builds a tab for every config file in the selected project and for each cloud source it can actually reach — Azure, Vercel, and GitHub — plus .NET's developer secret store, which lives outside the repository.",
+        steps: [
+          "Select a project. Tabs appear only for sources actually detected, so what you see is what this project really has.",
+          "Every tab lists names only. Click the eye on one row to fetch that single value; it re-masks itself when you switch tab or project.",
+          "A tab that says 'nothing configured' is reachable and empty; one with a hint is only partly readable and the hint names what to fix.",
+          "For a .NET project, keys read as their full path (Logging:LogLevel:Default) and each row states which settings layer wins.",
+        ],
+        note: "Read-only against Azure, Vercel, and GitHub — nothing is ever created, updated, or deleted there. Some values can never be read back at all: GitHub secrets and Vercel 'sensitive' entries show a disabled eye stating so, which is a fact about those platforms rather than a failure. Every reveal is recorded in the audit trail, and the record never contains the value.",
       },
     ],
   },
@@ -378,7 +391,7 @@ export const RELEASE_SECTIONS: ReleaseSection[] = [
     entries: [
       {
         title: "Secrets stay on the backend",
-        location: "Machine → Environment",
+        location: "Machine → Environment variables",
         purpose:
           "Environment values with credential-shaped names are masked before they leave the backend — in this screen and in every other response — and prepared actions no longer keep your values on disk after they run.",
         steps: ["No action needed — this is on by default."],

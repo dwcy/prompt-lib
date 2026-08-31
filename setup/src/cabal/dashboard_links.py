@@ -68,3 +68,57 @@ def parse_github_remote(url: str) -> tuple[str, str] | None:
     if not owner or not repo:
         return None
     return owner, repo
+
+
+# -- Azure link ladder (020-env-variable-sources FR-030) -------------------
+# Four signals, first match wins. Pure detection only: `machine_default` is resolved by
+# the Azure collector, because it needs `az account show` and this module stays I/O-free.
+
+AZD_MARKER_FILE = "azure.yaml"
+AZD_MARKER_DIR = ".azure"
+IAC_DIR = "infra"
+_IAC_SUFFIXES = (".bicep", ".tf")
+
+
+def find_azd_link(project: Path) -> str | None:
+    """Return the Azure Developer CLI signal describing this project, or None."""
+    if (project / AZD_MARKER_FILE).is_file():
+        return AZD_MARKER_FILE
+    azure_dir = project / AZD_MARKER_DIR
+    if not azure_dir.is_dir():
+        return None
+    environments = sorted(child.name for child in _safe_iterdir(azure_dir) if child.is_dir())
+    if environments:
+        return f"{AZD_MARKER_DIR}/ ({', '.join(environments)})"
+    return f"{AZD_MARKER_DIR}/"
+
+
+def find_azd_environment_name(project: Path) -> str | None:
+    """Name the azd environment when `.azure/<env>/.env` identifies exactly one."""
+    azure_dir = project / AZD_MARKER_DIR
+    if not azure_dir.is_dir():
+        return None
+    named = [
+        child.name
+        for child in _safe_iterdir(azure_dir)
+        if child.is_dir() and (child / ".env").is_file()
+    ]
+    return named[0] if len(named) == 1 else None
+
+
+def find_iac_link(project: Path) -> str | None:
+    """Return the infrastructure-as-code signal under `infra/`, or None."""
+    infra = project / IAC_DIR
+    if not infra.is_dir():
+        return None
+    for child in sorted(_safe_iterdir(infra), key=lambda item: item.name.lower()):
+        if child.is_file() and child.suffix.lower() in _IAC_SUFFIXES:
+            return f"{IAC_DIR}/{child.name}"
+    return None
+
+
+def _safe_iterdir(directory: Path) -> list[Path]:
+    try:
+        return list(directory.iterdir())
+    except OSError:
+        return []

@@ -1,43 +1,17 @@
-// Curated/System segmented pill switcher + variable search field for the environment toolbar.
-import type { EnvScope } from "@/api/securityEnvironment";
-
+// Search field and platform marker for the built-in Curated/System views.
+//
+// The Curated/System pills this component used to own were replaced by the module's tab strip
+// (EnvSourceTabs), where they are now the first two of a dynamic set — the switcher keeps only
+// the controls that belong to the built-in scopes themselves.
 export interface EnvScopeSwitcherProps {
-  scope: EnvScope;
-  onScopeChange: (scope: EnvScope) => void;
   queryText: string;
   onQueryChange: (value: string) => void;
   platform: string;
 }
 
-export function EnvScopeSwitcher({
-  scope,
-  onScopeChange,
-  queryText,
-  onQueryChange,
-  platform,
-}: EnvScopeSwitcherProps) {
+export function EnvScopeSwitcher({ queryText, onQueryChange, platform }: EnvScopeSwitcherProps) {
   return (
     <div className="env-toolbar">
-      <div className="env-toolbar__pills" role="tablist" aria-label="Environment scope">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={scope === "curated"}
-          className={scope === "curated" ? "is-active" : ""}
-          onClick={() => onScopeChange("curated")}
-        >
-          Curated
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={scope === "system"}
-          className={scope === "system" ? "is-active" : ""}
-          onClick={() => onScopeChange("system")}
-        >
-          System
-        </button>
-      </div>
       <input
         type="search"
         value={queryText}

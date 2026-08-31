@@ -8,6 +8,9 @@
 
 /* --- Intro row: explanatory copy (left) + mono enabled/total summary (right) --- */
 
+/* Single row: the sentence takes the slack, the count and the refresh control sit at the end.
+   Deliberately not a CardRefreshFooter here — that wrapper is `flex: 0 0 100%` so it can claim
+   its own line at a card's bottom edge, which is exactly what this row must not do. */
 .env-intro {
   display: flex;
   align-items: center;
@@ -16,12 +19,17 @@
   font-size: var(--fs-sm);
 }
 
+.env-intro__text {
+  flex: 1;
+  min-width: 0;
+}
+
 .env-intro__summary {
-  margin-left: auto;
   flex-shrink: 0;
   color: var(--muted);
   font-family: var(--font-family-mono);
   font-size: var(--fs-xs);
+  white-space: nowrap;
 }
 
 /* --- Toolbar: curated/system segmented pills + search + platform tag --- */
@@ -330,6 +338,338 @@
   }
 
   .env-toolbar__platform {
+    display: none;
+  }
+}
+
+/* -- multi-source browser (020-env-variable-sources) --------------------- */
+
+/* FR-007: overflow scrolls rather than shrinking tabs. A tab strip that squeezes names
+   until "appsettings.Development.json" and "appsettings.Production.json" both read as
+   "appsettings.D…" is worse than one that scrolls — the names are the navigation. */
+.env-sources__tabs {
+  display: flex;
+  gap: var(--space-1);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  padding-bottom: var(--space-1);
+  border-bottom: 1px solid var(--border);
+}
+
+.env-sources__tab {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  flex: 0 0 auto;
+  max-width: 22rem;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid transparent;
+  border-radius: var(--corner-lg) var(--corner-lg) 0 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.env-sources__tab:hover {
+  color: var(--text);
+  background: var(--surface-2);
+}
+
+.env-sources__tab.is-active {
+  color: var(--text);
+  background: var(--surface-1);
+  border-color: var(--border);
+  border-bottom-color: transparent;
+}
+
+.env-sources__tab-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.env-sources__tab-qualifier {
+  color: var(--muted-3);
+  font-size: var(--fs-xs);
+}
+
+/* FR-037: the four outcomes must be told apart at a glance, before anything is clicked. */
+.env-sources__tab[data-state="degraded"] {
+  color: var(--state-degraded);
+}
+
+.env-sources__tab[data-state="empty"] {
+  color: var(--muted-3);
+  font-style: italic;
+}
+
+.env-sources__badge {
+  padding: 0 var(--space-1);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-sm);
+  color: var(--muted-2);
+  font-size: var(--fs-xs);
+  text-transform: lowercase;
+}
+
+/* FR-032: a machine default must read as weaker than a real project link, so it is outlined
+   and muted where a genuine link badge would be filled. */
+.env-sources__badge[data-badge="machine-default"] {
+  border-style: dashed;
+  color: var(--muted-3);
+}
+
+.env-sources__badge[data-badge="outside"] {
+  border-color: color-mix(in srgb, var(--status-warning) 40%, var(--border));
+  color: var(--status-warning);
+}
+
+.env-sources__badge[data-badge="reference"] {
+  border-color: color-mix(in srgb, var(--status-info, var(--status-accent)) 40%, var(--border));
+}
+
+.env-sources__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.env-sources__group + .env-sources__group {
+  margin-top: var(--space-4);
+}
+
+.env-sources__group-heading {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-2);
+  color: var(--muted-2);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.env-sources__group-qualifier {
+  color: var(--muted-3);
+  font-size: var(--fs-xs);
+  font-weight: 400;
+}
+
+.env-sources__grid {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+
+.env-sources__grid th,
+.env-sources__grid td {
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.env-sources__grid thead th {
+  color: var(--muted-2);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.env-sources__name {
+  display: block;
+  color: var(--text);
+  font-family: var(--font-mono);
+  word-break: break-all;
+}
+
+.env-sources__description,
+.env-sources__updated {
+  color: var(--muted-3);
+  font-size: var(--fs-xs);
+}
+
+.env-sources__attribution {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  align-items: center;
+}
+
+.env-sources__layer {
+  display: inline-flex;
+  gap: var(--space-1);
+  color: var(--muted-2);
+  font-size: var(--fs-xs);
+}
+
+.env-sources__layer-verdict {
+  color: var(--muted-3);
+}
+
+.env-sources__layer[data-wins="true"] .env-sources__layer-verdict {
+  color: var(--state-ok);
+}
+
+/* -- reveal states ------------------------------------------------------- */
+
+.env-reveal {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.env-reveal__eye {
+  display: inline-flex;
+  padding: var(--space-1);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-sm);
+  background: var(--surface-2);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.env-reveal__eye svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.env-reveal__eye:hover:not(:disabled) {
+  color: var(--text);
+}
+
+/* FR-018: `never` is a fact, not a failure. It gets the muted, unmistakably inert treatment
+   — no warning colour, no hover, and a not-allowed cursor — so it never reads as retryable.
+   A refused reveal below uses the warning palette instead, because that one can change. */
+.env-reveal--never .env-reveal__eye {
+  border-style: dashed;
+  color: var(--muted-3);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.env-reveal--never .env-reveal__note {
+  color: var(--muted-3);
+  font-size: var(--fs-xs);
+}
+
+.env-reveal--refused .env-reveal__note {
+  font-size: var(--fs-xs);
+}
+
+.env-reveal--refused[data-status="denied"] .env-reveal__note {
+  color: var(--status-warning);
+}
+
+.env-reveal--refused[data-status="unavailable"] .env-reveal__note {
+  color: var(--muted-2);
+}
+
+.env-reveal__masked,
+.env-reveal__value {
+  font-family: var(--font-mono);
+  word-break: break-all;
+}
+
+.env-reveal__masked {
+  color: var(--muted-3);
+}
+
+.env-reveal__shown {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}
+
+/* An empty or whitespace-only value is an answer; it must not look like a failed read. */
+.env-reveal__value--blank {
+  color: var(--muted-2);
+  font-style: italic;
+}
+
+/* -- source notices ------------------------------------------------------ */
+
+.env-sources__notice {
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  background: var(--surface-1);
+}
+
+.env-sources__notice[data-state="degraded"] {
+  border-color: color-mix(in srgb, var(--status-warning) 40%, var(--border));
+}
+
+.env-sources__notice-title {
+  margin: 0 0 var(--space-1);
+  color: var(--text);
+  font-size: var(--fs-sm);
+}
+
+.env-sources__notice[data-state="empty"] .env-sources__notice-title {
+  color: var(--muted);
+}
+
+.env-sources__notice-body {
+  margin: 0;
+  color: var(--muted-2);
+  font-size: var(--fs-xs);
+}
+
+.env-sources__notices {
+  margin: 0;
+  padding-left: var(--space-4);
+  color: var(--muted-3);
+  font-size: var(--fs-xs);
+}
+
+/* -- azure link editor --------------------------------------------------- */
+
+.env-sources__link-editor {
+  padding: var(--space-3);
+  border: 1px dashed var(--border);
+  border-radius: var(--corner-lg);
+  background: var(--surface-1);
+}
+
+.env-sources__link-reason {
+  display: flex;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-2);
+  color: var(--muted-2);
+  font-size: var(--fs-xs);
+}
+
+.env-sources__link-label {
+  color: var(--muted-3);
+  text-transform: uppercase;
+}
+
+.env-sources__link-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: end;
+}
+
+.env-sources__link-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  color: var(--muted-2);
+  font-size: var(--fs-xs);
+}
+
+@media (max-width: 768px) {
+  .env-sources__grid thead th:nth-child(3),
+  .env-sources__grid tbody td:nth-child(3) {
     display: none;
   }
 }

@@ -1,175 +1,286 @@
-// Environment console: curated profile editor (toggle/edit/apply) and a read-only searchable
-// system inventory, laid out as the single flat toggle table from the cabal-console mock.
+// Environment variables console. Curated and System remain the first two tabs, unchanged
+// (FR-002); every tab after them is built from what the backend actually detected for the
+// selected project (FR-005), and rebuilt whenever that project changes (FR-006).
 import { useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  useEnvSources,
+  useRefreshSource,
+  useRevealValue,
+  type VariableEntry,
+  type VariableSource,
+} from "@/api/envSources";
 import { queryKeys } from "@/api/queryKeys";
-import { type EnvEntry, type EnvScope, useEnvironment } from "@/api/securityEnvironment";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
+import { RefreshButton } from "@/components/RefreshButton";
 import { useAction } from "@/hooks/useAction";
-import { EnvScopeSwitcher } from "@/modules/environment/components/EnvScopeSwitcher";
-import { EnvTable, type EnvTableRow } from "@/modules/environment/components/EnvTable";
+import { BuiltInScope } from "@/modules/environment/BuiltInScope";
 import {
-  countActive,
-  isSensitiveEnvironmentEntry,
-  sourceLabel,
-  sourceVariant,
-  systemEntryLabel,
-  systemEntryVariant,
-} from "@/modules/environment/environmentPresentation";
-import { useEnvironmentProfile } from "@/modules/environment/hooks/useEnvironmentProfile";
+  AzureLinkEditor,
+  EnvSourceEmptyState,
+} from "@/modules/environment/components/EnvSourceEmptyState";
+import { EnvSourceTable, entryKey } from "@/modules/environment/components/EnvSourceTable";
+import { type EnvSourceTab, EnvSourceTabs } from "@/modules/environment/components/EnvSourceTabs";
+import type { RevealState } from "@/modules/environment/components/RevealCell";
+import { useProjectContextStore } from "@/stores/projectContext";
 import "./EnvironmentModule.css";
 
-type CuratedLane = "all" | "paths" | "runtime";
-
-const LANES: Array<{ key: CuratedLane; label: string }> = [
-  { key: "all", label: "All" },
-  { key: "paths", label: "Filesystem" },
-  { key: "runtime", label: "Runtime" },
+const BUILT_IN_TABS: EnvSourceTab[] = [
+  {
+    key: "curated",
+    label: "Curated",
+    qualifier: null,
+    state: null,
+    outsideRepository: false,
+    linkConfidence: null,
+    linkReason: null,
+    count: 0,
+  },
+  {
+    key: "system",
+    label: "System",
+    qualifier: null,
+    state: null,
+    outsideRepository: false,
+    linkConfidence: null,
+    linkReason: null,
+    count: 0,
+  },
 ];
+
+const AZURE_SOURCE_IDS = new Set(["azure_keyvault", "azure_app_settings"]);
 
 export function EnvironmentModule() {
   const queryClient = useQueryClient();
-  const [scope, setScope] = useState<EnvScope>("curated");
-  const [lane, setLane] = useState<CuratedLane>("all");
-  const [queryText, setQueryText] = useState("");
-  const envQuery = useEnvironment(scope, scope === "system" ? queryText : "");
-  const applyAction = useAction("env.apply");
-  const profile = useEnvironmentProfile(scope, envQuery.data?.entries);
+  const projectPath = useProjectContextStore((state) => state.selected?.path ?? null);
+  const [activeTab, setActiveTab] = useState<string>("curated");
+  // A source refreshed on its own replaces just itself, so waiting 40s on Azure never
+  // re-runs — or discards — the sources that already loaded.
+  const [refreshedSources, setRefreshedSources] = useState<Record<string, VariableSource>>({});
+  // Revealed values live here and nowhere else — never in the query cache, which would
+  // survive the tab and project changes FR-014 requires them not to.
+  const [revealed, setRevealed] = useState<Record<string, RevealState>>({});
+  const [pendingKey, setPendingKey] = useState<string | null>(null);
+
+  const sourcesQuery = useEnvSources();
+  const revealMutation = useRevealValue();
+  const refreshSource = useRefreshSource();
+  const azureLinkAction = useAction("env.azure_link.set");
+
+  const sources = (sourcesQuery.data?.sources ?? []).map(
+    (source) => refreshedSources[source.id] ?? source,
+  );
+  const activeSource = sources.find((source) => source.id === activeTab) ?? null;
+
+  // FR-014: a tab change or a project change re-masks everything, with no user action.
+  // Both deps are triggers rather than values the body reads; dropping them would leave
+  // revealed values on screen across exactly the two transitions that must re-mask them.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: trigger-only deps, see above
+  useEffect(() => {
+    setRevealed({});
+    setPendingKey(null);
+  }, [activeTab, projectPath]);
+
+  // A refreshed source belongs to the project it was fetched for and must not survive a switch.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: trigger-only dep, see above
+  useEffect(() => {
+    setRefreshedSources({});
+  }, [projectPath]);
+
+  // The new project's tabs have not arrived yet, so selection falls back to one that exists.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: trigger-only dep, see above
+  useEffect(() => {
+    setActiveTab("curated");
+  }, [projectPath]);
 
   useEffect(() => {
-    if (applyAction.phase !== "succeeded") return;
-    void queryClient.invalidateQueries({ queryKey: queryKeys.global("environment") });
-  }, [applyAction.phase, queryClient]);
+    if (azureLinkAction.phase !== "succeeded") return;
+    void queryClient.invalidateQueries({
+      queryKey: queryKeys.scoped("envSources", projectPath),
+    });
+  }, [azureLinkAction.phase, queryClient, projectPath]);
 
-  if (envQuery.isPending) return <EmptyState title="Loading environment..." />;
-  if (envQuery.isError) {
-    return <EmptyState title="Environment unavailable" body={envQuery.error.message} />;
+  const tabs = useMemo(() => [...BUILT_IN_TABS, ...sources.map(sourceTab)], [sources]);
+
+  // A tab can disappear when the project changes or a source stops being detected; falling
+  // back keeps the module usable instead of rendering a panel for a tab that no longer exists.
+  useEffect(() => {
+    if (!tabs.some((tab) => tab.key === activeTab)) setActiveTab("curated");
+  }, [tabs, activeTab]);
+
+  function handleReveal(entry: VariableEntry) {
+    const key = entryKey(entry);
+    setPendingKey(key);
+    revealMutation.mutate(
+      { source_id: entry.source_id, container_id: entry.container_id, name: entry.name },
+      {
+        onSettled: () => setPendingKey(null),
+        onSuccess: (result) =>
+          setRevealed((current) => ({
+            ...current,
+            [key]: {
+              status: result.status,
+              value: result.value,
+              reason: result.reason,
+              isReference: result.is_reference,
+            },
+          })),
+        onError: (error) =>
+          setRevealed((current) => ({
+            ...current,
+            [key]: {
+              status: "unavailable",
+              value: null,
+              reason: error.message,
+              isReference: false,
+            },
+          })),
+      },
+    );
   }
 
-  const normalizedQuery = queryText.trim().toLocaleLowerCase();
-  const visibleEntries = envQuery.data.entries.filter((entry) => {
-    const matchesQuery =
-      normalizedQuery.length === 0 ||
-      entry.name.toLocaleLowerCase().includes(normalizedQuery) ||
-      entry.description.toLocaleLowerCase().includes(normalizedQuery);
-    const matchesLane = lane === "all" || (lane === "paths" ? entry.is_path : !entry.is_path);
-    return matchesQuery && (scope === "system" || matchesLane);
-  });
-  const enabledCount =
-    scope === "curated"
-      ? envQuery.data.entries.filter(
-          (entry) => profile.enabled[entry.name] ?? (profile.draft[entry.name] ?? "").trim() !== "",
-        ).length
-      : countActive(envQuery.data.entries, (entry) => entry.value_redacted);
-  const rows: EnvTableRow[] = visibleEntries.map((entry) =>
-    scope === "curated" ? curatedRow(entry, profile) : systemRow(entry),
-  );
+  function handleMask(entry: VariableEntry) {
+    setRevealed((current) => {
+      const next = { ...current };
+      delete next[entryKey(entry)];
+      return next;
+    });
+  }
+
+  const isBuiltIn = activeTab === "curated" || activeTab === "system";
 
   return (
     <div className="env-console">
-      <div className="env-intro">
-        <span>
-          {scope === "curated"
-            ? "Curated variables are read from the system environment; toggles clear or restore a value before you apply it."
-            : "System-inherited values are shown read-only; use search to filter by name or description."}
-        </span>
-        <span className="env-intro__summary">
-          {enabledCount} enabled / {envQuery.data.count} total
-        </span>
-      </div>
+      <EnvSourceTabs tabs={tabs} activeKey={activeTab} onSelect={setActiveTab} />
 
-      <EnvScopeSwitcher
-        scope={scope}
-        onScopeChange={setScope}
-        queryText={queryText}
-        onQueryChange={setQueryText}
-        platform={envQuery.data.platform}
-      />
+      {sourcesQuery.isError ? (
+        <p className="inline-error">
+          Source discovery is unavailable: {sourcesQuery.error.message}
+        </p>
+      ) : null}
 
-      {profile.browseError !== null ? <p className="inline-error">{profile.browseError}</p> : null}
+      {isBuiltIn ? (
+        <BuiltInScope scope={activeTab} />
+      ) : (
+        <div
+          className="env-sources__panel"
+          role="tabpanel"
+          id={`env-panel-${activeTab}`}
+          aria-labelledby={`env-tab-${activeTab}`}
+        >
+          {activeSource === null ? (
+            <EmptyState title="Loading sources..." animated />
+          ) : (
+            <SourcePanel
+              source={activeSource}
+              revealed={revealed}
+              pendingKey={pendingKey}
+              isRefreshing={sourcesQuery.isFetching || refreshSource.isPending}
+              onRefresh={() =>
+                refreshSource.mutate(activeSource.id, {
+                  onSuccess: (source) => {
+                    if (source === null) return;
+                    setRefreshedSources((current) => ({ ...current, [source.id]: source }));
+                  },
+                })
+              }
+              onReveal={handleReveal}
+              onMask={handleMask}
+              azureLinkAction={azureLinkAction}
+            />
+          )}
+        </div>
+      )}
 
-      {scope === "curated" ? (
-        <div className="env-lanes" role="tablist" aria-label="Variable groups">
-          {LANES.map((item) => (
-            <button
-              key={item.key}
-              type="button"
-              role="tab"
-              aria-selected={lane === item.key}
-              className={lane === item.key ? "is-active" : ""}
-              onClick={() => setLane(item.key)}
-            >
-              {item.label}
-            </button>
+      {sourcesQuery.data !== undefined && sourcesQuery.data.notices.length > 0 ? (
+        <ul className="env-sources__notices">
+          {sourcesQuery.data.notices.map((notice) => (
+            <li key={notice}>{notice}</li>
           ))}
-        </div>
+        </ul>
       ) : null}
 
-      <EnvTable
-        rows={rows}
-        ariaLabel={
-          scope === "curated" ? "Curated environment variables" : "System environment variables"
-        }
-      />
-
-      {scope === "curated" ? (
-        <div className="env-footer">
-          <span>
-            {profile.dirtyCount === 0 ? "Profile unchanged" : `${profile.dirtyCount} staged`}
-          </span>
-          <button type="button" disabled={profile.dirtyCount === 0} onClick={profile.revertAll}>
-            Revert all
-          </button>
-          <button
-            type="button"
-            disabled={profile.dirtyCount === 0 || applyAction.phase === "preparing"}
-            onClick={() => applyAction.prepare({ values: profile.dirtyValues })}
-          >
-            Apply {profile.dirtyCount}
-          </button>
-        </div>
-      ) : null}
-
-      <ConfirmDialog action={applyAction} actionTitle="Apply environment values" />
+      <ConfirmDialog action={azureLinkAction} actionTitle="Record Azure scope" />
     </div>
   );
 }
 
-function curatedRow(
-  entry: EnvEntry,
-  profile: ReturnType<typeof useEnvironmentProfile>,
-): EnvTableRow {
-  const value = profile.draft[entry.name] ?? "";
-  const dirty = entry.name in profile.dirtyValues;
-  const isOn = profile.enabled[entry.name] ?? value.trim() !== "";
-  return {
-    entry,
-    value,
-    isOn,
-    canToggle: entry.editable,
-    editing: entry.editable && isOn,
-    dirty,
-    isSecret: isSensitiveEnvironmentEntry(entry),
-    stateVariant: dirty ? "update" : sourceVariant(entry.source),
-    stateLabel: dirty ? "staged" : sourceLabel(entry.source),
-    onToggle: entry.editable ? () => profile.toggleEntry(entry) : undefined,
-    onChange: entry.editable ? (next) => profile.setValue(entry.name, next) : undefined,
-    onBrowse: entry.editable ? () => void profile.browseFor(entry) : undefined,
-    onRevert: entry.editable ? () => profile.revertOne(entry.name) : undefined,
-  };
+function SourcePanel({
+  source,
+  revealed,
+  pendingKey,
+  isRefreshing,
+  onRefresh,
+  onReveal,
+  onMask,
+  azureLinkAction,
+}: {
+  source: VariableSource;
+  revealed: Record<string, RevealState>;
+  pendingKey: string | null;
+  isRefreshing: boolean;
+  onRefresh: () => void;
+  onReveal: (entry: VariableEntry) => void;
+  onMask: (entry: VariableEntry) => void;
+  azureLinkAction: ReturnType<typeof useAction>;
+}) {
+  const hasEntries = source.containers.some((container) => container.entries.length > 0);
+  return (
+    <>
+      <div className="env-intro">
+        <span className="env-intro__text">
+          Names only. Use the eye on a row to fetch that one value.
+        </span>
+        <span className="env-intro__summary">{summarise(source)}</span>
+        <RefreshButton label={source.label} onRefresh={onRefresh} isFetching={isRefreshing} />
+      </div>
+
+      {AZURE_SOURCE_IDS.has(source.id) ? (
+        <AzureLinkEditor
+          source={source}
+          isBusy={azureLinkAction.phase === "preparing"}
+          onRecord={(subscriptionId, resourceGroup) =>
+            azureLinkAction.prepare({
+              subscription_id: subscriptionId,
+              resource_group: resourceGroup === "" ? null : resourceGroup,
+            })
+          }
+          onClear={() => azureLinkAction.prepare({ subscription_id: null, resource_group: null })}
+        />
+      ) : null}
+
+      {source.state === "degraded" || !hasEntries ? (
+        <EnvSourceEmptyState source={source} />
+      ) : (
+        <EnvSourceTable
+          containers={source.containers}
+          revealed={revealed}
+          pendingKey={pendingKey}
+          onReveal={onReveal}
+          onMask={onMask}
+        />
+      )}
+    </>
+  );
 }
 
-function systemRow(entry: EnvEntry): EnvTableRow {
+function summarise(source: VariableSource): string {
+  const count = source.containers.reduce((total, container) => total + container.entries.length, 0);
+  if (source.state === "degraded") return "partly readable";
+  return `${count} ${count === 1 ? "name" : "names"}`;
+}
+
+function sourceTab(source: VariableSource): EnvSourceTab {
+  const [first] = source.containers;
   return {
-    entry,
-    value: entry.value_redacted || "not reported",
-    isOn: entry.value_redacted.trim() !== "",
-    canToggle: false,
-    editing: false,
-    dirty: false,
-    isSecret: isSensitiveEnvironmentEntry(entry),
-    stateVariant: systemEntryVariant(entry),
-    stateLabel: systemEntryLabel(entry),
+    key: source.id,
+    label: source.label,
+    qualifier: first?.qualifier ?? null,
+    state: source.state,
+    outsideRepository: source.outside_repository,
+    linkConfidence: source.link_confidence,
+    linkReason: source.link_reason,
+    count: source.containers.reduce((total, container) => total + container.entries.length, 0),
   };
 }

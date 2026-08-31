@@ -13,6 +13,9 @@ Severity = Literal["info", "warning", "error"]
 DiagnosticKind = Literal["data_source", "mutation", "backend"]
 AuditOutcome = Literal["succeeded", "failed", "cancelled"]
 
+ENV_REVEAL_ACTION_ID = "env.reveal"
+RevealStatus = Literal["revealed", "denied", "unavailable"]
+
 
 class DiagnosticsRecorder:
     """Redact-on-write diagnostic events: persisted history plus an in-memory live feed."""
@@ -82,6 +85,29 @@ class AuditRecorder:
             kind="mutation",
         )
         return entry
+
+    def record_reveal(
+        self,
+        *,
+        source_id: str,
+        container_id: str,
+        name: str,
+        status: RevealStatus,
+    ) -> dict:
+        """Record one value reveal (FR-016).
+
+        Deliberately narrower than `record`: there is no parameter a value could be passed
+        through, so a revealed value cannot reach the audit trail even by mistake. Only
+        `denied` counts as a failure -- `unavailable` is the correct answer for an entry the
+        platform will never return, and logging it as a failure would bury real refusals.
+        """
+        return self.record(
+            action_id=ENV_REVEAL_ACTION_ID,
+            ticket_id=None,
+            job_id=None,
+            effect_summary=f"{status} {name} (source {source_id}, container {container_id})",
+            outcome="failed" if status == "denied" else "succeeded",
+        )
 
     def list(self) -> list[dict]:
         return self._storage.list_audit()

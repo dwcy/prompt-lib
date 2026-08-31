@@ -21,6 +21,10 @@ export const PROJECT_SCOPED_MODULES = [
   // invalidate both (021-codegen-eval-modules).
   "codegen",
   "evals",
+  // The multi-source environment browser lists the SELECTED project's config files and
+  // provider links (020-env-variable-sources FR-006), so it must be rebuilt on switch —
+  // unlike the curated/system views above it, which stay global.
+  "envSources",
 ] as const;
 
 export type ProjectScopedModule = (typeof PROJECT_SCOPED_MODULES)[number];
