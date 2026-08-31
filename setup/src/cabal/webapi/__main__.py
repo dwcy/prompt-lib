@@ -36,6 +36,14 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Loopback bind host (fixed to 127.0.0.1)",
     )
     parser.add_argument("--port", type=int, default=0, help="Bind port; 0 = OS-assigned ephemeral port")
+    # Default stays "warning" so packaged builds keep their quiet console; the dev supervisor
+    # raises it to "info" to make per-request activity visible alongside Vite's output.
+    parser.add_argument(
+        "--log-level",
+        default="warning",
+        choices=["critical", "error", "warning", "info", "debug", "trace"],
+        help="Uvicorn log level (default: warning)",
+    )
     return parser
 
 
@@ -84,7 +92,7 @@ def main(argv: list[str] | None = None) -> int:
     port = sock.getsockname()[1]
     _startup_log(f"socket_bound:{args.host}:{port}")
 
-    server = uvicorn.Server(uvicorn.Config(app, host=args.host, port=port, log_level="warning"))
+    server = uvicorn.Server(uvicorn.Config(app, host=args.host, port=port, log_level=args.log_level))
     app.state.request_shutdown = lambda: setattr(server, "should_exit", True)
 
     _startup_log("write_handshake:start")

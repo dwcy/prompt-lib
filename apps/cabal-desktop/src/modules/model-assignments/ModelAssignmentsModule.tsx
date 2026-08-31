@@ -1,8 +1,10 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { type ModelAssignment, useModels } from "@/api/observability";
+import { CardRefreshFooter } from "@/components/CardRefreshFooter";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
+import { RefreshButton } from "@/components/RefreshButton";
 import { StatePill } from "@/components/StatePill";
 import { useAction } from "@/hooks/useAction";
 import "./ModelAssignmentsModule.css";
@@ -86,6 +88,13 @@ export function ModelAssignmentsModule() {
             <small>invalid</small>
           </span>
         </div>
+        <CardRefreshFooter>
+          <RefreshButton
+            label="model assignments"
+            onRefresh={() => void modelsQuery.refetch()}
+            isFetching={modelsQuery.isFetching}
+          />
+        </CardRefreshFooter>
       </section>
 
       <section className="ma-overview">

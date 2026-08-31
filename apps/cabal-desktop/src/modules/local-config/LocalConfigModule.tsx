@@ -4,9 +4,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useLocalConfig } from "@/api/config";
 import { queryKeys } from "@/api/queryKeys";
+import { CardRefreshFooter } from "@/components/CardRefreshFooter";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
 import { JobPane } from "@/components/JobPane";
+import { RefreshButton } from "@/components/RefreshButton";
 import { useAction } from "@/hooks/useAction";
 import { BlueprintMetric, LocalConfigCard } from "@/modules/local-config/LocalConfigCard";
 import type { SelectionState } from "@/modules/local-config/localConfigSelection";
@@ -101,6 +103,13 @@ export function LocalConfigModule() {
           <BlueprintMetric label="changed" value={planSummary.changedCount} tone="changed" />
           <BlueprintMetric label="stable" value={planSummary.skipCount} tone="stable" />
         </div>
+        <CardRefreshFooter>
+          <RefreshButton
+            label="local config plan"
+            onRefresh={() => void localConfigQuery.refetch()}
+            isFetching={localConfigQuery.isFetching}
+          />
+        </CardRefreshFooter>
       </section>
 
       {localConfigQuery.data.actions.length === 0 ? (

@@ -4,7 +4,7 @@
 import type { DashboardSectionKey, useDashboardSection } from "@/api/dashboard";
 import { readString } from "@/lib/unknownFields";
 import { type HealthStatus, resolveHealthStatus } from "./dashboardHealthStatus";
-import { buildSectionContent, type SectionContent } from "./dashboardSectionContent";
+import { buildSectionContent, type SectionContent } from "./sectionContent";
 
 export interface ResolvedSection {
   settled: boolean;

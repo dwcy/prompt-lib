@@ -2,7 +2,9 @@
 // raw transcript log, and write-audit trigger events — lazy-loaded per tab.
 import { useState } from "react";
 import { type SessionDetail, type SessionSummary, useSessionDetail } from "@/api/observability";
+import { CardRefreshFooter } from "@/components/CardRefreshFooter";
 import { EmptyState } from "@/components/EmptyState";
+import { RefreshButton } from "@/components/RefreshButton";
 import {
   arrayFrom,
   DETAIL_TABS,
@@ -52,6 +54,13 @@ export function SessionDetailPanel({ session }: SessionDetailPanelProps) {
           <TabContent session={session} detail={detailQuery.data} />
         ) : null}
       </div>
+      <CardRefreshFooter>
+        <RefreshButton
+          label="session detail"
+          onRefresh={() => void detailQuery.refetch()}
+          isFetching={detailQuery.isFetching}
+        />
+      </CardRefreshFooter>
     </section>
   );
 }

@@ -86,7 +86,11 @@ export function McpModule() {
 
   return (
     <div className="mcp-console">
-      <McpHeader total={query.data.counts.total} />
+      <McpHeader
+        total={query.data.counts.total}
+        onRefresh={() => void query.refetch()}
+        isFetching={query.isFetching}
+      />
 
       <McpToolbar
         search={search}

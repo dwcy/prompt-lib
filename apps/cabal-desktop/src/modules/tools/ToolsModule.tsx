@@ -3,7 +3,9 @@
 // and the install/update confirm flow (T042/T043), per the cabal-console mock's isTools section.
 import { useMemo, useState } from "react";
 import { useToolsCatalog, useToolsStatus } from "@/api/tools";
+import { CardRefreshFooter } from "@/components/CardRefreshFooter";
 import { EmptyState } from "@/components/EmptyState";
+import { RefreshButton } from "@/components/RefreshButton";
 import { CategoryRail } from "@/modules/tools/components/CategoryRail";
 import { ToolDetailPane } from "@/modules/tools/components/ToolDetailPane";
 import { ToolFiltersBar } from "@/modules/tools/components/ToolFiltersBar";
@@ -71,6 +73,17 @@ export function ToolsModule() {
       <p className="tools-console__count select-none">
         {visibleRows.length} of {rows.length} tools
       </p>
+
+      <CardRefreshFooter>
+        <RefreshButton
+          label="tools catalog"
+          onRefresh={() => {
+            void catalogQuery.refetch();
+            void statusQuery.refetch();
+          }}
+          isFetching={catalogQuery.isFetching || statusQuery.isFetching}
+        />
+      </CardRefreshFooter>
 
       <div className="tools-console__panes">
         <CategoryRail

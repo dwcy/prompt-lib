@@ -7,9 +7,11 @@ import {
   useConfigTree,
 } from "@/api/config";
 import { queryKeys } from "@/api/queryKeys";
+import { CardRefreshFooter } from "@/components/CardRefreshFooter";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
 import { JobPane } from "@/components/JobPane";
+import { RefreshButton } from "@/components/RefreshButton";
 import { StatePill } from "@/components/StatePill";
 import { VirtualDataTable, type VirtualDataTableColumn } from "@/components/VirtualDataTable";
 import { useAction } from "@/hooks/useAction";
@@ -155,6 +157,13 @@ export function CodexModule() {
             ))}
           </div>
         )}
+        <CardRefreshFooter>
+          <RefreshButton
+            label="Codex local plan"
+            onRefresh={() => void localQuery.refetch()}
+            isFetching={localQuery.isFetching}
+          />
+        </CardRefreshFooter>
       </section>
 
       <section className="codex__section">
@@ -205,6 +214,13 @@ export function CodexModule() {
             />
           </div>
         )}
+        <CardRefreshFooter>
+          <RefreshButton
+            label="conversion audit"
+            onRefresh={() => void conversionQuery.refetch()}
+            isFetching={conversionQuery.isFetching}
+          />
+        </CardRefreshFooter>
       </section>
 
       <ConfirmDialog action={localAction} actionTitle={pendingTitle} />

@@ -3,12 +3,13 @@
 // selected — see useProjectContextSync's doc comment for what "explicitly selected" means.
 import { useEffect, useState } from "react";
 import { onSchemaMismatch } from "@/api/errors";
-import { useHealth } from "@/api/health";
-import { queryClient } from "@/api/queryClient";
+import { BookTextIcon } from "@/components/icons/book-text";
 import { HealthStrip } from "@/components/shell/HealthStrip";
 import { JobTray } from "@/components/shell/JobTray";
+import { ModuleDocsDialog } from "@/components/shell/ModuleDocsDialog";
 import { ModuleOutlet } from "@/components/shell/ModuleOutlet";
 import { SidebarNav } from "@/components/shell/SidebarNav";
+import { useAutoFetchStamp } from "@/hooks/useAutoFetchStamp";
 import { useProjectContextSync } from "@/hooks/useProjectContextSync";
 import { ProjectGateModule } from "@/modules/project-gate/ProjectGateModule";
 import {
@@ -37,6 +38,7 @@ export default function App() {
   const activeModule = findModule(requestedModuleKey) ?? requireModule(DEFAULT_MODULE_KEY);
   const activeModuleKey = activeModule.key;
   const [schemaMismatch, setSchemaMismatch] = useState<string | null>(null);
+  const [docsOpen, setDocsOpen] = useState(false);
   const selectedProject = useProjectContextStore((state) => state.selected);
   useProjectContextSync();
 
@@ -105,6 +107,7 @@ export default function App() {
 
   function selectModule(key: ModuleKey) {
     setLastModule(key);
+    setDocsOpen(false);
     if (
       typeof window.matchMedia === "function" &&
       window.matchMedia("(max-width: 768px)").matches
@@ -141,17 +144,18 @@ export default function App() {
           >
             {activeModule.title}
           </h1>
-          <SnapshotStamp />
-          <div className="app-shell__header-spacer" />
-          <HealthStrip />
           <button
             type="button"
-            className="app-shell__refresh"
-            onClick={() => void queryClient.invalidateQueries()}
-            title="Refetch every visible data source"
+            className="app-shell__view-docs"
+            onClick={() => setDocsOpen(true)}
+            aria-label={`About ${activeModule.title}`}
+            aria-haspopup="dialog"
+            title={`Read more about ${activeModule.title}`}
           >
-            Refresh
+            <BookTextIcon size={15} aria-hidden="true" />
           </button>
+          <div className="app-shell__header-spacer" />
+          <HealthStrip />
           <button
             type="button"
             className="app-shell__project-context"
@@ -166,7 +170,11 @@ export default function App() {
         <main id="workspace-content" className="app-shell__content" tabIndex={-1}>
           <ModuleOutlet activeModuleKey={activeModuleKey} />
         </main>
+        <SnapshotStamp />
       </div>
+      {docsOpen ? (
+        <ModuleDocsDialog moduleKey={activeModuleKey} onClose={() => setDocsOpen(false)} />
+      ) : null}
     </div>
   );
 }
@@ -183,13 +191,17 @@ function BrandLockup() {
 }
 
 function SnapshotStamp() {
-  // Last successful /api/health fetch — the freshest moment the workspace data is known-good.
-  const health = useHealth();
-  if (health.dataUpdatedAt === 0) return null;
-  const stamp = new Date(health.dataUpdatedAt).toISOString().slice(11, 19);
+  // Covers only the self-polling queries; per-card refresh buttons own the freshness of everything
+  // else, so this stamp never implies those cards were refetched.
+  const updatedAt = useAutoFetchStamp();
+  if (updatedAt === null) return null;
+  const stamp = new Date(updatedAt).toTimeString().slice(0, 8);
   return (
-    <span className="app-shell__snapshot select-none" title="Last successful backend snapshot">
-      snapshot {stamp}Z
+    <span
+      className="app-shell__snapshot select-none"
+      title="Oldest auto-refreshing data source; cards refresh individually"
+    >
+      snapshot {stamp}
     </span>
   );
 }

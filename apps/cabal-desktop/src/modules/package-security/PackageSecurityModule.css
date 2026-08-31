@@ -66,25 +66,6 @@
   color: var(--muted);
 }
 
-.pkgsec-header__rescan {
-  padding: 5px 14px;
-  background: var(--accent-bg);
-  border: 1px solid var(--accent-border);
-  border-radius: var(--corner-sm);
-  color: var(--accent);
-  font-size: var(--fs-sm);
-  cursor: pointer;
-}
-
-.pkgsec-header__rescan:hover:not(:disabled) {
-  background: var(--accent-bg-gradient);
-}
-
-.pkgsec-header__rescan:disabled {
-  opacity: var(--opacity-disabled);
-  cursor: default;
-}
-
 /* --- Notices strip ---------------------------------------------------------- */
 
 .pkgsec-notices {

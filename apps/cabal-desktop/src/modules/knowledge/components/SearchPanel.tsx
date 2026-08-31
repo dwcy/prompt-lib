@@ -2,7 +2,9 @@
 // trace-in-graph / build-context-pack handoffs.
 import { useState } from "react";
 import { type KnowledgeSearchResult, useKnowledgeSearch } from "@/api/knowledge";
+import { CardRefreshFooter } from "@/components/CardRefreshFooter";
 import { EmptyState } from "@/components/EmptyState";
+import { RefreshButton } from "@/components/RefreshButton";
 
 type SearchMode = "fulltext" | "semantic";
 
@@ -85,6 +87,13 @@ export function SearchPanel({
         ) : (
           <EmptyState title={searchQuery.data.status} body={searchQuery.data.message} />
         )}
+        <CardRefreshFooter>
+          <RefreshButton
+            label="search results"
+            onRefresh={() => void searchQuery.refetch()}
+            isFetching={searchQuery.isFetching}
+          />
+        </CardRefreshFooter>
       </div>
     </section>
   );

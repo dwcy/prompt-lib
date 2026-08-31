@@ -8,9 +8,11 @@ import {
   useInitTemplates,
 } from "@/api/projectLifecycle";
 import { queryKeys } from "@/api/queryKeys";
+import { CardRefreshFooter } from "@/components/CardRefreshFooter";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
 import { JobPane } from "@/components/JobPane";
+import { RefreshButton } from "@/components/RefreshButton";
 import { StatePill } from "@/components/StatePill";
 import { useAction } from "@/hooks/useAction";
 import "./InitProjectModule.css";
@@ -137,6 +139,16 @@ export function InitProjectModule() {
             <strong>Handoff</strong>
           </li>
         </ol>
+        <CardRefreshFooter>
+          <RefreshButton
+            label="project plan"
+            onRefresh={() => {
+              void templatesQuery.refetch();
+              void planQuery.refetch();
+            }}
+            isFetching={templatesQuery.isFetching || planQuery.isFetching}
+          />
+        </CardRefreshFooter>
       </section>
 
       <section className="init-destination-panel">

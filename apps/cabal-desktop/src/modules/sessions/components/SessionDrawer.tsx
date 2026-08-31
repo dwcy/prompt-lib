@@ -1,6 +1,8 @@
 // Sticky session detail drawer: title + mono id, fact rows, subagent dispatch rollup
 // (from the lazy activity tab payload), data-source footer note, and the delete action.
 import { type SessionSummary, useSessionDetail } from "@/api/observability";
+import { CardRefreshFooter } from "@/components/CardRefreshFooter";
+import { RefreshButton } from "@/components/RefreshButton";
 import {
   aggregateDispatches,
   arrayFrom,
@@ -83,6 +85,13 @@ export function SessionDrawer({ session, onDelete }: SessionDrawerProps) {
           Delete session
         </button>
       </div>
+      <CardRefreshFooter>
+        <RefreshButton
+          label="session activity"
+          onRefresh={() => void activityQuery.refetch()}
+          isFetching={activityQuery.isFetching}
+        />
+      </CardRefreshFooter>
     </aside>
   );
 }

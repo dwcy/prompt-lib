@@ -1,6 +1,8 @@
 // Command header card: title/description, node/edge/usage metrics + index/semantic state pills,
 // bundle actions, and the "bundle missing" runway banner shown when no OKF export exists yet.
 import type { KnowledgeSummary } from "@/api/knowledge";
+import { CardRefreshFooter } from "@/components/CardRefreshFooter";
+import { RefreshButton } from "@/components/RefreshButton";
 import { StatePill } from "@/components/StatePill";
 
 export interface KnowledgeHeaderProps {
@@ -8,9 +10,18 @@ export interface KnowledgeHeaderProps {
   onExport: () => void;
   onDoctor: () => void;
   onIndex: () => void;
+  onRefresh: () => void;
+  isFetching: boolean;
 }
 
-export function KnowledgeHeader({ summary, onExport, onDoctor, onIndex }: KnowledgeHeaderProps) {
+export function KnowledgeHeader({
+  summary,
+  onExport,
+  onDoctor,
+  onIndex,
+  onRefresh,
+  isFetching,
+}: KnowledgeHeaderProps) {
   return (
     <>
       <section className="km-header">
@@ -40,6 +51,9 @@ export function KnowledgeHeader({ summary, onExport, onDoctor, onIndex }: Knowle
             Rebuild index
           </button>
         </div>
+        <CardRefreshFooter>
+          <RefreshButton label="knowledge catalog" onRefresh={onRefresh} isFetching={isFetching} />
+        </CardRefreshFooter>
       </section>
 
       {!summary.available ? (

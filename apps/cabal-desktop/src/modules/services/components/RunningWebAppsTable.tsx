@@ -1,4 +1,6 @@
 import type { RunningWebApp } from "@/api/operations";
+import { CardRefreshFooter } from "@/components/CardRefreshFooter";
+import { RefreshButton } from "@/components/RefreshButton";
 import { ToggleSwitch } from "@/components/ToggleSwitch";
 
 export interface RunningWebAppsTableProps {
@@ -44,9 +46,6 @@ export function RunningWebAppsTable({
             {hiddenSystemCount > 0 ? ` (${hiddenSystemCount} hidden)` : ""}
           </span>
         </div>
-        <button type="button" onClick={onRefresh} disabled={isRefreshing}>
-          {isRefreshing ? "Refreshing…" : "Refresh"}
-        </button>
       </header>
 
       {error !== null ? (
@@ -104,6 +103,9 @@ export function RunningWebAppsTable({
           </table>
         </div>
       )}
+      <CardRefreshFooter>
+        <RefreshButton label="running web apps" onRefresh={onRefresh} isFetching={isRefreshing} />
+      </CardRefreshFooter>
     </section>
   );
 }

@@ -125,6 +125,8 @@ export function ProviderModule() {
             onCopyDeviceCode={() => void copyDeviceCode()}
             onSwitch={(user, host) => switchAction.prepare({ user, host })}
             onForget={(user, host) => forgetAction.prepare({ user, host })}
+            onRefresh={() => void providerQuery.refetch()}
+            isFetching={providerQuery.isFetching}
           />
         </>
       )}
@@ -140,6 +142,8 @@ export function ProviderModule() {
           isPending={reposQuery.isPending}
           isError={reposQuery.isError}
           error={reposQuery.error ?? null}
+          onRefresh={() => void reposQuery.refetch()}
+          isFetching={reposQuery.isFetching}
         />
         <ProviderClonePanel
           selectedRepo={selectedRepo}

@@ -1,4 +1,6 @@
 import type { MachineTool, SystemOverview } from "@/api/systemOverview";
+import { CardRefreshFooter } from "@/components/CardRefreshFooter";
+import { RefreshButton } from "@/components/RefreshButton";
 
 const CORE_TOOL_KEYS = new Set(["git", "python", "node", "npm", "pnpm", "dotnet"]);
 
@@ -8,6 +10,8 @@ export interface SystemOverviewPanelProps {
   error: string | null;
   updateBusy: boolean;
   onUpdate: () => void;
+  onRefresh: () => void;
+  isFetching: boolean;
 }
 
 export function SystemOverviewPanel({
@@ -16,6 +20,8 @@ export function SystemOverviewPanel({
   error,
   updateBusy,
   onUpdate,
+  onRefresh,
+  isFetching,
 }: SystemOverviewPanelProps) {
   if (isPending) {
     return (
@@ -105,6 +111,9 @@ export function SystemOverviewPanel({
           </div>
         </div>
       ) : null}
+      <CardRefreshFooter>
+        <RefreshButton label="machine snapshot" onRefresh={onRefresh} isFetching={isFetching} />
+      </CardRefreshFooter>
     </section>
   );
 }

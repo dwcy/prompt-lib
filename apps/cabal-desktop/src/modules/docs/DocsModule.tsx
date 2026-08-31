@@ -1,7 +1,9 @@
 // Docs reference module: README summary + docs/ markdown listing, console two-column layout.
 import { useState } from "react";
 import { useDocContent, useDocs } from "@/api/docs";
+import { CardRefreshFooter } from "@/components/CardRefreshFooter";
 import { EmptyState } from "@/components/EmptyState";
+import { RefreshButton } from "@/components/RefreshButton";
 import "./DocsModule.css";
 
 export function DocsModule() {
@@ -51,6 +53,13 @@ export function DocsModule() {
         ) : (
           <EmptyState title="No README found in this project" />
         )}
+        <CardRefreshFooter>
+          <RefreshButton
+            label={viewing ? "document" : "README"}
+            onRefresh={() => void (viewing ? content.refetch() : docs.refetch())}
+            isFetching={viewing ? content.isFetching : docs.isFetching}
+          />
+        </CardRefreshFooter>
       </section>
 
       <aside className="docs-card docs-card--list">
@@ -76,6 +85,13 @@ export function DocsModule() {
             ))}
           </ul>
         )}
+        <CardRefreshFooter>
+          <RefreshButton
+            label="docs list"
+            onRefresh={() => void docs.refetch()}
+            isFetching={docs.isFetching}
+          />
+        </CardRefreshFooter>
       </aside>
     </div>
   );

@@ -1,4 +1,4 @@
-![Cabal header: pink elephant logo beside the Cabal wordmark](https://raw.githubusercontent.com/dwcy/prompt-lib/main/docs/assets/cabal-header.png)
+![Cabal logo: a pink elephant mark](https://raw.githubusercontent.com/dwcy/prompt-lib/main/apps/cabal-desktop/src/assets/cabal-logo.png)
 
 # Cabal
 

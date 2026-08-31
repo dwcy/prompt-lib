@@ -1,7 +1,9 @@
 // Repo browser card: filter input + selectable repo rows, restyled in the console's card/table
 // language. Replaces the mock's "workflow runs" panel — the provider payload has no CI/PR data.
 import type { ProviderRepo } from "@/api/projectLifecycle";
+import { CardRefreshFooter } from "@/components/CardRefreshFooter";
 import { EmptyState } from "@/components/EmptyState";
+import { RefreshButton } from "@/components/RefreshButton";
 
 export interface ProviderRepoListCardProps {
   repos: ProviderRepo[];
@@ -13,6 +15,8 @@ export interface ProviderRepoListCardProps {
   isPending: boolean;
   isError: boolean;
   error: Error | null;
+  onRefresh: () => void;
+  isFetching: boolean;
 }
 
 export function ProviderRepoListCard({
@@ -25,6 +29,8 @@ export function ProviderRepoListCard({
   isPending,
   isError,
   error,
+  onRefresh,
+  isFetching,
 }: ProviderRepoListCardProps) {
   return (
     <section className="provider-repo-list-card">
@@ -77,6 +83,9 @@ export function ProviderRepoListCard({
           ))}
         </div>
       )}
+      <CardRefreshFooter>
+        <RefreshButton label="repositories" onRefresh={onRefresh} isFetching={isFetching} />
+      </CardRefreshFooter>
     </section>
   );
 }

@@ -90,24 +90,21 @@
 }
 
 .app-shell__snapshot {
-  flex-shrink: 0;
+  position: fixed;
+  right: var(--space-4);
+  bottom: var(--space-3);
+  z-index: var(--z-overlay);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--corner-full);
+  background-color: color-mix(in srgb, var(--bg) 82%, transparent);
   color: var(--muted);
   font-family: var(--font-family-mono);
   font-size: var(--fs-xs);
+  pointer-events: none;
 }
 
 .app-shell__header-spacer {
   flex: 1;
-}
-
-.app-shell__refresh {
-  flex-shrink: 0;
-  padding: 0.375rem var(--space-3); /* 6px 12px — Cabal Console button padding */
-  border: 1px solid var(--border-strong);
-  border-radius: var(--corner-md);
-  background-color: var(--surface-2);
-  color: var(--fg-soft);
-  font-size: var(--fs-sm);
 }
 
 .app-shell__brand {
@@ -362,17 +359,15 @@
     color var(--duration-fast) var(--ease-standard);
 }
 
-.sidebar-nav__item-dot {
+/* The animated module icon strokes with currentColor, so it inherits the item's
+   soft / hover / active colors without needing its own color rules. */
+.sidebar-nav__item-icon {
   flex: 0 0 auto;
-  width: 7px;
-  height: 7px;
-  border-radius: var(--corner-full);
-  background-color: #4c4860;
-  transition: background-color var(--duration-fast) var(--ease-standard);
-}
-
-.sidebar-nav__group[data-group="machine"] .sidebar-nav__item-dot {
-  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
 }
 
 .sidebar-nav__item-label {
@@ -417,12 +412,6 @@
   color: #ffffff;
 }
 
-.sidebar-nav__item--active .sidebar-nav__item-dot {
-  background-color: var(
-    --accent
-  ); /* always accent pink on the active item, per group color in the group title only */
-}
-
 .sidebar-nav__footer {
   display: grid;
   gap: var(--space-1);
@@ -449,28 +438,24 @@
 }
 
 .job-tray__trigger {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-height: 1.9rem;
-  padding: var(--space-1) var(--space-2);
+  display: inline-grid;
+  width: 1.9rem;
+  height: 1.9rem;
+  padding: 0;
+  place-items: center;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-full);
   background-color: transparent;
   color: var(--muted);
   font-size: var(--fs-sm);
+  font-weight: 700;
+  line-height: 1;
 }
 
-.job-tray__count {
-  display: grid;
-  place-items: center;
-  min-width: 1.15rem;
-  height: 1.15rem;
-  padding: 0 var(--space-1);
-  border-radius: var(--corner-full);
-  background-color: var(--status-accent);
-  color: var(--fg-inverted);
-  font-family: var(--font-family-mono);
-  font-size: var(--fs-xs);
-  font-weight: 700;
+.job-tray__trigger--active {
+  border-color: var(--status-warning);
+  background-color: color-mix(in srgb, var(--status-warning) 18%, transparent);
+  color: var(--status-warning);
 }
 
 .job-tray__panel {
@@ -538,6 +523,20 @@
   color: var(--muted);
 }
 
+/* The strip is a button so it can open the module breakdown; every rule here exists to strip the
+   global button chrome so it stays visually identical to the non-interactive states. */
+.health-strip__trigger {
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background-color: transparent;
+  text-align: left;
+}
+
+.health-strip__trigger:hover:not(:disabled) {
+  background-color: transparent;
+}
+
 .health-strip__dot {
   flex: 0 0 auto;
   width: 6px;
@@ -570,10 +569,8 @@
   color: var(--status-warning);
 }
 
-.health-strip__version {
-  color: var(--muted);
-  font-family: var(--font-family-mono);
-  font-size: var(--fs-xs);
+.health-strip__label--failed {
+  color: var(--status-danger);
 }
 
 .health-strip__degraded {
@@ -641,7 +638,6 @@
 
   .app-shell__snapshot,
   .app-shell__project-context,
-  .health-strip__version,
   .health-strip__degraded {
     display: none;
   }
@@ -1086,4 +1082,30 @@
   .module-switcher__items {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+/* Header docs affordance: opens the "About this screen" dialog for the active module. Sits
+   directly after the view title so it reads as belonging to it, not to the header actions
+   grouped on the right. */
+.app-shell__view-docs {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--corner-sm);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    color var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard);
+}
+
+.app-shell__view-docs:hover {
+  background-color: var(--surface-2);
+  color: var(--fg);
 }

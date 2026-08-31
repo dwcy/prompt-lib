@@ -1944,6 +1944,11 @@
   color: var(--danger-fg);
 }
 
+.warning-button {
+  border-color: color-mix(in srgb, var(--status-warning) 45%, var(--border));
+  color: var(--status-warning);
+}
+
 .session-inspector__tabs,
 .model-matrix__filters {
   display: flex;

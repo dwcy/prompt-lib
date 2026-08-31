@@ -6,7 +6,9 @@ import type {
   KnowledgeGraphFilters,
   KnowledgeNode,
 } from "@/api/knowledge";
+import { CardRefreshFooter } from "@/components/CardRefreshFooter";
 import { EmptyState } from "@/components/EmptyState";
+import { RefreshButton } from "@/components/RefreshButton";
 import { EvidenceDrawer } from "@/modules/knowledge/components/EvidenceDrawer";
 import { GraphPanel } from "@/modules/knowledge/components/GraphPanel";
 import { KnowledgeToolbar } from "@/modules/knowledge/components/KnowledgeToolbar";
@@ -23,6 +25,8 @@ export interface GraphWorkbenchProps {
   selectedEdge: KnowledgeEdge | null;
   onSelect: (node: KnowledgeNode) => void;
   onSelectEdge: (edge: KnowledgeEdge) => void;
+  onRefresh: () => void;
+  isFetching: boolean;
 }
 
 export function GraphWorkbench({
@@ -37,6 +41,8 @@ export function GraphWorkbench({
   selectedEdge,
   onSelect,
   onSelectEdge,
+  onRefresh,
+  isFetching,
 }: GraphWorkbenchProps) {
   const nodesById = useMemo(
     () => new Map((graph?.nodes ?? []).map((node) => [node.id, node])),
@@ -68,6 +74,9 @@ export function GraphWorkbench({
         />
         <EvidenceDrawer edge={selectedEdge} nodesById={nodesById} />
       </div>
+      <CardRefreshFooter>
+        <RefreshButton label="graph" onRefresh={onRefresh} isFetching={isFetching} />
+      </CardRefreshFooter>
     </section>
   );
 }

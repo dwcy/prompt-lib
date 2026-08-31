@@ -21,6 +21,7 @@ export function useOverviewKpis(): OverviewKpi[] {
     github: useDashboardSection("github"),
     supabase: useDashboardSection("supabase"),
     vercel: useDashboardSection("vercel"),
+    azure_devops: useDashboardSection("azure_devops"),
   } as const;
 
   const toolsSummary =

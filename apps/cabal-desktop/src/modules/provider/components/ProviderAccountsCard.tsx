@@ -2,8 +2,10 @@
 // switch/forget), the "+ Add account" trigger for the device-login flow, and its live device
 // code banner — the console mock's account table, adapted to the real gh_accounts payload.
 import type { ProviderState } from "@/api/projectLifecycle";
+import { CardRefreshFooter } from "@/components/CardRefreshFooter";
 import { EmptyState } from "@/components/EmptyState";
 import { JobPane } from "@/components/JobPane";
+import { RefreshButton } from "@/components/RefreshButton";
 import { StatePill } from "@/components/StatePill";
 import type { ActionPhase } from "@/hooks/useAction";
 
@@ -21,6 +23,8 @@ export interface ProviderAccountsCardProps {
   onCopyDeviceCode: () => void;
   onSwitch: (user: string, host: string) => void;
   onForget: (user: string, host: string) => void;
+  onRefresh: () => void;
+  isFetching: boolean;
 }
 
 export function ProviderAccountsCard({
@@ -34,6 +38,8 @@ export function ProviderAccountsCard({
   onCopyDeviceCode,
   onSwitch,
   onForget,
+  onRefresh,
+  isFetching,
 }: ProviderAccountsCardProps) {
   const addAccountBusy = loginPhase === "preparing" || loginPhase === "executing";
 
@@ -137,6 +143,9 @@ export function ProviderAccountsCard({
         Switching or forgetting an account updates the active gh credential immediately.
       </p>
       {loginJobId !== null ? <JobPane jobId={loginJobId} /> : null}
+      <CardRefreshFooter>
+        <RefreshButton label="accounts" onRefresh={onRefresh} isFetching={isFetching} />
+      </CardRefreshFooter>
     </section>
   );
 }

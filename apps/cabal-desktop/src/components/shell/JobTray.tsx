@@ -9,6 +9,7 @@ export function JobTray() {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const jobIds = useJobTrayStore((state) => state.jobIds);
   const removeJob = useJobTrayStore((state) => state.removeJob);
+  const hasActivity = jobIds.length > 0;
 
   useEffect(() => {
     if (!isOpen) return;
@@ -42,13 +43,16 @@ export function JobTray() {
       <button
         ref={triggerRef}
         type="button"
-        className="job-tray__trigger"
+        className={
+          hasActivity ? "job-tray__trigger job-tray__trigger--active" : "job-tray__trigger"
+        }
         aria-expanded={isOpen}
         aria-controls="global-job-tray"
+        aria-label={hasActivity ? `Activity — ${jobIds.length} running` : "Activity"}
+        title={hasActivity ? `Activity — ${jobIds.length} running` : "Activity"}
         onClick={() => setIsOpen((current) => !current)}
       >
-        Activity
-        {jobIds.length > 0 ? <span className="job-tray__count">{jobIds.length}</span> : null}
+        <span aria-hidden="true">!</span>
       </button>
 
       {isOpen ? (

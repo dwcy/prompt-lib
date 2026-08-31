@@ -2,8 +2,10 @@
 // log stream pane. Not part of the compact mock cards/table above, but required to keep the prereq
 // gating, dashboard handoff, and log-stream functionality the previous layout exposed.
 import type { ServiceRow } from "@/api/operations";
+import { CardRefreshFooter } from "@/components/CardRefreshFooter";
 import { EmptyState } from "@/components/EmptyState";
 import { LogStream } from "@/components/LogStream";
+import { RefreshButton } from "@/components/RefreshButton";
 import type { StreamConnectionState, StreamEvent } from "@/lib/sse";
 
 export interface ServiceDetailPanelProps {
@@ -13,6 +15,8 @@ export interface ServiceDetailPanelProps {
   onDashboard: (service: ServiceRow) => void;
   logEvents: StreamEvent[];
   logConnectionState: StreamConnectionState;
+  onRefresh: () => void;
+  isFetching: boolean;
 }
 
 export function ServiceDetailPanel({
@@ -22,6 +26,8 @@ export function ServiceDetailPanel({
   onDashboard,
   logEvents,
   logConnectionState,
+  onRefresh,
+  isFetching,
 }: ServiceDetailPanelProps) {
   if (service === null) {
     return (
@@ -74,6 +80,9 @@ export function ServiceDetailPanel({
           <LogStream events={logEvents} connectionState={logConnectionState} />
         )}
       </div>
+      <CardRefreshFooter>
+        <RefreshButton label="service detail" onRefresh={onRefresh} isFetching={isFetching} />
+      </CardRefreshFooter>
     </section>
   );
 }

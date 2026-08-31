@@ -56,6 +56,11 @@ def codex_install() -> tuple[bool, str]:
     return _npm_global_install("@openai/codex")
 
 
+def deepseek_harness_install() -> tuple[bool, str]:
+    """Install DeepSeek Harness' official ``dsh`` CLI from npm."""
+    return _npm_global_install("@deepseek-ai/dsh")
+
+
 def opencode_install() -> tuple[bool, str]:
     return _npm_global_install("opencode-ai")
 

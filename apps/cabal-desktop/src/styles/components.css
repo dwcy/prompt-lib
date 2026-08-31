@@ -707,7 +707,6 @@
 .gauge__caption {
   fill: var(--muted);
   font-family: var(--font-family-sans);
-  font-size: 11px;
 }
 
 .kpi-card {
@@ -774,4 +773,55 @@
   margin-top: var(--space-2);
   color: var(--muted);
   font-size: var(--fs-xs);
+}
+
+/* ─── RefreshButton ───────────────────────────────────────────────────────── */
+
+.card-refresh-footer {
+  display: flex;
+  /* flex-basis 100% so the footer claims its own line in wrapping row-cards; margin-top auto pins
+     it to the bottom edge in column-cards. */
+  flex: 0 0 100%;
+  justify-content: flex-end;
+  margin-top: auto;
+  padding-top: var(--space-2);
+}
+
+.refresh-button {
+  display: inline-grid;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  place-items: center;
+  border-radius: var(--corner-full);
+  color: var(--muted);
+  line-height: 1;
+}
+
+.refresh-button:hover:not(:disabled) {
+  color: var(--fg);
+}
+
+.refresh-button:disabled {
+  cursor: progress;
+}
+
+.refresh-button__icon {
+  display: block;
+}
+
+.refresh-button[data-refreshing="true"] .refresh-button__icon {
+  animation: refresh-button-spin 900ms linear infinite;
+}
+
+@keyframes refresh-button-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .refresh-button[data-refreshing="true"] .refresh-button__icon {
+    animation: none;
+  }
 }

@@ -1,7 +1,9 @@
-// Compact Git/GitHub/Supabase/Vercel status row for Overview (design's "serviceCards" row) —
-// always shows all four sections, unlike Project Dashboard which hides unlinked ones, because the
-// "Services ready" KPI counts against a fixed total of 4.
+// Compact Git/GitHub/Supabase/Vercel/Azure DevOps status row for Overview (design's
+// "serviceCards" row) — always shows all five sections, unlike Project Dashboard which hides
+// unlinked ones, because the "Services ready" KPI counts against a fixed total of 5.
 import { DASHBOARD_SECTIONS, type DashboardSectionKey, useDashboardSection } from "@/api/dashboard";
+import { CardRefreshFooter } from "@/components/CardRefreshFooter";
+import { RefreshButton } from "@/components/RefreshButton";
 import { DASHBOARD_SECTION_LABELS } from "@/modules/project-dashboard/dashboardSections.constants";
 import { resolveSectionQuery } from "@/modules/project-dashboard/resolveSectionQuery";
 
@@ -10,7 +12,8 @@ export function ServiceStatusRow() {
   const github = useDashboardSection("github");
   const supabase = useDashboardSection("supabase");
   const vercel = useDashboardSection("vercel");
-  const queriesByKey = { git, github, supabase, vercel } as const;
+  const azureDevops = useDashboardSection("azure_devops");
+  const queriesByKey = { git, github, supabase, vercel, azure_devops: azureDevops } as const;
 
   return (
     <section className="overview-console__services" aria-label="Project service status">
@@ -47,6 +50,13 @@ function ServiceStatusCard({ sectionKey, query }: ServiceStatusCardProps) {
         {line1}
         {detail !== null ? <span className="overview-service-card__detail">{detail}</span> : null}
       </p>
+      <CardRefreshFooter>
+        <RefreshButton
+          label={DASHBOARD_SECTION_LABELS[sectionKey]}
+          onRefresh={() => void query.refetch()}
+          isFetching={query.isFetching}
+        />
+      </CardRefreshFooter>
     </article>
   );
 }

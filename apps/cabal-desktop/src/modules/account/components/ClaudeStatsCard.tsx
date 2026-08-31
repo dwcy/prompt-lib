@@ -1,11 +1,15 @@
 // Claude stats card: session/spend/token/subagent tile grid from real session totals, with a
 // shortcut into the full Sessions & cost module.
 import type { SessionTotals } from "@/api/observability";
+import { CardRefreshFooter } from "@/components/CardRefreshFooter";
+import { RefreshButton } from "@/components/RefreshButton";
 import { formatCompactNumber, formatCount, formatMoney } from "../claudeStatsFormat";
 
 export interface ClaudeStatsCardProps {
   totals: SessionTotals;
   onOpenSessions: () => void;
+  onRefresh: () => void;
+  isFetching: boolean;
 }
 
 interface StatTile {
@@ -14,7 +18,12 @@ interface StatTile {
   suffix?: string;
 }
 
-export function ClaudeStatsCard({ totals, onOpenSessions }: ClaudeStatsCardProps) {
+export function ClaudeStatsCard({
+  totals,
+  onOpenSessions,
+  onRefresh,
+  isFetching,
+}: ClaudeStatsCardProps) {
   const tiles: StatTile[] = [
     { label: "Sessions", value: formatCount(totals.session_count) },
     { label: "Spend", value: formatMoney(totals.cost_usd) },
@@ -48,6 +57,9 @@ export function ClaudeStatsCard({ totals, onOpenSessions }: ClaudeStatsCardProps
       <button type="button" className="ccfg-link-btn select-none" onClick={onOpenSessions}>
         Sessions →
       </button>
+      <CardRefreshFooter>
+        <RefreshButton label="session stats" onRefresh={onRefresh} isFetching={isFetching} />
+      </CardRefreshFooter>
     </section>
   );
 }

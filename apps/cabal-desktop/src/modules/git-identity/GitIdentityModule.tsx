@@ -10,8 +10,10 @@ import {
   useGitIdentity,
   useGitPolicy,
 } from "@/api/securityEnvironment";
+import { CardRefreshFooter } from "@/components/CardRefreshFooter";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
+import { RefreshButton } from "@/components/RefreshButton";
 import { StatePill } from "@/components/StatePill";
 import { useAction } from "@/hooks/useAction";
 import "./GitIdentityModule.css";
@@ -101,6 +103,16 @@ export function GitIdentityModule() {
           <span className="gid-eyebrow">Policy source</span>
           <code>{policyQuery.data.source}</code>
         </div>
+        <CardRefreshFooter>
+          <RefreshButton
+            label="git identity"
+            onRefresh={() => {
+              void identityQuery.refetch();
+              void policyQuery.refetch();
+            }}
+            isFetching={identityQuery.isFetching || policyQuery.isFetching}
+          />
+        </CardRefreshFooter>
       </section>
 
       <section className="gid-authorship">

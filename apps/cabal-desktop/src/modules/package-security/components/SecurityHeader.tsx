@@ -1,6 +1,8 @@
 // Package security table header: bold title + muted ecosystem-scope description, a right-aligned
 // mono severity/kind summary strip, and the rescan action (existing behavior, re-skinned).
 import type { SecurityScan } from "@/api/securityEnvironment";
+import { CardRefreshFooter } from "@/components/CardRefreshFooter";
+import { RefreshButton } from "@/components/RefreshButton";
 import { countsByKind, scopeDescription } from "@/modules/package-security/packageSecurityStatus";
 
 export interface SecurityHeaderProps {
@@ -31,14 +33,9 @@ export function SecurityHeader({ scan, isRescanning, onRescan }: SecurityHeaderP
           {noticeCount > 0 ? `⚑ ${noticeCount} notice${noticeCount === 1 ? "" : "s"}` : "0 notices"}
         </span>
       </div>
-      <button
-        type="button"
-        className="pkgsec-header__rescan"
-        disabled={isRescanning}
-        onClick={onRescan}
-      >
-        {isRescanning ? "Rescanning…" : "Rescan"}
-      </button>
+      <CardRefreshFooter>
+        <RefreshButton label="security scan" onRefresh={onRescan} isFetching={isRescanning} />
+      </CardRefreshFooter>
     </header>
   );
 }

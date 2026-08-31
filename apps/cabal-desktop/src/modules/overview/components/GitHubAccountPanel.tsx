@@ -1,4 +1,6 @@
 import type { ProviderState } from "@/api/projectLifecycle";
+import { CardRefreshFooter } from "@/components/CardRefreshFooter";
+import { RefreshButton } from "@/components/RefreshButton";
 
 type ProviderAccount = ProviderState["accounts"][number];
 
@@ -8,6 +10,8 @@ export interface GitHubAccountPanelProps {
   error: string | null;
   switchBusy: boolean;
   onSwitch: (user: string, host: string) => void;
+  onRefresh: () => void;
+  isFetching: boolean;
 }
 
 export function GitHubAccountPanel({
@@ -16,6 +20,8 @@ export function GitHubAccountPanel({
   error,
   switchBusy,
   onSwitch,
+  onRefresh,
+  isFetching,
 }: GitHubAccountPanelProps) {
   const accounts = state?.accounts ?? [];
   const activeAccount = accounts.find((account) => account.active);
@@ -79,6 +85,9 @@ export function GitHubAccountPanel({
           </div>
         )}
       </div>
+      <CardRefreshFooter>
+        <RefreshButton label="GitHub account" onRefresh={onRefresh} isFetching={isFetching} />
+      </CardRefreshFooter>
     </section>
   );
 }

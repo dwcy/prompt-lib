@@ -1,4 +1,4 @@
-![Cabal header: pink elephant logo beside the Cabal wordmark](docs/assets/cabal-header.png)
+![Cabal logo: a pink elephant mark](apps/cabal-desktop/src/assets/cabal-logo.png)
 
 # Cabal
 
@@ -32,7 +32,7 @@ multi-agent workflows easier to run across projects.
 | Autonomous PR review | [`services/orchestrator`](services/orchestrator/) — daemon that watches a GitHub repo, dispatches each PR to a peer Claude agent over the A2A bridge, posts the review back via `gh`, persists state to SQLite, pushes phone notifications via ntfy.sh, ships with a Textual dashboard |
 | Spec-driven feature work | `specs/` holds spec-kit feature trees (spec, plan, research, data-model, contracts, tasks, quickstart) — `001-a2a-bridge`, `002-agent-orchestrator`, `003-issue-triage`, `004-github-plugin` |
 | Agent ecosystem knowledge graph | OKF (Open Knowledge Format) exports agents, skills, hooks, rules, templates, Codex assets, and specs into a portable catalog plus `graph.json`, so AI tools and reviewers can inspect routing, overlaps, unused concepts, and skill-agent connections. See [`docs/okf/README.md`](docs/okf/README.md). |
-| Tool-call safety | `PreToolUse` hooks (`command_guard.py`, `file_write_guard.py`) and `PostToolUse` audit (`write_audit.py`) intercept risky operations |
+| Tool-call safety | `PreToolUse` hooks (`command_guard.py`, `file_write_guard.py`, `pretool_branch_guard.py`, `pretool_inflight_guard.py`) and `PostToolUse` audit (`write_audit.py`) intercept risky operations — including editing a file that another session left uncommitted. See [`docs/hooks.md`](docs/hooks.md). |
 | Authoring new skills | `/skill-create` — scaffolds, tests, and refines new slash commands |
 
 ## Statusline

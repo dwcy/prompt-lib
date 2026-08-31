@@ -2,8 +2,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { type SettingEntry, useSettings } from "@/api/config";
 import { queryKeys } from "@/api/queryKeys";
+import { CardRefreshFooter } from "@/components/CardRefreshFooter";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
+import { RefreshButton } from "@/components/RefreshButton";
 import { StatePill } from "@/components/StatePill";
 import { ToggleSwitch } from "@/components/ToggleSwitch";
 import { useAction } from "@/hooks/useAction";
@@ -65,6 +67,13 @@ export function SettingsModule() {
             runtime state.
           </p>
         </div>
+        <CardRefreshFooter>
+          <RefreshButton
+            label="settings"
+            onRefresh={() => void settingsQuery.refetch()}
+            isFetching={settingsQuery.isFetching}
+          />
+        </CardRefreshFooter>
         <div className="settings-command-panel">
           <ol className="settings-inheritance-flow" aria-label="Settings resolution order">
             <li className="is-active">

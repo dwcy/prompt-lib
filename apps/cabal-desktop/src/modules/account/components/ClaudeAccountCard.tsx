@@ -1,6 +1,8 @@
 // Claude account card: identity + credential presence facts, runtime provenance, and quick actions
 // linking to a manual info refresh and the Models module.
 import type { AccountPayload } from "@/api/observability";
+import { CardRefreshFooter } from "@/components/CardRefreshFooter";
+import { RefreshButton } from "@/components/RefreshButton";
 
 export interface ClaudeAccountCardProps {
   account: AccountPayload;
@@ -50,14 +52,6 @@ export function ClaudeAccountCard({
       </div>
 
       <div className="ccfg-account-card__actions">
-        <button
-          type="button"
-          className="ccfg-btn ccfg-btn--accent select-none"
-          onClick={onRefresh}
-          disabled={isRefreshing}
-        >
-          {isRefreshing ? "Refreshing…" : "Claude info"}
-        </button>
         <button type="button" className="ccfg-btn select-none" onClick={onOpenModels}>
           Models
         </button>
@@ -76,6 +70,9 @@ export function ClaudeAccountCard({
           </dl>
         </div>
       ) : null}
+      <CardRefreshFooter>
+        <RefreshButton label="Claude account" onRefresh={onRefresh} isFetching={isRefreshing} />
+      </CardRefreshFooter>
     </section>
   );
 }

@@ -100,6 +100,8 @@ export function KnowledgeModule() {
         onExport={() => exportAction.prepare({})}
         onDoctor={() => doctorAction.prepare({})}
         onIndex={() => indexAction.prepare({ force: false })}
+        onRefresh={() => void summaryQuery.refetch()}
+        isFetching={summaryQuery.isFetching}
       />
 
       {lastJobId !== null ? <JobPane jobId={lastJobId} /> : null}
@@ -119,6 +121,8 @@ export function KnowledgeModule() {
           selectedEdge={selectedEdge}
           onSelect={handleSelectNode}
           onSelectEdge={setSelectedEdge}
+          onRefresh={() => void graphQuery.refetch()}
+          isFetching={graphQuery.isFetching}
         />
       ) : null}
       {tab === "search" ? (

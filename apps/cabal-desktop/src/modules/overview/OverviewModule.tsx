@@ -7,9 +7,11 @@ import { useOverview } from "@/api/overview";
 import { useProviderState } from "@/api/projectLifecycle";
 import { queryKeys } from "@/api/queryKeys";
 import { useSystemOverview } from "@/api/systemOverview";
+import { CardRefreshFooter } from "@/components/CardRefreshFooter";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
 import { KpiCard } from "@/components/KpiCard";
+import { RefreshButton } from "@/components/RefreshButton";
 import { useAction } from "@/hooks/useAction";
 import { useModuleNavigation } from "@/hooks/useModuleNavigation";
 import { ActivityCard } from "./components/ActivityCard";
@@ -88,6 +90,8 @@ export function OverviewModule() {
             updateJob.data?.state === "running"
           }
           onUpdate={() => updateAction.prepare({})}
+          onRefresh={() => void systemQuery.refetch()}
+          isFetching={systemQuery.isFetching}
         />
 
         <GitHubAccountPanel
@@ -96,6 +100,8 @@ export function OverviewModule() {
           error={providerQuery.isError ? providerQuery.error.message : null}
           switchBusy={switchAction.phase === "preparing" || switchAction.phase === "executing"}
           onSwitch={(user, host) => switchAction.prepare({ user, host })}
+          onRefresh={() => void providerQuery.refetch()}
+          isFetching={providerQuery.isFetching}
         />
       </div>
 
@@ -103,6 +109,8 @@ export function OverviewModule() {
         state={systemQuery.data}
         isPending={systemQuery.isPending}
         error={systemQuery.isError ? systemQuery.error.message : null}
+        onRefresh={() => void systemQuery.refetch()}
+        isFetching={systemQuery.isFetching}
       />
 
       <div className="overview-console__kpis">
@@ -117,6 +125,13 @@ export function OverviewModule() {
             hint={kpi.hint}
           />
         ))}
+        <CardRefreshFooter>
+          <RefreshButton
+            label="overview"
+            onRefresh={() => void overviewQuery.refetch()}
+            isFetching={overviewQuery.isFetching}
+          />
+        </CardRefreshFooter>
       </div>
 
       <ServiceStatusRow />

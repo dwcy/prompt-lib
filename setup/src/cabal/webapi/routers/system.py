@@ -258,7 +258,10 @@ def overview(request: Request):
 
 
 @router.get("/api/dashboard")
-def dashboard(request: Request, section: Literal["git", "github", "supabase", "vercel"]):
+def dashboard(
+    request: Request,
+    section: Literal["git", "github", "supabase", "vercel", "azure_devops"],
+):
     project = request.app.state.project
     if project is None:
         raise ApiError(404, "no_project_selected", "Select a project before requesting a dashboard section")

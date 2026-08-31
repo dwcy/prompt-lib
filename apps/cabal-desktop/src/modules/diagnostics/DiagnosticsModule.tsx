@@ -2,7 +2,9 @@
 // ledger with severity filtering and per-source retry (T035).
 import { useState } from "react";
 import { useDiagnosticsHistory } from "@/api/diagnostics";
+import { CardRefreshFooter } from "@/components/CardRefreshFooter";
 import { EmptyState } from "@/components/EmptyState";
+import { RefreshButton } from "@/components/RefreshButton";
 import { useEventStream } from "@/lib/sse";
 import { DiagnosticsHistoryTable } from "@/modules/diagnostics/components/DiagnosticsHistoryTable";
 import { DiagnosticsLiveTail } from "@/modules/diagnostics/components/DiagnosticsLiveTail";
@@ -50,6 +52,13 @@ export function DiagnosticsModule() {
             {stream.state}
           </strong>
         </article>
+        <CardRefreshFooter>
+          <RefreshButton
+            label="diagnostic totals"
+            onRefresh={() => void allHistoryQuery.refetch()}
+            isFetching={allHistoryQuery.isFetching}
+          />
+        </CardRefreshFooter>
       </section>
 
       <DiagnosticsLiveTail events={stream.events} connectionState={stream.state} />
@@ -85,6 +94,13 @@ export function DiagnosticsModule() {
             <DiagnosticsHistoryTable events={history} onRetry={retrySource} />
           )}
         </div>
+        <CardRefreshFooter>
+          <RefreshButton
+            label="incident ledger"
+            onRefresh={() => void historyQuery.refetch()}
+            isFetching={historyQuery.isFetching}
+          />
+        </CardRefreshFooter>
       </section>
     </div>
   );

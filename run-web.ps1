@@ -10,13 +10,15 @@ $appDirectory = Join-Path $root "apps\cabal-desktop"
 $exitCode = 1
 $backend = $null
 
+# dev_backend restarts cabal-backend whenever setup/src/cabal/**.py changes and labels its
+# output; it sets CABAL_DEV and the log level itself.
+$supervisor = Join-Path $root "setup/tools/dev_backend.py"
+
 $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
 $startInfo.FileName = (Get-Command uv -ErrorAction Stop).Source
 $startInfo.WorkingDirectory = $root
 $startInfo.UseShellExecute = $false
-$startInfo.Arguments = 'run cabal-backend --project "' + $root + '"'
-# CABAL_DEV opens CORS to the Vite dev origins; packaged builds never set it.
-$startInfo.EnvironmentVariables["CABAL_DEV"] = "1"
+$startInfo.Arguments = 'run python "' + $supervisor + '" --root "' + $root + '"'
 
 try {
     $backend = [System.Diagnostics.Process]::Start($startInfo)

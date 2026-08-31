@@ -106,6 +106,8 @@ export function ServicesModule() {
           services={services}
           readyCount={readyCount}
           totalCount={query.data.counts.total}
+          onRefresh={() => void query.refetch()}
+          isFetching={query.isFetching}
         />
         <ServiceHealthGrid services={services} />
       </section>
@@ -168,6 +170,8 @@ export function ServicesModule() {
         onDashboard={(service) => dashboardAction.prepare({ key: service.key })}
         logEvents={logStream.events}
         logConnectionState={logStream.state}
+        onRefresh={() => void dashboard.refetch()}
+        isFetching={dashboard.isFetching}
       />
 
       <ServiceDialog title="Set Up Service" action={setup} />

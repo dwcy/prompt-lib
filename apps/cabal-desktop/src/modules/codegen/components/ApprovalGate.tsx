@@ -72,14 +72,14 @@ export function ApprovalGate({ pending, onDecided }: ApprovalGateProps) {
       <div className="approval-gate__actions select-none">
         <button
           type="button"
-          onClick={() => rejectAction.prepare({ token: pending.token })}
+          onClick={() => rejectAction.prepare({ intent_ref: pending.intent_ref })}
           disabled={rejectAction.phase === "preparing" || rejectAction.phase === "executing"}
         >
           Reject
         </button>
         <button
           type="button"
-          onClick={() => approveAction.prepare({ token: pending.token })}
+          onClick={() => approveAction.prepare({ intent_ref: pending.intent_ref })}
           disabled={
             pending.stale ||
             approveAction.phase === "preparing" ||

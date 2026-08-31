@@ -82,27 +82,6 @@
   gap: var(--space-3);
 }
 
-.doc-hero__rescan {
-  padding: 6px 14px;
-  border: 1px solid var(--accent-border);
-  border-radius: var(--corner-md);
-  background-color: var(--accent-bg);
-  color: var(--accent);
-  font-size: var(--fs-sm);
-  cursor: pointer;
-  user-select: none;
-  transition: background-color var(--duration-fast) var(--ease-standard);
-}
-
-.doc-hero__rescan:hover:not(:disabled) {
-  background: var(--accent-bg-gradient);
-}
-
-.doc-hero__rescan:disabled {
-  opacity: var(--opacity-disabled);
-  cursor: default;
-}
-
 /* --- Triage route ---------------------------------------------------------- */
 
 .doc-route {

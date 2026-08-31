@@ -79,7 +79,7 @@ A code defect that the pipeline could not repair surfaces as `halted_at_ceiling`
 
 | Field | Meaning |
 |---|---|
-| `token` | Derived from the intent **and** `solution_fingerprint(project)` |
+| `intent_ref` | Derived from the intent **and** `solution_fingerprint(project)` |
 | `fingerprint` | Fingerprint of the solution tree, excluding build output and vendored trees |
 | `intent` | The proposed change — the file-by-file plan the user reviews |
 
@@ -214,7 +214,7 @@ Extending the existing `actions_catalog/` registry. Each carries a params schema
 | Action id | Destructive | Precondition digest bound to |
 |---|---|---|
 | `codegen.plan` | no | project fingerprint |
-| `codegen.approve` | **yes** | the pending intent's `token` — so the ticket and the subsystem's own gate agree by construction (research.md R3) |
+| `codegen.approve` | **yes** | the pending intent's `intent_ref` — so the ticket and the subsystem's own gate agree by construction (research.md R3) |
 | `codegen.reject` | no | pending intent token |
 | `codegen.new_service` | **yes** | resolved destination path + emptiness |
 | `evals.launch` | no | definition tree validity + selected profiles |

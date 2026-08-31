@@ -66,7 +66,11 @@ export function SessionsModule() {
 
   return (
     <div className="sess-module">
-      <SessionsTotals totals={data.totals} />
+      <SessionsTotals
+        totals={data.totals}
+        onRefresh={() => void sessionsQuery.refetch()}
+        isFetching={sessionsQuery.isFetching}
+      />
 
       <div className="sess-layout">
         <div className="sess-main">

@@ -1,13 +1,23 @@
 import type { ReactNode } from "react";
 import type { SystemOverview, TerminalApplication, TerminalShell } from "@/api/systemOverview";
+import { CardRefreshFooter } from "@/components/CardRefreshFooter";
+import { RefreshButton } from "@/components/RefreshButton";
 
 export interface TerminalPanelProps {
   state: SystemOverview | undefined;
   isPending: boolean;
   error: string | null;
+  onRefresh: () => void;
+  isFetching: boolean;
 }
 
-export function TerminalPanel({ state, isPending, error }: TerminalPanelProps) {
+export function TerminalPanel({
+  state,
+  isPending,
+  error,
+  onRefresh,
+  isFetching,
+}: TerminalPanelProps) {
   if (isPending) {
     return (
       <section className="overview-terminal-panel" aria-label="Terminal settings">
@@ -81,6 +91,9 @@ export function TerminalPanel({ state, isPending, error }: TerminalPanelProps) {
           )}
         </TerminalGroup>
       </div>
+      <CardRefreshFooter>
+        <RefreshButton label="terminal profile" onRefresh={onRefresh} isFetching={isFetching} />
+      </CardRefreshFooter>
     </section>
   );
 }

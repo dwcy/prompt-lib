@@ -1,5 +1,6 @@
-/* Project Health console layout: 2x2 grid of section health cards (git/github/supabase/vercel)
-   per the cabal-console mock's isProject section. Co-located with ProjectDashboardModule.tsx. */
+/* Project Health console layout: 2-column grid of section health cards (git/github/supabase/
+   vercel/azure_devops) per the cabal-console mock's isProject section. Co-located with
+   ProjectDashboardModule.tsx. */
 
 .project-health {
   display: grid;
@@ -85,15 +86,41 @@
   font-size: var(--fs-sm);
 }
 
+.health-card__fact-group {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
 .health-card__fact {
   display: grid;
   grid-template-columns: 130px 1fr;
   gap: var(--space-2);
+  width: 100%;
   padding: var(--space-2) 0;
   border-bottom: 1px solid var(--divider);
 }
 
-.health-card__fact:last-child {
+.health-card__fact--expandable {
+  border: none;
+  border-bottom: 1px solid var(--divider);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  margin: 0 calc(var(--space-2) * -1);
+  padding: var(--space-2);
+  width: calc(100% + var(--space-4));
+  border-radius: var(--corner-sm);
+  transition: background-color 150ms ease;
+}
+
+.health-card__fact--expandable:hover {
+  background-color: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.health-card__fact-group:last-child > .health-card__fact {
   border-bottom: none;
 }
 
@@ -102,9 +129,163 @@
 }
 
 .health-card__fact-value {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
   overflow-wrap: anywhere;
   font-family: var(--font-family-mono);
   font-size: var(--fs-xs);
+}
+
+.health-card__fact-chevron {
+  flex: 0 0 auto;
+  padding-right: var(--space-1);
+  color: var(--muted);
+  font-family: initial;
+  font-size: var(--fs-lg);
+  line-height: 1;
+  transition: transform 200ms ease;
+}
+
+.health-card__fact--expandable[aria-expanded="true"] .health-card__fact-chevron {
+  transform: rotate(90deg);
+}
+
+.health-card__fact-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 220ms ease,
+    opacity 180ms ease;
+}
+
+.health-card__fact-panel[data-expanded="true"] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.health-card__fact-panel-inner {
+  overflow: hidden;
+  min-height: 0;
+  padding: 0 0 var(--space-2) var(--space-2);
+  border-bottom: 1px solid var(--divider);
+}
+
+.health-card__fact-group:last-child > .health-card__fact-panel .health-card__fact-panel-inner {
+  border-bottom: none;
+}
+
+.health-card__fact-panel .health-card__fact-group {
+  padding-left: var(--space-2);
+}
+
+.health-card__fact-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.health-card__fact-item {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  margin: 0 calc(var(--space-2) * -1);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--corner-sm);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  transition: background-color 150ms ease;
+}
+
+.health-card__fact-item:hover {
+  background-color: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.health-card__fact-items > .health-card__fact-item + .health-card__fact-item {
+  border-top: 1px solid var(--divider);
+}
+
+.health-card__fact-item a {
+  overflow-wrap: anywhere;
+  color: var(--status-info);
+}
+
+.health-card__fact-item-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.health-card__fact-item-meta {
+  overflow: hidden;
+  flex: 0 0 auto;
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.health-card__fact-item-origin {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.health-card__fact-item-origin::before {
+  content: "";
+  width: 0.45rem;
+  height: 0.45rem;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background-color: var(--muted);
+}
+
+.health-card__fact-item-origin[data-origin="remote"] {
+  color: var(--status-info);
+}
+
+.health-card__fact-item-origin[data-origin="remote"]::before {
+  background-color: var(--status-info);
+}
+
+.health-card__fact-item-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: var(--space-1);
+}
+
+.health-card__fact-item-actions button {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--fs-xs);
+}
+
+.health-card__fact-item-actions--placeholder {
+  min-width: 8.5rem;
+  justify-content: center;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.health-card__fact-item-dot {
+  flex: 0 0 auto;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background-color: var(--status-ok);
+  align-self: center;
+}
+
+.health-card__fact-item[data-group="true"] {
+  color: var(--muted);
+  font-weight: 600;
 }
 
 /* ─── Links ────────────────────────────────────────────────────────────────── */
@@ -121,6 +302,34 @@
   color: var(--status-info);
   font-family: var(--font-family-mono);
   font-size: var(--fs-xs);
+}
+
+/* ─── Placeholder (unlinked, configurable section) ────────────────────────── */
+
+.health-card__placeholder {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  border: 1px dashed var(--border);
+  border-radius: var(--corner-md);
+  background-color: var(--surface-2);
+}
+
+.health-card__placeholder p {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+}
+
+.health-card__placeholder-configure {
+  flex: 0 0 auto;
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  color: var(--accent);
 }
 
 /* ─── Hint banner ──────────────────────────────────────────────────────────── */

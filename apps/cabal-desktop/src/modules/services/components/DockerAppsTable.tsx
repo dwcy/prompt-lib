@@ -1,4 +1,6 @@
 import type { DockerApp, DockerAppsPayload } from "@/api/operations";
+import { CardRefreshFooter } from "@/components/CardRefreshFooter";
+import { RefreshButton } from "@/components/RefreshButton";
 import { StatePill, type StatePillVariant } from "@/components/StatePill";
 
 export interface DockerAppsTableProps {
@@ -32,9 +34,6 @@ export function DockerAppsTable({
           <b>Docker apps</b>
           <span>{dockerSummary(payload)}</span>
         </div>
-        <button type="button" onClick={onRefresh} disabled={isRefreshing}>
-          {isRefreshing ? "Refreshing…" : "Refresh"}
-        </button>
       </header>
 
       {message !== null ? (
@@ -74,6 +73,9 @@ export function DockerAppsTable({
           </table>
         </div>
       )}
+      <CardRefreshFooter>
+        <RefreshButton label="Docker apps" onRefresh={onRefresh} isFetching={isRefreshing} />
+      </CardRefreshFooter>
     </section>
   );
 }

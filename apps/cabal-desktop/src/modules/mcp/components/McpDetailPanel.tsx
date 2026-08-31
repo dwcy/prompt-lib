@@ -2,7 +2,9 @@
 // command, and the required-environment-variable list rendered as divider rows with mono values —
 // restyled from the original inline inspector, same fields (server.env_status), same actions.
 import type { McpServer } from "@/api/operations";
+import { CardRefreshFooter } from "@/components/CardRefreshFooter";
 import { EmptyState } from "@/components/EmptyState";
+import { RefreshButton } from "@/components/RefreshButton";
 import { StatePill } from "@/components/StatePill";
 import { availableActions, mcpVariant } from "@/modules/mcp/mcpStatus";
 
@@ -47,9 +49,6 @@ export function McpDetailPanel({
           <span className="mcp-eyebrow">Scope inspector</span>
           <h2>{server.name}</h2>
         </div>
-        <button type="button" onClick={onRecheck} disabled={refreshing}>
-          {refreshing ? "Checking" : "Recheck"}
-        </button>
       </header>
 
       <div className="mcp-detail__connection">
@@ -94,6 +93,10 @@ export function McpDetailPanel({
           ))}
         </div>
       ) : null}
+
+      <CardRefreshFooter>
+        <RefreshButton label="connector status" onRefresh={onRecheck} isFetching={refreshing} />
+      </CardRefreshFooter>
     </aside>
   );
 }

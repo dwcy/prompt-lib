@@ -5,8 +5,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { type BackupSet, useConfigBackups, useConfigExtras } from "@/api/config";
 import { queryKeys } from "@/api/queryKeys";
+import { CardRefreshFooter } from "@/components/CardRefreshFooter";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
+import { RefreshButton } from "@/components/RefreshButton";
 import { StatePill } from "@/components/StatePill";
 import { useAction } from "@/hooks/useAction";
 import "./CleanupRestoreModule.css";
@@ -137,6 +139,13 @@ export function CleanupRestoreModule() {
           <li>Remove originals</li>
           <li>Restore if needed</li>
         </ol>
+        <CardRefreshFooter>
+          <RefreshButton
+            label="cleanup candidates"
+            onRefresh={() => void extrasQuery.refetch()}
+            isFetching={extrasQuery.isFetching}
+          />
+        </CardRefreshFooter>
       </section>
 
       <section className="clnr-layout">

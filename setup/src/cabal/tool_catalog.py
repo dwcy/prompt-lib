@@ -213,6 +213,7 @@ TOOL_CATEGORIES: tuple[ToolCategory, ...] = (
             "gemini",
             "huggingface",
             "codex",
+            "deepseek-harness",
             "grok",
             "copilot",
             "skills",
@@ -539,6 +540,13 @@ TOOL_DEFINITIONS: tuple[ToolDefinition, ...] = (
         "AI CLIs",
         "OpenAI Codex command-line interface for local coding workflows.",
         "https://github.com/openai/codex",
+    ),
+    _t(
+        "deepseek-harness",
+        "DeepSeek Harness",
+        "AI CLIs",
+        "DeepSeek's open-source agent harness and local Web UI, launched with the `dsh` CLI.",
+        "https://github.com/deepseek-ai/deepseek-harness",
     ),
     _t(
         "grok",

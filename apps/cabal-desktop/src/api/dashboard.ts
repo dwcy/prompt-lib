@@ -6,7 +6,7 @@ import { queryKeys } from "@/api/queryKeys";
 import { dashboardSectionSchema } from "@/api/schemas";
 import { useProjectContextStore } from "@/stores/projectContext";
 
-export const DASHBOARD_SECTIONS = ["git", "github", "supabase", "vercel"] as const;
+export const DASHBOARD_SECTIONS = ["git", "github", "supabase", "vercel", "azure_devops"] as const;
 export type DashboardSectionKey = (typeof DASHBOARD_SECTIONS)[number];
 
 export function useDashboardSection(section: DashboardSectionKey) {

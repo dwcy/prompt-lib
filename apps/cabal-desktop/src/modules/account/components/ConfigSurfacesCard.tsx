@@ -2,13 +2,17 @@
 // reported by /api/claude-info.
 import { useState } from "react";
 import type { ClaudeInfoPayload } from "@/api/observability";
+import { CardRefreshFooter } from "@/components/CardRefreshFooter";
+import { RefreshButton } from "@/components/RefreshButton";
 import { type ConfigScope, groupDocumentsByScope } from "../configSurfaces";
 
 export interface ConfigSurfacesCardProps {
   documents: ClaudeInfoPayload["documents"];
+  onRefresh: () => void;
+  isFetching: boolean;
 }
 
-export function ConfigSurfacesCard({ documents }: ConfigSurfacesCardProps) {
+export function ConfigSurfacesCard({ documents, onRefresh, isFetching }: ConfigSurfacesCardProps) {
   const [scope, setScope] = useState<ConfigScope>("global");
   const grouped = groupDocumentsByScope(documents);
   const rows = grouped[scope];
@@ -56,6 +60,9 @@ export function ConfigSurfacesCard({ documents }: ConfigSurfacesCardProps) {
           ))}
         </div>
       )}
+      <CardRefreshFooter>
+        <RefreshButton label="config surfaces" onRefresh={onRefresh} isFetching={isFetching} />
+      </CardRefreshFooter>
     </section>
   );
 }

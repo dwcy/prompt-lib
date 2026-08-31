@@ -1,13 +1,22 @@
 // Doctor warnings card: surfaces real config-doctor findings relevant to the Claude setup, with a
 // shortcut into the full Config doctor module.
 import type { DoctorFinding } from "@/api/observability";
+import { CardRefreshFooter } from "@/components/CardRefreshFooter";
+import { RefreshButton } from "@/components/RefreshButton";
 
 export interface DoctorWarningsCardProps {
   findings: DoctorFinding[];
   onOpenDoctor: () => void;
+  onRefresh: () => void;
+  isFetching: boolean;
 }
 
-export function DoctorWarningsCard({ findings, onOpenDoctor }: DoctorWarningsCardProps) {
+export function DoctorWarningsCard({
+  findings,
+  onOpenDoctor,
+  onRefresh,
+  isFetching,
+}: DoctorWarningsCardProps) {
   const errorCount = findings.filter((finding) => finding.severity === "error").length;
   const warningCount = findings.filter((finding) => finding.severity === "warning").length;
   const summary = [
@@ -41,6 +50,9 @@ export function DoctorWarningsCard({ findings, onOpenDoctor }: DoctorWarningsCar
       <button type="button" className="ccfg-link-btn select-none" onClick={onOpenDoctor}>
         Config doctor →
       </button>
+      <CardRefreshFooter>
+        <RefreshButton label="doctor warnings" onRefresh={onRefresh} isFetching={isFetching} />
+      </CardRefreshFooter>
     </section>
   );
 }

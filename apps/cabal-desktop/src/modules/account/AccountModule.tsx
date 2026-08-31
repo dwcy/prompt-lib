@@ -46,17 +46,28 @@ export function AccountModule() {
           }}
           onOpenModels={() => navigateToModule("model_assignments")}
         />
-        <ConfigSurfacesCard documents={info.documents} />
+        <ConfigSurfacesCard
+          documents={info.documents}
+          onRefresh={() => void infoQuery.refetch()}
+          isFetching={infoQuery.isFetching}
+        />
       </div>
 
       <div className="ccfg-console__column">
         {doctorQuery.isSuccess && findings.length > 0 ? (
-          <DoctorWarningsCard findings={findings} onOpenDoctor={() => navigateToModule("doctor")} />
+          <DoctorWarningsCard
+            findings={findings}
+            onOpenDoctor={() => navigateToModule("doctor")}
+            onRefresh={() => void doctorQuery.refetch()}
+            isFetching={doctorQuery.isFetching}
+          />
         ) : null}
         {sessionsQuery.isSuccess ? (
           <ClaudeStatsCard
             totals={sessionsQuery.data.totals}
             onOpenSessions={() => navigateToModule("sessions")}
+            onRefresh={() => void sessionsQuery.refetch()}
+            isFetching={sessionsQuery.isFetching}
           />
         ) : null}
       </div>

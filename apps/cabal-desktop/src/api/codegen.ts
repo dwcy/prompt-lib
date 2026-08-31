@@ -113,7 +113,7 @@ export const codegenIntentFileChangeSchema = z.object({
 });
 
 export const codegenPendingIntentSchema = z.object({
-  token: z.string(),
+  intent_ref: z.string(),
   request: z.string(),
   stale: z.boolean(),
   intent: z.object({

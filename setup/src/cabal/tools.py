@@ -36,6 +36,7 @@ from cabal.installers.ai_clis import (
     antigravity_install,
     codex_install,
     copilot_install,
+    deepseek_harness_install,
     gemini_install,
     grok_install,
     hermes_agent_install,
@@ -195,6 +196,8 @@ def _probe_key(key: str) -> object:
         return _has_lm_studio()
     if key == "opencode":
         return shutil.which("opencode") is not None
+    if key == "deepseek-harness":
+        return _probe_version("dsh", "--version") or (shutil.which("dsh") is not None)
     if key == "opencode-desktop":
         return _has_opencode_desktop()
     if key == "hermes-agent":
@@ -437,6 +440,7 @@ INSTALLER_FUNCTIONS: dict[str, Callable[[], tuple[bool, str]]] = {
     "gemini": gemini_install,
     "huggingface": huggingface_install,
     "codex": codex_install,
+    "deepseek-harness": deepseek_harness_install,
     "opencode": opencode_install,
     "opencode-desktop": opencode_desktop_install,
     "grok": grok_install,

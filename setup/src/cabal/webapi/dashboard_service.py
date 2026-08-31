@@ -9,13 +9,14 @@ from pathlib import Path
 from typing import Any
 
 from cabal import widget_cache
+from cabal.dashboard_azuredevops_service import collect_azure_devops
 from cabal.dashboard_git_service import collect_git
 from cabal.dashboard_github_service import collect_github
 from cabal.dashboard_supabase_service import collect_supabase
 from cabal.dashboard_vercel_service import collect_vercel
 from cabal.models.dashboard import AvailabilityState
 
-SECTIONS = ("git", "github", "supabase", "vercel")
+SECTIONS = ("git", "github", "supabase", "vercel", "azure_devops")
 
 _CACHE_PREFIX = "webapi-dashboard:"
 _FRESH_WINDOW = timedelta(minutes=5)
@@ -47,6 +48,8 @@ def _collect(project: Path, section: str) -> dict[str, Any]:
         return _stringify_enums(asdict(collect_supabase(project)))
     if section == "vercel":
         return _stringify_enums(asdict(collect_vercel(project)))
+    if section == "azure_devops":
+        return _stringify_enums(asdict(collect_azure_devops(project)))
     raise ValueError(f"Unknown dashboard section {section!r}")
 
 

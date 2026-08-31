@@ -1,7 +1,10 @@
 // Grouped primary navigation (console redesign): brand lockup, ⌘K search trigger, all 22 modules
 // in five purpose groups, and a mono workspace footer (current branch, project path, backend origin).
+import { useReducedMotion } from "motion/react";
+import { useCallback, useRef } from "react";
 import { useHealth } from "@/api/health";
 import cabalLogo from "@/assets/cabal-logo.png";
+import { type AnimatedIconHandle, MODULE_ICONS } from "@/components/icons/moduleIcons";
 import { ModuleSwitcher } from "@/components/shell/ModuleSwitcher";
 import { NavBadges } from "@/components/shell/NavBadges";
 import { resolveApiUrl } from "@/lib/runtimeConfig";
@@ -25,6 +28,19 @@ export function SidebarNav({ activeModuleKey, onSelectModule }: SidebarNavProps)
   const driftFlags = health.data?.drift_flags ?? null;
   const selectedProject = useProjectContextStore((state) => state.selected);
   const backendOrigin = originOf(resolveApiUrl("/api/health"));
+  // Hover/focus on the whole row drives the icon, not the 16px icon box itself; holding the handles
+  // in a ref keeps that off React state so pointing at the nav never re-renders all 25 rows.
+  const iconHandles = useRef(new Map<ModuleKey, AnimatedIconHandle | null>());
+  const prefersReducedMotion = useReducedMotion();
+  const animateIcon = useCallback(
+    (key: ModuleKey, run: boolean) => {
+      if (prefersReducedMotion === true) return;
+      const handle = iconHandles.current.get(key);
+      if (run) handle?.startAnimation();
+      else handle?.stopAnimation();
+    },
+    [prefersReducedMotion],
+  );
 
   return (
     <nav id="workspace-navigation" className="sidebar-nav select-none" aria-label="Primary">
@@ -52,6 +68,7 @@ export function SidebarNav({ activeModuleKey, onSelectModule }: SidebarNavProps)
                   const moduleHealth = health.data?.modules.find(
                     (entry) => entry.module === module.key,
                   );
+                  const Icon = MODULE_ICONS[module.key];
                   return (
                     <li key={module.key}>
                       <button
@@ -61,8 +78,19 @@ export function SidebarNav({ activeModuleKey, onSelectModule }: SidebarNavProps)
                         aria-current={isActive ? "page" : undefined}
                         title={MODULE_OPERATION_SUMMARIES[module.key]}
                         onClick={() => onSelectModule(module.key)}
+                        onMouseEnter={() => animateIcon(module.key, true)}
+                        onMouseLeave={() => animateIcon(module.key, false)}
+                        onFocus={() => animateIcon(module.key, true)}
+                        onBlur={() => animateIcon(module.key, false)}
                       >
-                        <span className="sidebar-nav__item-dot" aria-hidden="true" />
+                        <Icon
+                          ref={(instance) => {
+                            iconHandles.current.set(module.key, instance);
+                          }}
+                          size={16}
+                          className="sidebar-nav__item-icon"
+                          aria-hidden="true"
+                        />
                         <span className="sidebar-nav__item-label">
                           {MODULE_NAV_LABELS[module.key]}
                         </span>

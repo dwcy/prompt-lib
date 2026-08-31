@@ -5,5 +5,5 @@ deploying curated Codex assets into `~/.codex/`, managing MCP servers via
 `claude mcp`, scaffolding new projects, and running restore operations.
 """
 
-__version__ = "0.1.0"
+__version__ = "1.0.0b"
 __all__ = ["__version__"]

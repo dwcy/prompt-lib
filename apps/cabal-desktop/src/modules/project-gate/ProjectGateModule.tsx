@@ -4,8 +4,10 @@
 
 import { useMemo, useState } from "react";
 import { useProjectContext } from "@/api/project";
+import { CardRefreshFooter } from "@/components/CardRefreshFooter";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
+import { RefreshButton } from "@/components/RefreshButton";
 import { PathInput } from "@/modules/project-gate/components/PathInput";
 import { RecentProjectsList } from "@/modules/project-gate/components/RecentProjectsList";
 import { useProjectGate } from "@/modules/project-gate/hooks/useProjectGate";
@@ -59,6 +61,13 @@ export function ProjectGateModule() {
             <dd>{isBusy ? "review" : "ready"}</dd>
           </div>
         </dl>
+        <CardRefreshFooter>
+          <RefreshButton
+            label="project context"
+            onRefresh={() => void projectQuery.refetch()}
+            isFetching={projectQuery.isFetching}
+          />
+        </CardRefreshFooter>
       </section>
 
       <div className="gate-layout">

@@ -95,3 +95,7 @@ obj/
 
 # Agent eval harness output — tasks/rubrics/configs under evals/ ARE committed; results are runs.
 evals/results/
+
+# Fake HOME used by tests that need an isolated ~/.claude — byproduct, and it carries
+# machineID/userID from whatever ran it. Never source.
+/.faketmp/

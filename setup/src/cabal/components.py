@@ -116,6 +116,17 @@ ENV_DESCRIPTIONS: dict[str, str] = {
         "Azure DevOps MCP server — Personal Access Token for work items, repos, pipelines, and PRs. "
         "Create in Azure DevOps → User Settings → Personal access tokens."
     ),
+    "AZURE_DEVOPS_ORG": (
+        "Project Health dashboard's Azure DevOps card — organisation name only (e.g. \"my-org\", "
+        "not the full URL). Queried via the az CLI, separate from the MCP server's AZURE_DEVOPS_ORG_URL."
+    ),
+    "AZURE_DEVOPS_PROJECT": (
+        "Project Health dashboard's Azure DevOps card — project name within the organisation."
+    ),
+    "AZURE_DEVOPS_REPO": (
+        "Project Health dashboard's Azure DevOps card — optional; scopes the open-PR list to one "
+        "repository instead of the whole project."
+    ),
     "SUPABASE_ACCESS_TOKEN": (
         "Supabase MCP server — gives Claude access to your project's DB, auth, storage, and edge functions. "
         "Create at supabase.com/dashboard/account/tokens."

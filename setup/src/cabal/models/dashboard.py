@@ -25,13 +25,29 @@ class GitRemote:
     is_github: bool
 
 
+@dataclass(frozen=True)
+class GitWorktree:
+    path: str
+    branch: str | None
+    detached: bool
+    last_commit_at: str | None = None
+
+
+@dataclass(frozen=True)
+class GitBranch:
+    name: str
+    last_commit_at: str | None = None
+    upstream_remote: str | None = None
+
+
 @dataclass
 class GitSection:
     state: AvailabilityState
     current_branch: str | None = None
     detached: bool = False
-    local_branches: list[str] = field(default_factory=list)
+    local_branches: list[GitBranch] = field(default_factory=list)
     remotes: list[GitRemote] = field(default_factory=list)
+    worktrees: list[GitWorktree] = field(default_factory=list)
     hint: str | None = None
 
 
@@ -53,6 +69,20 @@ class PullRequest:
     url: str
 
 
+@dataclass(frozen=True)
+class RemoteBranch:
+    name: str
+    url: str
+
+
+@dataclass(frozen=True)
+class Issue:
+    number: int
+    title: str
+    author: str
+    url: str
+
+
 @dataclass
 class GitHubSection:
     state: AvailabilityState
@@ -61,6 +91,36 @@ class GitHubSection:
     remote_used: str | None = None
     runs: list[WorkflowRun] = field(default_factory=list)
     pull_requests: list[PullRequest] = field(default_factory=list)
+    remote_branches: list[RemoteBranch] = field(default_factory=list)
+    issues: list[Issue] = field(default_factory=list)
+    hint: str | None = None
+
+
+@dataclass(frozen=True)
+class AzurePipelineRun:
+    name: str
+    status: str
+    result: str | None
+    source_branch: str
+    url: str
+
+
+@dataclass(frozen=True)
+class AzurePullRequest:
+    id: int
+    title: str
+    author: str
+    url: str
+
+
+@dataclass
+class AzureDevOpsSection:
+    state: AvailabilityState
+    connected: bool = False
+    org: str | None = None
+    project: str | None = None
+    runs: list[AzurePipelineRun] = field(default_factory=list)
+    pull_requests: list[AzurePullRequest] = field(default_factory=list)
     hint: str | None = None
 
 
@@ -113,6 +173,7 @@ class DashboardSnapshot:
     github: GitHubSection
     supabase: SupabaseSection
     vercel: VercelSection
+    azure_devops: AzureDevOpsSection
 
     def to_cacheable(self) -> dict:
         """JSON-safe dict of all sections (enums → their value). Never raises; no tokens."""
@@ -133,13 +194,14 @@ class DashboardSnapshot:
                 github=_github_from(data["github"]),
                 supabase=_supabase_from(data["supabase"]),
                 vercel=_vercel_from(data["vercel"]),
+                azure_devops=_azure_devops_from(data["azure_devops"]),
             )
         except (KeyError, TypeError, ValueError):
             return None
 
 
 def _coerce_enums(data: dict) -> None:
-    for section in ("git", "github", "supabase", "vercel"):
+    for section in ("git", "github", "supabase", "vercel", "azure_devops"):
         block = data.get(section)
         if not isinstance(block, dict):
             continue
@@ -158,10 +220,17 @@ def _git_from(d: dict) -> GitSection:
         state=_state(d["state"]),
         current_branch=d.get("current_branch"),
         detached=bool(d.get("detached", False)),
-        local_branches=list(d.get("local_branches") or []),
+        local_branches=[
+            GitBranch(b["name"], b.get("last_commit_at"), b.get("upstream_remote"))
+            for b in (d.get("local_branches") or [])
+        ],
         remotes=[
             GitRemote(r["name"], r["url"], bool(r["is_github"]))
             for r in (d.get("remotes") or [])
+        ],
+        worktrees=[
+            GitWorktree(w["path"], w.get("branch"), bool(w["detached"]), w.get("last_commit_at"))
+            for w in (d.get("worktrees") or [])
         ],
         hint=d.get("hint"),
     )
@@ -186,6 +255,33 @@ def _github_from(d: dict) -> GitHubSection:
         ],
         pull_requests=[
             PullRequest(int(p["number"]), p["title"], p["author"], p["url"])
+            for p in (d.get("pull_requests") or [])
+        ],
+        remote_branches=[
+            RemoteBranch(b["name"], b["url"]) for b in (d.get("remote_branches") or [])
+        ],
+        issues=[
+            Issue(int(i["number"]), i["title"], i["author"], i["url"])
+            for i in (d.get("issues") or [])
+        ],
+        hint=d.get("hint"),
+    )
+
+
+def _azure_devops_from(d: dict) -> AzureDevOpsSection:
+    return AzureDevOpsSection(
+        state=_state(d["state"]),
+        connected=bool(d.get("connected", False)),
+        org=d.get("org"),
+        project=d.get("project"),
+        runs=[
+            AzurePipelineRun(
+                r["name"], r["status"], r.get("result"), r["source_branch"], r["url"]
+            )
+            for r in (d.get("runs") or [])
+        ],
+        pull_requests=[
+            AzurePullRequest(int(p["id"]), p["title"], p["author"], p["url"])
             for p in (d.get("pull_requests") or [])
         ],
         hint=d.get("hint"),

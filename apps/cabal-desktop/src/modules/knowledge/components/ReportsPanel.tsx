@@ -1,7 +1,9 @@
 // Reports tab: preflight scope/risk card driven by a task description, plus the usage ledger
 // of recorded retrieval calls.
 import { useKnowledgePreflight, useKnowledgeUsage } from "@/api/knowledge";
+import { CardRefreshFooter } from "@/components/CardRefreshFooter";
 import { EmptyState } from "@/components/EmptyState";
+import { RefreshButton } from "@/components/RefreshButton";
 import { StatePill } from "@/components/StatePill";
 
 export interface ReportsPanelProps {
@@ -50,6 +52,13 @@ export function ReportsPanel({ task, onTaskChange }: ReportsPanelProps) {
             ))}
           </div>
         ) : null}
+        <CardRefreshFooter>
+          <RefreshButton
+            label="preflight"
+            onRefresh={() => void preflightQuery.refetch()}
+            isFetching={preflightQuery.isFetching}
+          />
+        </CardRefreshFooter>
       </div>
       <div className="km-card km-usage-ledger">
         <header>
@@ -79,6 +88,13 @@ export function ReportsPanel({ task, onTaskChange }: ReportsPanelProps) {
             </article>
           ))
         )}
+        <CardRefreshFooter>
+          <RefreshButton
+            label="usage ledger"
+            onRefresh={() => void usageQuery.refetch()}
+            isFetching={usageQuery.isFetching}
+          />
+        </CardRefreshFooter>
       </div>
     </section>
   );

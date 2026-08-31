@@ -2,10 +2,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { type ConfigFile, type ConfigTarget, useConfigDiff, useConfigTree } from "@/api/config";
 import { queryKeys } from "@/api/queryKeys";
+import { CardRefreshFooter } from "@/components/CardRefreshFooter";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { DiffView } from "@/components/DiffView";
 import { EmptyState } from "@/components/EmptyState";
 import { JobPane } from "@/components/JobPane";
+import { RefreshButton } from "@/components/RefreshButton";
 import { StatePill } from "@/components/StatePill";
 import { useAction } from "@/hooks/useAction";
 
@@ -66,6 +68,13 @@ export function DeployTreePanel({ target, actionId }: DeployTreePanelProps) {
         <Metric label="New" value={treeQuery.data.drift.new_count} tone="open" />
         <Metric label="Extras" value={treeQuery.data.drift.extras_count} tone="stale" />
         <Metric label="Stable" value={treeQuery.data.drift.unchanged_count} tone="ok" />
+        <CardRefreshFooter>
+          <RefreshButton
+            label="deploy tree"
+            onRefresh={() => void treeQuery.refetch()}
+            isFetching={treeQuery.isFetching}
+          />
+        </CardRefreshFooter>
       </section>
 
       <section className="cfg-deploy__command-strip">
@@ -230,6 +239,15 @@ export function DeployTreePanel({ target, actionId }: DeployTreePanelProps) {
           ) : (
             <DiffView diffText={diffQuery.data.diff_text} />
           )}
+          {diffPath !== null ? (
+            <CardRefreshFooter>
+              <RefreshButton
+                label="diff"
+                onRefresh={() => void diffQuery.refetch()}
+                isFetching={diffQuery.isFetching}
+              />
+            </CardRefreshFooter>
+          ) : null}
         </aside>
       </div>
 

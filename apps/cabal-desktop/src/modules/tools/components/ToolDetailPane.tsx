@@ -1,7 +1,9 @@
 // Sticky detail pane (third console pane): tool identity + status pill, description, badge chips,
 // mono fact rows, safety notes, source-doc link, and the install/update action flow (T042/T043).
 import { type ToolDetail, useToolDetail } from "@/api/tools";
+import { CardRefreshFooter } from "@/components/CardRefreshFooter";
 import { EmptyState } from "@/components/EmptyState";
+import { RefreshButton } from "@/components/RefreshButton";
 import { StatePill } from "@/components/StatePill";
 import { ToolActionPanel } from "@/modules/tools/actions";
 import {
@@ -26,6 +28,15 @@ export function ToolDetailPane({ toolKey }: ToolDetailPaneProps) {
         <EmptyState title="Could not load tool detail" body={detailQuery.error.message} />
       ) : detailQuery.data !== undefined ? (
         <ToolDetailBody tool={detailQuery.data} />
+      ) : null}
+      {toolKey !== null ? (
+        <CardRefreshFooter>
+          <RefreshButton
+            label="tool detail"
+            onRefresh={() => void detailQuery.refetch()}
+            isFetching={detailQuery.isFetching}
+          />
+        </CardRefreshFooter>
       ) : null}
     </aside>
   );

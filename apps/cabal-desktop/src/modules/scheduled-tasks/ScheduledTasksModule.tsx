@@ -1,8 +1,10 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { type ScheduledTask, useScheduledTasks } from "@/api/scheduledTasks";
+import { CardRefreshFooter } from "@/components/CardRefreshFooter";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
+import { RefreshButton } from "@/components/RefreshButton";
 import { StatePill, type StatePillVariant } from "@/components/StatePill";
 import { useAction } from "@/hooks/useAction";
 import "./ScheduledTasksModule.css";
@@ -53,13 +55,13 @@ export function ScheduledTasksModule() {
           <h1>Claude + Codex schedules</h1>
           <p>Review locally runnable tasks and remove definitions with a guarded confirmation.</p>
         </div>
-        <button
-          type="button"
-          onClick={() => void tasksQuery.refetch()}
-          disabled={tasksQuery.isFetching}
-        >
-          {tasksQuery.isFetching ? "Refreshing…" : "Refresh tasks"}
-        </button>
+        <CardRefreshFooter>
+          <RefreshButton
+            label="scheduled tasks"
+            onRefresh={() => void tasksQuery.refetch()}
+            isFetching={tasksQuery.isFetching}
+          />
+        </CardRefreshFooter>
       </header>
 
       <section className="scheduled-tasks__providers" aria-label="Scheduler sources">

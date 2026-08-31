@@ -2,7 +2,9 @@
 // with copy-to-clipboard and JSON export.
 import { useState } from "react";
 import { type ContextPack, useKnowledgeContextPack } from "@/api/knowledge";
+import { CardRefreshFooter } from "@/components/CardRefreshFooter";
 import { EmptyState } from "@/components/EmptyState";
+import { RefreshButton } from "@/components/RefreshButton";
 
 type Budget = "tiny" | "focused" | "full";
 const BUDGETS: Budget[] = ["tiny", "focused", "full"];
@@ -51,6 +53,13 @@ export function ContextPackPanel({ query, onQueryChange }: ContextPackPanelProps
         ) : (
           <ContextPackView pack={contextQuery.data.pack} />
         )}
+        <CardRefreshFooter>
+          <RefreshButton
+            label="context pack"
+            onRefresh={() => void contextQuery.refetch()}
+            isFetching={contextQuery.isFetching}
+          />
+        </CardRefreshFooter>
       </div>
     </section>
   );

@@ -14,6 +14,7 @@ from cabal.webapi.actions_catalog import config as config_actions
 from cabal.webapi.actions_catalog import codegen as codegen_actions
 from cabal.webapi.actions_catalog import codex as codex_actions
 from cabal.webapi.actions_catalog import evals as evals_actions
+from cabal.webapi.actions_catalog import git_health as git_health_actions
 from cabal.webapi.actions_catalog import knowledge as knowledge_actions
 from cabal.webapi.actions_catalog import jobs as jobs_actions
 from cabal.webapi.actions_catalog import local_config as local_config_actions
@@ -89,6 +90,8 @@ def create_app(
     for descriptor in config_actions.CONFIG_DESCRIPTORS:
         app.state.actions.register(descriptor)
     for descriptor in local_config_actions.LOCAL_CONFIG_DESCRIPTORS:
+        app.state.actions.register(descriptor)
+    for descriptor in git_health_actions.GIT_HEALTH_DESCRIPTORS:
         app.state.actions.register(descriptor)
     for descriptor in codex_actions.CODEX_DESCRIPTORS:
         app.state.actions.register(descriptor)

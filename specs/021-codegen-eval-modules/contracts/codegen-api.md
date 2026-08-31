@@ -38,7 +38,7 @@ One run: request, template, outcome, per-stage costs, retry budget.
 - `priced: false` is preserved and distinguishable from a real zero (FR-008, data-model A2).
 - Cache figures are **absent** — not zero — when the provider did not report them.
 - Repair spend is a separate field from initial spend (FR-019).
-- `outcome` is one of the six values in data-model A3; the environment-failure and retry-ceiling cases are never collapsed into a generic failure (FR-016, FR-017).
+- `outcome` is one of the **four** persisted values in data-model A3; `aborted_environment` and `halted_at_ceiling` are never collapsed into a generic failure (FR-016, FR-017).
 
 ### `GET /api/codegen/pending`
 
@@ -46,7 +46,7 @@ The pending intent awaiting a decision, or `null`.
 
 ```json
 {
-  "token": "…",
+  "intent_ref": "…",
   "request": "Add a webhook receiver endpoint",
   "stale": false,
   "intent": { "files": [ { "path": "src/Api/Webhooks/ReceiverEndpoint.cs", "operation": "create" } ] }
@@ -77,10 +77,10 @@ Stage → provider/model bindings.
 
 ### `codegen.approve` — redeem the intent and apply
 
-`destructive: true`. Params: `{ "token": string }`.
+`destructive: true`. Params: `{ "intent_ref": string }`.
 
 **Contract**:
-- `compute_digest` binds to the **pending intent token** so the webapi ticket and the subsystem's own gate cannot disagree (data-model B4).
+- `compute_digest` binds to the **pending intent reference** so the webapi ticket and the subsystem's own gate cannot disagree (data-model B4).
 - Execute is refused with `409 intent_stale` when the fingerprint moved. The refusal is an error, never an automatic re-prompt to approve.
 - A token already redeemed is refused — approval is not replayable.
 - `prepare`'s `effect_preview` populates `files_changed` from the intent's file list, so the confirmation the user sees is the plan itself.
@@ -88,7 +88,7 @@ Stage → provider/model bindings.
 
 ### `codegen.reject` — discard the pending intent
 
-`destructive: false`. Params: `{ "token": string }`.
+`destructive: false`. Params: `{ "intent_ref": string }`.
 
 **Contract**: clears the pending intent, records outcome `rejected at gate`, leaves the working tree unmodified, and **writes an audit entry** — a rejection is a decision worth keeping (FR-006, data-model B5).
 

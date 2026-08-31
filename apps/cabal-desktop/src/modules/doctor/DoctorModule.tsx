@@ -1,7 +1,9 @@
 // Config Doctor module: full triage board for config-doctor findings — hero summary with counts
 // and rescan, resolution route, and error/warning lanes of per-finding detail cards.
 import { type DoctorFinding, useDoctor } from "@/api/observability";
+import { CardRefreshFooter } from "@/components/CardRefreshFooter";
 import { EmptyState } from "@/components/EmptyState";
+import { RefreshButton } from "@/components/RefreshButton";
 import { StatePill } from "@/components/StatePill";
 import "./DoctorModule.css";
 
@@ -53,15 +55,14 @@ export function DoctorModule() {
             variant={health === "blocked" ? "error" : health === "attention" ? "degraded" : "ok"}
             label={health}
           />
-          <button
-            type="button"
-            className="doc-hero__rescan"
-            onClick={() => void doctorQuery.refetch()}
-            disabled={doctorQuery.isFetching}
-          >
-            {doctorQuery.isFetching ? "Scanning..." : "Run again"}
-          </button>
         </div>
+        <CardRefreshFooter>
+          <RefreshButton
+            label="config doctor"
+            onRefresh={() => void doctorQuery.refetch()}
+            isFetching={doctorQuery.isFetching}
+          />
+        </CardRefreshFooter>
       </section>
 
       <ol className="doc-route" aria-label="Configuration triage route">
