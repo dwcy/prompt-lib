@@ -28,6 +28,7 @@ from cabal.dotnetgen.providers.base import (
     ProviderStatus,
     ProviderUnavailableError,
     Usage,
+    post_json,
 )
 from cabal.dotnetgen.providers.config import StageBinding
 

@@ -36,7 +36,7 @@ def test_variable_entry_declares_no_value_field() -> None:
 
 def test_variable_entry_cannot_be_constructed_with_a_value() -> None:
     try:
-        VariableEntry(
+        VariableEntry(  # pylint: disable=unexpected-keyword-arg
             name="X",
             source_id="s",
             container_id="c",

@@ -90,6 +90,7 @@ class FallbackProvider:
                 ) from standby_exc
 
     def check(self) -> ProviderStatus:
+        # pylint: disable=assignment-from-no-return  # Provider.check is a Protocol stub (`...` body)
         primary = self.primary.check()
         if primary.reachable:
             return primary

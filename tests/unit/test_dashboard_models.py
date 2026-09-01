@@ -12,7 +12,11 @@ import pytest
 
 from cabal.models.dashboard import (
     AvailabilityState,
+    AzureDevOpsSection,
+    AzurePipelineRun,
+    AzurePullRequest,
     DashboardSnapshot,
+    GitBranch,
     GitHubSection,
     GitRemote,
     GitSection,
@@ -79,7 +83,7 @@ def _populated_snapshot() -> DashboardSnapshot:
             state=AvailabilityState.OK,
             current_branch="main",
             detached=False,
-            local_branches=["main", "dev"],
+            local_branches=[GitBranch("main"), GitBranch("dev", upstream_remote="origin")],
             remotes=[GitRemote("origin", "https://github.com/o/r", True)],
             hint=None,
         ),
@@ -138,6 +142,30 @@ def _populated_snapshot() -> DashboardSnapshot:
             members=[ProjectMember("alice", "member")],
             hint=None,
             enrich_hint=None,
+        ),
+        azure_devops=AzureDevOpsSection(
+            state=AvailabilityState.OK,
+            connected=True,
+            org="myorg",
+            project="myproj",
+            runs=[
+                AzurePipelineRun(
+                    name="CI",
+                    status="completed",
+                    result="succeeded",
+                    source_branch="main",
+                    url="https://dev.azure.com/myorg/myproj/_build/results?buildId=1",
+                )
+            ],
+            pull_requests=[
+                AzurePullRequest(
+                    id=7,
+                    title="Add dashboard",
+                    author="alice",
+                    url="https://dev.azure.com/myorg/myproj/_git/r/pullrequest/7",
+                )
+            ],
+            hint=None,
         ),
     )
 

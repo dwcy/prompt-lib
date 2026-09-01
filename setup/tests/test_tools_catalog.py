@@ -63,17 +63,6 @@ def test_deepseek_harness_entry_is_installable():
     assert installer[0] == "DeepSeek Harness"
 
 
-def test_deepseek_harness_entry_is_installable():
-    definition = get_tool_definition("deepseek-harness")
-
-    assert definition is not None
-    assert definition.category == "AI CLIs"
-    assert definition.source_url == "https://github.com/deepseek-ai/deepseek-harness"
-    installer = tools._installer_for("deepseek-harness")
-    assert installer is not None
-    assert installer[0] == "DeepSeek Harness"
-
-
 def test_huggingface_entry_targets_current_hf_cli():
     definition = get_tool_definition("huggingface")
 
