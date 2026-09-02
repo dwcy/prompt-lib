@@ -76,4 +76,5 @@ export const MODULE_ICONS: Record<ModuleKey, AnimatedIcon> = {
   codegen: FolderCodeIcon,
   evals: ShieldCheckIcon,
   news: RadioTowerIcon,
+  agent_setup: FolderCogIcon,
 };

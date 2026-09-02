@@ -25,6 +25,10 @@ export const PROJECT_SCOPED_MODULES = [
   // provider links (020-env-variable-sources FR-006), so it must be rebuilt on switch —
   // unlike the curated/system views above it, which stay global.
   "envSources",
+  // The Agent Setup module's Local tabs browse the SELECTED project's .claude/.agents
+  // folders, so switching projects must rebuild them; the Global tabs stay outside this
+  // list and key under queryKeys.global instead.
+  "agentConfig",
 ] as const;
 
 export type ProjectScopedModule = (typeof PROJECT_SCOPED_MODULES)[number];

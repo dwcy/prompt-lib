@@ -1,0 +1,193 @@
+/* Agent Setup module: agent tab row, Global/Local scope switch, and the split tree/preview
+   pane for browsing Claude/Codex/Antigravity config folders. Co-located with AgentSetupModule.tsx. */
+
+.agent-setup {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-5) var(--space-6);
+}
+
+.agent-setup__agent-tabs {
+  align-self: start;
+}
+
+.agent-setup__panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  background-color: var(--surface-1);
+}
+
+.agent-setup__panel-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--divider);
+}
+
+.agent-setup__panel-header .refresh-button {
+  margin-left: auto;
+}
+
+.agent-setup__base-path {
+  overflow: hidden;
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-setup__body {
+  display: grid;
+  grid-template-columns: minmax(18rem, 0.85fr) minmax(22rem, 1.15fr);
+  gap: 1px;
+  min-height: 28rem;
+  background: var(--divider);
+}
+
+/* ─── Folder/file tree ────────────────────────────────────────────────────── */
+
+.agent-config-tree {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: var(--space-3);
+  overflow-y: auto;
+  background: var(--surface-1);
+}
+
+.agent-config-tree__root,
+.agent-config-tree__children {
+  display: grid;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.agent-config-tree__row {
+  min-width: 0;
+}
+
+.agent-config-tree__dir,
+.agent-config-tree__file {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-width: 0;
+  padding: var(--space-1) var(--space-2);
+  border: none;
+  border-radius: var(--corner-sm);
+  background: none;
+  color: var(--fg-soft);
+  text-align: left;
+}
+
+.agent-config-tree__dir:hover:not(:disabled),
+.agent-config-tree__file:hover:not(:disabled) {
+  background-color: var(--surface-2);
+}
+
+.agent-config-tree__file.is-selected {
+  background-color: color-mix(in srgb, var(--status-accent) 12%, var(--surface-2));
+  color: var(--fg);
+}
+
+.agent-config-tree__caret {
+  flex: 0 0 auto;
+  width: 1rem;
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+
+.agent-config-tree__name {
+  overflow: hidden;
+  min-width: 0;
+  flex: 1 1 auto;
+  font-size: var(--fs-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-config-tree__meta {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+}
+
+.agent-config-tree__truncated {
+  margin: var(--space-2) 0 0;
+  color: var(--status-warning);
+  font-size: var(--fs-xs);
+}
+
+/* ─── File preview pane ───────────────────────────────────────────────────── */
+
+.agent-file-preview {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--surface-0);
+}
+
+.agent-file-preview__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--divider);
+}
+
+.agent-file-preview__header strong {
+  overflow: hidden;
+  min-width: 0;
+  color: var(--fg);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-file-preview__header > span {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+.agent-file-preview__header .refresh-button {
+  margin-left: auto;
+}
+
+.agent-file-preview__content {
+  flex: 1 1 auto;
+  margin: 0;
+  padding: var(--space-3);
+  overflow: auto;
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-md);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.agent-file-preview__truncated {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-top: 1px solid var(--divider);
+  color: var(--status-warning);
+  font-size: var(--fs-xs);
+}
+
+@media (max-width: 900px) {
+  .agent-setup__body {
+    grid-template-columns: 1fr;
+  }
+}

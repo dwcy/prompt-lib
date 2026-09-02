@@ -54,6 +54,7 @@ MODULE_KEYS = (
     "diagnostics",
     "docs",
     "news",
+    "agent_setup",
 )
 
 # Modules whose routers are mounted; the rest honestly report "unavailable".
@@ -84,6 +85,7 @@ IMPLEMENTED_MODULES = frozenset(
         "init_wizard",
         "docs",
         "news",
+        "agent_setup",
     }
 )
 

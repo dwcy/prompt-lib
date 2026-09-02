@@ -6,6 +6,11 @@ import { ProjectGateModule } from "@/modules/project-gate/ProjectGateModule";
 const AccountModule = lazy(() =>
   import("@/modules/account/AccountModule").then((module) => ({ default: module.AccountModule })),
 );
+const AgentSetupModule = lazy(() =>
+  import("@/modules/agent-setup/AgentSetupModule").then((module) => ({
+    default: module.AgentSetupModule,
+  })),
+);
 const CodegenModule = lazy(() =>
   import("@/modules/codegen/CodegenModule").then((module) => ({
     default: module.CodegenModule,
@@ -162,6 +167,7 @@ export const MODULE_NAV_LABELS: Record<ModuleKey, string> = {
   docs: "Docs",
   release_notes: "Release news",
   news: "AI news feed",
+  agent_setup: "Agent Setup",
 };
 
 export const MODULE_OPERATION_SUMMARIES: Record<ModuleKey, string> = {
@@ -193,6 +199,7 @@ export const MODULE_OPERATION_SUMMARIES: Record<ModuleKey, string> = {
   docs: "README summary and project reference documents",
   release_notes: "What shipped, where it lives, and how to use it",
   news: "AI, security, package, Azure, and Hacker News signals",
+  agent_setup: "Folder and file structure for Claude, Codex, and Antigravity",
 };
 
 export const MODULE_GROUP_ORDER: ModuleGroup[] = [
@@ -237,6 +244,7 @@ export const BACKEND_MODULE_KEYS = [
   "codegen",
   "evals",
   "news",
+  "agent_setup",
 ] as const;
 
 /** Pages with no backend module; the sidebar shows them, health never reports on them. */
@@ -440,6 +448,13 @@ export const MODULE_REGISTRY: ModuleDefinition[] = [
     group: "reference",
     phase: 18,
     component: NewsModule,
+  },
+  {
+    key: "agent_setup",
+    title: "Agent Setup — Claude / Codex / Antigravity",
+    group: "machine",
+    phase: 19,
+    component: AgentSetupModule,
   },
 ];
 

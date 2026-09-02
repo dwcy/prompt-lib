@@ -29,6 +29,7 @@ from cabal.webapi.envelope import ApiError, error_response, utc_now_iso
 from cabal.webapi.jobs import JobManager
 from cabal.webapi.routers import account as account_router
 from cabal.webapi.routers import actions as actions_router
+from cabal.webapi.routers import agent_config as agent_config_router
 from cabal.webapi.routers import codegen as codegen_router
 from cabal.webapi.routers import codex as codex_router
 from cabal.webapi.routers import config as config_router
@@ -142,6 +143,7 @@ def create_app(
     app.router.routes.extend(docs_router.router.routes)
     app.router.routes.extend(codegen_router.router.routes)
     app.router.routes.extend(evals_router.router.routes)
+    app.router.routes.extend(agent_config_router.router.routes)
 
     _register_exception_handlers(app)
     security.assert_api_routes_authenticated(app)
