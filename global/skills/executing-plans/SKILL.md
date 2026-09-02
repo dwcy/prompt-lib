@@ -12,6 +12,7 @@ Announce at start: "I'm using the executing-plans skill to implement this plan."
 ### Step 1: Load and Review Plan
 
 - Read the plan file
+- If it already has `[X]` tasks, this is a resume: continue from the first unchecked task and never redo a checked one. If a checked task's output looks missing, verify on disk first and record what you found as a ruling (below)
 - Review critically — identify any questions or concerns about the plan
 - If concerns: Raise them with your human partner before starting
 - If no concerns: Create tasks and proceed
@@ -23,7 +24,8 @@ For each task:
 1. Mark as in_progress
 2. Follow each step exactly (plan has bite-sized steps)
 3. Run verifications as specified
-4. Mark as completed
+4. Mark as completed in the plan file itself (`[X]`, plus the phase Status line when the file has one), not only in the session task list. Conversation memory does not survive `/compact`; the file does
+5. When you resolve an ambiguity yourself (the kind global CLAUDE.md lets you state an assumption on and proceed), append a ruling to the plan file so the decision survives compaction and the user can overrule it: `- Ruling (T0NN): <what> — <why> — <cost if wrong>`
 
 ### Step 3: Complete Development
 
@@ -58,7 +60,7 @@ Don't force through blockers — stop and ask.
 - Review plan critically first
 - Follow plan steps exactly
 - Don't skip verifications
-- Stop when blocked, never guess
+- Stop when blocked, never guess — a ruling records an assumption on a minor ambiguity; it is not a way past a blocker, a failing verification, or anything destructive, security-sensitive, or outside the worktree
 - Never start implementation on main/master branch without explicit user consent
 
 ## Integration
