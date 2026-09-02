@@ -1,5 +1,4 @@
 import type { ProviderState } from "@/api/projectLifecycle";
-import { CardRefreshFooter } from "@/components/CardRefreshFooter";
 import { RefreshButton } from "@/components/RefreshButton";
 
 type ProviderAccount = ProviderState["accounts"][number];
@@ -31,6 +30,7 @@ export function GitHubAccountPanel({
     <section className="overview-github-panel" aria-label="GitHub accounts on this computer">
       <header className="overview-github-panel__header">
         <strong>GitHub</strong>
+        <RefreshButton label="GitHub account" onRefresh={onRefresh} isFetching={isFetching} />
       </header>
 
       <div className="overview-github-panel__body">
@@ -85,9 +85,6 @@ export function GitHubAccountPanel({
           </div>
         )}
       </div>
-      <CardRefreshFooter>
-        <RefreshButton label="GitHub account" onRefresh={onRefresh} isFetching={isFetching} />
-      </CardRefreshFooter>
     </section>
   );
 }

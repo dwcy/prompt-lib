@@ -1,5 +1,4 @@
 import type { MachineTool, SystemOverview } from "@/api/systemOverview";
-import { CardRefreshFooter } from "@/components/CardRefreshFooter";
 import { RefreshButton } from "@/components/RefreshButton";
 
 const CORE_TOOL_KEYS = new Set(["git", "python", "node", "npm", "pnpm", "dotnet"]);
@@ -52,6 +51,7 @@ export function SystemOverviewPanel({
       <div className="overview-system-panel__title">
         <b>Machine snapshot</b>
         <span>host probes, live versions</span>
+        <RefreshButton label="machine snapshot" onRefresh={onRefresh} isFetching={isFetching} />
       </div>
       <header className="overview-system-panel__header">
         <div className="overview-system-panel__machine">
@@ -111,9 +111,6 @@ export function SystemOverviewPanel({
           </div>
         </div>
       ) : null}
-      <CardRefreshFooter>
-        <RefreshButton label="machine snapshot" onRefresh={onRefresh} isFetching={isFetching} />
-      </CardRefreshFooter>
     </section>
   );
 }

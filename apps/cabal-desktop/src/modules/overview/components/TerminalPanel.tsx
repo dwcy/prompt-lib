@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import type { SystemOverview, TerminalApplication, TerminalShell } from "@/api/systemOverview";
-import { CardRefreshFooter } from "@/components/CardRefreshFooter";
 import { RefreshButton } from "@/components/RefreshButton";
 
 export interface TerminalPanelProps {
@@ -53,6 +52,7 @@ export function TerminalPanel({
               : ""}
           </small>
         </span>
+        <RefreshButton label="terminal profile" onRefresh={onRefresh} isFetching={isFetching} />
       </header>
 
       <div className="overview-terminal-panel__grid">
@@ -91,9 +91,6 @@ export function TerminalPanel({
           )}
         </TerminalGroup>
       </div>
-      <CardRefreshFooter>
-        <RefreshButton label="terminal profile" onRefresh={onRefresh} isFetching={isFetching} />
-      </CardRefreshFooter>
     </section>
   );
 }
