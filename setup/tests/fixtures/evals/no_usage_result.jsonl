@@ -1,0 +1,2 @@
+{"type":"assistant","message":{"content":[{"type":"tool_use","id":"call-1","name":"Read","input":{"file_path":"a.py"}}]}}
+{"type":"result","subtype":"success","is_error":false,"result":"Done.","num_turns":1}

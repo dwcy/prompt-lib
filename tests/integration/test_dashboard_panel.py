@@ -281,6 +281,7 @@ def _cache_key_for(project: Path) -> str:
 def _seed_cache(project: Path, branch: str, supabase_ref: str = "CACHED_REF") -> None:
     from cabal.models.dashboard import (
         AvailabilityState,
+        AzureDevOpsSection,
         DashboardSnapshot,
         GitHubSection,
         GitSection,
@@ -295,6 +296,7 @@ def _seed_cache(project: Path, branch: str, supabase_ref: str = "CACHED_REF") ->
         github=GitHubSection(state=AvailabilityState.NOT_AUTHED),
         supabase=SupabaseSection(state=AvailabilityState.OK, project_ref=supabase_ref),
         vercel=VercelSection(state=AvailabilityState.NOT_LINKED),
+        azure_devops=AzureDevOpsSection(state=AvailabilityState.NO_CLI),
     )
     widget_cache.save_entry(_cache_key_for(project), snapshot.to_cacheable())
 

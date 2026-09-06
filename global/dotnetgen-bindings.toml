@@ -1,0 +1,53 @@
+# Stage bindings for the dotnet-codegen pipeline.
+#
+# NEVER put API keys or secrets in this file. It holds provider and model NAMES only.
+# Keys are read from the environment at runtime via the `api_key_env` name below and are
+# never written by the tool.
+#
+# Deployed to ~/.claude/ by the apply flow. A project may override any [stages.*] table by
+# placing a file of the same shape at <solution>/.dotnetgen/bindings.toml.
+#
+# The `verify` stage has no binding by design: it runs the .NET toolchain, not a model.
+# That asymmetry is the point — the verification signal costs nothing.
+
+[defaults]
+retry_ceiling = 3          # hard repair-attempt ceiling; environment failures never consume it
+map_token_budget = 1024    # hard cap on the structural map
+
+# --- route: question vs change. A classification, so bind the cheapest thing available. ---
+[stages.route]
+provider = "openai_compatible"
+model = "qwen2.5-coder:7b"
+base_url = "http://localhost:11434/v1"
+
+# --- architect: decides correctness. Bind the strongest thing available. ---
+# cli_shell uses existing `claude`/`codex` subscription auth and needs no API key.
+[stages.architect]
+provider = "cli_shell"
+model = "claude-opus-5"
+
+[stages.architect.fallback]
+provider = "anthropic"
+model = "claude-sonnet-5"
+api_key_env = "ANTHROPIC_API_KEY"
+
+# --- write: mechanical transcription of an already-approved intent. ---
+# This is the stage where a cheap or local model pays off (SC-008); no design judgment remains.
+[stages.write]
+provider = "openai_compatible"
+model = "qwen2.5-coder:7b"
+base_url = "http://localhost:11434/v1"
+
+[stages.write.fallback]
+provider = "cli_shell"
+model = "claude-haiku-4-5-20251001"
+
+# --- Provider reference ---------------------------------------------------------------
+# cli_shell           subscription auth via the `claude` / `codex` CLIs. No API key.
+#                     Usage (incl. cached input tokens) is read from the stream-json events.
+# openai_compatible   any OpenAI chat-completions endpoint, selected by `base_url`:
+#                       Ollama     http://localhost:11434/v1
+#                       LM Studio  http://localhost:1234/v1
+#                       hosted     https://api.openai.com/v1  (needs api_key_env)
+# anthropic           Anthropic Messages API. Needs api_key_env.
+# google              Google Gemini API. Needs api_key_env.

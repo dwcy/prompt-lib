@@ -14,7 +14,9 @@ from cabal.models.dashboard import (
     AvailabilityState,
     GitHubSection,
     GitRemote,
+    Issue,
     PullRequest,
+    RemoteBranch,
     WorkflowRun,
 )
 
@@ -23,8 +25,12 @@ _ORIGIN = "origin"
 _RUN_LIMIT = "10"
 _PR_LIMIT = "30"
 _PR_STATE = "open"
+_ISSUE_LIMIT = "30"
+_ISSUE_STATE = "open"
+_BRANCH_LIMIT = 100
 _RUN_FIELDS = "databaseId,name,status,conclusion,headBranch,url,createdAt"
 _PR_FIELDS = "number,title,author,url"
+_ISSUE_FIELDS = "number,title,author,url"
 
 _HINT_NO_REMOTE = "no GitHub remote"
 _HINT_NO_CLI = "gh CLI not found"
@@ -71,6 +77,8 @@ def collect_github(
 
         runs = _collect_runs(owner_repo, current_branch)
         pull_requests = _collect_pull_requests(owner_repo)
+        remote_branches = _collect_branches(owner_repo)
+        issues = _collect_issues(owner_repo)
     except subprocess.TimeoutExpired:
         return GitHubSection(
             state=AvailabilityState.TIMEOUT,
@@ -95,6 +103,8 @@ def collect_github(
         remote_used=remote.name,
         runs=runs,
         pull_requests=pull_requests,
+        remote_branches=remote_branches,
+        issues=issues,
     )
 
 
@@ -164,6 +174,55 @@ def _collect_pull_requests(owner_repo: str) -> list[PullRequest]:
             )
         )
     return pull_requests
+
+
+def _collect_issues(owner_repo: str) -> list[Issue]:
+    args = [
+        "issue",
+        "list",
+        "--repo",
+        owner_repo,
+        "--state",
+        _ISSUE_STATE,
+        "--limit",
+        _ISSUE_LIMIT,
+        "--json",
+        _ISSUE_FIELDS,
+    ]
+    code, out = _run_gh(args)
+    if code != 0:
+        return []
+    issues: list[Issue] = []
+    for item in _parse_json_list(out):
+        author = item.get("author")
+        login = author.get("login") if isinstance(author, dict) else None
+        issues.append(
+            Issue(
+                number=int(item.get("number") or 0),
+                title=str(item.get("title") or ""),
+                author=str(login or ""),
+                url=str(item.get("url") or ""),
+            )
+        )
+    return issues
+
+
+def _collect_branches(owner_repo: str) -> list[RemoteBranch]:
+    args = [
+        "api",
+        f"repos/{owner_repo}/branches",
+        "--paginate",
+        "-q",
+        ".[].name",
+    ]
+    code, out = _run_gh(args)
+    if code != 0:
+        return []
+    names = [line.strip() for line in out.splitlines() if line.strip()][:_BRANCH_LIMIT]
+    return [
+        RemoteBranch(name=name, url=f"https://github.com/{owner_repo}/tree/{name}")
+        for name in names
+    ]
 
 
 def _parse_json_list(out: str) -> list[dict]:

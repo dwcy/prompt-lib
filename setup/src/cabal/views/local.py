@@ -78,8 +78,8 @@ from cabal.tools import (
     _outdated_packages,
     _probe_key,
 )
+from cabal.gitignore_templates import GITIGNORE_BY_TEMPLATE
 from cabal.updates import check_for_updates, do_git_pull
-from cabal.views.folder_browser import GITIGNORE_BY_TEMPLATE
 from cabal.widgets.env_panel import EnvPanel
 from cabal.widgets.file_viewer import FileViewerModal
 from cabal.widgets.update_panel import UpdatePanel

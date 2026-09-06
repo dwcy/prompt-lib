@@ -78,7 +78,7 @@ Stale worktrees aren't dangerous but they take disk space and pollute `git workt
 
 ## Runtime enforcement
 
-The rule used to live only in docs and CLAUDE.md — easy to forget. Two hooks now enforce it at runtime.
+The rule used to live only in docs and CLAUDE.md — easy to forget. Three hooks now enforce it at runtime.
 
 ### SessionStart auto-worktree on collision
 
@@ -100,6 +100,21 @@ Linked worktrees, `main`/`master`, detached HEAD, and non-repo dirs are exempt. 
 `Explore`, `Plan`, `claude-code-guide`, `statusline-setup`, `code-plan-verifier`, `gitignore-auditor`, `github-config-manager`, `load-project`, `secret-auditor`.
 
 **V1 gap (acknowledged)**: two foreground concurrent `Task` calls in the same assistant message both see `run_in_background: false` and slip through. Closing this needs cross-invocation state (a small lockfile of in-flight Task IDs) and is deferred.
+
+### PreToolUse in-flight guard
+
+The two mechanisms above both depend on a *live* competing session: the branch lock checks whether the other PID is alive, and the `Task` guardrail checks a dispatch that is happening right now. Neither sees the case that actually bites most often — **uncommitted work left behind by a session that already exited**. There is no lock to hold, no PID to probe, and the file on disk looks completely ordinary.
+
+`global/hooks/pretool_inflight_guard.py` closes that gap from the other direction: instead of asking "is someone else editing this?", it asks "was this file already dirty before I started?". On a session's first write into a repo it snapshots `git status --porcelain -uall`; the first edit to any file in that snapshot is blocked once, with a warning that names the two silent losses:
+
+- **Committing someone else's change** as part of your own feature.
+- **Destroying work git cannot recover.** A `git checkout --` on a file whose changes were never staged is irreversible — no blob in the object store, no reflog entry, no stash. This is the failure that motivated the hook.
+
+Retrying the same edit proceeds, because a feature legitimately has to touch files other work has also touched. The point is a conscious decision, not an unwritable file.
+
+Details, state file layout, and scope notes: [`docs/hooks.md`](hooks.md#pretool_inflight_guardpy). **Bypass**: `PROMPTLIB_DISABLED_HOOKS=pretool_inflight_guard`.
+
+**What it does not do**: there is still no per-file lock between two concurrently live sessions. That would need liveness detection, and a stale file lock is worse than none — it blocks work with no way to tell whether the holder is real. The dirty-set snapshot needs no liveness check and no cooperation from the other session, which is why it went first.
 
 ## How the rule appears in each file
 

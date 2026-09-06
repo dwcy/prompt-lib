@@ -59,3 +59,17 @@ Durable user / project preferences not visible from the code itself. Each entry 
 - **Why**: User corrected "latest 3.x" to the explicit project baseline "3.14 from now on".
 - **Scope**: Prompt-lib active package/runtime/build surfaces. Historical specs and unrelated compatibility examples can stay unchanged unless they drive behavior.
 - **Stale signal**: User names a newer default baseline or asks to restore multi-version support.
+
+### P-20260811-01 — Keep Overview machine and terminal metadata separated
+- **Date**: 2026-08-11
+- **Preference**: Keep `Package manager: …` directly under the OS in the Overview computer panel. Put installed shells, terminal applications, profiles, and shell/terminal modifications in a dedicated Terminal panel instead of appending a shell path to the OS line.
+- **Why**: The user wants the computer header concise while retaining package-manager visibility and making terminal configuration independently scannable.
+- **Scope**: Cabal desktop Overview layout and related system-overview payloads.
+- **Stale signal**: User explicitly asks to combine the metadata again.
+
+### P-20260811-02 — Never approximate an exact reference
+- **Date**: 2026-08-11
+- **Preference**: When a design, specification, fixture, or other exact reference exists, reproduce its values and behavior exactly; never substitute approximate tokens, dimensions, colors, states, copy, or interactions.
+- **Why**: The user explicitly corrected an approximately matched toggle and said “never approximate.”
+- **Scope**: Project-wide implementation and verification work.
+- **Stale signal**: The user explicitly authorizes interpretation or approximation for a specific task.

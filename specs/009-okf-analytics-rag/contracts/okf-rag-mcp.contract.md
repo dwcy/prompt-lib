@@ -15,6 +15,13 @@ It MUST use `default_enabled: false` and MUST NOT be listed as a runnable Local 
 - `okf_analytics`
 - `okf_usage`
 
+## Additional Tools
+
+The implementation also ships two tools beyond the required set:
+
+- `okf_get` — full concept bodies for ids chosen from `okf_search` results (two-tier retrieval keeps search responses compact).
+- `okf_status` — bundle/index location, freshness state, FTS/semantic availability, and row counts; the diagnostic entry point when another tool reports an error or staleness.
+
 ## Tool Requirements
 
 - `okf_context_pack` returns the same required JSON shape as `contracts/context-pack.contract.md`.

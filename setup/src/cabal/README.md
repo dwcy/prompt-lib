@@ -1,4 +1,4 @@
-![Cabal header: pink elephant logo beside the Cabal wordmark](https://raw.githubusercontent.com/dwcy/prompt-lib/main/docs/assets/cabal-header.png)
+![Cabal logo: a pink elephant mark](https://raw.githubusercontent.com/dwcy/prompt-lib/main/apps/cabal-desktop/src/assets/cabal-logo.png)
 
 # Cabal
 
@@ -49,6 +49,12 @@ sh setup/settings-configurator-ui.sh
 | Local | In another project: scaffold `.claude/`, apply a `CLAUDE.md` template, set up git repo template, optionally `specify init`. |
 | Codex | Deploy `global/codex/` to `~/.codex`, scaffold `.agents/`, and inspect Claude -> Codex conversion diffs. |
 | Tools | Install / update companion CLIs (Claude CLI, GitHub CLI, Specify CLI, claude-devtools). |
+
+## Headless submodules
+
+| Command | Purpose |
+|---|---|
+| `python -m cabal.evals` | Agent eval/regression harness: A/B-compare two agent configurations over a fixed task set (`validate` / `run` / `judge` / `report`). Benchmark data lives in the repo's `evals/` tree — see `evals/README.md`. |
 
 ## Identity
 

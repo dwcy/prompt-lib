@@ -1,0 +1,417 @@
+/* Cleanup & Restore console module: command header + toolbar, backup-first removal command strip
+   with workflow steps, grouped extras table (stale-default indicators in --status-warning), and
+   the recovery timeline restore panel. Token-only colors, following the same card/table language
+   as PackageSecurityModule and ServicesModule (see specs/015-web-ui-overhaul). */
+
+.clnr-console {
+  display: grid;
+  gap: 14px;
+}
+
+.clnr-eyebrow {
+  display: block;
+  color: var(--muted-2);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  user-select: none;
+}
+
+/* --- Command header ------------------------------------------------------- */
+
+.clnr-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+}
+
+.clnr-header__intro {
+  display: grid;
+  gap: 4px;
+  max-width: 480px;
+}
+
+.clnr-header__intro h1 {
+  margin: 0;
+  font-size: var(--fs-xl);
+  font-weight: 600;
+}
+
+.clnr-header__intro p {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+}
+
+.clnr-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.clnr-toolbar button {
+  padding: 5px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-sm);
+  color: var(--fg-soft);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.clnr-toolbar button:hover:not(:disabled) {
+  background: var(--surface-3);
+}
+
+.clnr-toolbar button:disabled {
+  opacity: var(--opacity-disabled);
+  cursor: default;
+}
+
+.clnr-toolbar button.clnr-toolbar__danger-btn {
+  background: none;
+  border-color: var(--danger-border);
+  color: var(--danger-fg);
+}
+
+.clnr-toolbar button.clnr-toolbar__danger-btn:hover:not(:disabled) {
+  background: var(--danger-bg);
+}
+
+/* --- Removal review command strip ------------------------------------------ */
+
+.clnr-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+}
+
+.clnr-strip__summary {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.clnr-strip__summary strong {
+  font-size: var(--fs-md);
+  font-weight: 600;
+}
+
+.clnr-strip__summary p {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+}
+
+.clnr-strip__steps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 0 auto;
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+
+.clnr-strip__steps li {
+  padding: 3px 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-full);
+}
+
+.clnr-strip__steps li + li::before {
+  content: "→";
+  margin-right: 6px;
+  color: var(--muted-3);
+}
+
+.clnr-strip__steps li.clnr-strip__step--done {
+  border-color: var(--accent-border);
+  color: var(--accent);
+}
+
+/* --- Main layout: extras groups | recovery timeline ------------------------ */
+
+.clnr-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 14px;
+  align-items: start;
+}
+
+.clnr-layout__main {
+  display: grid;
+  gap: 12px;
+}
+
+.clnr-group {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  padding: 12px 16px 4px;
+}
+
+.clnr-group h2 {
+  margin: 0 0 6px;
+  color: var(--fg-soft);
+  font-size: var(--fs-md);
+  font-weight: 600;
+}
+
+.clnr-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.clnr-list__item {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) 110px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--divider-faint);
+}
+
+.clnr-list__item:last-child {
+  border-bottom: none;
+}
+
+.clnr-list__select {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.clnr-list__path {
+  overflow: hidden;
+  color: var(--fg);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.clnr-list__classification {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.clnr-list__classification--stale {
+  color: var(--status-warning);
+}
+
+.clnr-list__reason {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--fg-soft);
+  font-size: var(--fs-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- Recovery timeline ------------------------------------------------------ */
+
+.clnr-recovery {
+  padding: 16px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+}
+
+.clnr-recovery__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.clnr-recovery__header-intro {
+  display: grid;
+  gap: 2px;
+}
+
+.clnr-recovery__header-intro h2 {
+  margin: 0;
+  font-size: var(--fs-md);
+  font-weight: 600;
+}
+
+.clnr-recovery__count {
+  margin-left: auto;
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-sm);
+}
+
+.clnr-recovery__empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.clnr-recovery__list {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.clnr-recovery__item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 14px 1fr;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--divider-faint);
+}
+
+.clnr-recovery__item:last-child {
+  border-bottom: none;
+}
+
+.clnr-recovery__rail {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.clnr-recovery__rail::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: -10px;
+  width: 1px;
+  background: var(--divider);
+}
+
+.clnr-recovery__item:last-child .clnr-recovery__rail::before {
+  display: none;
+}
+
+.clnr-recovery__rail > span {
+  position: relative;
+  z-index: 1;
+  width: 7px;
+  height: 7px;
+  margin-top: 3px;
+  background: var(--accent);
+  border-radius: var(--corner-full);
+}
+
+.clnr-recovery__body {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.clnr-recovery__body-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.clnr-recovery__body strong {
+  font-size: var(--fs-sm);
+  font-weight: 500;
+}
+
+.clnr-recovery__body code {
+  overflow: hidden;
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.clnr-recovery__body time {
+  color: var(--muted-3);
+  font-size: var(--fs-xs);
+}
+
+.clnr-recovery__latest {
+  padding: 1px 8px;
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--corner-full);
+  color: var(--accent);
+  font-size: var(--fs-xs);
+}
+
+.clnr-recovery__restore {
+  justify-self: start;
+  margin-top: 2px;
+  padding: 4px 12px;
+  background: none;
+  border: 1px solid var(--danger-border);
+  border-radius: var(--corner-sm);
+  color: var(--danger-fg);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.clnr-recovery__restore:hover:not(:disabled) {
+  background: var(--danger-bg);
+}
+
+.clnr-recovery__restore:disabled {
+  opacity: var(--opacity-disabled);
+  cursor: default;
+}
+
+/* --- Narrow layouts --------------------------------------------------------- */
+
+@media (max-width: 1024px) {
+  .clnr-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .clnr-header {
+    align-items: flex-start;
+  }
+
+  .clnr-toolbar {
+    margin-left: 0;
+  }
+
+  .clnr-strip {
+    align-items: flex-start;
+  }
+
+  .clnr-strip__steps {
+    margin-left: 0;
+  }
+
+  .clnr-list__item {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}

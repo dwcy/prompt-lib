@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prompt-lib.local/018-dotnet-codegen/edit-operation.schema.json",
+  "title": "EditOperation",
+  "description": "The contract between the writing stage and the edit applier. This is the surface SC-003 (>=90% first-attempt application) is measured on, so it carries contract tests per Constitution Gate 3. Line numbers are structurally excluded: no property accepts them, because models cannot count and tokenizers merge digit sequences (research 1.2, 1.3).",
+  "type": "object",
+  "required": ["file", "anchor_kind", "disposition"],
+  "additionalProperties": false,
+  "properties": {
+    "file": {
+      "type": "string",
+      "description": "Solution-relative path. Must already exist unless disposition is create-file."
+    },
+    "anchor_kind": {
+      "enum": ["symbol", "text"],
+      "description": "symbol is preferred and drift-proof (research R1). text is the fallback for non-member edits only: using directives, top-level statements, .csproj items, DI registration."
+    },
+    "symbol": {
+      "type": "string",
+      "description": "Fully-qualified member identity, e.g. Orders.Domain.Order.Cancel(System.DateTimeOffset). Required when anchor_kind is symbol. Invariant under formatting, so unaffected by the dotnet format PostToolUse hook.",
+      "minLength": 1
+    },
+    "search": {
+      "type": "string",
+      "description": "Literal text to locate, matched via the relaxation ladder (exact, whitespace-insensitive, leading-trim, normalised-token). Required when anchor_kind is text.",
+      "minLength": 1
+    },
+    "disposition": {
+      "enum": ["replace", "insert-into-type", "delete", "create-file"],
+      "description": "insert-into-type requires symbol to name the containing type."
+    },
+    "content": {
+      "type": "string",
+      "description": "The complete new member or file text. Must be parseable on its own. Fragments and placeholders such as '... rest unchanged ...' are contract violations, not lazy output to be tolerated. Absent only when disposition is delete."
+    },
+    "reason": {
+      "type": "string",
+      "description": "One line tracing this operation back to the approved ChangeIntent. Enables gate auditing."
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "anchor_kind": { "const": "symbol" } } },
+      "then": { "required": ["symbol"], "not": { "required": ["search"] } }
+    },
+    {
+      "if": { "properties": { "anchor_kind": { "const": "text" } } },
+      "then": { "required": ["search"], "not": { "required": ["symbol"] } }
+    },
+    {
+      "if": { "properties": { "disposition": { "const": "delete" } } },
+      "then": { "not": { "required": ["content"] } },
+      "else": { "required": ["content"] }
+    }
+  ],
+  "$comment": "Two validations cannot be expressed in JSON Schema and belong in the contract tests: (1) content must not be byte-identical to the existing span, which would be a no-op wasting output tokens and inviting unrelated cleanup; (2) content must parse as a complete C# member or compilation unit."
+}

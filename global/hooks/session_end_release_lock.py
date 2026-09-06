@@ -2,7 +2,8 @@
 """SessionEnd hook — release the per-branch session lock claimed by this cwd.
 
 Reads <git-common-dir>/claude-session-locks/<branch>.json and deletes it if
-the lock's `cwd` matches the current working directory. Never fails the
+the lock's `cwd` matches the current working directory. Also prunes aged-out
+in-flight snapshots written by pretool_inflight_guard.py. Never fails the
 session: any error exits 0.
 """
 
@@ -10,7 +11,15 @@ import json
 import os
 import subprocess
 import sys
+import time
 from pathlib import Path
+
+# In-flight snapshots are keyed by session id, so a stale one is never read by a new
+# session — pruning is housekeeping, not correctness. Deliberately age-based rather than
+# deleting "this session's" file: that would mean reading stdin, and a SessionEnd hook that
+# blocks on stdin is a worse failure than a few leftover JSON files.
+_INFLIGHT_DIR_NAME = "claude-inflight"
+_INFLIGHT_MAX_AGE_S = 7 * 24 * 60 * 60
 
 try:
     from _gate import should_skip
@@ -76,6 +85,7 @@ def main() -> None:
 
     branch_slug = branch.replace("/", "-")
     common_dir = _resolve_git_path(common_dir_raw, cwd)
+    _prune_inflight_snapshots(common_dir)
     lock_path = common_dir / "claude-session-locks" / f"{branch_slug}.json"
     if not lock_path.exists():
         return
@@ -95,6 +105,23 @@ def main() -> None:
         lock_path.unlink()
     except OSError:
         pass
+
+
+def _prune_inflight_snapshots(common_dir: Path) -> None:
+    directory = common_dir / _INFLIGHT_DIR_NAME
+    if not directory.is_dir():
+        return
+    cutoff = time.time() - _INFLIGHT_MAX_AGE_S
+    try:
+        entries = list(directory.glob("*.json"))
+    except OSError:
+        return
+    for entry in entries:
+        try:
+            if entry.stat().st_mtime < cutoff:
+                entry.unlink()
+        except OSError:
+            continue
 
 
 if __name__ == "__main__":

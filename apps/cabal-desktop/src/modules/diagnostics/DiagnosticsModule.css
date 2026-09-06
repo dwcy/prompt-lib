@@ -1,0 +1,333 @@
+/* Diagnostics module: console stat-card row, collector log tail on --surface-deep, and the
+   persisted incident ledger. Imported by DiagnosticsModule.tsx; tokens.css vars only. */
+
+.diag-module {
+  display: grid;
+  gap: var(--space-4);
+}
+
+/* --- Stat card row ------------------------------------------------------ */
+
+.diag-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-3);
+}
+
+.diag-stat {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  padding: var(--space-3) var(--space-4);
+}
+
+.diag-stat__label {
+  display: block;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+}
+
+.diag-stat__value {
+  display: block;
+  margin-top: var(--space-1);
+  font-size: var(--fs-2xl);
+  line-height: var(--lh-2xl);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.diag-stat--danger {
+  border-color: color-mix(in srgb, var(--status-danger) 30%, var(--border));
+}
+
+.diag-stat--danger .diag-stat__value {
+  color: var(--status-danger);
+}
+
+.diag-stat--warning {
+  border-color: color-mix(in srgb, var(--status-warning) 30%, var(--border));
+}
+
+.diag-stat--warning .diag-stat__value {
+  color: var(--status-warning);
+}
+
+/* Stream-state coloring shared by the 4th stat card value and the log header tail indicator. */
+.diag-module [data-stream-state="open"] {
+  color: var(--status-ok);
+}
+
+.diag-module [data-stream-state="connecting"] {
+  color: var(--status-info);
+}
+
+.diag-module [data-stream-state="stale"] {
+  color: var(--status-warning);
+}
+
+.diag-module [data-stream-state="error"] {
+  color: var(--status-danger);
+}
+
+.diag-module [data-stream-state="closed"] {
+  color: var(--muted);
+}
+
+/* --- Collector log panel ------------------------------------------------ */
+
+.diag-log {
+  background: var(--surface-deep);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  overflow: hidden;
+}
+
+.diag-log__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-bottom: 1px solid var(--divider);
+}
+
+.diag-log__title {
+  font-size: var(--fs-base);
+  font-weight: 600;
+}
+
+.diag-log__tail {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+}
+
+.diag-log__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--corner-full);
+  background: var(--status-ok);
+  animation: pulse-dot 1.6s ease-in-out infinite;
+}
+
+.diag-log__source {
+  margin-left: auto;
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
+
+/* column-reverse with a single chronological child keeps the scroll anchored to the newest
+   line at the bottom, terminal-style. */
+.diag-log__body {
+  display: flex;
+  flex-direction: column-reverse;
+  height: 26.875rem;
+  overflow-y: auto;
+  padding: var(--space-3) var(--space-4);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-sm);
+  line-height: 2;
+}
+
+.diag-log__lines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.diag-log__line {
+  display: grid;
+  grid-template-columns: 76px 52px 120px 1fr;
+  gap: var(--space-3);
+  white-space: nowrap;
+  animation: fade-in-line var(--duration-base) var(--ease-standard);
+}
+
+.diag-log__time {
+  color: var(--muted-3);
+}
+
+.diag-log__section {
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.diag-log__message {
+  color: var(--fg-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.diag-log__empty {
+  color: var(--muted);
+}
+
+/* Severity column coloring shared by log lines and ledger rows. */
+.diag-log__sev[data-severity="info"],
+.diag-ledger__sev[data-severity="info"] {
+  color: var(--status-info);
+}
+
+.diag-log__sev[data-severity="warning"],
+.diag-ledger__sev[data-severity="warning"] {
+  color: var(--status-warning);
+}
+
+.diag-log__sev[data-severity="error"],
+.diag-ledger__sev[data-severity="error"] {
+  color: var(--status-danger);
+}
+
+/* --- Incident ledger (persisted history) -------------------------------- */
+
+.diag-ledger-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  overflow: hidden;
+}
+
+.diag-ledger-card__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  border-bottom: 1px solid var(--divider);
+}
+
+.diag-ledger-card__header h2 {
+  font-size: var(--fs-base);
+  font-weight: 600;
+}
+
+.diag-ledger-card__count {
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
+
+.diag-ledger-card__filter {
+  margin-left: auto;
+}
+
+.diag-ledger-card__body {
+  overflow-x: auto;
+}
+
+.diag-ledger-card__state {
+  padding: var(--space-4);
+}
+
+.diag-ledger {
+  list-style: none;
+  margin: 0;
+  padding: var(--space-2) 0;
+  min-width: 40rem;
+}
+
+.diag-ledger__row {
+  display: grid;
+  grid-template-columns: 8.25rem 3.25rem 7.5rem 1fr auto auto;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-1) var(--space-4);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-sm);
+  border-bottom: 1px solid var(--divider-faint);
+}
+
+.diag-ledger__row:last-child {
+  border-bottom: 0;
+}
+
+.diag-ledger__time {
+  color: var(--muted-3);
+  white-space: nowrap;
+}
+
+.diag-ledger__module {
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.diag-ledger__message {
+  color: var(--fg-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.diag-ledger__kind {
+  color: var(--muted-2);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+}
+
+.diag-ledger__retry {
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
+  color: var(--fg-soft);
+  font-family: var(--font-family-sans);
+  font-size: var(--fs-xs);
+  padding: 0.125rem var(--space-2);
+  border-radius: var(--corner-sm);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.diag-ledger__retry:hover {
+  background: var(--surface-3);
+  color: var(--fg);
+}
+
+/* --- Severity filter ----------------------------------------------------- */
+
+.diag-severity-filter {
+  display: inline-flex;
+  gap: var(--space-1);
+  padding: 2px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-md);
+}
+
+.diag-severity-filter button {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  padding: var(--space-1) 0.625rem;
+  border-radius: var(--corner-sm);
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-standard);
+}
+
+.diag-severity-filter button:hover {
+  color: var(--fg-soft);
+}
+
+.diag-severity-filter button[aria-pressed="true"] {
+  background: var(--surface-3);
+  color: var(--fg);
+}
+
+/* --- Narrow layout ------------------------------------------------------- */
+
+@media (max-width: 768px) {
+  .diag-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .diag-log__dot {
+    animation: none;
+  }
+}

@@ -20,7 +20,7 @@ from cabal.models.session import (
     ToolInvocation,
     TriggerEvent,
 )
-from cabal.session_pricing import PricingEntry, lookup
+from cabal.session_pricing import PricingEntry, lookup, price_usage
 
 _AGENT_TOOL_NAMES = frozenset({"Task", "Agent"})
 _PROJECTS_DIR = Path.home() / ".claude" / "projects"
@@ -111,16 +111,9 @@ def _parse_entry(raw: dict) -> LogEntry:
     claude_version = raw.get("version") or None
 
     usage_raw = msg.get("usage") or raw.get("usage")
-    usage = (
-        TokenUsage(
-            input_tokens=int(usage_raw.get("input_tokens", 0)),
-            output_tokens=int(usage_raw.get("output_tokens", 0)),
-            cache_read_input_tokens=int(usage_raw.get("cache_read_input_tokens", 0)),
-            cache_creation_input_tokens=int(usage_raw.get("cache_creation_input_tokens", 0)),
-        )
-        if isinstance(usage_raw, dict)
-        else None
-    )
+    usage = _parse_usage(usage_raw) if isinstance(usage_raw, dict) else None
+    speed = usage_raw.get("speed") if isinstance(usage_raw, dict) else None
+    service_tier = usage_raw.get("service_tier") if isinstance(usage_raw, dict) else None
 
     # content: real format has it in message.content; fixture format at top level
     content = msg.get("content") if msg else None
@@ -175,6 +168,8 @@ def _parse_entry(raw: dict) -> LogEntry:
         content=content,
         model=model,
         usage=usage,
+        speed=speed if isinstance(speed, str) else None,
+        service_tier=service_tier if isinstance(service_tier, str) else None,
         tool_name=tool_name,
         tool_input=tool_input,
         is_error=bool(raw.get("is_error", False)),
@@ -185,6 +180,33 @@ def _parse_entry(raw: dict) -> LogEntry:
         custom_title=custom_title,
         hook_event=hook_event,
         tool_error_count=tool_error_count,
+    )
+
+
+def _parse_usage(raw: dict) -> TokenUsage:
+    """Build a TokenUsage, splitting cache writes by TTL when the transcript reports it.
+
+    `cache_creation_input_tokens` is the flat total; the `cache_creation` sub-object adds
+    the 5m/1h breakdown.  Older transcripts have only the flat total — attribute it all to
+    5m, which is the cheaper rate and so never inflates a historical figure.
+    """
+    total_writes = int(raw.get("cache_creation_input_tokens", 0))
+    detail = raw.get("cache_creation")
+    if isinstance(detail, dict):
+        writes_5m = int(detail.get("ephemeral_5m_input_tokens", 0))
+        writes_1h = int(detail.get("ephemeral_1h_input_tokens", 0))
+    else:
+        writes_5m, writes_1h = total_writes, 0
+    # Trust the flat total as the headline number, but never let the split exceed it.
+    if writes_5m + writes_1h > total_writes:
+        total_writes = writes_5m + writes_1h
+    return TokenUsage(
+        input_tokens=int(raw.get("input_tokens", 0)),
+        output_tokens=int(raw.get("output_tokens", 0)),
+        cache_read_input_tokens=int(raw.get("cache_read_input_tokens", 0)),
+        cache_creation_input_tokens=total_writes,
+        cache_creation_5m_tokens=writes_5m,
+        cache_creation_1h_tokens=writes_1h,
     )
 
 
@@ -206,6 +228,8 @@ def compute_summary(
     """Aggregate tokens, cost, agents, and skills from parsed log entries."""
     total = TokenUsage()
     model_breakdown: dict[str, TokenUsage] = {}
+    model_costs: dict[str, float] = {}
+    unpriced: set[str] = set()
     agents: list[AgentInvocation] = []
     skills: list[SkillInvocation] = []
     tool_calls: list[ToolInvocation] = []
@@ -232,6 +256,26 @@ def compute_summary(
                 model_key = entry.model or "unknown"
                 existing = model_breakdown.get(model_key, TokenUsage())
                 model_breakdown[model_key] = existing + entry.usage
+                # Priced per request, not per model total: fast mode, batch tier, and
+                # dated rates all vary between requests that share a model id.
+                rate = lookup(
+                    model_key,
+                    pricing,
+                    when=entry.timestamp,
+                    speed=entry.speed,
+                    service_tier=entry.service_tier,
+                )
+                if rate is None:
+                    unpriced.add(model_key)
+                else:
+                    model_costs[model_key] = model_costs.get(model_key, 0.0) + price_usage(
+                        rate,
+                        input_tokens=entry.usage.input_tokens,
+                        output_tokens=entry.usage.output_tokens,
+                        cache_read_tokens=entry.usage.cache_read_input_tokens,
+                        cache_write_5m_tokens=entry.usage.cache_creation_5m_tokens,
+                        cache_write_1h_tokens=entry.usage.cache_creation_1h_tokens,
+                    )
                 if entry.request_id:
                     seen_request_ids.add(entry.request_id)
 
@@ -303,7 +347,7 @@ def compute_summary(
                 if a.timestamp and a.timestamp >= skill.timestamp
             ]
 
-    cost = _compute_cost(model_breakdown, pricing)
+    cost = sum(model_costs.values())
     start_time = min(timestamps) if timestamps else None
     end_time = max(timestamps) if timestamps else None
     duration = (end_time - start_time).total_seconds() if start_time and end_time else 0.0
@@ -322,6 +366,8 @@ def compute_summary(
         total_cache_write_tokens=total.cache_creation_input_tokens,
         estimated_cost_usd=cost,
         model_breakdown=model_breakdown,
+        model_costs=model_costs,
+        unpriced_models=sorted(unpriced),
         agent_count=len(agents),
         agents=agents,
         skills=skills,
@@ -335,19 +381,6 @@ def compute_summary(
         cwd=cwd,
         claude_version=claude_version,
     )
-
-
-def _compute_cost(breakdown: dict[str, TokenUsage], pricing: list[PricingEntry]) -> float:
-    total_cost = 0.0
-    for model, usage in breakdown.items():
-        entry = lookup(model, pricing)
-        total_cost += (
-            usage.input_tokens * entry.input_usd_per_mtok / 1_000_000
-            + usage.output_tokens * entry.output_usd_per_mtok / 1_000_000
-            + usage.cache_read_input_tokens * entry.cache_read_usd_per_mtok / 1_000_000
-            + usage.cache_creation_input_tokens * entry.cache_write_usd_per_mtok / 1_000_000
-        )
-    return total_cost
 
 
 def infer_trigger(entry_index: int, entries: list[LogEntry]) -> str:

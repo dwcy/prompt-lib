@@ -1,0 +1,2 @@
+description = "Baseline: minimal instruction set with no task-specific guidance"
+user_overlay = "user"

@@ -55,3 +55,23 @@ def tmp_project_dir() -> Iterator[Path]:
         yield d
     finally:
         shutil.rmtree(d, ignore_errors=True)
+
+
+@pytest.fixture(autouse=True)
+def short_job_stream_segments(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep SSE segments test-short; production streams hold a segment far longer."""
+    try:
+        from cabal.webapi import sse
+    except ImportError:
+        return
+    monkeypatch.setattr(sse, "JOB_STREAM_SEGMENT_MAX_S", 1.0)
+
+
+@pytest.fixture(autouse=True)
+def fresh_probe_caches() -> None:
+    """Memoized host probes must never leak a result from a previous test."""
+    try:
+        from cabal.webapi.probe_cache import clear_probe_caches
+    except ImportError:
+        return
+    clear_probe_caches()

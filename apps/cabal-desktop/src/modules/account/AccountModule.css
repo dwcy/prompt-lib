@@ -1,0 +1,357 @@
+/* Claude Config console: 2-column grid, account/config-surface cards left, doctor/stats cards
+   right — per specs/015-web-ui-overhaul/redesign/cabal-console-mock.html (isClaude "Claude Config",
+   ~lines 443-511). */
+
+.ccfg-console {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: var(--space-3);
+  align-items: start;
+}
+
+.ccfg-console__column {
+  display: grid;
+  gap: var(--space-3);
+}
+
+/* --- Shared card shell -------------------------------------------------- */
+
+.ccfg-account-card,
+.ccfg-doctor-card,
+.ccfg-stats-card {
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  background-color: var(--surface-1);
+}
+
+.ccfg-surfaces-card {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  background-color: var(--surface-1);
+}
+
+.ccfg-doctor-card {
+  border-color: color-mix(in srgb, var(--status-warning) 35%, var(--border));
+}
+
+/* --- Claude account card -------------------------------------------------- */
+
+.ccfg-account-card__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ccfg-status-badge {
+  margin-left: auto;
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+.ccfg-fact-rows {
+  display: grid;
+  margin-top: var(--space-2);
+  font-size: var(--fs-base);
+}
+
+.ccfg-fact-row {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  gap: var(--space-2);
+  padding: 7px 0;
+  border-bottom: 1px solid var(--divider);
+}
+
+.ccfg-fact-row:last-child {
+  border-bottom: none;
+}
+
+.ccfg-fact-row__label {
+  color: var(--muted);
+}
+
+.ccfg-fact-row__value {
+  overflow: hidden;
+  color: var(--fg);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ccfg-mono {
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+.ccfg-tone-ok {
+  color: var(--status-ok);
+}
+
+.ccfg-tone-warning {
+  color: var(--status-warning);
+}
+
+.ccfg-tone-danger {
+  color: var(--status-danger);
+}
+
+.ccfg-account-card__actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.ccfg-btn {
+  padding: 5px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-sm);
+  background-color: var(--surface-2);
+  color: var(--fg-soft);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.ccfg-btn--accent {
+  border-color: var(--accent-border);
+  background-color: var(--accent-bg);
+  color: var(--accent);
+}
+
+.ccfg-btn:disabled {
+  opacity: var(--opacity-disabled);
+  cursor: default;
+}
+
+.ccfg-runtime {
+  margin-top: var(--space-4);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--divider);
+}
+
+.ccfg-runtime__eyebrow {
+  color: var(--muted-2);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.ccfg-runtime__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-1) var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.ccfg-runtime__grid dt {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.ccfg-runtime__grid dd {
+  overflow: hidden;
+  color: var(--fg-soft);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- Configuration surfaces card ------------------------------------------ */
+
+.ccfg-surfaces-card__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 11px var(--space-4);
+  border-bottom: 1px solid var(--divider);
+}
+
+.ccfg-surfaces-card__empty {
+  padding: var(--space-4);
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.ccfg-surfaces-rows {
+  display: grid;
+}
+
+.ccfg-surfaces-row {
+  display: grid;
+  grid-template-columns: 16px minmax(8rem, 12rem) minmax(0, 1fr) 90px;
+  gap: var(--space-3);
+  align-items: center;
+  padding: 10px var(--space-4);
+  border-bottom: 1px solid var(--divider-faint);
+  font-size: var(--fs-base);
+}
+
+.ccfg-surfaces-row:last-child {
+  border-bottom: none;
+}
+
+.ccfg-surfaces-row__name {
+  overflow: hidden;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ccfg-surfaces-row__desc {
+  overflow: hidden;
+  min-width: 0;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ccfg-surfaces-row__state {
+  text-align: right;
+}
+
+.ccfg-dot {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  border-radius: var(--corner-full);
+}
+
+.ccfg-dot--ok {
+  background-color: var(--status-ok);
+}
+
+.ccfg-dot--missing {
+  background-color: var(--status-warning);
+}
+
+/* --- Claude doctor card ---------------------------------------------------- */
+
+.ccfg-doctor-card__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ccfg-doctor-card__summary {
+  margin-left: auto;
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+.ccfg-doctor-card__list {
+  display: grid;
+  gap: var(--space-2);
+  max-height: 15rem;
+  margin-top: var(--space-3);
+  overflow-y: auto;
+}
+
+.ccfg-doctor-finding {
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--status-warning) 30%, var(--border));
+  border-radius: var(--corner-md);
+  background-color: var(--surface-3);
+}
+
+.ccfg-doctor-finding__path {
+  color: var(--status-warning);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+.ccfg-doctor-finding__message {
+  margin-top: var(--space-1);
+  color: var(--fg-soft);
+  font-size: var(--fs-sm);
+  line-height: 1.55;
+}
+
+/* --- Claude stats card ------------------------------------------------------ */
+
+.ccfg-stats-card__header {
+  display: flex;
+  align-items: center;
+}
+
+.ccfg-stats-card__hint {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.ccfg-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.ccfg-stat-tile {
+  padding: 11px 12px;
+  border-radius: var(--corner-md);
+  background-color: var(--surface-2);
+}
+
+.ccfg-stat-tile__label {
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+
+.ccfg-stat-tile__value {
+  margin-top: 3px;
+  font-size: var(--fs-xl);
+  font-weight: 600;
+}
+
+.ccfg-stat-tile__suffix {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  font-weight: 400;
+}
+
+/* --- Shared link button ------------------------------------------------------ */
+
+.ccfg-link-btn {
+  width: 100%;
+  margin-top: var(--space-3);
+  padding-top: var(--space-2);
+  border: 0;
+  border-top: 1px solid var(--divider);
+  background: none;
+  color: var(--fg-soft);
+  font-size: var(--fs-sm);
+  text-align: right;
+  cursor: pointer;
+}
+
+.ccfg-link-btn:hover {
+  color: var(--accent);
+}
+
+/* --- Narrow layouts ----------------------------------------------------------- */
+
+@media (max-width: 768px) {
+  .ccfg-console {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ccfg-surfaces-row {
+    grid-template-columns: 16px minmax(0, 1fr);
+  }
+
+  .ccfg-surfaces-row__desc {
+    grid-column: 2;
+  }
+
+  .ccfg-surfaces-row__state {
+    grid-column: 2;
+    text-align: left;
+  }
+}

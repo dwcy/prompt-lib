@@ -10,6 +10,17 @@ Personal preferences and conventions that apply to every project and session.
 - If something I ask is ambiguous, state your assumption and proceed — don't ask for clarification on minor things.
 - Bullet points over paragraphs for lists of things.
 
+### Explain in plain language
+
+When explaining a problem, a blocker, or a decision I have to make, lead with what is concretely true — the file, the line, what breaks — before any label for it. Assume I have not memorised the project's internal shorthand.
+
+- **Don't make identifiers carry the explanation.** Task IDs (`T042`), requirement codes (`FR-010b`, `SC-003`), and internal terms (`disposition`, `anchor_kind`, `relaxation ladder`) are *references*, not descriptions. Say what the thing does, then cite the ID in parentheses if it's useful for lookup.
+- **Show the actual thing.** A three-line code snippet or the literal error text beats a paragraph describing it.
+- **When I have to choose, give me the real-world trade-off** — what I gain, what I lose, what it costs to change later — not the names of the options.
+- If I say something is unclear, that's a signal to re-explain from concrete facts, **not** to add more detail at the same level of abstraction.
+
+This applies to prose aimed at me. Code comments, commit messages, and spec files keep their normal precision and may use the project's terms freely.
+
 ## Searching the codebase
 
 - **Use the `Grep` tool for content search and `Glob` for file lookup — never `grep`/`ls`/`find` via Bash.** They're cheaper, permission-integrated, and don't dump noise into context.
@@ -17,6 +28,14 @@ Personal preferences and conventions that apply to every project and session.
 - **Fan-out investigations → dispatch the `Explore` agent** (e.g. "how is the app launched + where's signal handling + what binds X"). It reads the files and returns only the conclusion, so file dumps never enter the main context.
 - Bash is still correct for *running* things (git, tests, `python -c` smoke checks) — just not for searching source.
 - **Never read generated, dependency, or build-output dirs** — `__pycache__`, `.pytest_cache`, `.mypy_cache`, `.ruff_cache`, `node_modules`, `.venv`/`venv`, `dist`/`build`, `.next`/`.nuxt`, `bin`/`obj`, `publish`/`out`, `target`, `.git`, vendored/`packages`, and the like. They're noise — committed source is the source of truth, not the artifact. Scope `Grep`/`Glob` to source paths and let the tools' default ignores do the rest. Reading into one is a **last resort, only when a bug demands inspecting the actual generated output** (e.g. a build emits wrong code) — and say why when you do.
+
+## Stay inside the working directory
+
+The folder the session starts in is the boundary. Other projects on this machine are not material to look at, sample, or measure against unless I ask for that specific thing — "it would be useful here" is not asking. Exempt: `~/.claude/`, this repo's `global/` tree, and the active toolchain. That much should go without saying; the rest is the part that's easy to miss.
+
+- **Reading is the first half of publishing.** Whatever you read, you may summarise into a file later. Assume every repo I work in may become public.
+- **Never record another project's identity** — name, path, solution or package names, namespaces, type or table names. Describe it by shape: "a private 25-project .NET solution, ~86k lines, block-scoped namespaces".
+- **Screen- and machine-capture tools** (browser page snapshots, container and process listings, screenshots) write absolute paths and unrelated state into the working directory. Keep their output gitignored and check anything they produced before committing.
 
 ## Code style (universal)
 
@@ -80,7 +99,7 @@ Tags are gated (off by default), the policy file has CLI editors, and a crashed 
 When a planning skill (`/plan`, `/speckit-plan`, `/speckit-tasks`, `/speckit-implement`) reaches its done state — all tasks completed, verification passed, the slice is shipped — commit immediately without asking. (For `/plan` that means the plan's tasks have been *executed*, not merely approved — plan approval itself produces nothing to commit.) Keep follow-up changes in small per-feature commits rather than batching.
 
 - **Trigger:** all plan tasks done + verified; or I say "considered done"; or a single self-contained slice finishes in conversation.
-- **Pre-flight: stage only this session's changes.** Before editing any file as part of a plan, run `git diff HEAD --name-only` to see what already has uncommitted modifications. If a file you plan to edit was already modified before the session, treat it as off-limits for this commit — either skip the edit, or fold it into the unrelated in-flight work later. Never sweep pre-existing in-flight changes into your auto-commit.
+- **Pre-flight: stage only this session's changes.** Before editing any file as part of a plan, run `git diff HEAD --name-only` to see what already has uncommitted modifications. If a file you plan to edit was already modified before the session, treat it as off-limits for this commit — either skip the edit, or fold it into the unrelated in-flight work later. Never sweep pre-existing in-flight changes into your auto-commit. Enforced at edit time by `global/hooks/pretool_inflight_guard.py`, which blocks the first edit of any such file once (bypass: `PROMPTLIB_DISABLED_HOOKS=pretool_inflight_guard`).
 - **Separate commits per distinct feature**, BUT do not split a single file across two commits via an intermediate file-state dance. If two features both touch `settings.json` (or any shared file), prefer one combined commit ("feat: add X + Y") over rewriting → committing → restoring.
 - **Use `git -C <repo>` for every git command.** Never prepend `cd <repo> && git ...` — the harness's safety guardrail treats compound commands as suspicious and denies them, even on a safe branch.
 - **Branch-safety check pattern:** the `git-identity` wrapper already enforces `policy.refuse_on_branches`, so a simple one-liner suffices at plan completion:
@@ -102,6 +121,8 @@ When two or more subagents are dispatched to operate concurrently on the same re
 - **Exempt**: read-only agents (no Write/Edit in `tools:`) and sequential single-agent dispatch.
 
 **Runtime enforcement**: `global/hooks/pretool_task_isolation.py` blocks background `Agent` (formerly `Task`) dispatches that lack `isolation: "worktree"` (unless the subagent is on the read-only allowlist), and `global/hooks/session_start.py` auto-creates a sibling worktree when a second Claude session lands on a feature branch already held by another live session.
+
+Both of those need a *live* competing session. For work left behind by a session that already exited — no lock holder, file looks ordinary — `global/hooks/pretool_inflight_guard.py` snapshots the repo's dirty set on this session's first write and blocks the first edit of any file that was already dirty, once.
 
 See [`docs/parallel-isolation.md`](docs/parallel-isolation.md) for the full rule, edge cases, and anti-patterns.
 
@@ -148,3 +169,5 @@ See [`docs/orchestration.md`](docs/orchestration.md) for the full routing table 
 - Never commit without being asked explicitly — **except** at plan-completion checkpoints (see *Auto-commit at plan completion*).
 - Never push to remote without being asked explicitly.
 - Never delete files without confirmation.
+- **Never `git checkout --` / `git restore` / `git stash` a file carrying changes you did not make.** Unstaged work exists nowhere but the working tree — no blob in the object store, no reflog entry, nothing to recover. Reverting it is permanent data loss, not an undo. To drop only your own edit to a shared file, re-apply the intended content instead.
+- Never read, sample, or measure against code outside the working directory unless I asked for that specific thing (see *Stay inside the working directory*), and never write another project's names or paths into this one.

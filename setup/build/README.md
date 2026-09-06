@@ -11,6 +11,18 @@ setup\build\build.cmd                  # Windows convenience
 
 PyInstaller and textual are installed into the active interpreter on first run if missing.
 
+The desktop workspace uses a second PyInstaller spec for the FastAPI sidecar:
+
+```bash
+uv run --with pyinstaller python setup/build/build_backend.py
+uv run python setup/build/verify_backend.py
+```
+
+That emits `setup/build/dist/cabal-backend-<target-triple>[.exe]`, the file
+Tauri picks up through `apps/cabal-desktop/src-tauri/tauri.conf.json`. The
+verification command starts that binary with temporary handshake/storage paths,
+checks `/api/health`, then shuts it down.
+
 ## Output
 
 ```
@@ -57,7 +69,10 @@ Resolution is centralised in `_resource_root()` / `_detect_repo_dir()` in `setup
 ## Files
 
 - `cabal.spec` — PyInstaller spec. Lists hidden imports for Textual's lazily-loaded internals and the data trees to bundle.
+- `cabal-backend.spec` — PyInstaller spec for the Tauri sidecar backend.
 - `build_exe.py` — Cross-platform driver. Ensures PyInstaller + textual, runs the spec, prints the output path and size.
+- `build_backend.py` — Cross-platform driver for the FastAPI sidecar.
+- `verify_backend.py` — Short sidecar smoke verifier for handshake, health, and shutdown.
 - `build.cmd` — Windows launcher that finds `py` or `python` on PATH.
 
 ## Updating the bundled config

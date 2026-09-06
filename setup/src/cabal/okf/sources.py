@@ -26,6 +26,10 @@ TOOL_FILES: tuple[str, ...] = (
 )
 TOOL_DIRS: tuple[str, ...] = ("setup/src/cabal/installers",)
 
+PLACEHOLDER_FILES: frozenset[str] = frozenset(
+    {".gitkeep", ".gitignore", ".gitattributes", ".ds_store", "thumbs.db"}
+)
+
 
 def _iter_files(path: Path) -> list[Path]:
     if not path.exists():
@@ -34,7 +38,9 @@ def _iter_files(path: Path) -> list[Path]:
         (
             child
             for child in path.rglob("*")
-            if child.is_file() and "__pycache__" not in child.parts
+            if child.is_file()
+            and "__pycache__" not in child.parts
+            and child.name.lower() not in PLACEHOLDER_FILES
         ),
         key=lambda item: item.as_posix().lower(),
     )

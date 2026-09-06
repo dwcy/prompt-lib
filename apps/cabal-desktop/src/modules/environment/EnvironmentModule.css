@@ -1,0 +1,675 @@
+/* Environment module styles: intro/summary row, curated/system segmented toolbar, lane filter
+   chips, the console toggle table (re-gridded VirtualDataTable), and the curated apply footer. */
+
+.env-console {
+  display: grid;
+  gap: var(--space-3);
+}
+
+/* --- Intro row: explanatory copy (left) + mono enabled/total summary (right) --- */
+
+/* Single row: the sentence takes the slack, the count and the refresh control sit at the end.
+   Deliberately not a CardRefreshFooter here — that wrapper is `flex: 0 0 100%` so it can claim
+   its own line at a card's bottom edge, which is exactly what this row must not do. */
+.env-intro {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.env-intro__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.env-intro__summary {
+  flex-shrink: 0;
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+}
+
+/* --- Toolbar: curated/system segmented pills + search + platform tag --- */
+
+.env-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.env-toolbar__pills {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-full);
+}
+
+.env-toolbar__pills button {
+  padding: 5px 14px;
+  background: transparent;
+  border: none;
+  border-radius: var(--corner-full);
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.env-toolbar__pills button.is-active {
+  background: var(--accent-bg-gradient);
+  color: var(--fg);
+}
+
+.env-toolbar input[type="search"] {
+  width: 16rem;
+  max-width: 100%;
+  padding: 6px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-md);
+  color: var(--fg);
+  font-size: var(--fs-sm);
+}
+
+.env-toolbar input[type="search"]::placeholder {
+  color: var(--muted);
+}
+
+.env-toolbar__platform {
+  margin-left: auto;
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+/* --- Lane filter chips (curated only) --- */
+
+.env-lanes {
+  display: inline-flex;
+  gap: var(--space-2);
+}
+
+.env-lanes button {
+  padding: 4px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-full);
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+
+.env-lanes button.is-active {
+  border-color: var(--accent-border);
+  color: var(--accent);
+}
+
+/* --- Table: re-grid the shared VirtualDataTable onto the console toggle columns --- */
+
+.env-console__table .virtual-data-table {
+  max-height: calc(100dvh - 320px);
+  min-height: 14rem;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+}
+
+.env-console__table .virtual-data-table__header,
+.env-console__table .virtual-data-table__row {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 220px) minmax(0, 1fr) minmax(0, 240px) 68px 88px;
+  gap: var(--space-3);
+  align-items: center;
+  min-width: 0;
+  padding: 0 var(--space-4);
+}
+
+.env-console__table .virtual-data-table__header {
+  background: var(--surface-1);
+  border-bottom: 1px solid var(--divider);
+}
+
+.env-console__table .virtual-data-table__header-cell {
+  min-width: 0;
+  padding: 9px 0;
+  color: var(--muted-2);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tracking-wide);
+}
+
+.env-console__table .virtual-data-table__row {
+  border-bottom: 1px solid var(--divider-faint);
+}
+
+.env-console__table .virtual-data-table__row:has(.toggle-switch:not(.is-on)) {
+  opacity: 0.45;
+}
+
+.env-console__table .virtual-data-table__cell {
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* --- Cell content --- */
+
+.env-cell-name {
+  overflow: hidden;
+  color: var(--fg);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.env-cell-desc {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.env-cell-value {
+  overflow: hidden;
+  color: var(--fg-soft);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.env-cell-value--masked {
+  color: var(--muted);
+  letter-spacing: 0.08em;
+}
+
+.env-secret,
+.env-state {
+  overflow: hidden;
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.env-secret {
+  color: var(--muted-3);
+}
+
+.env-secret--masked {
+  color: var(--status-warning);
+}
+
+.env-state {
+  color: var(--state-unavailable);
+  text-transform: lowercase;
+}
+
+.env-state[data-state="ok"],
+.env-state[data-state="installed"],
+.env-state[data-state="open"],
+.env-state[data-state="succeeded"] {
+  color: var(--state-ok);
+}
+
+.env-state[data-state="degraded"],
+.env-state[data-state="missing"],
+.env-state[data-state="stale"] {
+  color: var(--state-missing);
+}
+
+.env-state[data-state="failed"],
+.env-state[data-state="error"] {
+  color: var(--state-error);
+}
+
+.env-state[data-state="loading"],
+.env-state[data-state="connecting"],
+.env-state[data-state="update"] {
+  color: var(--state-update-available);
+}
+
+.env-cell-editor {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.env-cell-input {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.env-cell-input input {
+  min-width: 0;
+  width: 100%;
+  flex: 1 1 auto;
+  padding: 4px 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-sm);
+  color: var(--fg);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+.env-cell-input--secret {
+  position: relative;
+}
+
+.env-cell-input--secret input {
+  padding-right: 30px;
+}
+
+.env-cell-editor .env-secret-visibility {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  display: grid;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: var(--corner-sm);
+  background: transparent;
+  color: var(--muted);
+  transform: translateY(-50%);
+}
+
+.env-cell-editor .env-secret-visibility:hover:not(:disabled) {
+  background: var(--surface-3);
+  color: var(--fg);
+}
+
+.env-secret-visibility svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.env-cell-editor button {
+  flex-shrink: 0;
+  padding: 3px 8px;
+  font-size: var(--fs-xs);
+}
+
+/* --- Apply footer (curated only) --- */
+
+.env-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.env-footer button {
+  margin-left: auto;
+}
+
+.env-footer button + button {
+  margin-left: var(--space-2);
+}
+
+@media (max-width: 768px) {
+  .env-console__table .virtual-data-table__header,
+  .env-console__table .virtual-data-table__row {
+    grid-template-columns: 36px minmax(0, 1fr) 96px 52px 64px;
+  }
+
+  .env-console__table .virtual-data-table__header-cell:nth-child(3),
+  .env-console__table .virtual-data-table__cell:nth-child(3) {
+    display: none;
+  }
+
+  .env-toolbar__platform {
+    display: none;
+  }
+}
+
+/* -- multi-source browser (020-env-variable-sources) --------------------- */
+
+/* FR-007: overflow scrolls rather than shrinking tabs. A tab strip that squeezes names
+   until "appsettings.Development.json" and "appsettings.Production.json" both read as
+   "appsettings.D…" is worse than one that scrolls — the names are the navigation. */
+.env-sources__tabs {
+  display: flex;
+  gap: var(--space-1);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  padding-bottom: var(--space-1);
+  border-bottom: 1px solid var(--border);
+}
+
+.env-sources__tab {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  flex: 0 0 auto;
+  max-width: 22rem;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid transparent;
+  border-radius: var(--corner-lg) var(--corner-lg) 0 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.env-sources__tab:hover {
+  color: var(--text);
+  background: var(--surface-2);
+}
+
+.env-sources__tab.is-active {
+  color: var(--text);
+  background: var(--surface-1);
+  border-color: var(--border);
+  border-bottom-color: transparent;
+}
+
+.env-sources__tab-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.env-sources__tab-qualifier {
+  color: var(--muted-3);
+  font-size: var(--fs-xs);
+}
+
+/* FR-037: the four outcomes must be told apart at a glance, before anything is clicked. */
+.env-sources__tab[data-state="degraded"] {
+  color: var(--state-degraded);
+}
+
+.env-sources__tab[data-state="empty"] {
+  color: var(--muted-3);
+  font-style: italic;
+}
+
+.env-sources__badge {
+  padding: 0 var(--space-1);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-sm);
+  color: var(--muted-2);
+  font-size: var(--fs-xs);
+  text-transform: lowercase;
+}
+
+/* FR-032: a machine default must read as weaker than a real project link, so it is outlined
+   and muted where a genuine link badge would be filled. */
+.env-sources__badge[data-badge="machine-default"] {
+  border-style: dashed;
+  color: var(--muted-3);
+}
+
+.env-sources__badge[data-badge="outside"] {
+  border-color: color-mix(in srgb, var(--status-warning) 40%, var(--border));
+  color: var(--status-warning);
+}
+
+.env-sources__badge[data-badge="reference"] {
+  border-color: color-mix(in srgb, var(--status-info, var(--status-accent)) 40%, var(--border));
+}
+
+.env-sources__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.env-sources__group + .env-sources__group {
+  margin-top: var(--space-4);
+}
+
+.env-sources__group-heading {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-2);
+  color: var(--muted-2);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.env-sources__group-qualifier {
+  color: var(--muted-3);
+  font-size: var(--fs-xs);
+  font-weight: 400;
+}
+
+.env-sources__grid {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+
+.env-sources__grid th,
+.env-sources__grid td {
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.env-sources__grid thead th {
+  color: var(--muted-2);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.env-sources__name {
+  display: block;
+  color: var(--text);
+  font-family: var(--font-mono);
+  word-break: break-all;
+}
+
+.env-sources__description,
+.env-sources__updated {
+  color: var(--muted-3);
+  font-size: var(--fs-xs);
+}
+
+.env-sources__attribution {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  align-items: center;
+}
+
+.env-sources__layer {
+  display: inline-flex;
+  gap: var(--space-1);
+  color: var(--muted-2);
+  font-size: var(--fs-xs);
+}
+
+.env-sources__layer-verdict {
+  color: var(--muted-3);
+}
+
+.env-sources__layer[data-wins="true"] .env-sources__layer-verdict {
+  color: var(--state-ok);
+}
+
+/* -- reveal states ------------------------------------------------------- */
+
+.env-reveal {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.env-reveal__eye {
+  display: inline-flex;
+  padding: var(--space-1);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-sm);
+  background: var(--surface-2);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.env-reveal__eye svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.env-reveal__eye:hover:not(:disabled) {
+  color: var(--text);
+}
+
+/* FR-018: `never` is a fact, not a failure. It gets the muted, unmistakably inert treatment
+   — no warning colour, no hover, and a not-allowed cursor — so it never reads as retryable.
+   A refused reveal below uses the warning palette instead, because that one can change. */
+.env-reveal--never .env-reveal__eye {
+  border-style: dashed;
+  color: var(--muted-3);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.env-reveal--never .env-reveal__note {
+  color: var(--muted-3);
+  font-size: var(--fs-xs);
+}
+
+.env-reveal--refused .env-reveal__note {
+  font-size: var(--fs-xs);
+}
+
+.env-reveal--refused[data-status="denied"] .env-reveal__note {
+  color: var(--status-warning);
+}
+
+.env-reveal--refused[data-status="unavailable"] .env-reveal__note {
+  color: var(--muted-2);
+}
+
+.env-reveal__masked,
+.env-reveal__value {
+  font-family: var(--font-mono);
+  word-break: break-all;
+}
+
+.env-reveal__masked {
+  color: var(--muted-3);
+}
+
+.env-reveal__shown {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}
+
+/* An empty or whitespace-only value is an answer; it must not look like a failed read. */
+.env-reveal__value--blank {
+  color: var(--muted-2);
+  font-style: italic;
+}
+
+/* -- source notices ------------------------------------------------------ */
+
+.env-sources__notice {
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  background: var(--surface-1);
+}
+
+.env-sources__notice[data-state="degraded"] {
+  border-color: color-mix(in srgb, var(--status-warning) 40%, var(--border));
+}
+
+.env-sources__notice-title {
+  margin: 0 0 var(--space-1);
+  color: var(--text);
+  font-size: var(--fs-sm);
+}
+
+.env-sources__notice[data-state="empty"] .env-sources__notice-title {
+  color: var(--muted);
+}
+
+.env-sources__notice-body {
+  margin: 0;
+  color: var(--muted-2);
+  font-size: var(--fs-xs);
+}
+
+.env-sources__notices {
+  margin: 0;
+  padding-left: var(--space-4);
+  color: var(--muted-3);
+  font-size: var(--fs-xs);
+}
+
+/* -- azure link editor --------------------------------------------------- */
+
+.env-sources__link-editor {
+  padding: var(--space-3);
+  border: 1px dashed var(--border);
+  border-radius: var(--corner-lg);
+  background: var(--surface-1);
+}
+
+.env-sources__link-reason {
+  display: flex;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-2);
+  color: var(--muted-2);
+  font-size: var(--fs-xs);
+}
+
+.env-sources__link-label {
+  color: var(--muted-3);
+  text-transform: uppercase;
+}
+
+.env-sources__link-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: end;
+}
+
+.env-sources__link-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  color: var(--muted-2);
+  font-size: var(--fs-xs);
+}
+
+@media (max-width: 768px) {
+  .env-sources__grid thead th:nth-child(3),
+  .env-sources__grid tbody td:nth-child(3) {
+    display: none;
+  }
+}

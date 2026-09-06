@@ -19,11 +19,8 @@ def mcp_bus_status() -> str:
     if not shutil.which(MCP_BUS_PKG):
         return "not installed"
     r = subprocess.run([MCP_BUS_PKG, "--version"], capture_output=True, text=True)
-    v = (
-        (r.stdout or r.stderr or "").strip().splitlines()[0]
-        if r.returncode == 0
-        else ""
-    )
+    output = (r.stdout or r.stderr or "").strip()
+    v = output.splitlines()[0] if r.returncode == 0 and output else ""
     return f"installed {v}" if v else "installed"
 
 

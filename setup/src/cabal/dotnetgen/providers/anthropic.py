@@ -1,0 +1,165 @@
+# -*- coding: utf-8 -*-
+"""Anthropic Messages adapter, for the API-key auth mode.
+
+The reason this exists alongside the CLI-shell adapter is cache accounting. SC-005 asks that at
+least 70% of served context come from cache across a run sequence, and SC-010 asks that our cost
+arithmetic reconcile with the provider's own figures. Both need the *cache* token counts, which
+this API reports directly as `cache_read_input_tokens` and `cache_creation_input_tokens`.
+
+The banded prompt is what makes those numbers move: `context.bands` orders content stable-to-
+volatile and marks checkpoints, and this adapter turns those checkpoints into `cache_control`
+markers. Without that, the prefix is re-sent in full every turn and the cache reports zero.
+
+Uses `urllib` from the standard library, matching `openai_compatible` - the pipeline should not
+take a runtime dependency to POST one JSON document.
+"""
+
+from __future__ import annotations
+
+import json
+import time
+import urllib.error
+import urllib.request
+from dataclasses import dataclass
+from typing import Final
+
+from cabal.dotnetgen.providers.base import (
+    CompletionRequest,
+    CompletionResult,
+    ProviderError,
+    ProviderStatus,
+    ProviderUnavailableError,
+    post_json,
+)
+from cabal.dotnetgen.providers.config import StageBinding
+from cabal.dotnetgen.providers.usage import parse_usage
+
+PROVIDER_NAME: Final[str] = "anthropic"
+DEFAULT_BASE_URL: Final[str] = "https://api.anthropic.com"
+API_VERSION: Final[str] = "2023-06-01"
+REQUEST_TIMEOUT_SECONDS: Final[int] = 300
+CHECK_TIMEOUT_SECONDS: Final[int] = 10
+DEFAULT_MAX_TOKENS: Final[int] = 4096
+
+
+@dataclass(frozen=True)
+class AnthropicProvider:
+    """Stage-bindable adapter. Holds no key: the binding reads it from the environment per call."""
+
+    binding: StageBinding
+    name: str = PROVIDER_NAME
+
+    @property
+    def base_url(self) -> str:
+        return (self.binding.base_url or DEFAULT_BASE_URL).rstrip("/")
+
+    @property
+    def is_local(self) -> bool:
+        """Never local. Present so the ledger can ask every provider the same question."""
+        return False
+
+    def _headers(self) -> dict[str, str]:
+        key = self.binding.api_key()
+        if not key:
+            raise ProviderError(
+                f"{self.binding.api_key_env or 'ANTHROPIC_API_KEY'} is not set; "
+                f"stage {self.binding.stage!r} cannot authenticate"
+            )
+        return {
+            "Content-Type": "application/json",
+            "x-api-key": key,
+            "anthropic-version": API_VERSION,
+        }
+
+    def _post(self, path: str, body: dict, timeout: int) -> dict:
+        return post_json(f"{self.base_url}{path}", body, self._headers(), timeout)
+
+
+    def complete(self, request: CompletionRequest) -> CompletionResult:
+        system, messages = _split_system(request)
+        body: dict = {
+            "model": request.model,
+            "max_tokens": request.max_output_tokens or DEFAULT_MAX_TOKENS,
+            "messages": messages,
+        }
+        if system:
+            body["system"] = system
+        if request.temperature is not None:
+            body["temperature"] = request.temperature
+        if request.stop:
+            body["stop_sequences"] = list(request.stop)
+
+        started = time.monotonic()
+        payload = self._post("/v1/messages", body, REQUEST_TIMEOUT_SECONDS)
+        elapsed = time.monotonic() - started
+
+        blocks = payload.get("content")
+        if not isinstance(blocks, list):
+            raise ProviderError(f"response contained no content: {str(payload)[:300]}")
+        text = "".join(b.get("text", "") for b in blocks if b.get("type") == "text")
+
+        return CompletionResult(
+            text=text,
+            usage=parse_usage(payload.get("usage")),
+            model=payload.get("model", request.model),
+            provider=self.name,
+            wall_clock_seconds=elapsed,
+        )
+
+    def check(self) -> ProviderStatus:
+        """Probe with a one-token call. Cheaper than a health endpoint the API does not offer."""
+        try:
+            self._post(
+                "/v1/messages",
+                {
+                    "model": self.binding.model,
+                    "max_tokens": 1,
+                    "messages": [{"role": "user", "content": "ping"}],
+                },
+                CHECK_TIMEOUT_SECONDS,
+            )
+        except ProviderError as exc:
+            return ProviderStatus(self.name, self.binding.model, reachable=False, detail=str(exc))
+        return ProviderStatus(self.name, self.binding.model, reachable=True)
+
+
+def _split_system(request: CompletionRequest) -> tuple[str | list[dict], list[dict]]:
+    """Anthropic takes system content as its own field, not as a message role.
+
+    The leading system blocks are the stable bands, so hoisting them here is also what keeps the
+    cacheable prefix contiguous.
+    """
+    system_parts: list[str] = []
+    system_checkpoints: list[bool] = []
+    messages: list[dict] = []
+    for message in request.messages:
+        if message.role == "system" and not messages:
+            system_parts.append(message.content)
+            system_checkpoints.append(message.cache_checkpoint)
+            continue
+        content: str | list[dict] = message.content
+        if message.cache_checkpoint:
+            content = [_text_block(message.content, checkpoint=True)]
+        messages.append({"role": message.role, "content": content})
+    if not messages:
+        # The API requires at least one message; an all-system request is still a real request.
+        messages.append({"role": "user", "content": system_parts.pop() if system_parts else ""})
+        system_checkpoints = system_checkpoints[: len(system_parts)]
+    if any(system_checkpoints):
+        # Block form exists only to carry cache_control; the plain string stays the
+        # payload for the uncached case.
+        system: str | list[dict] = [
+            _text_block(text, checkpoint=checkpoint)
+            for text, checkpoint in zip(system_parts, system_checkpoints)
+        ]
+    else:
+        system = "\n\n".join(system_parts)
+    return system, messages
+
+
+def _text_block(text: str, *, checkpoint: bool) -> dict:
+    """A content block, marked as a cache breakpoint when the band declared one."""
+    block: dict = {"type": "text", "text": text}
+    if checkpoint:
+        block["cache_control"] = {"type": "ephemeral"}
+    return block

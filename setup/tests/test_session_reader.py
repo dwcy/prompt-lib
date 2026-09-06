@@ -263,6 +263,92 @@ class TestComputeSummary:
         assert "claude-sonnet-4-6" in summary.model_breakdown
         assert summary.model_breakdown["claude-sonnet-4-6"].input_tokens == 1200
 
+    def test_unpriced_model_is_flagged_not_silently_free(self, tmp_path: Path):
+        """The bug this guards: a model missing from the table used to cost $0 with no signal."""
+        content = (
+            '{"type":"assistant","model":"claude-from-the-future-9",'
+            '"usage":{"input_tokens":1000000,"output_tokens":1000000},'
+            '"timestamp":"2026-06-30T10:00:03.000Z"}\n'
+        )
+        sess = _session(tmp_path, content)
+
+        summary = compute_summary(sess, read_session(sess), load_pricing())
+
+        assert summary.unpriced_models == ["claude-from-the-future-9"]
+        assert summary.estimated_cost_usd == 0.0
+        assert summary.total_input_tokens == 1000000  # tokens still counted
+
+    def test_known_model_is_not_flagged_unpriced(self, tmp_path: Path):
+        sess = self._fixture_session(tmp_path)
+
+        summary = compute_summary(sess, read_session(sess), load_pricing())
+
+        assert summary.unpriced_models == []
+        assert summary.model_costs["claude-sonnet-4-6"] > 0.0
+
+    def test_model_costs_sum_to_the_total(self, tmp_path: Path):
+        sess = self._fixture_session(tmp_path)
+
+        summary = compute_summary(sess, read_session(sess), load_pricing())
+
+        assert summary.estimated_cost_usd == pytest.approx(sum(summary.model_costs.values()))
+
+    def test_cache_writes_split_by_ttl(self, tmp_path: Path):
+        content = (
+            '{"type":"assistant","model":"claude-opus-5","usage":{"input_tokens":0,'
+            '"output_tokens":0,"cache_creation_input_tokens":300,'
+            '"cache_creation":{"ephemeral_5m_input_tokens":100,"ephemeral_1h_input_tokens":200}},'
+            '"timestamp":"2026-06-30T10:00:03.000Z"}\n'
+        )
+        sess = _session(tmp_path, content)
+
+        summary = compute_summary(sess, read_session(sess), load_pricing())
+        usage = summary.model_breakdown["claude-opus-5"]
+
+        assert usage.cache_creation_input_tokens == 300
+        assert usage.cache_creation_5m_tokens == 100
+        assert usage.cache_creation_1h_tokens == 200
+        # 100 @ $6.25/Mtok + 200 @ $10.00/Mtok
+        assert summary.estimated_cost_usd == pytest.approx((100 * 6.25 + 200 * 10.0) / 1_000_000)
+
+    def test_cache_writes_without_a_split_fall_back_to_the_five_minute_rate(self, tmp_path: Path):
+        content = (
+            '{"type":"assistant","model":"claude-opus-5","usage":{"input_tokens":0,'
+            '"output_tokens":0,"cache_creation_input_tokens":300},'
+            '"timestamp":"2026-06-30T10:00:03.000Z"}\n'
+        )
+        sess = _session(tmp_path, content)
+
+        summary = compute_summary(sess, read_session(sess), load_pricing())
+
+        assert summary.model_breakdown["claude-opus-5"].cache_creation_5m_tokens == 300
+        assert summary.estimated_cost_usd == pytest.approx(300 * 6.25 / 1_000_000)
+
+    def test_fast_mode_requests_bill_at_double(self, tmp_path: Path):
+        def cost_at(speed: str) -> float:
+            content = (
+                '{"type":"assistant","model":"claude-opus-5",'
+                '"usage":{"input_tokens":1000000,"output_tokens":0,'
+                f'"speed":"{speed}"}},'
+                '"timestamp":"2026-06-30T10:00:03.000Z"}\n'
+            )
+            sess = _session(tmp_path, content, project=speed)
+            return compute_summary(sess, read_session(sess), load_pricing()).estimated_cost_usd
+
+        assert cost_at("standard") == pytest.approx(5.0)
+        assert cost_at("fast") == pytest.approx(10.0)
+
+    def test_sonnet_5_intro_rate_applies_to_a_session_inside_the_window(self, tmp_path: Path):
+        content = (
+            '{"type":"assistant","model":"claude-sonnet-5","usage":{"input_tokens":1000000,'
+            '"output_tokens":0},"timestamp":"2026-08-01T10:00:03.000Z"}\n'
+        )
+        sess = _session(tmp_path, content)
+
+        summary = compute_summary(sess, read_session(sess), load_pricing())
+
+        assert summary.estimated_cost_usd == pytest.approx(2.0)
+
     def test_empty_session_returns_zero_cost(self, tmp_path: Path):
         sess = _session(tmp_path, "")
         entries = read_session(sess)

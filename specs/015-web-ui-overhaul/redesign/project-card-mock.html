@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<article style="{{ cardStyleComputed }}">
+  <h3 style="margin:0">{{ card.title }}</h3>
+  <p>{{ card.summary }}</p>
+  <dl style="display:grid; grid-template-columns:minmax(7rem,.45fr) minmax(0,1fr); gap:.35rem .75rem">
+    <sc-for list="{{ card.facts }}" as="f" hint-placeholder-count="3">
+      <dt style="color:#a8a3ba">{{ f.label }}</dt><dd style="margin:0; overflow-wrap:anywhere">{{ f.value }}</dd>
+    </sc-for>
+  </dl>
+  <sc-for list="{{ card.links }}" as="l" hint-placeholder-count="1">
+    <a href="{{ l.url }}" target="_blank" rel="noreferrer" style="display:inline-block; color:#75c7ff; margin:.4rem .5rem .2rem 0">{{ l.label }}</a>
+  </sc-for>
+  <sc-if value="{{ card.hint }}" hint-placeholder-val="{{ false }}">
+    <p style="color:#a8a3ba; border-left:3px solid #34233e; padding-left:.7rem">{{ card.hint }}</p>
+  </sc-if>
+</article>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:320,&quot;height&quot;:260},&quot;card&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;{state:string,title:string,summary:string,facts:{label:string,value:string}[],links:{label:string,url:string}[],hint?:string}&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const card = this.props.card || { title: "", summary: "", facts: [], links: [], hint: null, state: "ok" };
+    const border = card.state === "ok" ? "rgba(95,211,141,.5)"
+      : ["token_missing", "not_authed", "not_linked"].includes(card.state) ? "rgba(246,196,83,.5)"
+      : ["no_cli", "timeout"].includes(card.state) ? "rgba(117,199,255,.45)"
+      : card.state === "error" ? "rgba(255,107,120,.7)" : "#34233e";
+    return { card, cardStyleComputed: `border:1px solid ${border}; border-radius:8px; background:#12101a; padding:.85rem; color:#ecf3ff` };
+  }
+}
+</script>
+</body>
+</html>

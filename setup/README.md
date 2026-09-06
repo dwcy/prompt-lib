@@ -1,4 +1,4 @@
-![Cabal header: pink elephant logo beside the Cabal wordmark](../docs/assets/cabal-logo.png)
+![Cabal logo: a pink elephant mark](../apps/cabal-desktop/src/assets/cabal-logo.png)
 
 # setup/
 
@@ -8,7 +8,7 @@ The control panel is published to PyPI as **`cabal`** and bundled into a standal
 
 | Path | Command | Notes |
 |---|---|---|
-| Repo root (source checkout) | `./run` on POSIX, `.\run.cmd` on Windows | Convenience entry point that delegates to the platform-specific source launcher below. |
+| Repo root (source checkout) | `./run` on POSIX, `.\run.cmd` on Windows | Opens the settings TUI by default; append `web` or `tauri` to launch a graphical workspace. |
 | Install from PyPI (recommended) | `uv tool install cabal` then `cabal` | Single command. Needs only a Python >= 3.14. Works on any OS that `uv` / `pipx` support. |
 | Terminal (source) | `python setup/settings-configurator-ui.py` | Dev mode when Python is already installed. First run asks before installing `textual` + `rich` via pip. |
 | Terminal (Windows convenience) | `setup\settings-configurator-ui.cmd` | Finds Python or asks to install the latest Python via `winget`, then launches the wizard. |
@@ -73,6 +73,6 @@ setup/
 └── tools/                          ← supporting scripts (bash fallback, smoke test, dev installer)
 ```
 
-The repo root also contains `run` and `run.cmd`; keep them as thin delegators so the setup logic stays inside this folder.
+The repo root also contains `run` and `run.cmd`; keep them as thin delegators so setup and graphical-app launch logic stays in the platform-specific launchers.
 
 See `build/README.md`, `env/README.md`, and `tools/README.md` for subfolder details.

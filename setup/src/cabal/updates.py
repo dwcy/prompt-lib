@@ -13,6 +13,20 @@ import subprocess
 from cabal._paths import REPO_DIR
 
 
+def _commit_date(revision: str) -> str:
+    try:
+        result = subprocess.run(
+            ["git", "log", "-1", "--format=%cs", revision],
+            capture_output=True,
+            text=True,
+            cwd=str(REPO_DIR),
+            timeout=5,
+        )
+    except Exception:
+        return ""
+    return result.stdout.strip() if result.returncode == 0 else ""
+
+
 def _current_branch() -> str | None:
     try:
         r = subprocess.run(
@@ -91,23 +105,16 @@ def check_for_updates() -> dict:
         remote_hash = remote_ls.stdout.split()[0]
         short = lambda h: h[:8]
         if local_hash == remote_hash:
-            date = ""
-            d = subprocess.run(
-                [
-                    "git",
-                    "log",
-                    "-1",
-                    "--format=%cs",
-                    local_hash,
-                ],  # %cs = committer date, short ISO
-                capture_output=True,
-                text=True,
-                cwd=str(REPO_DIR),
-                timeout=5,
-            )
-            if d.returncode == 0:
-                date = d.stdout.strip()
-            return {"status": "up_to_date", "hash": short(local_hash), "date": date}
+            date = _commit_date(local_hash)
+            return {
+                "status": "up_to_date",
+                "hash": short(local_hash),
+                "date": date,
+                "local_hash": short(local_hash),
+                "latest_hash": short(remote_hash),
+                "latest_date": date,
+                "branch": branch,
+            }
 
         # Tips differ — fetch the upstream so we can count how many commits we're
         # actually behind (a different tip can also mean we're ahead — nothing to pull).
@@ -142,12 +149,24 @@ def check_for_updates() -> dict:
 
         # Different tip but zero commits to pull → we're level or ahead of upstream.
         if behind_count == 0:
-            return {"status": "up_to_date", "hash": short(local_hash), "date": ""}
+            date = _commit_date(local_hash)
+            return {
+                "status": "up_to_date",
+                "hash": short(local_hash),
+                "date": date,
+                "local_hash": short(local_hash),
+                "latest_hash": short(local_hash),
+                "latest_date": date,
+                "branch": branch,
+            }
 
         return {
             "status": "behind",
             "local": short(local_hash),
             "remote": short(remote_hash),
+            "local_hash": short(local_hash),
+            "latest_hash": short(remote_hash),
+            "latest_date": _commit_date(remote_hash),
             "behind_count": behind_count,
             "subject": subject,
             "branch": branch,

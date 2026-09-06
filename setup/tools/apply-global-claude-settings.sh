@@ -144,6 +144,14 @@ if [ -f "$SCRIPT_DIR/keybindings.json" ]; then
   echo "  Copied  keybindings.json"
 fi
 
+# Copy dotnetgen stage bindings. Provider and model NAMES only — never keys, which are read from
+# the environment at call time. Without this the pipeline resolves bindings only from a source
+# checkout, so an installed setup would find no configuration at all.
+if [ -f "$SCRIPT_DIR/dotnetgen-bindings.toml" ]; then
+  cp "$SCRIPT_DIR/dotnetgen-bindings.toml" "$TARGET/dotnetgen-bindings.toml"
+  echo "  Copied  dotnetgen-bindings.toml"
+fi
+
 # Copy MEMORY.md if it exists in this folder
 if [ -f "$SCRIPT_DIR/MEMORY.md" ]; then
   cp "$SCRIPT_DIR/MEMORY.md" "$TARGET/MEMORY.md"

@@ -53,6 +53,7 @@ See [`docs/parallel-isolation.md`](../../docs/parallel-isolation.md) for the can
 - **@react-architect** — React 2025 stack ONLY (Vite + TypeScript + Zustand + TanStack Query/Router/Forms + Tailwind v4 + Biome + Zod). Use when the project matches this stack.
 - **@frontend-architect** — Vue 3, Next.js, or React projects NOT on the 2025 stack. Component design, state, performance, accessibility.
 - **@frontend-css** — Modular CSS (globals.css + CSS Modules pattern). Use for any CSS-only task — never let a frontend agent do CSS architecture work.
+- **@frontend-tester** — Vitest, React Testing Library, MSW, Playwright, accessibility smoke checks, fixture-backend flows. Use for every frontend test task.
 
 ### Game
 
@@ -76,6 +77,7 @@ See [`docs/parallel-isolation.md`](../../docs/parallel-isolation.md) for the can
 | Vite + Zustand + TanStack | `@react-architect` |
 | Vue 3, Next.js, plain React | `@frontend-architect` |
 | `*.css`, design tokens, theming | `@frontend-css` |
+| Vitest, RTL, MSW, Playwright, frontend fixtures | `@frontend-tester` |
 | `*.unity`, MonoBehaviour, ScriptableObject | `@unity-architect` |
 | Cross-cutting orchestration, ADRs, scripts that span domains | `main` |
 | Read-only verification of an implementation against its plan | `@code-plan-verifier` |

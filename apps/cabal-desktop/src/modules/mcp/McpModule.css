@@ -1,0 +1,551 @@
+/* MCP Connectors console module: command header, filter toolbar, connectors table (status dot +
+   scope chips + per-row actions), selected-connector detail panel, and the multi-scope disable
+   dialog. Token-only colors, following the same console card/table language as ServicesModule and
+   KnowledgeModule (see specs/015-web-ui-overhaul). Data-honesty scope-down: this module restyles
+   the real MCP Connectors screen only — no fabricated routing-flow diagram or deploy-state widget. */
+
+.mcp-console {
+  display: grid;
+  gap: 14px;
+}
+
+.mcp-eyebrow {
+  display: block;
+  color: var(--muted-2);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  user-select: none;
+}
+
+/* --- Command header ------------------------------------------------------- */
+
+.mcp-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+}
+
+.mcp-header__intro {
+  display: grid;
+  gap: 4px;
+  max-width: 480px;
+}
+
+.mcp-header__intro h1 {
+  margin: 0;
+  font-size: var(--fs-xl);
+  font-weight: 600;
+}
+
+.mcp-header__intro p {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+}
+
+.mcp-header__count {
+  margin-left: auto;
+  color: var(--fg-soft);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-sm);
+}
+
+/* --- Filter toolbar --------------------------------------------------------- */
+
+.mcp-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+}
+
+.mcp-toolbar__search {
+  min-width: 220px;
+  flex: 1 1 220px;
+  padding: 8px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-md);
+  color: var(--fg);
+  font-size: var(--fs-base);
+}
+
+.mcp-toolbar__search::placeholder {
+  color: var(--muted);
+}
+
+.mcp-toolbar__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.mcp-toolbar__filters button {
+  padding: 4px 12px;
+  background: var(--surface-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-full);
+  color: var(--fg-soft);
+  font-size: var(--fs-sm);
+  text-transform: capitalize;
+  cursor: pointer;
+}
+
+.mcp-toolbar__filters button.is-active {
+  background: var(--accent-bg-gradient);
+  border-color: var(--accent-border);
+  color: #ffffff;
+}
+
+.mcp-toolbar__scope {
+  padding: 8px 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-md);
+  color: var(--fg-soft);
+  font-size: var(--fs-base);
+}
+
+.mcp-toolbar__count {
+  margin-left: auto;
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+/* --- Connectors table ------------------------------------------------------- */
+
+.mcp-table {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  overflow: hidden;
+}
+
+.mcp-table__columns {
+  display: grid;
+  grid-template-columns: 16px 170px minmax(140px, 1fr) 110px 70px auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--divider);
+  color: var(--muted-2);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.mcp-rows {
+  display: grid;
+}
+
+.mcp-row {
+  display: grid;
+  grid-template-columns: 16px 170px minmax(140px, 1fr) 110px 70px auto;
+  gap: 12px;
+  align-items: center;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--divider-faint);
+  font-size: var(--fs-base);
+}
+
+.mcp-row.is-selected {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.mcp-dot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-radius: var(--corner-full);
+}
+
+.mcp-dot--ok {
+  background: var(--status-ok);
+}
+
+.mcp-dot--warning {
+  background: var(--status-warning);
+}
+
+.mcp-dot--danger {
+  background: var(--status-danger);
+}
+
+.mcp-dot--muted {
+  background: var(--muted-3);
+}
+
+.mcp-row__name {
+  padding: 0;
+  overflow: hidden;
+  background: none;
+  border: none;
+  color: var(--fg);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.mcp-row__name[aria-pressed="true"] {
+  color: var(--accent);
+}
+
+.mcp-row__scopes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.mcp-scope-chip {
+  padding: 2px 8px;
+  background: var(--surface-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-full);
+  color: var(--fg-soft);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+}
+
+.mcp-row__env {
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+.mcp-row__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.mcp-row__actions button {
+  padding: 4px 10px;
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--corner-sm);
+  color: var(--accent);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.mcp-row__actions button:hover:not(:disabled) {
+  background: var(--accent-bg-gradient);
+}
+
+.mcp-row__actions button.mcp-row__action--recheck {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+  color: var(--fg-soft);
+}
+
+.mcp-row__actions button.mcp-row__action--danger {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+  color: var(--status-danger);
+}
+
+/* --- Selected-connector detail panel ---------------------------------------- */
+
+.mcp-detail {
+  padding: 16px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+}
+
+.mcp-detail__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mcp-detail__header h2 {
+  margin: 0;
+  font-size: var(--fs-lg);
+}
+
+.mcp-detail__header button {
+  padding: 6px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-md);
+  color: var(--fg-soft);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.mcp-detail__connection {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.mcp-detail__scopes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.mcp-detail__command {
+  margin: 12px 0 0;
+  padding: 8px 10px;
+  overflow-x: auto;
+  background: var(--surface-deep);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-md);
+  color: var(--fg-soft);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+.mcp-detail__env {
+  display: grid;
+  gap: 0;
+  margin: 14px 0 0;
+}
+
+.mcp-detail__env > div {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--divider);
+}
+
+.mcp-detail__env dt {
+  color: var(--fg-soft);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-sm);
+}
+
+.mcp-detail__env dd {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+.mcp-detail__env > div.is-ready dd {
+  color: var(--status-ok);
+}
+
+.mcp-detail__env > div.is-missing dd {
+  color: var(--status-warning);
+}
+
+.mcp-detail__env-empty {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.mcp-detail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--divider);
+}
+
+.mcp-detail__actions button {
+  padding: 6px 14px;
+  background: var(--accent-bg-gradient);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--corner-md);
+  color: #ffffff;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.mcp-detail__actions button:disabled {
+  opacity: var(--opacity-disabled);
+  cursor: not-allowed;
+}
+
+.mcp-detail__actions button.mcp-detail__action--danger {
+  background: var(--danger-bg);
+  border-color: var(--danger-border);
+  color: var(--danger-fg);
+}
+
+/* --- Multi-scope disable dialog --------------------------------------------- */
+
+.mcp-scope-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: color-mix(in srgb, black 55%, transparent);
+}
+
+.mcp-scope-dialog {
+  display: grid;
+  gap: 14px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 80vh;
+  padding: 20px;
+  overflow-y: auto;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+}
+
+.mcp-scope-dialog header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.mcp-scope-dialog header h2 {
+  margin: 4px 0 6px;
+  font-size: var(--fs-lg);
+}
+
+.mcp-scope-dialog header p {
+  margin: 0;
+  max-width: 420px;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+}
+
+.mcp-scope-dialog__rows {
+  display: grid;
+  gap: 0;
+}
+
+.mcp-scope-dialog__rows > div {
+  display: grid;
+  grid-template-columns: 28px 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--divider);
+}
+
+.mcp-scope-dialog__step {
+  color: var(--muted-3);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+.mcp-scope-dialog__identity {
+  display: grid;
+  gap: 2px;
+}
+
+.mcp-scope-dialog__identity strong {
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-sm);
+}
+
+.mcp-scope-dialog__identity small {
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+
+.mcp-scope-dialog__remove {
+  padding: 4px 10px;
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-border);
+  border-radius: var(--corner-sm);
+  color: var(--danger-fg);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.mcp-scope-dialog__locked {
+  color: var(--muted-3);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+}
+
+.mcp-scope-dialog footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--divider);
+}
+
+.mcp-scope-dialog footer span {
+  max-width: 360px;
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+
+.mcp-scope-dialog footer button {
+  padding: 6px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-md);
+  color: var(--fg-soft);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+/* --- Narrow layouts ---------------------------------------------------------- */
+
+@media (max-width: 1024px) {
+  .mcp-table__columns,
+  .mcp-row {
+    grid-template-columns: 16px 140px minmax(0, 1fr) 90px auto;
+  }
+
+  .mcp-table__columns span:nth-child(5),
+  .mcp-row__env {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .mcp-table__columns,
+  .mcp-row {
+    grid-template-columns: 16px minmax(0, 1fr) auto auto;
+  }
+
+  .mcp-table__columns span:nth-child(3),
+  .mcp-row__scopes {
+    display: none;
+  }
+
+  .mcp-scope-dialog__rows > div {
+    grid-template-columns: 1fr;
+    row-gap: 6px;
+  }
+}

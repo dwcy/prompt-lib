@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from cabal.installers import versions
 from cabal.installers.versions import version_options_for
 
 
@@ -17,7 +18,8 @@ def test_node_versions_mark_lts_from_upstream_status():
     assert any(option.is_lts for option in result.options)
 
 
-def test_dotnet_versions_mark_lts_and_sts():
+def test_dotnet_versions_mark_lts_and_sts(monkeypatch):
+    monkeypatch.setattr(versions, "get_cached_release_set", lambda: None)
     result = version_options_for("dotnet", installed_version="9.0.100")
     channels = {option.channel for option in result.options}
 

@@ -21,6 +21,7 @@ from textual.widgets import Button, Static
 from cabal.big_font import render_big
 from cabal.models.dashboard import (
     AvailabilityState,
+    AzureDevOpsSection,
     DashboardSnapshot,
     GitHubSection,
     GitSection,
@@ -29,10 +30,10 @@ from cabal.models.dashboard import (
 )
 from cabal.widget_cache import load_entry, save_entry
 
-SECTIONS = ("git", "github", "supabase", "vercel")
+SECTIONS = ("git", "github", "supabase", "vercel", "azure_devops")
 # Sections tied to an external service the project may simply not use — hidden
 # entirely when the project isn't linked to them, rather than showing "not linked".
-HIDEABLE_SECTIONS = ("github", "supabase", "vercel")
+HIDEABLE_SECTIONS = ("github", "supabase", "vercel", "azure_devops")
 CACHE_PREFIX = "dashboard:"
 
 _SECTION_TITLES = {
@@ -40,6 +41,7 @@ _SECTION_TITLES = {
     "github": "GitHub",
     "supabase": "Supabase",
     "vercel": "Vercel",
+    "azure_devops": "Azure DevOps",
 }
 _PLACEHOLDER = "[dim]select a project to see its dashboard[/dim]"
 _REFRESHING = "[dim]refreshing…[/dim]"
@@ -184,6 +186,17 @@ class DashboardPanel(Widget):
         section = collect_vercel(project)
         self.app.call_from_thread(self._apply_section, "vercel", section, str(project))
 
+    def _fetch_azure_devops(self) -> None:
+        project = self._resolve_project()
+        if project is None:
+            return
+        from cabal.dashboard_azuredevops_service import collect_azure_devops
+
+        section = collect_azure_devops(project)
+        self.app.call_from_thread(
+            self._apply_section, "azure_devops", section, str(project)
+        )
+
     def _apply_section(self, name: str, section, owner: str | None = None) -> None:
         project = self._resolve_project()
         if project is None or (owner is not None and owner != str(project)):
@@ -216,6 +229,7 @@ class DashboardPanel(Widget):
             github=GitHubSection(state=AvailabilityState.ERROR),
             supabase=SupabaseSection(state=AvailabilityState.ERROR),
             vercel=VercelSection(state=AvailabilityState.ERROR),
+            azure_devops=AzureDevOpsSection(state=AvailabilityState.ERROR),
         )
 
     def _paint_title(self, project: Path | None) -> None:
@@ -266,6 +280,7 @@ class DashboardPanel(Widget):
             "github": self._build_github_text,
             "supabase": self._build_supabase_text,
             "vercel": self._build_vercel_text,
+            "azure_devops": self._build_azure_devops_text,
         }
         return builders[name](section)
 
@@ -334,6 +349,27 @@ class DashboardPanel(Widget):
             lines.append("[bold]open PRs:[/bold]")
             for pr in section.pull_requests:
                 lines.append(f"  #{pr.number} {pr.title} — @{pr.author}")
+                lines.extend(self._link_lines("  PR", pr.url))
+        return Text.from_markup("\n".join(lines) or _LOADING)
+
+    def _build_azure_devops_text(self, section: AzureDevOpsSection) -> Text:
+        if section.state != AvailabilityState.OK:
+            return Text.from_markup("\n".join(self._state_hint(section)))
+        lines: list[str] = []
+        if section.org and section.project:
+            lines.append(f"[bold]project:[/bold] {section.org}/{section.project}")
+        if section.runs:
+            lines.append("[bold]pipeline runs:[/bold]")
+            for run in section.runs:
+                outcome = run.result or run.status
+                lines.append(f"  {run.name} — {outcome} ({run.source_branch})")
+                lines.extend(self._link_lines("  run", run.url))
+        else:
+            lines.append("[dim]no pipeline runs[/dim]")
+        if section.pull_requests:
+            lines.append("[bold]open PRs:[/bold]")
+            for pr in section.pull_requests:
+                lines.append(f"  #{pr.id} {pr.title} — {pr.author}")
                 lines.extend(self._link_lines("  PR", pr.url))
         return Text.from_markup("\n".join(lines) or _LOADING)
 

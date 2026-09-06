@@ -13,7 +13,12 @@ class TokenUsage:
     input_tokens: int = 0
     output_tokens: int = 0
     cache_read_input_tokens: int = 0
+    # Total cache writes, kept as the headline figure the UI already shows.  The two
+    # fields below split it by TTL because a 1h write bills at 2x base and a 5m write
+    # at 1.25x — charging both at the 5m rate under-reports long-cache sessions.
     cache_creation_input_tokens: int = 0
+    cache_creation_5m_tokens: int = 0
+    cache_creation_1h_tokens: int = 0
 
     def __add__(self, other: TokenUsage) -> TokenUsage:
         return TokenUsage(
@@ -21,6 +26,8 @@ class TokenUsage:
             output_tokens=self.output_tokens + other.output_tokens,
             cache_read_input_tokens=self.cache_read_input_tokens + other.cache_read_input_tokens,
             cache_creation_input_tokens=self.cache_creation_input_tokens + other.cache_creation_input_tokens,
+            cache_creation_5m_tokens=self.cache_creation_5m_tokens + other.cache_creation_5m_tokens,
+            cache_creation_1h_tokens=self.cache_creation_1h_tokens + other.cache_creation_1h_tokens,
         )
 
     @property
@@ -44,6 +51,9 @@ class LogEntry:
     content: str | list | None = None
     model: str | None = None
     usage: TokenUsage | None = None
+    # Billing modifiers carried on the usage block: "fast" doubles the rate, "batch" halves it.
+    speed: str | None = None
+    service_tier: str | None = None
     tool_name: str | None = None
     tool_input: dict | None = None
     is_error: bool = False
@@ -117,6 +127,12 @@ class SessionSummary:
     total_cache_write_tokens: int
     estimated_cost_usd: float
     model_breakdown: dict[str, TokenUsage] = field(default_factory=dict)
+    # Cost attributed per model, and the models the pricing table could not price.
+    # estimated_cost_usd is the sum of model_costs and therefore EXCLUDES anything in
+    # unpriced_models — a caller showing the total must show this list alongside it,
+    # or a stale table reads as a cheap month.
+    model_costs: dict[str, float] = field(default_factory=dict)
+    unpriced_models: list[str] = field(default_factory=list)
     agent_count: int = 0
     agents: list[AgentInvocation] = field(default_factory=list)
     skills: list[SkillInvocation] = field(default_factory=list)

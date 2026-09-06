@@ -1,0 +1,2 @@
+{"type":"assistant","message":{"content":[{"type":"tool_use","id":"call-1","name":"Bash","input":{"command":"do-something-risky"}}]}}
+{"type":"result","subtype":"error_max_turns","is_error":true,"result":"Error: hit max turns","usage":{"input_tokens":5000,"output_tokens":100},"total_cost_usd":0.02,"num_turns":10}

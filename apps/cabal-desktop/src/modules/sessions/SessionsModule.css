@@ -1,0 +1,556 @@
+/* Sessions module styles: console cost-table layout — totals KPI row, virtualized session
+   table with proportional cost-share bars, sticky detail drawer, and detail-tab card. */
+
+.sess-module {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.sess-vh {
+  position: absolute;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  white-space: nowrap;
+}
+
+/* ── Totals row ─────────────────────────────────────────────────────────── */
+
+.sess-totals {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+/* ── Main grid: table column + sticky drawer ────────────────────────────── */
+
+.sess-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: var(--space-3);
+  align-items: start;
+}
+
+.sess-main {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.sess-card {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  background-color: var(--surface-1);
+}
+
+/* ── Table header bar: title, lens/sort pills, mono source hint ─────────── */
+
+.sess-table__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.6875rem var(--space-4);
+  border-bottom: 1px solid var(--divider);
+}
+
+.sess-table__title {
+  font-size: var(--fs-base);
+  font-weight: 600;
+  user-select: none;
+}
+
+.sess-table__source {
+  margin-left: auto;
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+.sess-pills {
+  display: flex;
+  gap: 2px;
+  margin: 0;
+  padding: 2px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-md);
+  background-color: var(--surface-2);
+}
+
+.sess-pills button {
+  padding: 3px 9px;
+  border: none;
+  border-radius: var(--corner-sm);
+  background: none;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  text-transform: capitalize;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.sess-pills button:hover {
+  color: var(--fg-soft);
+}
+
+.sess-pills button.is-active {
+  background-color: var(--surface-3);
+  color: var(--fg);
+}
+
+/* ── Column header + rows share one grid template ───────────────────────── */
+
+.sess-table__head,
+.sess-row {
+  display: grid;
+  grid-template-columns: 16px 118px minmax(0, 1fr) 70px 90px 120px 60px 66px;
+  gap: var(--space-3);
+  align-items: center;
+  padding-right: var(--space-4);
+  padding-left: var(--space-4);
+}
+
+.sess-table__head {
+  padding-top: 0.5625rem;
+  padding-bottom: 0.5625rem;
+  border-bottom: 1px solid var(--divider);
+  color: var(--muted-2);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  user-select: none;
+}
+
+.sess-table__head .sess-num {
+  text-align: right;
+}
+
+.sess-table__body {
+  position: relative;
+  max-height: 26rem;
+  overflow: auto;
+}
+
+.sess-table__rows {
+  position: relative;
+}
+
+.sess-row {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  border: none;
+  border-bottom: 1px solid var(--divider-faint);
+  background: none;
+  color: var(--fg);
+  text-align: left;
+  cursor: pointer;
+  user-select: none;
+}
+
+.sess-row:hover {
+  background-color: var(--surface-2);
+}
+
+.sess-row.is-active {
+  background-color: var(--surface-3);
+}
+
+.sess-row__fork {
+  color: var(--accent);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-sm);
+}
+
+.sess-row__started {
+  color: var(--fg-soft);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-sm);
+}
+
+.sess-row__branch {
+  overflow: hidden;
+  min-width: 0;
+  color: var(--fg);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sess-row__branch--fallback {
+  color: var(--muted);
+}
+
+.sess-row__num {
+  color: var(--fg-soft);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-sm);
+  text-align: right;
+}
+
+.sess-row__cost {
+  color: var(--fg);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-sm);
+  text-align: right;
+}
+
+.sess-row__count {
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-sm);
+  text-align: right;
+}
+
+.sess-row__share {
+  display: block;
+  overflow: hidden;
+  height: 5px;
+  border-radius: 3px;
+  background-color: var(--surface-3);
+}
+
+.sess-row__share-fill {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background-color: var(--accent);
+}
+
+/* ── Pager footer ───────────────────────────────────────────────────────── */
+
+.sess-table__pager {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-top: 1px solid var(--divider);
+}
+
+.sess-table__pager button {
+  padding: 4px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-md);
+  background-color: var(--surface-2);
+  color: var(--fg-soft);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  user-select: none;
+}
+
+.sess-table__pager button:hover:not(:disabled) {
+  background-color: var(--surface-3);
+  color: var(--fg);
+}
+
+.sess-table__pager button:disabled {
+  opacity: var(--opacity-disabled);
+  cursor: default;
+}
+
+/* ── Sticky detail drawer ───────────────────────────────────────────────── */
+
+.sess-drawer {
+  position: sticky;
+  top: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--corner-lg);
+  background-color: var(--surface-1);
+  padding: var(--space-4);
+}
+
+.sess-drawer__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.sess-drawer__title {
+  overflow: hidden;
+  min-width: 0;
+  margin: 0;
+  font-size: var(--fs-md);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sess-drawer__id {
+  flex: 0 0 auto;
+  margin-left: auto;
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+.sess-facts {
+  display: grid;
+  margin: var(--space-2) 0 0;
+  font-size: var(--fs-sm);
+}
+
+.sess-facts > div {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: var(--space-2);
+  padding: 7px 0;
+  border-bottom: 1px solid var(--divider);
+}
+
+.sess-facts > div:last-child {
+  border-bottom: none;
+}
+
+.sess-facts dt {
+  color: var(--muted);
+}
+
+.sess-facts dd {
+  margin: 0;
+  color: var(--fg-soft);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-sm);
+  overflow-wrap: anywhere;
+}
+
+.sess-drawer__section {
+  margin: var(--space-3) 0 var(--space-2);
+  color: var(--muted-2);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  user-select: none;
+}
+
+.sess-dispatches {
+  display: grid;
+  gap: 6px;
+}
+
+.sess-dispatch {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 56px;
+  gap: var(--space-2);
+  align-items: center;
+  font-size: var(--fs-sm);
+}
+
+.sess-dispatch__name {
+  overflow: hidden;
+  color: var(--accent);
+  font-family: var(--font-family-mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sess-dispatch__calls {
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  text-align: right;
+}
+
+.sess-drawer__pending {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.sess-drawer__note {
+  margin: var(--space-3) 0 0;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--divider);
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.sess-drawer__actions {
+  margin-top: var(--space-3);
+}
+
+.sess-danger-btn {
+  padding: 5px 12px;
+  border: 1px solid var(--danger-border);
+  border-radius: var(--corner-md);
+  background: none;
+  color: var(--danger-fg);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  user-select: none;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.sess-danger-btn:hover {
+  background-color: var(--danger-bg);
+}
+
+/* ── Detail tabs card (below the table) ─────────────────────────────────── */
+
+.sess-detail__body {
+  padding: var(--space-4);
+}
+
+.sess-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.sess-metric {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--corner-md);
+  background-color: var(--surface-2);
+}
+
+.sess-metric strong {
+  display: block;
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-lg);
+  font-weight: 600;
+}
+
+.sess-metric small {
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+
+.sess-model-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 90px 80px;
+  gap: var(--space-2);
+  align-items: center;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--divider-faint);
+  font-size: var(--fs-sm);
+}
+
+.sess-model-row:last-child {
+  border-bottom: none;
+}
+
+.sess-model-row .sess-model-name {
+  overflow: hidden;
+  font-family: var(--font-family-mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sess-model-row .sess-model-tokens {
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  text-align: right;
+}
+
+.sess-model-row .sess-model-cost {
+  color: var(--fg-soft);
+  font-family: var(--font-family-mono);
+  text-align: right;
+}
+
+.sess-activity-group {
+  margin-top: var(--space-3);
+}
+
+.sess-activity-group:first-child {
+  margin-top: 0;
+}
+
+.sess-activity-group > header {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin-bottom: var(--space-1);
+}
+
+.sess-activity-group > header strong {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.sess-activity-group > header span {
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+.sess-event {
+  display: grid;
+  grid-template-columns: minmax(0, 200px) minmax(0, 1fr);
+  gap: var(--space-2);
+  padding: 6px 0;
+  border-bottom: 1px solid var(--divider-faint);
+  font-size: var(--fs-sm);
+}
+
+.sess-event:last-child {
+  border-bottom: none;
+}
+
+.sess-event strong {
+  overflow: hidden;
+  font-family: var(--font-family-mono);
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sess-event span {
+  overflow: hidden;
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sess-overview {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.sess-raw {
+  overflow: auto;
+  max-height: 24rem;
+  margin: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--corner-md);
+  background-color: var(--surface-deep);
+  color: var(--fg-soft);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ── Narrow layouts ─────────────────────────────────────────────────────── */
+
+@media (max-width: 1180px) {
+  .sess-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sess-drawer {
+    position: static;
+  }
+
+  .sess-totals {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .sess-totals {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sess-metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

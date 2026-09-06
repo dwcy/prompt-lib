@@ -24,10 +24,18 @@ classifiers = [
 dependencies = [
   "textual>=0.50,<7",
   "rich>=13,<15",
+  "fastapi>=0.115,<1",
+  "uvicorn>=0.34,<1",
+  "platformdirs>=4.3,<5",
+  "psutil>=7.1,<8",
+  "mcp>=1.2,<2",
 ]
 
 [project.optional-dependencies]
 semantic = ["fastembed>=0.4,<1"]
+
+[dependency-groups]
+dev = ["pytest>=9,<10", "pytest-asyncio>=1.3,<2", "httpx>=0.28,<1", "jsonschema>=4.23,<5"]
 
 [project.urls]
 Homepage = "https://github.com/dwcy/prompt-lib"
@@ -36,6 +44,8 @@ Issues = "https://github.com/dwcy/prompt-lib/issues"
 
 [project.scripts]
 cabal = "cabal.__main__:main"
+cabal-backend = "cabal.webapi.__main__:main"
+cabal-okf-rag = "cabal.okf.mcp_server:main"
 
 [tool.hatch.version]
 path = "setup/src/cabal/__init__.py"
@@ -62,4 +72,9 @@ include = [
 testpaths = ["tests", "setup/tests", "global/hooks/tests"]
 filterwarnings = [
   "ignore::DeprecationWarning:textual",
+]
+markers = [
+  # Tests that drive a real external toolchain rather than a stub, so they cost minutes and need
+  # the SDK installed. Deselect with `-m "not toolchain"`; they skip themselves when it is absent.
+  "toolchain: needs a real .NET SDK on PATH",
 ]

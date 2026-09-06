@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import os
 import platform
+import shutil
 import subprocess
 import tempfile
 from pathlib import Path
@@ -18,6 +19,17 @@ from cabal._paths import MCP_TEMPLATES_FILE
 from cabal.claude_cli import _run_claude_cli
 
 _WINDOWS_CMD_WRAPPED = frozenset({"pnpm", "npx", "bunx"})
+
+# Console scripts that live in a venv / uv tool dir rather than on the system
+# PATH. Registration is user-scope, so a bare name that resolves in the repo
+# shell fails to spawn in every other session; store the absolute path instead.
+_LOCAL_CONSOLE_SCRIPTS = frozenset({"cabal-okf-rag", "cabal-backend", "mcp-bus", "headroom"})
+
+
+def _resolve_command(cmd: str) -> str:
+    if cmd not in _LOCAL_CONSOLE_SCRIPTS:
+        return cmd
+    return shutil.which(cmd) or cmd
 
 
 def _load_mcp_templates() -> dict:
@@ -112,7 +124,7 @@ def _claude_mcp_list() -> list[dict]:
     so we split on `: ` (colon + space) to find the name/command boundary.
     """
     rc, out, _ = _run_claude_cli(["mcp", "list"], timeout=60)
-    if rc != 0:
+    if rc != 0 or not out:
         return []
     results = []
     for line in out.splitlines():
@@ -318,7 +330,7 @@ def claude_mcp_add_from_template(name: str, template: dict) -> tuple[bool, str]:
         joined = " ".join([cmd] + args)
         subcmd, subargs = "cmd", ["/s", "/c", joined]
     else:
-        subcmd, subargs = cmd, args
+        subcmd, subargs = _resolve_command(cmd), args
 
     full = ["mcp", "add", "-s", "user"]
     if transport != "stdio":
@@ -362,6 +374,8 @@ def _template_to_project_entry(template: dict) -> dict:
     if platform.system() == "Windows" and cmd in _WINDOWS_CMD_WRAPPED:
         joined = " ".join([cmd] + args)
         cmd, args = "cmd", ["/s", "/c", joined]
+    else:
+        cmd = _resolve_command(cmd)
     env = {var: f"${{{var}}}" for var in template.get("env_required") or []}
     return {"command": cmd, "args": args, "env": env}
 
