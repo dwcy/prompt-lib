@@ -134,7 +134,7 @@ Dynamic context injection: a line like ``!`git status --short` `` runs **before*
 The description is the **primary trigger mechanism**. Claude decides whether to use a skill based on this field alone. Three rules:
 
 1. **Put the key use case first.** The skill listing caps each entry (description + `when_to_use`) at 1,536 characters, and when many skills are installed the listing shares a budget (~1% of the context window) — least-used skills get shortened first. Front-load the WHAT and the strongest trigger; keep the whole description ≤1024 characters and written in third person.
-2. **Include both WHAT it does AND WHEN to use it** — all "when to use" information goes in the description, not the body.
+2. **One clause of WHAT, then all of the WHEN.** Name what the skill does in a single clause and spend the rest on triggering conditions — phrases the user says, situations, file types. Never summarise the workflow in the description: a summary becomes a shortcut the model follows instead of reading the body. A description that said "code review between tasks" produced one review from a skill whose body specified two. All "when to use" information lives here, not in the body.
 3. **Be pushy** — Claude tends to undertrigger skills. Write descriptions that lean toward triggering. Instead of "Generates a commit message", write "Generates a conventional commit message from staged changes. Use this whenever the user asks to commit, stage changes, write a git message, or says anything like 'commit this' or 'let's commit'."
 
 Test the description mentally: if someone typed a realistic user request, would the opening sentence of this description match it clearly?
@@ -144,6 +144,8 @@ Test the description mentally: if someone typed a realistic user request, would 
 - Use imperative form: "Read the file first", not "The file should be read"
 - Explain the reasoning behind instructions — Claude follows instructions better when it understands the purpose
 - Avoid heavy-handed MUST/NEVER in all caps — reframe as the reason the constraint matters
+- **Match the form to the failure.** A prohibition ("never X") works when the failure is skipping a step under pressure — a discipline problem. It backfires when the failure is output of the wrong shape (too long, wrong structure, wrong tone): in head-to-head wording tests, prohibition-style guidance produced more of the unwanted shape than a positive recipe did, and trended worse than no guidance at all. For shape problems write the recipe — the template, the example, the contract — and drop the "don't".
+- **Rationalisation table for discipline skills.** When a skill exists to stop a shortcut (skip the tests, guess the fix, claim done), add a two-column table of the excuses the model reaches for and what each actually means. Collect the excuses by running the scenario without the skill and quoting what came back, not by imagining them.
 - Keep the body under 500 lines; if it's growing larger, extract reference content to `references/<topic>.md` and link to it
 - Use intermediate headers to structure multi-step workflows
 - Include output format templates if the skill produces structured output
@@ -247,6 +249,10 @@ Come up with realistic test cases — the kind of thing a real user would actual
 
 **Good:** `"ok I've staged my login form changes and want to commit, the issue was a broken redirect after OAuth"`
 **Bad:** `"test the commit skill"`
+
+For discipline skills, at least one prompt must be a pressure scenario that stacks three or more pressures — time ("dinner in 30 minutes"), sunk cost ("three hours in, 200 lines written"), authority ("the lead said just ship it"), exhaustion, social ("everyone else skips this") — and ends with a forced choice. A skill that only survives polite prompts has not been tested.
+
+The 019 eval harness (`python -m cabal.evals`, design in `specs/019-agent-eval-harness/plan.md`) runs such prompts as baseline-vs-candidate A/B cells with the skill absent versus present. Use it for real measurements where it is available; the mental walkthrough below is the fallback.
 
 Share the test prompts with the user and ask if they look right before running them. Then mentally walk through how the skill would handle each one — trace the steps, identify where it might fail or behave unexpectedly.
 

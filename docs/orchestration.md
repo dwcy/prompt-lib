@@ -86,6 +86,12 @@ Read-only agents (`gitignore-auditor`, `secret-auditor`, `code-plan-verifier`, `
 
 See [`docs/parallel-isolation.md`](parallel-isolation.md) for the full isolation rules.
 
+## Fix loop and reviewer briefing
+
+A half-done result goes back to its agent with the open gaps listed, never patched around. The loop has a ceiling of five rounds per task: rounds 1–3 continue the same agent (it keeps its context), rounds 4–5 use a fresh agent with a stronger model and a brief that says what earlier rounds tried, and at the cap the remaining gaps go to the user with a recommendation. Re-verification after a fix checks only the fix diff against the listed gaps.
+
+Read-only reviewers (`code-plan-verifier`, `owasp-security-reviewer`, the auditors) are briefed with a diff *file path* written to the scratchpad, never a pasted diff; told they are read-only (no edits, no `git checkout`/`stash`/`restore`); told not to spawn their own subagents; and never told what to ignore. The full wording lives in [`global/skills/orchestrate/SKILL.md`](../global/skills/orchestrate/SKILL.md), Step 4.
+
 ## When routing fires
 
 The main session handles tasks itself by default. `global/CLAUDE.md` gates delegation on what it buys — **scale** (roughly >5 files or context-dominating work), **independence** (fresh-eyes review or audit), or **parallelism** (independent isolated workstreams) — never on domain match alone. `/orchestrate` runs its full routing table when explicitly invoked; auto-routing fires only when the gate passes, and the session announces which agent was selected and what the dispatch buys. Multi-agent pipelines run only on explicit `/orchestrate` or Spec Kit invocation.

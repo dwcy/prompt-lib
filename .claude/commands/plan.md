@@ -80,6 +80,8 @@ Rules:
 - Tasks are sequenced — earlier tasks must not depend on later ones
 - For full-stack: backend tasks come first (they implement the contract), then frontend tasks (they consume it)
 - Each task has three things: a **title**, a **one-sentence description of what is built**, and a **done condition** (the observable outcome that confirms it is complete)
+- When another task consumes a task's output, add an **interfaces** line: `Consumes:` the exact signatures or paths it depends on, `Produces:` the exact signatures or paths it exposes. An agent reading only its own task still needs its neighbours' contracts
+- No placeholders: "TBD", "add appropriate error handling", "similar to Task N" — write the real paths, names, and behaviour
 
 Create each task using the `TaskCreate` tool.
 
