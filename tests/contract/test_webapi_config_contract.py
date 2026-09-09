@@ -32,6 +32,18 @@ CONFIG_READ_ROUTES = (
 )
 
 TREE_FILE_KEYS = {"rel_path", "state", "diff_available"}
+CONFIG_FILE_KEYS = {
+    "target",
+    "rel_path",
+    "side",
+    "abs_path",
+    "state",
+    "exists",
+    "content",
+    "binary",
+    "truncated",
+    "size_bytes",
+}
 TREE_COMPONENT_KEYS = {"key", "label", "group", "files"}
 DRIFT_KEYS = {"target", "changed_count", "new_count", "unchanged_count", "extras_count", "computed_at", "digest"}
 FILE_STATES = {"new", "changed", "unchanged"}
@@ -190,6 +202,84 @@ def test_ConfigDiff_get_unknown_path_returns_404(app_factory) -> None:
     )
 
     assert response.status_code == 404
+
+
+# --- /api/config/file -------------------------------------------------------
+
+
+def _first_tree_path(client, *, unchanged_only: bool = False) -> str | None:
+    tree = client.get("/api/config/tree?target=claude", headers=auth_headers()).json()["data"]
+    for component in tree["components"]:
+        for file_entry in component["files"]:
+            if unchanged_only and file_entry["state"] != "unchanged":
+                continue
+            return file_entry["rel_path"]
+    return None
+
+
+@pytest.mark.parametrize("side", ("deployed", "source"))
+def test_ConfigFile_get_returns_v2_envelope_with_file_text(app_factory, side: str) -> None:
+    _app, client = build_client(app_factory)
+    target_path = _first_tree_path(client)
+    if target_path is None:
+        pytest.skip("no deployable file on this machine to read")
+
+    response = client.get(
+        f"/api/config/file?target=claude&path={target_path}&side={side}", headers=auth_headers()
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert _envelope_shape_ok(body)
+    data = body["data"]
+    assert CONFIG_FILE_KEYS <= set(data)
+    assert data["rel_path"] == target_path
+    assert data["side"] == side
+    assert data["state"] in FILE_STATES
+    if data["exists"] and not data["binary"]:
+        assert isinstance(data["content"], str)
+
+
+# The point of this endpoint: an unchanged file has no diff, but must still be readable.
+def test_ConfigFile_get_serves_a_file_with_no_diff_available(app_factory) -> None:
+    _app, client = build_client(app_factory)
+    target_path = _first_tree_path(client, unchanged_only=True)
+    if target_path is None:
+        pytest.skip("no unchanged deployable file on this machine")
+
+    response = client.get(
+        f"/api/config/file?target=claude&path={target_path}", headers=auth_headers()
+    )
+
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["side"] == "deployed"
+    assert data["exists"] is True
+    assert data["content"] is not None
+
+
+def test_ConfigFile_get_unknown_path_returns_404(app_factory) -> None:
+    _app, client = build_client(app_factory)
+
+    response = client.get(
+        "/api/config/file?target=claude&path=not/a/real/file.zzz", headers=auth_headers()
+    )
+
+    assert response.status_code == 404
+    assert response.json()["error"]["code"] == "path_not_found"
+
+
+def test_ConfigFile_get_unknown_side_returns_422(app_factory) -> None:
+    _app, client = build_client(app_factory)
+    target_path = _first_tree_path(client)
+    if target_path is None:
+        pytest.skip("no deployable file on this machine to read")
+
+    response = client.get(
+        f"/api/config/file?target=claude&path={target_path}&side=sideways", headers=auth_headers()
+    )
+
+    assert response.status_code == 422
 
 
 # --- /api/config/extras -----------------------------------------------------

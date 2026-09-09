@@ -30,7 +30,10 @@ export function ConfigDeployModule() {
         </fieldset>
       </header>
 
+      {/* Keyed on the target: file paths, group filter and queued selection all belong to one
+          target, so switching starts the panel clean rather than carrying the other one's state. */}
       <DeployTreePanel
+        key={target}
         target={target}
         actionId={target === "codex" ? "codex.apply" : "config.apply"}
       />

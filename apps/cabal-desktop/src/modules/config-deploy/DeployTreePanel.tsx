@@ -10,6 +10,10 @@ import { JobPane } from "@/components/JobPane";
 import { RefreshButton } from "@/components/RefreshButton";
 import { StatePill } from "@/components/StatePill";
 import { useAction } from "@/hooks/useAction";
+import { DeployComponentTree } from "./DeployComponentTree";
+import { ALL_GROUPS, DeployGroupFilter } from "./DeployGroupFilter";
+import { fileStateVariant } from "./deployPresentation";
+import { FileViewDialog } from "./FileViewDialog";
 
 export interface DeployTreePanelProps {
   target: ConfigTarget;
@@ -21,6 +25,8 @@ export function DeployTreePanel({ target, actionId }: DeployTreePanelProps) {
   const treeQuery = useConfigTree(target);
   const [selectedPaths, setSelectedPaths] = useState<Set<string>>(() => new Set());
   const [diffPath, setDiffPath] = useState<string | null>(null);
+  const [group, setGroup] = useState<string>(ALL_GROUPS);
+  const [viewFile, setViewFile] = useState<ConfigFile | null>(null);
   const diffQuery = useConfigDiff(target, diffPath);
   const action = useAction(actionId);
 
@@ -50,6 +56,15 @@ export function DeployTreePanel({ target, actionId }: DeployTreePanelProps) {
 
   const selectedCount = selectedPaths.size;
   const driftCount = treeQuery.data.drift.changed_count + treeQuery.data.drift.new_count;
+  const visibleComponents =
+    group === ALL_GROUPS
+      ? treeQuery.data.components
+      : treeQuery.data.components.filter((component) => component.group === group);
+  // "Select drift" queues what is on screen — queueing hidden groups from behind a filter
+  // would put files into the write that the user never saw.
+  const visibleActionableFiles = visibleComponents.flatMap((component) =>
+    component.files.filter((file) => file.state !== "unchanged"),
+  );
   const diffFile =
     diffPath === null
       ? null
@@ -113,7 +128,10 @@ export function DeployTreePanel({ target, actionId }: DeployTreePanelProps) {
           <button
             type="button"
             className="cfg-deploy__toolbar-btn"
-            onClick={() => setSelectedPaths(new Set(actionableFiles.map((file) => file.rel_path)))}
+            onClick={() =>
+              setSelectedPaths(new Set(visibleActionableFiles.map((file) => file.rel_path)))
+            }
+            disabled={visibleActionableFiles.length === 0}
           >
             Select drift
           </button>
@@ -136,84 +154,25 @@ export function DeployTreePanel({ target, actionId }: DeployTreePanelProps) {
         </div>
       </section>
 
+      <DeployGroupFilter
+        components={treeQuery.data.components}
+        active={group}
+        onChange={setGroup}
+      />
+
       <div className="cfg-deploy__body">
-        <section className="cfg-deploy__tree">
-          {treeQuery.data.components.map((component) => {
-            const files = component.files;
-            const selectedInComponent = files.filter((file) =>
-              selectedPaths.has(file.rel_path),
-            ).length;
-            const changedInComponent = files.filter((file) => file.state === "changed").length;
-            const newInComponent = files.filter((file) => file.state === "new").length;
-            const checked = files.length > 0 && selectedInComponent === files.length;
-            const indeterminate = selectedInComponent > 0 && selectedInComponent < files.length;
-
-            return (
-              <article key={component.key} className="cfg-deploy__component">
-                <label className="cfg-deploy__component-header">
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    ref={(node) => {
-                      if (node !== null) node.indeterminate = indeterminate;
-                    }}
-                    onChange={(event) =>
-                      setSelectedPaths((current) =>
-                        updateComponentSelection(current, files, event.currentTarget.checked),
-                      )
-                    }
-                  />
-                  <span className="cfg-deploy__component-title-block">
-                    <span className="cfg-deploy__component-title">{component.label}</span>
-                    <span className="cfg-deploy__component-group">{component.group}</span>
-                  </span>
-                  <span className="cfg-deploy__component-rollup">
-                    {changedInComponent} changed · {newInComponent} new · {selectedInComponent}{" "}
-                    queued
-                  </span>
-                </label>
-
-                <ul className="cfg-deploy__file-list">
-                  {files.map((file) => (
-                    <li key={file.rel_path} className="cfg-deploy__file-item">
-                      <label className="cfg-deploy__file-select">
-                        <input
-                          type="checkbox"
-                          checked={selectedPaths.has(file.rel_path)}
-                          disabled={file.state === "unchanged"}
-                          onChange={(event) =>
-                            setSelectedPaths((current) =>
-                              updatePathSelection(
-                                current,
-                                file.rel_path,
-                                event.currentTarget.checked,
-                              ),
-                            )
-                          }
-                        />
-                        <span className="cfg-deploy__file-path">{file.rel_path}</span>
-                      </label>
-                      <StatePill
-                        variant={
-                          file.state === "changed" ? "update" : file.state === "new" ? "open" : "ok"
-                        }
-                        label={file.state}
-                      />
-                      <button
-                        type="button"
-                        className="cfg-deploy__file-diff-btn"
-                        onClick={() => setDiffPath(file.rel_path)}
-                        disabled={!file.diff_available}
-                      >
-                        Diff
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </article>
-            );
-          })}
-        </section>
+        <DeployComponentTree
+          components={visibleComponents}
+          selectedPaths={selectedPaths}
+          onToggleFile={(relPath, checked) =>
+            setSelectedPaths((current) => updatePathSelection(current, relPath, checked))
+          }
+          onToggleComponent={(files, checked) =>
+            setSelectedPaths((current) => updateComponentSelection(current, files, checked))
+          }
+          onShowDiff={setDiffPath}
+          onViewFile={setViewFile}
+        />
 
         <aside className="cfg-deploy__diff">
           <header className="cfg-deploy__diff-header">
@@ -222,12 +181,7 @@ export function DeployTreePanel({ target, actionId }: DeployTreePanelProps) {
               {diffPath !== null ? <p className="cfg-deploy__diff-path">{diffPath}</p> : null}
             </div>
             {diffFile !== null ? (
-              <StatePill
-                variant={
-                  diffFile.state === "changed" ? "update" : diffFile.state === "new" ? "open" : "ok"
-                }
-                label={diffFile.state}
-              />
+              <StatePill variant={fileStateVariant(diffFile.state)} label={diffFile.state} />
             ) : null}
           </header>
           {diffPath === null ? (
@@ -250,6 +204,10 @@ export function DeployTreePanel({ target, actionId }: DeployTreePanelProps) {
           ) : null}
         </aside>
       </div>
+
+      {viewFile !== null ? (
+        <FileViewDialog target={target} file={viewFile} onClose={() => setViewFile(null)} />
+      ) : null}
 
       <ConfirmDialog action={action} actionTitle={`Apply ${target} config`} />
 
