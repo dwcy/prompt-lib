@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { apiGet, requireData } from "@/api/client";
+import { markdownDocumentSchema } from "@/api/markdown";
 import { queryKeys } from "@/api/queryKeys";
 import { useProjectContextStore } from "@/stores/projectContext";
 
@@ -68,6 +69,8 @@ export const configFileContentSchema = z.object({
   binary: z.boolean(),
   truncated: z.boolean(),
   size_bytes: z.number().nullable(),
+  // Present only for .md/.markdown, so the viewer can render the document instead of its source.
+  markdown: markdownDocumentSchema.nullable(),
 });
 
 export const configExtraSchema = z.object({

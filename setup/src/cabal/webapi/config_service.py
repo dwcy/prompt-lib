@@ -19,6 +19,8 @@ from cabal.codex_setup.diff_apply import diff_codex_component, find_codex_extras
 from cabal.components import COMPONENTS, FileStatus
 from cabal.diff_apply import diff_component, find_extras
 from cabal.settings_helpers import _effective_settings_text, _is_settings_json
+from cabal.skill_catalog import split_frontmatter
+from cabal.skill_structure import parse_blocks
 from cabal.webapi.envelope import ApiError, compute_precondition_digest, utc_now_iso
 
 CONFIG_TARGETS = ("claude", "codex")
@@ -52,6 +54,7 @@ _STATE_WIRE = {"NEW": "new", "CHANGED": "changed", "UNCHANGED": "unchanged"}
 
 CONFIG_FILE_SIDES = ("deployed", "source")
 MAX_FILE_BYTES = 512 * 1024
+MARKDOWN_SUFFIXES = frozenset({".md", ".markdown"})
 
 
 @dataclass(frozen=True)
@@ -151,6 +154,22 @@ def config_diff(target: str, path: str) -> dict[str, Any]:
     return {"target": target, "rel_path": path, "state": _STATE_WIRE[status.state], "diff_text": diff_text}
 
 
+def _markdown_document(content: str) -> dict[str, Any]:
+    """Parsed markdown for the file viewer: same block/section shape the skills view renders.
+
+    A leading `---` frontmatter block is not prose, so it is handed over as a code block rather
+    than parsed as body markdown (where its dashes read as a table rule).
+    """
+    frontmatter, body = split_frontmatter(content)
+    preamble, sections = parse_blocks(body)
+    if frontmatter.strip():
+        preamble = [
+            {"type": "code", "language": "yaml", "text": frontmatter.strip("\n")},
+            *preamble,
+        ]
+    return {"preamble": preamble, "sections": sections}
+
+
 def config_file(target: str, path: str, side: str) -> dict[str, Any]:
     """`/api/config/file` data: the whole text of one side of a deployable file.
 
@@ -176,6 +195,7 @@ def config_file(target: str, path: str, side: str) -> dict[str, Any]:
         "binary": False,
         "truncated": False,
         "size_bytes": None,
+        "markdown": None,
     }
     if not payload["exists"]:
         return payload
@@ -199,6 +219,8 @@ def config_file(target: str, path: str, side: str) -> dict[str, Any]:
             payload["content"] = sample.decode("utf-8")
         except UnicodeDecodeError:
             payload["binary"] = True
+    if payload["content"] is not None and file_path.suffix.lower() in MARKDOWN_SUFFIXES:
+        payload["markdown"] = _markdown_document(payload["content"])
     return payload
 
 

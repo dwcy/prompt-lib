@@ -43,7 +43,10 @@ CONFIG_FILE_KEYS = {
     "binary",
     "truncated",
     "size_bytes",
+    "markdown",
 }
+MARKDOWN_DOC_KEYS = {"preamble", "sections"}
+MARKDOWN_SECTION_KEYS = {"level", "title", "anchor", "blocks"}
 TREE_COMPONENT_KEYS = {"key", "label", "group", "files"}
 DRIFT_KEYS = {"target", "changed_count", "new_count", "unchanged_count", "extras_count", "computed_at", "digest"}
 FILE_STATES = {"new", "changed", "unchanged"}
@@ -256,6 +259,43 @@ def test_ConfigFile_get_serves_a_file_with_no_diff_available(app_factory) -> Non
     assert data["side"] == "deployed"
     assert data["exists"] is True
     assert data["content"] is not None
+
+
+def test_ConfigFile_get_parses_a_markdown_file_into_blocks(app_factory) -> None:
+    _app, client = build_client(app_factory)
+    tree = client.get("/api/config/tree?target=claude", headers=auth_headers()).json()["data"]
+    markdown_path = next(
+        (
+            file_entry["rel_path"]
+            for component in tree["components"]
+            for file_entry in component["files"]
+            if file_entry["rel_path"].endswith(".md")
+        ),
+        None,
+    )
+    if markdown_path is None:
+        pytest.skip("no markdown file in the deploy tree on this machine")
+
+    response = client.get(
+        f"/api/config/file?target=claude&path={markdown_path}&side=source", headers=auth_headers()
+    )
+
+    assert response.status_code == 200
+    document = response.json()["data"]["markdown"]
+    assert MARKDOWN_DOC_KEYS <= set(document)
+    for section in document["sections"]:
+        assert MARKDOWN_SECTION_KEYS <= set(section)
+
+
+def test_ConfigFile_get_leaves_markdown_null_for_a_non_markdown_file(app_factory) -> None:
+    _app, client = build_client(app_factory)
+
+    response = client.get(
+        "/api/config/file?target=claude&path=settings.json&side=source", headers=auth_headers()
+    )
+
+    assert response.status_code == 200
+    assert response.json()["data"]["markdown"] is None
 
 
 def test_ConfigFile_get_unknown_path_returns_404(app_factory) -> None:

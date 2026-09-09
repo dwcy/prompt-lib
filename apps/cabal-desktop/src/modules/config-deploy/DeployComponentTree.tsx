@@ -9,7 +9,7 @@ export interface DeployComponentTreeProps {
   selectedPaths: Set<string>;
   onToggleFile: (relPath: string, checked: boolean) => void;
   onToggleComponent: (files: ConfigFile[], checked: boolean) => void;
-  onShowDiff: (relPath: string) => void;
+  onShowDiff: (file: ConfigFile) => void;
   onViewFile: (file: ConfigFile) => void;
 }
 
@@ -67,7 +67,7 @@ export function DeployComponentTree({
                   <button
                     type="button"
                     className="cfg-deploy__file-diff-btn"
-                    onClick={() => onShowDiff(file.rel_path)}
+                    onClick={() => onShowDiff(file)}
                     disabled={!file.diff_available}
                   >
                     Diff

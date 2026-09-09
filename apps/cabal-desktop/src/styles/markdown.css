@@ -1,0 +1,137 @@
+/* Shared markdown document rendering (components/markdown/*): blocks the backend already parsed,
+   plus the four inline forms. Global layer so any module can render a document without owning
+   these styles. */
+
+.md-view {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.md-view__section {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.md-view__heading {
+  margin: 0;
+  color: var(--fg);
+  font-weight: 600;
+  line-height: var(--lh-md);
+}
+
+.md-view__heading--h1 {
+  font-size: var(--fs-lg);
+}
+
+.md-view__heading--h2 {
+  font-size: var(--fs-md);
+}
+
+.md-view__heading--h3,
+.md-view__heading--h4,
+.md-view__heading--h5,
+.md-view__heading--h6 {
+  font-size: var(--fs-base);
+  color: var(--fg-soft);
+}
+
+.md-block__text,
+.md-block__quote {
+  margin: 0;
+  color: var(--fg-soft);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-md);
+}
+
+.md-block__quote {
+  padding-left: var(--space-3);
+  border-left: 2px solid var(--border-strong);
+  color: var(--muted);
+}
+
+.md-block__list {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding-left: var(--space-4);
+  color: var(--fg-soft);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-md);
+}
+
+.md-block__list li[data-depth="1"] {
+  margin-left: var(--space-3);
+}
+
+.md-block__list li[data-depth="2"] {
+  margin-left: var(--space-6);
+}
+
+.md-block__code {
+  position: relative;
+  border: 1px solid var(--divider);
+  border-radius: var(--corner-md);
+  background-color: var(--surface-0);
+}
+
+.md-block__code-lang {
+  position: absolute;
+  top: var(--space-1);
+  right: var(--space-2);
+  color: var(--muted-3);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+.md-block__code pre {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  overflow-x: auto;
+  color: var(--fg);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-sm);
+}
+
+.md-block__table-scroll {
+  overflow-x: auto;
+}
+
+.md-block__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+
+.md-block__table th,
+.md-block__table td {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--divider);
+  color: var(--fg-soft);
+  text-align: left;
+  vertical-align: top;
+}
+
+.md-block__table th {
+  background-color: var(--surface-2);
+  color: var(--fg);
+}
+
+.md-block__divider {
+  margin: 0;
+  border: none;
+  border-top: 1px solid var(--divider);
+}
+
+.md-inline__code {
+  padding: 1px 3px;
+  border-radius: var(--corner-sm);
+  background-color: var(--surface-2);
+  font-family: var(--font-family-mono);
+  font-size: 0.95em;
+}
+
+.md-inline__link {
+  color: var(--status-accent);
+  text-decoration: underline dotted;
+}

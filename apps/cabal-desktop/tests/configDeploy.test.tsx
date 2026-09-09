@@ -1,7 +1,7 @@
 // Deploy-config tree behaviour: queueing a component's files (the checkbox handler used to read
 // event.currentTarget inside the lazy state updater, which React has already nulled by then —
 // the whole module crashed into its error boundary), filtering the tree down to one config group,
-// and reading a file that has no diff at all.
+// and the file reader — diff, either side of an unchanged file, and markdown as a document.
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
@@ -41,29 +41,76 @@ const TREE = {
   },
 };
 
+const DIFF_TEXT = ["--- deployed/x", "+++ repo/x", "@@ -1 +1 @@", "-old line", "+new line"].join(
+  "\n",
+);
+
+const MARKDOWN_SOURCE = "# Lessons\n\nKeep the terminal honest.\n";
+
 function treeHandler() {
   return http.get("/api/config/tree", () => HttpResponse.json(wrapEnvelope(TREE)));
 }
 
-function fileHandler() {
-  return http.get("/api/config/file", ({ request }) => {
-    const params = new URL(request.url).searchParams;
-    const side = params.get("side");
-    return HttpResponse.json(
+function diffHandler() {
+  return http.get("/api/config/diff", ({ request }) =>
+    HttpResponse.json(
       wrapEnvelope({
         target: "claude",
-        rel_path: params.get("path"),
-        side,
-        abs_path: `C:/Users/dev/.claude/${params.get("path")}`,
-        state: "unchanged",
-        exists: true,
+        rel_path: new URL(request.url).searchParams.get("path"),
+        state: "changed",
+        diff_text: DIFF_TEXT,
+      }),
+    ),
+  );
+}
+
+function fileEnvelope(request: Request, overrides: Record<string, unknown>) {
+  const params = new URL(request.url).searchParams;
+  return wrapEnvelope({
+    target: "claude",
+    rel_path: params.get("path"),
+    side: params.get("side"),
+    abs_path: `C:/Users/dev/.claude/${params.get("path")}`,
+    state: "unchanged",
+    exists: true,
+    binary: false,
+    truncated: false,
+    size_bytes: 18,
+    markdown: null,
+    ...overrides,
+  });
+}
+
+function fileHandler() {
+  return http.get("/api/config/file", ({ request }) => {
+    const side = new URL(request.url).searchParams.get("side");
+    return HttpResponse.json(
+      fileEnvelope(request, {
         content: side === "deployed" ? "deployed body line" : "repo body line",
-        binary: false,
-        truncated: false,
-        size_bytes: 18,
       }),
     );
   });
+}
+
+function markdownFileHandler() {
+  return http.get("/api/config/file", ({ request }) =>
+    HttpResponse.json(
+      fileEnvelope(request, {
+        content: MARKDOWN_SOURCE,
+        markdown: {
+          preamble: [],
+          sections: [
+            {
+              level: 1,
+              title: "Lessons",
+              anchor: "lessons",
+              blocks: [{ type: "paragraph", text: "Keep the terminal honest." }],
+            },
+          ],
+        },
+      }),
+    ),
+  );
 }
 
 function renderModule() {
@@ -75,6 +122,10 @@ function renderModule() {
     </QueryClientProvider>,
   );
   return { user };
+}
+
+function rowFor(relPath: string): HTMLElement {
+  return screen.getByText(relPath).closest("li") as HTMLElement;
 }
 
 describe("Deploy config tree", () => {
@@ -102,12 +153,25 @@ describe("Deploy config tree", () => {
     expect(screen.getByRole("button", { name: "Select drift" })).toBeDisabled();
   });
 
+  it("shows a diff only once asked, not as a permanent panel", async () => {
+    server.use(treeHandler(), diffHandler());
+    const { user } = renderModule();
+
+    await screen.findByText("skills/css/SKILL.md");
+    expect(screen.queryByLabelText("Unified diff")).not.toBeInTheDocument();
+
+    await user.click(within(rowFor("skills/css/SKILL.md")).getByRole("button", { name: "Diff" }));
+
+    const dialog = await screen.findByRole("dialog", { name: "skills/css/SKILL.md contents" });
+    expect(await within(dialog).findByLabelText("Unified diff")).toBeInTheDocument();
+  });
+
   it("opens a file with no diff and switches between deployed and repo source", async () => {
     server.use(treeHandler(), fileHandler());
     const { user } = renderModule();
 
     await screen.findByText("skills/tui/SKILL.md");
-    const row = screen.getByText("skills/tui/SKILL.md").closest("li") as HTMLElement;
+    const row = rowFor("skills/tui/SKILL.md");
     expect(within(row).getByRole("button", { name: "Diff" })).toBeDisabled();
 
     await user.click(within(row).getByRole("button", { name: "View file" }));
@@ -116,5 +180,22 @@ describe("Deploy config tree", () => {
 
     await user.click(within(dialog).getByRole("tab", { name: "Repo source" }));
     expect(await within(dialog).findByText("repo body line")).toBeInTheDocument();
+  });
+
+  it("renders a markdown file as a document, with raw behind a toggle", async () => {
+    server.use(treeHandler(), markdownFileHandler());
+    const { user } = renderModule();
+
+    await screen.findByText("skills/tui/SKILL.md");
+    await user.click(
+      within(rowFor("skills/tui/SKILL.md")).getByRole("button", { name: "View file" }),
+    );
+
+    const dialog = await screen.findByRole("dialog", { name: "skills/tui/SKILL.md contents" });
+    expect(await within(dialog).findByRole("heading", { name: "Lessons" })).toBeInTheDocument();
+    expect(within(dialog).getByText("Keep the terminal honest.")).toBeInTheDocument();
+
+    await user.click(within(dialog).getByRole("button", { name: "Raw markdown" }));
+    expect(await within(dialog).findByText(/^# Lessons/)).toBeInTheDocument();
   });
 });
