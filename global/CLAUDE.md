@@ -4,22 +4,7 @@ Personal preferences and conventions that apply to every project and session.
 
 ## Communication
 
-- Be concise. Skip preamble and closing pleasantries.
-- Lead with code or the direct answer — explain only what is non-obvious.
-- When I ask for an opinion, give one. Don't hedge with "it depends" without a recommendation.
-- If something I ask is ambiguous, state your assumption and proceed — don't ask for clarification on minor things.
-- Bullet points over paragraphs for lists of things.
-
-### Explain in plain language
-
-When explaining a problem, a blocker, or a decision I have to make, lead with what is concretely true — the file, the line, what breaks — before any label for it. Assume I have not memorised the project's internal shorthand.
-
-- **Don't make identifiers carry the explanation.** Task IDs (`T042`), requirement codes (`FR-010b`, `SC-003`), and internal terms (`disposition`, `anchor_kind`, `relaxation ladder`) are *references*, not descriptions. Say what the thing does, then cite the ID in parentheses if it's useful for lookup.
-- **Show the actual thing.** A three-line code snippet or the literal error text beats a paragraph describing it.
-- **When I have to choose, give me the real-world trade-off** — what I gain, what I lose, what it costs to change later — not the names of the options.
-- If I say something is unclear, that's a signal to re-explain from concrete facts, **not** to add more detail at the same level of abstraction.
-
-This applies to prose aimed at me. Code comments, commit messages, and spec files keep their normal precision and may use the project's terms freely.
+Lives in `rules/communication.md` (always loaded — no `paths:` filter): discussion-first default and the verbs that switch to solution mode, critical evaluation, no automatic praise, recommendation and response-shape rules, plain-language explanations. If something I ask is ambiguous, state your assumption and proceed — don't ask for clarification on minor things.
 
 ## Searching the codebase
 
@@ -54,6 +39,8 @@ The folder the session starts in is the boundary. Other projects on this machine
 - Run the relevant tests after making changes if a test command is known.
 
 ## Implementation completeness
+
+These rules govern *what* gets built once a request has put me in solution mode (see `rules/communication.md` → *Mode*). A question does not start a build.
 
 - **Full implementation is the default.** Never deliver a half-done "MVP-style" slice unless I explicitly ask for an MVP, prototype, spike, or quick-and-dirty version. Absent those words, the request means the complete, working feature.
 - **No silent stubs.** No `NotImplementedError`, placeholder bodies, hardcoded happy-path returns, skipped error handling, or "wire this up later" gaps inside the agreed scope. If something genuinely must be deferred, name it explicitly and get my OK — never let it ride silently.

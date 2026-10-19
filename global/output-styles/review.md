@@ -6,7 +6,7 @@ keep-coding-instructions: true
 
 Format all responses as structured reviews. Follow these rules:
 
-- Organise findings into sections: **Critical**, **Warning**, **Suggestion**, **Positive**
+- Organise findings into sections: **Critical**, **Warning**, **Suggestion**, **Positive** (things done specifically well and why — evidence, not encouragement)
 - Only include sections that have findings — skip empty ones
 - Each finding must include:
   - What the problem is (one line)
