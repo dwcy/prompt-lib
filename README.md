@@ -21,9 +21,9 @@ multi-agent workflows easier to run across projects.
 | Need | How Cabal handles it |
 |---|---|
 | Domain expertise on demand | 29 specialist subagents (`@dotnet-architect`, `@python-tester`, `@react-architect`, `@tanstack-architect`, `@frontend-css`, `@frontend-designer`, `@ux-analyst`, `@unity-architect`, `@requirements-analyst`, `@api-designer`, `@db-architect`, `@data-analyst`, `@website-content-analyst`, `@git-repo-analyst`, `@code-plan-verifier`, `@gitignore-auditor`, `@secret-auditor`, `@owasp-security-reviewer`, `@code-cleaner`, `@init-project`, `@load-project`, …) auto-invoked when the task matches their description |
-| Repetitive workflows (commit, PR, review, scaffold) | 26 slash-command skills under `global/skills/` — `/git`, `/pr`, `/react-init`, `/react-review`, `/react-test`, `/react-perf`, `/react-safe`, `/css`, `/css-guide`, `/lovable-cleanup`, `/skill-create`, `/executing-plans`, `/finishing-a-development-branch`, `/using-git-worktrees`, `/design`, `/ui-component`, `/orchestrate`, `/tui`, `/cli-llm-app`, `/add-mcp`, `/dependency-audit`, `/docs`, `/git-restore-identity`, `/github-audit`, `/github-scaffold`, `/infographics-design` |
+| Repetitive workflows (commit, PR, review, scaffold) | 29 slash-command skills under `global/skills/` — `/git`, `/pr`, `/react-init`, `/react-review`, `/react-test`, `/react-perf`, `/react-safe`, `/css`, `/css-guide`, `/lovable-cleanup`, `/skill-create`, `/executing-plans`, `/finishing-a-development-branch`, `/using-git-worktrees`, `/systematic-debugging`, `/design`, `/ui-component`, `/orchestrate`, `/tui`, `/cli-llm-app`, `/add-mcp`, `/dependency-audit`, `/docs`, `/git-restore-identity`, `/github-audit`, `/github-scaffold`, `/infographics-design`, `/change-summary`, `/dotnet-codegen` |
 | Loading project context on session start | `SessionStart` hook detects whether the cwd has a `CLAUDE.md`; if yes, invokes `@load-project`; if no, offers to scaffold one from a template (`.NET`, Python, frontend, monorepo, Unity, generic) |
-| Always-on context bloat | Conditional rules in `global/rules/` (`csharp.md`, `typescript.md`, `react.md`, `tests.md`) load only when Claude touches a matching file |
+| Always-on context bloat | Conditional rules in `global/rules/` (`csharp.md`, `typescript.md`, `react.md`, `tests.md`) load only when Claude touches a matching file; rules without a `paths:` filter (`communication.md`) are always on |
 | Response-mode switching | Four output styles — `concise`, `technical`, `review`, `architect` — picked per session via `/output-style` |
 | External tool integrations | Eight pre-wired MCP servers: `context7`, `github`, `figma`, `playwright`, `azure-devops`, `supabase`, `obsidian`, `docker` (env vars resolved via `${VAR}` substitution) |
 | Multi-machine setup / deployment | Cabal, an interactive local agent control panel via the root launcher (`./run` on POSIX, `.\run.cmd` on Windows) — deploy, init env vars, show inline drift markers, restore from backup, local project scaffold, optional companion tools. The supported graphical workspace lives in `apps/cabal-desktop/`. |
@@ -115,6 +115,7 @@ Every command available in this project, grouped by purpose. Source links point 
 |---|---|---|
 | `/plan` | Plan a non-trivial feature — classify, scope, contract (full-stack), task breakdown, spawn parallel agents with worktree isolation | [src](.claude/commands/plan.md) · [docs](docs/workflows.md) |
 | `/executing-plans` | Execute a written `tasks.md` plan with review checkpoints between phases | [src](global/skills/executing-plans/SKILL.md) · [docs](docs/workflows.md#workflow-1--spec-kit-feature-single-session) |
+| `/systematic-debugging` | Root-cause-first debugging — reproduce, pattern, hypothesis, verified fix; three failed fixes stops and questions the design | [src](global/skills/systematic-debugging/SKILL.md) · [docs](docs/skills.md#systematic-debugging) |
 | `/adr` | Create a numbered Architecture Decision Record under `docs/adr/` | [src](.claude/commands/adr.md) · [docs](docs/adr/) |
 | `/cli-llm-app` | Integrate Claude Code / Codex into an app via the CLI (subscription auth, no API key) — persistent-subprocess pattern, flag gotchas, stream-json schema | [src](global/skills/cli-llm-app/SKILL.md) |
 | `/orchestrate` | Automatic subagent routing — analyse the task, dispatch specialists with worktree isolation, aggregate results | [src](global/skills/orchestrate/SKILL.md) · [docs](docs/orchestration.md) |
@@ -189,7 +190,7 @@ prompt-lib/
 │   ├── agents/          ← @-invocable specialist subagents
 │   ├── skills/          ← /-invocable slash commands
 │   ├── hooks/           ← SessionStart / PreToolUse / Stop scripts
-│   ├── rules/           ← file-pattern-conditional rules
+│   ├── rules/           ← rules: path-conditional (`paths:`) or always-on
 │   ├── output-styles/   ← response formatting profiles
 │   └── project-templates/  ← templates used by @init-project
 ├── setup/               ← TUI installer (settings-configurator-ui.py)

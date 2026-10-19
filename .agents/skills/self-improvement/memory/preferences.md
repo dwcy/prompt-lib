@@ -20,8 +20,8 @@ Durable user / project preferences not visible from the code itself. Each entry 
 
 ### P-20260510-03 — Concise, code-first responses; no preamble
 - **Date**: 2026-05-10
-- **Preference**: Lead with code or the direct answer. Skip "Sure!", "Here's what I'll do", and end-of-message recaps. Bullet points over paragraphs for lists. Tables for any enumeration of three or more items.
-- **Why**: User prefers signal over fluff. Codified in global `CLAUDE.md`.
+- **Preference**: Lead with code or the direct answer. Skip "Sure!", "Here's what I'll do", and end-of-message recaps. Bullet points over paragraphs for lists. Tables for comparable information (same attributes across several items); a plain list of names stays a list.
+- **Why**: User prefers signal over fluff. Codified in `global/rules/communication.md` (always-on rule; discussion-first default, no automatic praise, response shape).
 - **Scope**: All communication.
 - **Stale signal**: User starts asking for more context / explanation by default.
 

@@ -19,6 +19,7 @@ description: "Task list template for feature implementation"
 - **Owner**: Named subagent that will execute the task (see `.specify/memory/agents.md`). Use `main` only when no specialist fits.
 - **Parallel: yes** (optional trailing field): mark a task that will be dispatched **concurrently** with other writing tasks. `/speckit-implement` will pass `isolation: "worktree"` on the Agent call for every `Parallel: yes` task so concurrent writers don't clobber each other. Omit for sequential tasks and for read-only auditors. See [`docs/parallel-isolation.md`](../../docs/parallel-isolation.md).
 - Include exact file paths in descriptions
+- **Interfaces** (indented sub-bullet, required when another task consumes this task's output): `Consumes:` the exact signatures or paths this task depends on · `Produces:` the exact signatures or paths it exposes. A subagent reading only its own task line still needs its neighbours' contracts.
 
 ## Phase status convention (MANDATORY)
 
@@ -37,6 +38,28 @@ Every `## Phase X: ...` heading MUST be followed immediately by a verbose `**Sta
 - Architecture/impl tasks → matching `*-architect`; test tasks → matching `*-tester`; CSS-only tasks → `@frontend-css`.
 - During `/speckit-implement`, dispatch each task by spawning the named subagent via the `Agent` tool with `subagent_type: "<agent>"`.
 - For tasks tagged `Parallel: yes`, also pass `isolation: "worktree"` on the Agent call. The worktree auto-cleans on no-change; on changes, merge the returned branch back to the integration branch before moving to the next phase (Constitution Gate 6).
+
+## No placeholders (MANDATORY)
+
+Every task must be executable by an agent that has read nothing but this file and the design documents it names. Before writing the file, reject:
+
+- "TBD", "TODO", "fill in later", "add appropriate error handling", "similar to T0NN" — write the actual paths, names, and behaviour instead.
+- Tasks whose done state is not observable (no test, no command, no file that must exist).
+
+`/speckit-tasks` self-review before reporting: (1) every requirement and user story in spec.md maps to at least one task; (2) grep the generated file for the placeholder phrases above; (3) every `Consumes:` matches a `Produces:` in an earlier task or a file that already exists.
+
+## Resuming and rulings (MANDATORY)
+
+The `[X]` checkboxes and Status lines are the durable ledger. Conversation memory does not survive `/compact` or a new session; this file does.
+
+- **On resume** — before executing anything, re-read the generated tasks.md and continue from the first `[ ]` task. Never re-run an `[X]` task; if its output looks missing, verify on disk first and record what you found under `## Rulings`.
+- **Rulings** — when execution hits an ambiguity that global CLAUDE.md lets you resolve yourself ("state your assumption and proceed"), append it under `## Rulings` so the decision survives compaction and the user can overrule it:
+
+  `- Ruling (T0NN): <what you decided> — <why> — <cost if wrong>`
+
+  Blockers still stop: destructive or irreversible actions, security-sensitive changes, side effects outside the worktree (merge, push, publish), a failing verification, or a plan so unclear that every path is a guess. Those go to the user, not into a ruling.
+
+`/speckit-tasks` keeps the `## Rulings` section in the generated file, initialised as `(none yet)`.
 
 ## Contract test ordering rule (Constitution Principle III)
 
@@ -123,6 +146,7 @@ Examples of foundational tasks (adjust based on your project):
 - [ ] T012 [P] [US1] Create [Entity1] model in src/models/[entity1].py — Owner: @<lang>-architect
 - [ ] T013 [P] [US1] Create [Entity2] model in src/models/[entity2].py — Owner: @<lang>-architect
 - [ ] T014 [US1] Implement [Service] in src/services/[service].py (depends on T012, T013) — Owner: @<lang>-architect
+  - Interfaces — Consumes: `Entity1(id: UUID, name: str)` from src/models/[entity1].py · Produces: `Service.create(payload: CreateRequest) -> Entity1`
 - [ ] T015 [US1] Implement [endpoint/feature] in src/[location]/[file].py — Owner: @<lang>-architect
 - [ ] T016 [US1] Add validation and error handling — Owner: @<lang>-architect
 - [ ] T017 [US1] Add logging for user story 1 operations — Owner: @<lang>-architect
@@ -275,6 +299,12 @@ With multiple developers:
 
 ---
 
+## Rulings
+
+(none yet)
+
+---
+
 ## Notes
 
 - [P] tasks = different files, no dependencies
@@ -284,4 +314,4 @@ With multiple developers:
 - Verify tests fail before implementing
 - Commit after each task or logical group
 - Stop at any checkpoint to validate story independently
-- Avoid: vague tasks, same file conflicts, cross-story dependencies that break independence, missing Owner field
+- Avoid: vague tasks, placeholders, same file conflicts, cross-story dependencies that break independence, missing Owner field, missing Interfaces on a task another task consumes

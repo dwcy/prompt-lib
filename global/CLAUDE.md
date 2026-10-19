@@ -4,22 +4,7 @@ Personal preferences and conventions that apply to every project and session.
 
 ## Communication
 
-- Be concise. Skip preamble and closing pleasantries.
-- Lead with code or the direct answer — explain only what is non-obvious.
-- When I ask for an opinion, give one. Don't hedge with "it depends" without a recommendation.
-- If something I ask is ambiguous, state your assumption and proceed — don't ask for clarification on minor things.
-- Bullet points over paragraphs for lists of things.
-
-### Explain in plain language
-
-When explaining a problem, a blocker, or a decision I have to make, lead with what is concretely true — the file, the line, what breaks — before any label for it. Assume I have not memorised the project's internal shorthand.
-
-- **Don't make identifiers carry the explanation.** Task IDs (`T042`), requirement codes (`FR-010b`, `SC-003`), and internal terms (`disposition`, `anchor_kind`, `relaxation ladder`) are *references*, not descriptions. Say what the thing does, then cite the ID in parentheses if it's useful for lookup.
-- **Show the actual thing.** A three-line code snippet or the literal error text beats a paragraph describing it.
-- **When I have to choose, give me the real-world trade-off** — what I gain, what I lose, what it costs to change later — not the names of the options.
-- If I say something is unclear, that's a signal to re-explain from concrete facts, **not** to add more detail at the same level of abstraction.
-
-This applies to prose aimed at me. Code comments, commit messages, and spec files keep their normal precision and may use the project's terms freely.
+Lives in `rules/communication.md` (always loaded — no `paths:` filter): discussion-first default and the verbs that switch to solution mode, critical evaluation, no automatic praise, recommendation and response-shape rules, plain-language explanations. If something I ask is ambiguous, state your assumption and proceed — don't ask for clarification on minor things.
 
 ## Searching the codebase
 
@@ -55,12 +40,24 @@ The folder the session starts in is the boundary. Other projects on this machine
 
 ## Implementation completeness
 
+These rules govern *what* gets built once a request has put me in solution mode (see `rules/communication.md` → *Mode*). A question does not start a build.
+
 - **Full implementation is the default.** Never deliver a half-done "MVP-style" slice unless I explicitly ask for an MVP, prototype, spike, or quick-and-dirty version. Absent those words, the request means the complete, working feature.
 - **No silent stubs.** No `NotImplementedError`, placeholder bodies, hardcoded happy-path returns, skipped error handling, or "wire this up later" gaps inside the agreed scope. If something genuinely must be deferred, name it explicitly and get my OK — never let it ride silently.
 - **Underspecified → analyse first, then ask.** When the request leaves real decisions open, do the analysis and ask targeted questions until the scope is clear enough to implement fully — don't guess your way into a partial build.
 - **Large scope → steer to Spec Kit.** If the work spans multiple features or subsystems, or can't be finished properly in one pass, recommend the Spec Kit flow (`/speckit-specify` → `/speckit-clarify` → `/speckit-plan` → `/speckit-tasks`) instead of starting an ad-hoc partial implementation.
 - **"Done" check before stopping.** Before declaring a task complete, re-scan the agreed scope for anything not yet implemented. If in-scope work remains, keep going — done means implemented and verified, not "mostly there".
+- **Evidence before claims.** A completion or fix claim needs a freshly run command and its actual output in the report — the tests, the build, the reproduction step. "Should work", "probably fixed", and "seems fine" are not reports; if you have not run it, say it is unverified.
 - **Applies to subagents.** Put these expectations in every dispatch brief; when a subagent returns half-done work, send it back rather than accepting it.
+
+## Receiving review feedback
+
+Review comments — from me, a reviewer subagent, or a PR — are claims to verify, not instructions to execute.
+
+- Check each finding against the code before acting on it. Where the reviewer is wrong, say so with the file and line that shows it; where they are right, fix it without ceremony.
+- No performative agreement. "You're absolutely right" and "great catch" add nothing; state what you verified and what you changed.
+- Before removing or adding something because a review says it is unused or missing, grep for actual usage. Act on what the codebase shows, not on what the comment asserts.
+- A review that asks for scope beyond the task is a new request — surface it, don't silently absorb it.
 
 ## Versions
 

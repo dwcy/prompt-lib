@@ -11,6 +11,16 @@ When two or more Claude Code sessions touch the same checkout, they fight for `.
 
 This skill is the user-facing primitive. The orchestrator daemon uses its own `WorktreeManager` (`services/orchestrator/src/orchestrator/worktree.py`) for the same isolation reason; the conventions match (sibling layout, refuse-on-uncommitted) so both layers behave consistently.
 
+## Native tool first
+
+Reach for the git commands below only when the harness does not already provide the isolation:
+
+- **Subagents** — pass `isolation: "worktree"` on the Agent call. The harness creates the worktree under `.claude/worktrees/`, removes it when the agent makes no changes, and returns path + branch when it does.
+- **This session** — when the `EnterWorktree` tool is available, use it; it moves the session into a harness-managed worktree and `ExitWorktree` brings it back.
+- **A second human-driven session** — that is what the subcommands below are for: a sibling checkout the user opens a new terminal in.
+
+`.claude/worktrees/` is harness-managed and gitignored. Do not create sibling worktrees inside it, and do not `git worktree remove` entries there by hand while a session may still own them — run `prune` after the sessions have ended instead.
+
 ---
 
 ## Subcommands
