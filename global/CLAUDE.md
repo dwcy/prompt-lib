@@ -60,7 +60,17 @@ The folder the session starts in is the boundary. Other projects on this machine
 - **Underspecified → analyse first, then ask.** When the request leaves real decisions open, do the analysis and ask targeted questions until the scope is clear enough to implement fully — don't guess your way into a partial build.
 - **Large scope → steer to Spec Kit.** If the work spans multiple features or subsystems, or can't be finished properly in one pass, recommend the Spec Kit flow (`/speckit-specify` → `/speckit-clarify` → `/speckit-plan` → `/speckit-tasks`) instead of starting an ad-hoc partial implementation.
 - **"Done" check before stopping.** Before declaring a task complete, re-scan the agreed scope for anything not yet implemented. If in-scope work remains, keep going — done means implemented and verified, not "mostly there".
+- **Evidence before claims.** A completion or fix claim needs a freshly run command and its actual output in the report — the tests, the build, the reproduction step. "Should work", "probably fixed", and "seems fine" are not reports; if you have not run it, say it is unverified.
 - **Applies to subagents.** Put these expectations in every dispatch brief; when a subagent returns half-done work, send it back rather than accepting it.
+
+## Receiving review feedback
+
+Review comments — from me, a reviewer subagent, or a PR — are claims to verify, not instructions to execute.
+
+- Check each finding against the code before acting on it. Where the reviewer is wrong, say so with the file and line that shows it; where they are right, fix it without ceremony.
+- No performative agreement. "You're absolutely right" and "great catch" add nothing; state what you verified and what you changed.
+- Before removing or adding something because a review says it is unused or missing, grep for actual usage. Act on what the codebase shows, not on what the comment asserts.
+- A review that asks for scope beyond the task is a new request — surface it, don't silently absorb it.
 
 ## Versions
 

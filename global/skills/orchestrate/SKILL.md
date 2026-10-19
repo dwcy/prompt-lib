@@ -143,7 +143,20 @@ Every dispatch prompt MUST end with this completeness brief (verbatim or tighten
 
 > Deliver the complete implementation — no MVP, stubs, placeholder bodies, or skipped error handling unless the user explicitly asked for a prototype. If you believe something in scope should be deferred, say so explicitly in your report instead of leaving it half-done. Before returning, re-check the brief for anything not yet implemented and finish it.
 
-When an agent's result comes back half-done anyway (stubs, unimplemented in-scope items), re-dispatch it with the gaps listed — do not patch around it or present it as complete.
+**Fix loop with a ceiling.** When an agent's result comes back half-done (stubs, unimplemented in-scope items, a failed verification), send it back with the gaps listed — do not patch around it or present it as complete. Cap the loop at five rounds per task:
+
+- Rounds 1–3: continue the same agent via `SendMessage` so it keeps its context; list only the open gaps.
+- Rounds 4–5: dispatch a fresh agent of the same type with a stronger `model` override and a brief that says what the earlier attempts tried and why each fell short. Same-agent retries past round 3 tend to repeat the same misreading.
+- At the cap: stop dispatching. Put each open gap to the user with what was tried and your recommendation. A sixth round costs more than the conversation.
+
+Re-verification after a fix round checks the fix diff against the listed gaps, not the whole task again — pass the reviewer the scoped diff.
+
+**Briefing a reviewer or verifier** (`code-plan-verifier`, `owasp-security-reviewer`, any read-only auditor):
+
+- Write the diff to a scratch file (`git -C <repo> diff <base>...HEAD > <scratchpad>/review-<slug>.diff`) and pass the path. A pasted diff is the largest single context cost in a review dispatch, and the reviewer can `Read` the file with offsets.
+- State that the reviewer is read-only: no edits, no `git checkout`/`stash`/`restore`, no branch switching. A reviewer that moves HEAD orphans commits the implementer made after the diff was cut.
+- State that the reviewer must not spawn its own subagents. Its verdict is the product; a sub-review duplicates it at full cost.
+- Do not tell the reviewer what to ignore. "Do not flag X" pre-judges the review; if you find yourself writing it, remove it and let the finding come back so the user can dismiss it.
 
 For parallel agents, dispatch in a single message (multiple Agent tool calls). Set `run_in_background: true` on all but the last so they run concurrently.
 

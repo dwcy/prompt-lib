@@ -46,6 +46,12 @@ Skills are how you turn "things you keep doing" into one keystroke.
 - **When to use**: long implementations where you want the model to execute, then pause for human review, rather than barrel through the whole feature.
 - **Composes with**: `/using-git-worktrees` to isolate the workspace, then `@code-plan-verifier` once execution finishes.
 
+### `/systematic-debugging`
+- **Tools**: `Bash, Read, Glob, Grep`
+- **What it does**: root-cause-first debugging in four phases — reproduce and read the real error, look for the pattern, state a one-sentence hypothesis and run the smallest experiment that could kill it, then fix the cause and verify with the reproduction command. Three failed fixes for the same failure stops the loop and turns it into a design question.
+- **Bundled**: `references/condition-based-waiting.md` (replace timed sleeps in tests with a condition poller — the how-to behind the rule in `global/rules/tests.md`) and `scripts/find_polluter.py` (bisects a pytest suite to the one test that leaves state behind when a test passes alone but fails in order).
+- **When to use**: any failing test, bug report, or "it's still broken" — before proposing a fix.
+
 ## Frontend / React skills
 
 ### `/react-init`

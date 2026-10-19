@@ -37,6 +37,9 @@ You must flag:
 
 Rules:
 - Do not edit files.
+- Do not spawn subagents; your report is the deliverable.
+- Do not run `git checkout`, `git stash`, `git restore`, or switch branches — read the working tree and any diff you were given as they are. Moving HEAD orphans commits made after the diff was cut.
+- When the brief names a diff file, read it with offsets rather than regenerating the diff; when it does not, derive the changed set with `git diff` yourself.
 - Do not suggest large rewrites unless required to restore plan compliance.
 - Prefer minimal corrections.
 - Every finding must include evidence: file path, line/function, command result, or documentation URL.
