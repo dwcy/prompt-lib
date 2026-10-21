@@ -19,6 +19,8 @@ from cabal.codex_setup.diff_apply import diff_codex_component, find_codex_extras
 from cabal.components import COMPONENTS, FileStatus
 from cabal.diff_apply import diff_component, find_extras
 from cabal.settings_helpers import _effective_settings_text, _is_settings_json
+from cabal.skill_catalog import split_frontmatter
+from cabal.skill_structure import parse_blocks
 from cabal.webapi.envelope import ApiError, compute_precondition_digest, utc_now_iso
 
 CONFIG_TARGETS = ("claude", "codex")
@@ -49,6 +51,10 @@ _CODEX_GROUPS = {
 }
 
 _STATE_WIRE = {"NEW": "new", "CHANGED": "changed", "UNCHANGED": "unchanged"}
+
+CONFIG_FILE_SIDES = ("deployed", "source")
+MAX_FILE_BYTES = 512 * 1024
+MARKDOWN_SUFFIXES = frozenset({".md", ".markdown"})
 
 
 @dataclass(frozen=True)
@@ -146,6 +152,76 @@ def config_diff(target: str, path: str) -> dict[str, Any]:
     _component, status = match
     diff_text = _unified_diff(status)
     return {"target": target, "rel_path": path, "state": _STATE_WIRE[status.state], "diff_text": diff_text}
+
+
+def _markdown_document(content: str) -> dict[str, Any]:
+    """Parsed markdown for the file viewer: same block/section shape the skills view renders.
+
+    A leading `---` frontmatter block is not prose, so it is handed over as a code block rather
+    than parsed as body markdown (where its dashes read as a table rule).
+    """
+    frontmatter, body = split_frontmatter(content)
+    preamble, sections = parse_blocks(body)
+    if frontmatter.strip():
+        preamble = [
+            {"type": "code", "language": "yaml", "text": frontmatter.strip("\n")},
+            *preamble,
+        ]
+    return {"preamble": preamble, "sections": sections}
+
+
+def config_file(target: str, path: str, side: str) -> dict[str, Any]:
+    """`/api/config/file` data: the whole text of one side of a deployable file.
+
+    Unlike the diff, this answers for every file in the tree — an unchanged file has no
+    diff to show but is still the thing you want to read.
+    """
+    if side not in CONFIG_FILE_SIDES:
+        raise ApiError(422, "params_invalid", f"Unknown file side {side!r}")
+    match = _status_by_target_path(target).get(path)
+    if match is None:
+        raise ApiError(404, "path_not_found", f"No deployable file at {path!r} for target {target!r}")
+    _component, status = match
+    file_path = status.dst if side == "deployed" else status.src
+
+    payload: dict[str, Any] = {
+        "target": target,
+        "rel_path": path,
+        "side": side,
+        "abs_path": str(file_path),
+        "state": _STATE_WIRE[status.state],
+        "exists": file_path.is_file(),
+        "content": None,
+        "binary": False,
+        "truncated": False,
+        "size_bytes": None,
+        "markdown": None,
+    }
+    if not payload["exists"]:
+        return payload
+
+    # settings.json is assembled before deploy, so the source side must show the text that
+    # would actually be written — the same substitution the diff applies.
+    if side == "source" and _is_settings_json(file_path):
+        raw = _effective_settings_text(file_path).encode("utf-8")
+    else:
+        try:
+            raw = file_path.read_bytes()
+        except OSError as error:
+            raise ApiError(500, "read_failed", f"Could not read {file_path}: {error}") from error
+
+    sample = raw[:MAX_FILE_BYTES]
+    payload["size_bytes"] = len(raw)
+    payload["truncated"] = len(raw) > MAX_FILE_BYTES
+    payload["binary"] = b"\x00" in sample[:8192]
+    if not payload["binary"]:
+        try:
+            payload["content"] = sample.decode("utf-8")
+        except UnicodeDecodeError:
+            payload["binary"] = True
+    if payload["content"] is not None and file_path.suffix.lower() in MARKDOWN_SUFFIXES:
+        payload["markdown"] = _markdown_document(payload["content"])
+    return payload
 
 
 def _read_text(path: Path) -> str:

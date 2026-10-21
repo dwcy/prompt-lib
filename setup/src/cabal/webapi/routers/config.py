@@ -8,7 +8,13 @@ from typing import Literal
 from fastapi import APIRouter, Depends, Request
 
 from cabal.webapi import security
-from cabal.webapi.config_service import build_config_tree, config_backups, config_diff, config_extras
+from cabal.webapi.config_service import (
+    build_config_tree,
+    config_backups,
+    config_diff,
+    config_extras,
+    config_file,
+)
 from cabal.webapi.envelope import envelope_response
 
 # Auth is declared at router level so routes keep the guard when flattened onto the app.
@@ -29,6 +35,16 @@ def config_tree(request: Request, target: Literal["claude", "codex"]):
 @router.get("/api/config/diff")
 def config_diff_route(request: Request, target: Literal["claude", "codex"], path: str):
     return envelope_response(data=config_diff(target, path), source="config_deploy")
+
+
+@router.get("/api/config/file")
+def config_file_route(
+    request: Request,
+    target: Literal["claude", "codex"],
+    path: str,
+    side: Literal["deployed", "source"] = "deployed",
+):
+    return envelope_response(data=config_file(target, path, side), source="config_deploy")
 
 
 @router.get("/api/config/extras")

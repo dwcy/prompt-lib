@@ -199,7 +199,7 @@ export const MODULE_OPERATION_SUMMARIES: Record<ModuleKey, string> = {
   docs: "README summary and project reference documents",
   release_notes: "What shipped, where it lives, and how to use it",
   news: "AI, security, package, Azure, and Hacker News signals",
-  agent_setup: "Folder and file structure for Claude, Codex, and Antigravity",
+  agent_setup: "Installed skills, where each lives, and the raw config files",
 };
 
 export const MODULE_GROUP_ORDER: ModuleGroup[] = [
@@ -451,7 +451,7 @@ export const MODULE_REGISTRY: ModuleDefinition[] = [
   },
   {
     key: "agent_setup",
-    title: "Agent Setup — Claude / Codex / Antigravity",
+    title: "Agent Setup — Skills and Config Files",
     group: "machine",
     phase: 19,
     component: AgentSetupModule,

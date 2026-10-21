@@ -18,7 +18,6 @@ from textual.containers import Horizontal, Vertical
 from textual.widget import Widget
 from textual.widgets import Button, Static
 
-from cabal.big_font import render_big
 from cabal.models.dashboard import (
     AvailabilityState,
     AzureDevOpsSection,
@@ -68,7 +67,13 @@ class DashboardPanel(Widget):
         border: round #CC006B;
     }
     DashboardPanel #dash-titlebar { height: 3; align-vertical: middle; }
-    DashboardPanel #dash-title { content-align: left middle; height: auto; width: 1fr; }
+    DashboardPanel #dash-title {
+        content-align: left middle;
+        height: auto;
+        width: 1fr;
+        text-wrap: nowrap;
+        text-overflow: ellipsis;
+    }
     DashboardPanel #btn-git { min-width: 14; height: 3; margin: 0 2 0 0; }
     DashboardPanel #dash-refresh { min-width: 14; height: 3; margin: 0; }
     DashboardPanel .dash-group { height: auto; }
@@ -237,7 +242,7 @@ class DashboardPanel(Widget):
         if project is None:
             title.update("[dim]no project selected[/dim]")
         else:
-            title.update(Text(render_big(project.name), style="bold bright_magenta"))
+            title.update(Text(project.name, style="bold bright_magenta"))
 
     def _apply_visibility(self, name: str, section) -> None:
         """Hide a service section the project isn't linked to; show all others."""

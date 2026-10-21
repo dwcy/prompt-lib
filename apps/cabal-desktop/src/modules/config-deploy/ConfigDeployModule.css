@@ -1,7 +1,7 @@
 /* Config Deployment console module: command header with target switcher, drift metric tiles,
-   deploy queue command strip, component/file tree, and sticky diff review panel — restyled to
-   the console token system established by ToolsModule.css / ServicesModule.css / KnowledgeModule.css.
-   Token-only colors; DOM structure and behavior are unchanged from the pre-redesign markup. */
+   deploy queue command strip, group filter, component/file tree, and the file-reader dialog
+   (diff / deployed / repo source) — on the console token system established by ToolsModule.css /
+   ServicesModule.css / KnowledgeModule.css. Token-only colors. */
 
 .cfg-deploy {
   display: flex;
@@ -232,14 +232,7 @@
   color: var(--muted);
 }
 
-/* ── Body: tree | diff panel ────────────────────────────────────────────── */
-
-.cfg-deploy__body {
-  display: grid;
-  grid-template-columns: minmax(22rem, 1fr) minmax(20rem, 0.95fr);
-  gap: var(--space-4);
-  align-items: start;
-}
+/* ── Component / file tree ──────────────────────────────────────────────── */
 
 .cfg-deploy__tree {
   max-height: 44rem;
@@ -305,7 +298,7 @@
 
 .cfg-deploy__file-item {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-2) var(--space-3);
@@ -358,39 +351,143 @@
   opacity: var(--opacity-disabled);
 }
 
-/* ── Diff review panel ───────────────────────────────────────────────────── */
+.cfg-deploy__file-view-btn {
+  padding: 4px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-sm);
+  background-color: var(--surface-2);
+  color: var(--fg-soft);
+  font-size: var(--fs-xs);
+  cursor: pointer;
+}
 
-.cfg-deploy__diff {
-  position: sticky;
-  top: 0;
-  max-height: 44rem;
+.cfg-deploy__file-view-btn:hover {
+  background-color: var(--surface-3);
+  color: var(--fg);
+}
+
+/* ── Group filter ────────────────────────────────────────────────────────── */
+
+.cfg-deploy__group-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.cfg-deploy__group-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-full);
+  background-color: var(--surface-1);
+  color: var(--fg-soft);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.cfg-deploy__group-chip:hover {
+  background-color: var(--surface-3);
+  color: var(--fg);
+}
+
+.cfg-deploy__group-chip.is-active {
+  border-color: var(--accent);
+  background-color: var(--surface-3);
+  color: var(--fg);
+}
+
+.cfg-deploy__group-chip-count {
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+}
+
+.cfg-deploy__group-chip-drift {
+  color: var(--status-info);
+  font-size: var(--fs-xs);
+}
+
+/* ── File viewer dialog ──────────────────────────────────────────────────── */
+
+.cfg-file-view {
+  width: min(72rem, 100%);
+  max-height: 90vh;
+}
+
+.cfg-file-view__path {
+  font-family: var(--font-family-mono);
+  word-break: break-all;
+}
+
+.cfg-file-view__abs {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-xs);
+  word-break: break-all;
+}
+
+.cfg-file-view__header-side {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.cfg-file-view__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.cfg-file-view__meta {
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+
+.cfg-file-view__body {
+  min-height: 0;
+  flex: 1 1 auto;
   overflow: auto;
-  padding: var(--space-4);
   border: 1px solid var(--border);
   border-radius: var(--corner-lg);
   background-color: var(--surface-1);
 }
 
-.cfg-deploy__diff-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-3);
-  margin-bottom: var(--space-3);
-}
-
-.cfg-deploy__diff-header h2 {
-  margin: 0;
-  font-size: var(--fs-md);
-  font-weight: 600;
-}
-
-.cfg-deploy__diff-path {
-  margin: 4px 0 0;
-  overflow-wrap: anywhere;
-  color: var(--muted);
-  font-family: var(--font-family-mono);
+.cfg-file-view__raw-toggle {
+  padding: 4px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--corner-sm);
+  background-color: var(--surface-2);
+  color: var(--fg-soft);
   font-size: var(--fs-xs);
+  cursor: pointer;
+}
+
+.cfg-file-view__raw-toggle:hover,
+.cfg-file-view__raw-toggle.is-active {
+  background-color: var(--surface-3);
+  color: var(--fg);
+}
+
+.cfg-file-view__document,
+.cfg-file-view__diff {
+  padding: var(--space-4);
+}
+
+.cfg-file-view__content {
+  margin: 0;
+  padding: var(--space-4);
+  font-family: var(--font-family-mono);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-base);
+  white-space: pre;
+  tab-size: 2;
 }
 
 /* ── Narrow layouts ──────────────────────────────────────────────────────── */
@@ -402,13 +499,5 @@
 
   .cfg-deploy__steps {
     flex-wrap: wrap;
-  }
-
-  .cfg-deploy__body {
-    grid-template-columns: 1fr;
-  }
-
-  .cfg-deploy__diff {
-    position: static;
   }
 }

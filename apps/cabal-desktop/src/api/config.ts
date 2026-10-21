@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { apiGet, requireData } from "@/api/client";
+import { markdownDocumentSchema } from "@/api/markdown";
 import { queryKeys } from "@/api/queryKeys";
 import { useProjectContextStore } from "@/stores/projectContext";
 
@@ -53,6 +54,23 @@ export const configDiffSchema = z.object({
   rel_path: z.string(),
   state: configFileStateSchema,
   diff_text: z.string(),
+});
+
+export const configFileSideSchema = z.enum(["deployed", "source"]);
+
+export const configFileContentSchema = z.object({
+  target: configTargetSchema,
+  rel_path: z.string(),
+  side: configFileSideSchema,
+  abs_path: z.string(),
+  state: configFileStateSchema,
+  exists: z.boolean(),
+  content: z.string().nullable(),
+  binary: z.boolean(),
+  truncated: z.boolean(),
+  size_bytes: z.number().nullable(),
+  // Present only for .md/.markdown, so the viewer can render the document instead of its source.
+  markdown: markdownDocumentSchema.nullable(),
 });
 
 export const configExtraSchema = z.object({
@@ -145,6 +163,8 @@ export type ConfigFile = z.infer<typeof configFileSchema>;
 export type ConfigComponent = z.infer<typeof configComponentSchema>;
 export type ConfigTree = z.infer<typeof configTreeSchema>;
 export type ConfigDiff = z.infer<typeof configDiffSchema>;
+export type ConfigFileSide = z.infer<typeof configFileSideSchema>;
+export type ConfigFileContent = z.infer<typeof configFileContentSchema>;
 export type ConfigExtraGroup = z.infer<typeof configExtraGroupSchema>;
 export type BackupKind = z.infer<typeof backupKindSchema>;
 export type BackupSet = z.infer<typeof backupSetSchema>;
@@ -175,6 +195,24 @@ export function useConfigDiff(target: ConfigTarget, path: string | null) {
         signal,
       );
       return requireData(envelope, `${target} config diff`);
+    },
+    enabled: path !== null,
+    staleTime: 15_000,
+  });
+}
+
+/** Whole-file read for the file viewer — available for unchanged files, which have no diff. */
+export function useConfigFileContent(
+  target: ConfigTarget,
+  path: string | null,
+  side: ConfigFileSide,
+) {
+  return useQuery({
+    queryKey: queryKeys.global("config", "file", target, path ?? "none", side),
+    queryFn: async ({ signal }) => {
+      const query = `target=${target}&path=${encodeURIComponent(path ?? "")}&side=${side}`;
+      const envelope = await apiGet(`/api/config/file?${query}`, configFileContentSchema, signal);
+      return requireData(envelope, `${target} config file`);
     },
     enabled: path !== null,
     staleTime: 15_000,

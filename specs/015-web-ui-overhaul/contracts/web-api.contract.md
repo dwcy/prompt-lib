@@ -39,6 +39,7 @@ Tools
 Config lifecycle
 - `GET /api/config/tree?target=claude|codex` — ConfigComponent[] + DriftReport (with digest).
 - `GET /api/config/diff?target&path` — unified diff, redacted.
+- `GET /api/config/file?target&path&side=deployed|source` — whole file text for one side; answers for unchanged files too, which have no diff. `.md` also carries `markdown` (parsed blocks + sections) so the viewer can render the document.
 - `GET /api/config/extras?target` · `GET /api/config/backups?kind` — CleanupExtra[], BackupSet[].
 - `GET /api/settings` — SettingEntry[].
 - `GET /api/local-config` — LocalConfigAction[] with previews.

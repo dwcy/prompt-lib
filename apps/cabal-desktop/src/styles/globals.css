@@ -1,5 +1,6 @@
 /* Base reset + Tailwind entry + design system. Token/theme/component layers are split across
-   sibling files (tokens.css, theme.css, shell.css, components.css, overlays.css, modules.css) —
+   sibling files (tokens.css, theme.css, shell.css, components.css, markdown.css, overlays.css,
+   modules.css) —
    this file stays the reset + base-element layer per T003/T024. */
 @import "tailwindcss";
 @import "@fontsource-variable/geist";
@@ -8,6 +9,7 @@
 @import "./theme.css";
 @import "./shell.css";
 @import "./components.css";
+@import "./markdown.css";
 @import "./overlays.css";
 @import "./modules.css";
 

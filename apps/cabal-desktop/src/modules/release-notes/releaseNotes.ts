@@ -145,6 +145,19 @@ export const RELEASE_SECTIONS: ReleaseSection[] = [
         ],
         note: "Read-only against Azure, Vercel, and GitHub — nothing is ever created, updated, or deleted there. Some values can never be read back at all: GitHub secrets and Vercel 'sensitive' entries show a disabled eye stating so, which is a fact about those platforms rather than a failure. Every reveal is recorded in the audit trail, and the record never contains the value.",
       },
+      {
+        title: "The skills you actually have",
+        location: "Machine → Agent Setup",
+        purpose:
+          "Lists every skill Claude Code can load here — your personal ones, the selected project's, and each installed plugin's — and opens one up: its instructions as a collapsible outline, the exact file it lives in, the reference files and scripts it bundles, and the other skills, agents and tools it hands work to.",
+        steps: [
+          "Search or filter by scope, then pick a skill to open it.",
+          "Read the outline instead of the raw file; switch to Raw file when you want the source.",
+          "Use 'Needs attention' to see only what will not load, what is defined twice, and what no longer matches this repo.",
+          "Open 'Folders searched' to see every path that was looked in, including the ones that do not exist.",
+        ],
+        note: "Read-only. A loose .md file directly under a skills/ folder is listed as not loaded, because Claude Code only loads <name>/SKILL.md. The Config files tab still holds the plain folder browser for Claude, Codex, and Antigravity.",
+      },
     ],
   },
   {
